@@ -66,6 +66,10 @@ const root=path.join(__dirname,'..');
     document.querySelectorAll('#masonry .card__btn').forEach((button,i)=>{
       if(i%4!==0)button.insertAdjacentHTML('beforeend','<div class="card__title-base"><h3 class="card__title">Luz y paisaje felino</h3></div>');
     });
+    const map=document.createElement('section');
+    map.className='map-section';
+    map.innerHTML='<div class="map-section__head"><h2 class="map-section__title">Mapa de prueba</h2><label class="map-filter"><select id="mapCategory"><option>Todas</option></select></label></div><div class="map-container"><div id="map" class="map"></div></div>';
+    document.querySelector('.gallery-section').after(map);
   });
   const rgb=value=>value.match(/[0-9.]+/g).slice(0,3).map(Number).map(n=>{
     n/=255;return n<=.04045?n/12.92:((n+.055)/1.055)**2.4;
