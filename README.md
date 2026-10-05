@@ -1,88 +1,61 @@
 # Kookye Cat Gallery
 
-A self-hosted, responsive photo gallery built with PHP, JavaScript, HTML, and CSS. It includes a private admin area for managing uploads, photo metadata, categories, visual themes, and gallery layouts.
+Galería autohospedada y adaptable para organizar y presentar fotografías. Está construida con PHP, JavaScript y CSS, sin framework ni proceso de compilación.
 
-> This repository contains the application code only. Personal photographs, original uploads, private configuration, credentials, and production deployment settings are intentionally excluded.
+Este repositorio contiene únicamente el software. No incluye fotografías, datos personales, credenciales, configuraciones de producción ni el historial del sitio de origen. Añade tus propias imágenes y textos antes de publicar una instalación.
 
-## Features
+## Funciones
 
-- Responsive gallery layouts, hover effects, palettes, and header styles
-- Photo uploads with generated desktop and mobile WebP versions
-- Per-photo titles, descriptions, categories, ordering, drafts, and favorites
-- Optional map display for coordinates provided with uploaded photos
-- Basic rich-text editors for the legal pages and project section
-- Progressive web app support and offline page
-- Optional AI-assisted photo descriptions; the gallery works without API keys
+- Diseños de galería configurables: cuadrícula, mosaico tipo masonry y composiciones editoriales.
+- Paletas, cabeceras y efectos al pasar el cursor (hover) seleccionables desde el panel.
+- Gestión de fotografías, categorías, metadatos, favoritos y orden.
+- Herramienta de edición fotográfica con filtros y navegación táctil.
+- Editor de textos del sitio y páginas legales.
+- Mapa opcional que utiliza los datos de ubicación de las fotos que subas.
+- Aplicación web instalable y soporte básico sin conexión.
+- Generación de miniaturas y versiones WebP para escritorio y móvil.
 
-## Requirements
+## Requisitos
 
-- PHP 8.1 or later
-- PHP extensions: GD, EXIF, Fileinfo, JSON, and cURL (cURL is only needed for AI descriptions)
-- Apache with `.htaccess` support, or an equivalent web server configuration
-- HTTPS for the admin session cookie and production use
+- PHP 8.1 o posterior con las extensiones GD y Fileinfo.
+- Servidor web Apache con `.htaccess` habilitado; el acceso directo a directorios privados queda bloqueado por esas reglas.
+- Node.js solo es necesario para ejecutar las pruebas de JavaScript y navegador.
 
-## Quick start
+## Instalación
 
-1. Clone this repository into a PHP-enabled web root.
-2. Configure the web root to point at the repository root and enable URL rewriting.
-3. Create a private configuration directory outside the web root and set `GALLERY_PRIVATE_DIR` in PHP-FPM or your web server.
-4. Create `upload-auth.php` in that directory:
+1. Descarga o clona este repositorio en la raíz pública de tu servidor web.
+2. Configura PHP para permitir las subidas que necesites. El directorio `img/` debe ser escribible por PHP.
+3. Crea el directorio privado de configuración fuera de la raíz pública y define `GALLERY_PRIVATE_DIR` para PHP. La aplicación también permite usar `var/` dentro del proyecto; sus reglas de servidor bloquean el acceso web.
+4. Define `GALLERY_PUBLIC_URL` con la URL pública de la galería para generar enlaces y metadatos correctos.
+5. Abre `/admin.php` y configura la autenticación de administración según las instrucciones del propio panel. No se proporciona una contraseña predeterminada.
+6. Sube tus fotografías, revisa sus metadatos y personaliza los textos. Las páginas legales incluidas son plantillas: complétalas con información válida para tu instalación antes de hacerla pública.
 
-   ```php
-   <?php
-   return [
-       'username' => 'choose-a-unique-username',
-       'password_hash' => password_hash('replace-with-a-long-unique-password', PASSWORD_DEFAULT),
-   ];
-   ```
+Para una instalación de prueba local con PHP:
 
-   Generate the hash with PHP and never commit this file or a real password.
-
-5. Optionally create `config.php` in the same private directory to enable AI descriptions:
-
-   ```php
-   <?php
-   return [
-       'ai_enabled' => false,
-       'gemini_api_key' => '',
-       'openrouter_api_key' => '',
-   ];
-   ```
-
-6. Make `img/`, `imagenes/`, and `data/` writable by the PHP user. Keep `img/` and `data/` blocked from direct HTTP access.
-7. Visit the site over HTTPS and open `/admin.php` to sign in.
-
-The application creates missing runtime folders when possible. Original uploads and generated image derivatives are runtime data and should be backed up separately from this repository.
-
-## Configuration
-
-- `GALLERY_PRIVATE_DIR`: absolute path outside the web root that contains `upload-auth.php`, `config.php`, and `site-settings.json`. Defaults to the local `var/` directory, which is blocked from HTTP access and ignored by Git.
-- Public URL: set `GALLERY_PUBLIC_URL` to the canonical HTTPS URL for correct canonical links and sharing.
-
-AI keys are optional and must only be stored in the private configuration directory. Never put credentials in source files, issues, or commits.
-
-## Photo uploads
-
-Use the admin panel to upload JPEG or PNG originals. The processor creates responsive WebP derivatives. The original uploads remain in `img/`; generated files go in `imagenes/desktop/` and `imagenes/mobile/`. Add only photos you own or have permission to publish. Remove location metadata from photos when you do not want it exposed.
-
-## Development
-
-Run the repository validation workflow locally with the required PHP extensions and Node.js installed:
-
-```bash
-php tests/site-settings.php
-php tests/photo-navigation.php
-node tests/photo-presets.cjs
-node tests/photo-navigation.cjs
-node tests/gallery-layout.cjs
-node tests/site-design.cjs
-node tests/admin-layout.cjs
-node tests/photo-likes.cjs
-node tests/photo-editor.cjs
+```sh
+php -S 127.0.0.1:8000
 ```
 
-## License
+Luego abre `http://127.0.0.1:8000`. La subida requiere que PHP pueda escribir en `img/`.
 
-The source code is available under the **Kookye Cat Gallery Non-Commercial License** in [LICENSE](LICENSE). You may use, modify, and redistribute it for non-commercial purposes. Commercial use and use intended to generate financial benefit require separate written permission.
+## Privacidad y configuración
 
-This is a source-available, non-commercial license, not an OSI-approved open-source license. External services, fonts, map libraries, and platform marks remain subject to their respective terms.
+No guardes contraseñas, claves API, datos de acceso, fotografías privadas ni archivos de configuración en el control de versiones. Usa variables de entorno o un directorio privado, y sirve el sitio mediante HTTPS. Los títulos y descripciones se editan localmente desde la administración; esta versión no transmite nombres de archivo a servicios externos.
+
+Las imágenes pueden incluir EXIF, coordenadas GPS u otros metadatos. Comprueba y elimina los datos que no quieras publicar antes de subirlas. El mapa está desactivado inicialmente. La aplicación genera un sitemap a partir del contenido disponible en la instalación.
+
+## Desarrollo y comprobaciones
+
+La integración continua valida PHP, revisa la sintaxis de JavaScript y ejecuta las comprobaciones principales con GitHub Actions. Para ejecutar las comprobaciones sin navegador:
+
+```sh
+node tests/photo-presets.cjs
+php tests/site-settings.php
+php tests/photo-navigation.php
+```
+
+Las comprobaciones de interfaz requieren Playwright y Chromium, como se indica en `.github/workflows/validate.yml`.
+
+## Licencia
+
+El software se distribuye bajo la **Licencia Kookye Cat Gallery de Uso No Comercial**, incluida en `LICENSE`. Permite reutilizar, modificar y redistribuir el código sin fines económicos o comerciales. No concede derechos sobre imágenes, marcas ni datos que añadas a tu instalación.

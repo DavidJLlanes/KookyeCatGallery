@@ -1,0 +1,14 @@
+Options -Indexes
+
+<IfModule mod_dir.c>
+    FallbackResource /index.php
+</IfModule>
+
+<FilesMatch "^(\.env(?:\..*)?|composer\.(?:json|lock)|README\.md|LICENSE)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(?:\.git|var|data|img)(?:/|$) - [F,L,NC]
+</IfModule>

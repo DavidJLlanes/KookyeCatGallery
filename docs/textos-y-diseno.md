@@ -1,0 +1,16 @@
+# Textos y diseño
+
+Entra en `/admin.php`, inicia sesión y abre **Textos y diseño**. Guarda para aplicar los cambios a la web pública.
+
+- Paletas: Elegante, Noche (negro y blanco), Luz (blanco y tinta), Cyberpunk (neón) y Japón (papel y carmesí).
+- Galería: adaptativa, masonry, cuadrada, horizontal 4:3 o vertical 3:4. Todas usan las columnas seleccionadas: 1–4 en móvil y 1–10 en escritorio.
+- Cabeceras: cuatro para móvil y cuatro para escritorio, con selectores independientes de la cuadrícula y de la paleta. Móvil corresponde a hasta 768 px y escritorio a partir de 769 px.
+- Textos: abre los grupos para editar el contenido de inicio, perfil, proyecto, contacto, controles, metadatos y páginas legales. Los títulos, descripciones y categorías de las fotos se editan en **Gestionar fotos**. Se conserva el formato de la página; los campos admiten texto plano y pueden quedar vacíos. En los textos de recuento, conserva `{count}` para mostrar el número de fotos.
+
+La configuración se guarda en `var/site-settings.json`, fuera del directorio público y de los archivos desplegados. El usuario que ejecuta PHP necesita permisos de escritura en esa carpeta. El archivo se crea al guardar por primera vez. Un error de guardado se muestra en el panel y conserva el archivo anterior. No se necesitan migraciones de base de datos.
+
+Los valores por defecto usan la paleta Elegante y las cabeceras Perfil social en móvil y Tipográfica en escritorio; las columnas iniciales son tres en ambas pantallas. La opción adaptativa usa imágenes cuadradas en móvil y masonry en escritorio. Las cuadrículas de proporción fija recortan la miniatura; el visor abre la fotografía completa.
+
+Para añadir textos en el futuro, incorpora una clave estable a `inc/site-texts.php` y utiliza `site_text_html()` en HTML o `site_text()` en contextos que ya escapen el valor. Los controles JavaScript usan `siteText()` y `siteTextHTML()`. No cambies claves existentes al cambiar sus valores por defecto.
+
+Validación: `php tests/site-settings.php` y comprobaciones de sintaxis PHP/JavaScript del workflow de GitHub.

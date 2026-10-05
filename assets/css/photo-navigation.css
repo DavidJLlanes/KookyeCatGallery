@@ -1,0 +1,31 @@
+/* Navigation in the server-rendered photo page and its fullscreen viewer. */
+.photo-detail__viewer { position:relative; width:100%; display:flex; justify-content:center; }
+.photo-detail__navigation { position:absolute; inset:0; pointer-events:none; z-index:3; }
+.photo-detail__nav {
+    position:absolute; top:50%; transform:translateY(-50%);
+    display:flex; align-items:center; justify-content:center;
+    width:48px; height:48px; border:1px solid var(--line); border-radius:50%;
+    color:var(--fg); background:var(--bg); opacity:.9; pointer-events:auto;
+    text-decoration:none; box-shadow:0 4px 20px #0003;
+}
+.photo-detail__nav--previous { left:.6rem; }
+.photo-detail__nav--next { right:.6rem; }
+.photo-detail__nav svg { width:24px; height:24px; }
+.photo-detail__nav:hover { opacity:1; border-color:var(--accent); color:var(--accent); }
+.photo-detail__nav:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+.photo-detail__nav.is-disabled { opacity:.25; pointer-events:none; }
+.photo-detail__btn, .lightbox__stage { touch-action:pan-y pinch-zoom; }
+.photo-detail__btn:active, .lightbox__img:active { cursor:grabbing; }
+.lightbox--immersive .lightbox__nav:not([hidden]) {
+    display:flex !important; position:absolute; top:50%; z-index:5;
+    background:#0009; border-color:#ffffff55; color:#fff;
+}
+.lightbox--immersive .lightbox__nav--prev { left:max(.6rem, env(safe-area-inset-left)); }
+.lightbox--immersive .lightbox__nav--next { right:max(.6rem, env(safe-area-inset-right)); }
+.lightbox__nav[hidden] { display:none !important; }
+.lightbox__nav:disabled { opacity:.25; pointer-events:none; }
+@media (max-width:768px) {
+    .photo-detail__nav { width:40px; height:40px; }
+    .photo-detail__nav--previous { left:.25rem; }
+    .photo-detail__nav--next { right:.25rem; }
+}
