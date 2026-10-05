@@ -1,0 +1,69 @@
+name: Validar sitio web
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validar PHP y JavaScript
+        run: |
+          set -eu
+          find . -type f -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
+          node --check assets/js/photo-editor.js
+          node --check assets/js/photo-filter-engine.js
+          node --check assets/js/photo-editor-presets.js
+          node --check tests/photo-presets.cjs
+          node --check tests/photo-editor.cjs
+          node --check assets/js/photo-manager.js
+          node --check assets/js/main.js
+          node --check assets/js/admin-settings.js
+          node --check assets/js/pwa.js
+          node --check assets/js/site-texts.js
+          node --check tests/photo-navigation.cjs
+          node --check tests/photo-likes.cjs
+      - name: Comprobar los filtros fotográficos
+        run: node tests/photo-presets.cjs
+      - name: Comprobar la configuración del sitio
+        run: php tests/site-settings.php
+      - name: Comprobar la navegación entre fotos
+        run: php tests/photo-navigation.php
+      - name: Instalar herramientas de prueba del navegador
+        run: |
+          npm install --prefix /tmp/site-browser-tools --no-save playwright@1.58.2
+          /tmp/site-browser-tools/node_modules/.bin/playwright install --with-deps chromium
+      - name: Comprobar el diseño adaptable
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/site-design.cjs
+      - name: Comprobar las cuadrículas y la paginación
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/gallery-layout.cjs
+      - name: Comprobar el panel de administración
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/admin-layout.cjs
+      - name: Comprobar la navegación de fotos
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/photo-navigation.cjs
+      - name: Comprobar los favoritos y corazones
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/photo-likes.cjs
+      - name: Comprobar el editor fotográfico
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/photo-editor.cjs

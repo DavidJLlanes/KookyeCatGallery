@@ -1,0 +1,141 @@
+.admin-library__intro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.4rem;
+    color: var(--fg-soft);
+    font-size: .9rem;
+}
+.admin-library__intro .upload-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    white-space: nowrap;
+    text-decoration: none;
+}
+.admin-library__count, .admin-library__empty {
+    margin: 1rem 0;
+    color: var(--fg-soft);
+    font-size: .8rem;
+}
+.admin-photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+    gap: 1rem;
+}
+.admin-photo-card {
+    overflow: hidden;
+    border: 1px solid rgba(212, 165, 116, .22);
+    background: #11100e;
+}
+.admin-photo-card[hidden] { display: none; }
+.admin-photo-card img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: #24211d;
+}
+.admin-photo-card__body { padding: .85rem; }
+.admin-photo-card h2 {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    min-height: 2.8em;
+    font: 500 .92rem/1.4 var(--sans);
+}
+.admin-photo-card p { margin: .45rem 0 .8rem; color: var(--accent); font-size: .73rem; }
+.admin-photo-card__actions { display: flex; gap: .5rem; }
+.admin-photo-card__actions > * { flex: 1; }
+.admin-photo-card__actions .upload-logout,
+.admin-photo-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: .45rem .6rem;
+    border: 1px solid rgba(212, 165, 116, .4);
+    color: var(--fg);
+    background: rgba(212, 165, 116, .08);
+    font: 500 .75rem var(--sans);
+    text-decoration: none;
+    cursor: pointer;
+}
+.admin-photo-delete { border-color: rgba(207, 119, 112, .5); color: #ebaaa4; }
+.admin-photo-card__actions > :focus-visible,
+.admin-delete-dialog button:focus-visible,
+.admin-delete-dialog input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.admin-delete-dialog {
+    width: min(92vw, 430px);
+    max-height: 90svh;
+    margin: auto;
+    padding: 1.5rem;
+    border: 1px solid rgba(212, 165, 116, .5);
+    background: #171614;
+    color: var(--fg);
+    box-shadow: 0 30px 90px #000b;
+}
+.admin-delete-dialog::backdrop { background: rgba(0, 0, 0, .78); }
+.admin-delete-dialog form { display: grid; gap: .8rem; }
+.admin-delete-dialog h2 { font: 400 2rem var(--serif); }
+.admin-delete-dialog p { font-size: .85rem; color: var(--fg-soft); }
+.admin-delete-dialog label { font-size: .74rem; letter-spacing: .05em; }
+.admin-delete-dialog input {
+    width: 100%;
+    padding: .75rem;
+    border: 1px solid rgba(243, 240, 234, .35);
+    background: #0a0a0a;
+    color: var(--fg);
+    font: 500 .9rem var(--sans);
+}
+.admin-delete-dialog__error { color: #ebaaa4 !important; }
+.admin-delete-dialog__actions { display: flex; gap: .6rem; }
+.admin-delete-dialog__actions button {
+    flex: 1;
+    min-height: 44px;
+    padding: .6rem;
+    border: 1px solid rgba(212, 165, 116, .5);
+    background: transparent;
+    color: var(--fg);
+    font: 500 .78rem var(--sans);
+    cursor: pointer;
+}
+.admin-delete-dialog__actions button[type="submit"] { border-color: #d9766d; background: #81312c; }
+.admin-delete-dialog__actions button:disabled { opacity: .5; cursor: wait; }
+.page-editor-options { margin: 1.5rem 0; padding: 1rem; border: 1px solid rgba(212,165,116,.25); }
+.page-editor-options h2 { margin: 0 0 .4rem; font: 400 1.4rem var(--serif); color: var(--accent); }
+.page-editor-options__grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .65rem; margin-top: .9rem; }
+.page-editor-option { display:flex; justify-content:space-between; align-items:center; gap:.6rem; min-height:48px; padding:.7rem .85rem; border:1px solid var(--line); color:var(--fg); text-decoration:none; font:.8rem var(--sans); }
+.page-editor-option span:last-child { color:var(--accent); white-space:nowrap; }
+.page-editor-option:hover,.page-editor-option:focus-visible { border-color:var(--accent); }
+.site-page-editor { gap: .85rem; }
+.page-editor-toolbar { display:flex; flex-wrap:wrap; gap:.4rem; }
+.page-editor-toolbar button { min-height:40px; padding:.5rem .7rem; border:1px solid var(--line); background:var(--bg-soft); color:var(--fg); font:.75rem var(--sans); cursor:pointer; }
+.page-editor-toolbar button:hover,.page-editor-toolbar button:focus-visible { border-color:var(--accent); color:var(--accent); }
+.page-editor-surface { min-height:320px; max-height:65vh; overflow:auto; padding:1rem; border:1px solid var(--line); background:var(--bg-soft); color:var(--fg); font:.9rem/1.7 var(--sans); }
+.page-editor-surface:focus { outline:2px solid var(--accent); outline-offset:2px; }
+.page-editor-surface h2,.page-editor-surface h3 { margin:1.3rem 0 .5rem; color:var(--accent); }
+.admin-category-card { display:grid; grid-template-columns:minmax(150px,.65fr) minmax(0,1fr); gap:1.2rem; margin:1rem 0; padding:1rem; border:1px solid var(--line); background:var(--bg-soft); }
+.admin-category-card h2 { margin:0; overflow-wrap:anywhere; font:400 1.4rem var(--serif); color:var(--accent); }
+.admin-category-card p { color:var(--fg-soft); font-size:.8rem; }
+.admin-category-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.7rem; align-items:end; }
+.admin-category-form [data-delete-confirm] { grid-column:1/-1; }
+.admin-category-form .upload-submit { min-height:44px; }
+.admin-category-form [hidden] { display:none!important; }
+.admin-category-form select,.admin-category-form input { box-sizing:border-box; }
+@media (max-width: 600px) {
+    .admin-library__intro { align-items: stretch; flex-direction: column; }
+    .admin-photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+    .admin-photo-card__body { padding: .65rem; }
+    .admin-photo-card h2 { font-size: .8rem; }
+    .admin-photo-card__actions { flex-direction: column; }
+    .admin-delete-dialog__actions { flex-direction: column; }
+    .page-editor-options__grid { grid-template-columns:1fr; }
+    .page-editor-surface { min-height:240px; }
+    .admin-category-card { grid-template-columns:1fr; gap:.6rem; padding:.8rem; }
+    .admin-category-form { grid-template-columns:1fr; }
+    .admin-category-form [data-delete-confirm] { grid-column:auto; }
+}

@@ -1,0 +1,58 @@
+{
+  "name": "Kookye Cat Gallery",
+  "short_name": "Kookye Cats",
+  "id": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "description": "A responsive cat photo gallery with a private management panel.",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "photo",
+    "lifestyle"
+  ],
+  "orientation": "any",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Gallery",
+      "short_name": "Gallery",
+      "description": "Browse the photo gallery",
+      "url": "/#galeria",
+      "icons": [
+        {
+          "src": "/favicon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Manage photos",
+      "short_name": "Manage",
+      "description": "Upload and manage photos",
+      "url": "/admin.php",
+      "icons": [
+        {
+          "src": "/favicon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ]
+}
