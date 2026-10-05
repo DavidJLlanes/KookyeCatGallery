@@ -19,10 +19,6 @@ $siteName = site_text('text_52179dc42df7efe5');
 $author   = site_text('text_30170303c506cf6c');
 $siteSettings = site_settings_load();
 
-// Load optional private configuration outside the web root.
-$privateDir = getenv('GALLERY_PRIVATE_DIR') ?: __DIR__ . '/var';
-$configPath = rtrim($privateDir, '/\\') . '/config.php';
-$config = is_file($configPath) ? require $configPath : [];
 
 $processor = new ImageProcessor(__DIR__);
 $items     = $processor->processAll();
@@ -188,13 +184,17 @@ $pageTitle    = site_text('text_1a0ef9e63d20942b');
 $pageDesc     = str_replace('{count}', (string) $totalFotos, site_text('text_506b817f8bd1888e'));
 $pageKeywords = str_replace('{count}', (string) $totalFotos, site_text('text_570bd4204e3d077b'));
 $pageCanonical = $siteUrl . '/';
-$pageOgImage   = $heroItem ? $siteUrl . photo_asset_url($heroItem['desktop'], __DIR__) : '';
+$pageOgImage   = $siteUrl . '/assets/img/kookye-cat-gallery-og.png';
+$pageOgWidth   = 1730;
+$pageOgHeight  = 909;
 
 if ($fotoItem !== null) {
     $pageTitle    = safe($fotoItem['title']) . site_text('text_0ad82954c86eec7c');
     $pageDesc     = $fotoItem['description'] ?: $fotoItem['title'] . site_text('text_5f894de21770ce4f') . $author;
     $pageCanonical = $siteUrl . '/foto/' . $fotoItem['slug'];
     $pageOgImage   = $siteUrl . photo_asset_url($fotoItem['desktop'], __DIR__);
+    $pageOgWidth   = (int) ($fotoItem['desktop_w'] ?? 1200);
+    $pageOgHeight  = (int) ($fotoItem['desktop_h'] ?? 630);
 }
 ?>
 <!DOCTYPE html>
@@ -226,8 +226,9 @@ if ($fotoItem !== null) {
     <meta property="og:url" content="<?= safe($pageCanonical) ?>">
     <?php if ($pageOgImage): ?>
     <meta property="og:image" content="<?= safe($pageOgImage) ?>">
-    <meta property="og:image:alt" content="<?= $fotoItem ? safe($fotoItem['title']) : site_text('text_c7ea52a379d46ca5') . safe($author) ?>">
-    <meta property="og:image:width" content="1600">
+    <meta property="og:image:width" content="<?= $pageOgWidth ?>">
+    <meta property="og:image:height" content="<?= $pageOgHeight ?>">
+    <meta property="og:image:alt" content="<?= $fotoItem ? safe($fotoItem['title']) : 'Kookye Cat Gallery — galería de fotografías de gatos' ?>">
     <?php endif; ?>
 
     <!-- Twitter / X Card -->
