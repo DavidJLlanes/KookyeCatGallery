@@ -9,6 +9,8 @@
   Adaptable a móvil y escritorio, con administración y edición desde el navegador.
 </p>
 
+La portada también se usa como imagen Open Graph y Twitter Card al compartir la página principal; cada ficha de fotografía conserva su propia vista previa.
+
 <p align="center">
   <a href="https://github.com/DavidJLlanes/KookyeCatGallery/actions/workflows/validate.yml"><img alt="Validación automática" src="https://github.com/DavidJLlanes/KookyeCatGallery/actions/workflows/validate.yml/badge.svg?branch=main"></a>
   <a href="LICENSE"><img alt="Licencia de uso no comercial" src="https://img.shields.io/badge/licencia-uso%20no%20comercial-D49B38?style=flat-square"></a>
