@@ -13,7 +13,7 @@ La portada también se usa como imagen Open Graph y Twitter Card al compartir la
 
 <p align="center">
   <a href="https://github.com/DavidJLlanes/KookyeCatGallery/actions/workflows/validate.yml"><img alt="Validación automática" src="https://github.com/DavidJLlanes/KookyeCatGallery/actions/workflows/validate.yml/badge.svg?branch=main"></a>
-  <a href="LICENSE"><img alt="Licencia de uso no comercial" src="https://img.shields.io/badge/licencia-uso%20no%20comercial-D49B38?style=flat-square"></a>
+  <a href="LICENSE"><img alt="PolyForm Noncommercial License 1.0.0" src="https://img.shields.io/badge/licencia-PolyForm%20Noncommercial%201.0.0-D49B38?style=flat-square"></a>
   <a href="#requisitos"><img alt="PHP 8.1 o posterior" src="https://img.shields.io/badge/PHP-8.1%2B-777BB4?style=flat-square&logo=php&logoColor=white"></a>
   <a href="#caracter%C3%ADsticas"><img alt="Aplicación web instalable" src="https://img.shields.io/badge/PWA-instalable-6C4AB6?style=flat-square"></a>
 </p>
@@ -101,4 +101,4 @@ Lee la guía para [contribuir](CONTRIBUTING.md) y las instrucciones de [segurida
 
 ## Licencia
 
-El proyecto utiliza la **Licencia Kookye Cat Gallery de Uso No Comercial**, incluida en [LICENSE](LICENSE). Permite reutilizar, modificar y redistribuir el software sin fines económicos o comerciales. La licencia no concede derechos sobre las fotografías, marcas ni datos que añadas a tu instalación.
+El proyecto se distribuye bajo la **[PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0)**. El texto oficial completo está en [LICENSE](LICENSE). Esta licencia oficial para software establece los usos no comerciales permitidos; consulta sus términos completos antes de reutilizar o redistribuir el proyecto.
