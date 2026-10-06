@@ -956,7 +956,8 @@ const solvePerspectiveAffine = (src,dst) => {
             const safeName=inputName.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/[. -]+$/,'').trim()||'foto-editada';
             const filename=safeName.toLowerCase().endsWith('.jpg')?safeName:safeName+'.jpg';
             const file=new File([blob],filename,{type:'image/jpeg',lastModified:Date.now()});
-            if(navigator.share&&navigator.canShare){
+            const mobileDevice=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+            if(mobileDevice&&navigator.share&&navigator.canShare){
                 let canShareFile=false;
                 try{canShareFile=navigator.canShare({files:[file]});}catch(_){}
                 if(canShareFile){
@@ -966,7 +967,7 @@ const solvePerspectiveAffine = (src,dst) => {
                         setMessage('Copia compartida desde este dispositivo. No se ha publicado en la web.');
                     }catch(error){
                         if(error.name==='AbortError'){setMessage('Guardado cancelado. La foto no se ha publicado en la web.');return;}
-                        throw error;
+                        setMessage('No se pudo abrir la galería; se descargará una copia en este dispositivo.');
                     }
                     return;
                 }
