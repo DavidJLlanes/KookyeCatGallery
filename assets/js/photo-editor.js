@@ -733,14 +733,16 @@ const solvePerspectiveAffine = (src,dst) => {
             image=new Image();image.src=sourceUrl;await image.decode();
             backdrop.style.backgroundImage='url("'+sourceUrl+'")';
             resetControls();editor.hidden=false;$('fileSourceField').hidden=true;$('gpsStatus').hidden=true;
+            $('gpsFields').hidden=false;
+            $('photoLatitude').required=false;$('photoLongitude').required=false;
+            $('photoLatitude').value=data.gps?.latitude??'';
+            $('photoLongitude').value=data.gps?.longitude??'';
             if(data.gps){
-                const place='GPS detectado: '+data.gps.latitude+', '+data.gps.longitude+'.';
-                $('gpsStatusReview').textContent=place+' No hace falta añadir coordenadas.';
+                $('gpsStatusReview').textContent='GPS detectado. Puedes mantener las coordenadas o borrar ambos campos para no compartir la ubicación.';
                 $('photoGpsSummary').textContent='Ubicación · '+data.gps.latitude+', '+data.gps.longitude;
             }else{
-                $('gpsStatusReview').textContent='La foto no incluye GPS. Añade latitud y longitud para situarla en el mapa.';
-                $('photoGpsSummary').textContent='Añadir ubicación GPS';
-                $('gpsFields').hidden=false;$('photoLatitude').required=true;$('photoLongitude').required=true;
+                $('gpsStatusReview').textContent='Sin GPS. La ubicación es opcional; completa ambas coordenadas solo si quieres mostrar la foto en el mapa.';
+                $('photoGpsSummary').textContent='Sin ubicación GPS';
             }
             ready=true;submitButton.disabled=false;scheduleRender();editor.scrollIntoView({behavior:'smooth',block:'start'});
         }catch(error){$('gpsStatus').textContent='';setMessage(error.message||'No se pudo preparar la fotografía.',true);}
