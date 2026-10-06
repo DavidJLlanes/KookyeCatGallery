@@ -48,6 +48,9 @@ const setIntensity = async (page,value) => {
         ctx.fillStyle='white';ctx.fillRect(240,110,25,70);return c.toDataURL('image/png').split(',')[1];
       });
       await page.setInputFiles('#photoFile',{name:'fixture.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+      await page.locator('#startEditingButton').waitFor({state:'visible'});
+      assert.equal(await page.locator('#startEditingButton').isDisabled(),false,'Selecting a photo enables the editing step.');
+      await page.locator('#startEditingButton').click();
       await page.locator('#photoEditor').waitFor({state:'visible'});await settle(page);
       const baseline=await snapshot(page);
       assert.equal(baseline.width,480);
