@@ -119,3 +119,9 @@
 @media(max-width:420px){.photo-editor__step,.photo-details__topbar>span{display:none}}
 
 @media(min-width:761px){.photo-editor__tools>.photo-editor__tool:first-child{margin-left:auto}.photo-editor__tools>.photo-editor__tool:last-child{margin-right:auto}}
+
+@media(max-width:380px){
+ .photo-editor__topbar{gap:.35rem;padding-inline:.4rem}
+ .photo-editor__top-action,.photo-editor__next,.photo-editor__cancel{padding-inline:.45rem;font-size:.64rem}
+ .photo-details__topbar{gap:.35rem;padding-inline:.35rem}
+}

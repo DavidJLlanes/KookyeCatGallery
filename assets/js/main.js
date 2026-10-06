@@ -16,7 +16,7 @@
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-    // Horizontal gestures on the photo only: vertical scrolling and pinch zoom remain native.
+    // Horizontal photo gestures navigate; browser page zoom is disabled outside the editor.
     const bindPhotoNavigation = (surface, navigate) => {
         if (!surface) return;
         const pointers = new Set();
