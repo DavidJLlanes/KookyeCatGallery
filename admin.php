@@ -136,7 +136,7 @@ function uploadPage(string $title, string $content, int $status = 200, bool $wid
     .upload-submit,.upload-logout{min-height:46px;padding:.7rem 1.1rem;border:1px solid rgba(212,165,116,.6);color:var(--fg);background:rgba(212,165,116,.1);font:500 .78rem var(--sans);letter-spacing:.05em;cursor:pointer}
     .upload-logout{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;box-sizing:border-box}
     .upload-submit{background:linear-gradient(135deg,#e8c59e,#c18e5d);color:#15110d;border:0}
-    .upload-submit:disabled{opacity:.45;cursor:wait}
+    .upload-submit:disabled{opacity:.45;cursor:not-allowed}.upload-continue{width:100%;margin:.25rem 0 1rem}.upload-continue:not(:disabled){box-shadow:0 0 0 2px rgba(212,165,116,.16)}
     .upload-gps{padding:1rem;border:1px solid rgba(212,165,116,.25);background:#ffffff05}
     .upload-gps[hidden]{display:none}
     .upload-gps-status{color:var(--accent);font-size:.78rem}
@@ -666,14 +666,15 @@ __UPLOAD_GUIDE__
     <input type="hidden" name="action" value="__ACTION__">
     <input type="hidden" name="csrf" value="__CSRF__">
     <input type="hidden" name="file" value="__EDIT_FILE__">
-    <div class="upload-field" id="fileSourceField" __FILE_HIDDEN__><label for="photoFile">Fotografía</label><input id="photoFile" name="photo" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" __FILE_REQUIRED__><div class="upload-source-actions"><button class="upload-logout" id="cameraSourceButton" type="button">Usar cámara</button></div><small class="upload-help">Al elegir la foto se abrirá el editor. Ajusta luz, encuadre o filtros y pulsa «Continuar» para completar los detalles y publicarla. JPG o PNG, hasta 15 MB.</small></div>
+    <div class="upload-field" id="fileSourceField" __FILE_HIDDEN__><label for="photoFile">Fotografía</label><input id="photoFile" name="photo" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" __FILE_REQUIRED__><div class="upload-source-actions"><button class="upload-logout" id="cameraSourceButton" type="button">Usar cámara</button></div><small class="upload-help">Selecciona una foto y pulsa «Continuar a la edición». Las fotos grandes se optimizan en este dispositivo.</small></div>
+    <button class="upload-submit upload-continue" id="startEditingButton" type="button" __START_BUTTON_HIDDEN__ disabled>Continuar a la edición</button>
     <p class="upload-gps-status" id="gpsStatus" aria-live="polite" __GPS_STATUS_HIDDEN__>Elige una imagen para detectar si incluye coordenadas GPS.</p>
     <section class="photo-editor" id="photoEditor" aria-label="Editor de fotografía" hidden>
         <header class="photo-editor__topbar">
             <button type="button" class="photo-editor__cancel" id="editorCancel" aria-label="Cancelar edición y volver al inicio" title="Cancelar y volver al inicio"><span aria-hidden="true">×</span><span class="photo-editor__cancel-label">Cancelar</span></button>
             <button type="button" class="photo-editor__top-action" id="editorChangePhoto">__CHANGE_LABEL__</button>
             <span class="photo-editor__step">1 / 2 · Ajustes</span>
-            <button type="button" class="photo-editor__next" id="editorContinue" aria-label="Continuar a los detalles de publicación" title="Continuar a los detalles de publicación">Continuar</button>
+            <button type="button" class="photo-editor__next" id="editorContinue" aria-label="Continuar a las opciones de publicación" title="Continuar a las opciones de publicación">Continuar</button>
         </header>
         <div class="photo-editor__stage" id="editorStage">
             <div class="photo-editor__backdrop" id="editorBackdrop" aria-hidden="true"></div>
@@ -742,7 +743,7 @@ HTML;
         : '';
     $form = strtr($formTemplate, [
         '__STATUS__' => $status,
-        '__UPLOAD_GUIDE__' => $editMode ? '' : '<p class="upload-flow-guide"><strong>Publicar una fotografía:</strong> 1) selecciónala, 2) ajusta la imagen en el editor, 3) pulsa «Continuar» para añadir título y categoría y después «Publicar fotografía».</p>',
+        '__UPLOAD_GUIDE__' => '',
         '__CSRF__' => $csrf,
         '__OPTIONS__' => $options,
         '__CATEGORY_HELP__' => $editMode ? '<small class="upload-help">Aquí puedes cambiar la categoría de esta foto. Para cambiar varias a la vez, usa «Gestionar categorías».</small>' : '',
@@ -753,6 +754,7 @@ HTML;
         '__FILE_REQUIRED__' => $editMode ? '' : 'required',
         '__GPS_STATUS_HIDDEN__' => $editMode ? 'hidden' : '',
         '__CHANGE_LABEL__' => $editMode ? 'Usar original' : 'Cambiar foto',
+        '__START_BUTTON_HIDDEN__' => $editMode ? 'hidden' : '',
         '__STEP_LABEL__' => $editMode ? '2 / 2 · Actualizar fotografía' : '2 / 2 · Nueva publicación',
         '__TITLE__' => $editMode ? uploadEscape($edit['title']) : '',
         '__DESCRIPTION__' => $editMode ? uploadEscape($edit['description']) : '',
