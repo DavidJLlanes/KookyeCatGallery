@@ -10,6 +10,8 @@
     const cropPanel=$('cropPanel'),cropRatios=$('cropRatios'),cropApply=$('cropApply'),cropCancel=$('cropCancel'),cropReset=$('cropReset');
     const zoomReset=$('editorZoomReset'),reviewPreview=$('reviewPreview'),feedback=$('uploadFeedback'),submitButton=$('uploadSubmit');
     const csrf=form.querySelector('[name="csrf"]').value,maxBytes=15*1024*1024;
+    const startEditingButton=$('startEditingButton');
+    let selectedUploadFile=null;
     const categoryChoice=$('photoCategoryChoice'),categoryInput=$('photoCategory');
     const editFile=form.dataset.editFile||'',isEditing=editFile!=='',hasStoredEdit=form.dataset.hasEdited==='1';
     let sourceVariant='published';
@@ -31,6 +33,38 @@
     let thumbnailObserver=null,thumbnailBase=null;
     const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
     const setMessage=(message,error=false)=>{feedback.textContent=message;feedback.classList.toggle('upload-message--error',error);editorProgress.textContent=message;editorProgress.hidden=!message||editor.hidden;editorProgress.classList.toggle('is-error',error);};
+    const prepareUploadFile=async file=>{
+        if(file.size<=maxBytes)return file;
+        setMessage('La foto supera 15 MB. Preparando una copia optimizada en este dispositivo…');
+        let bitmap=null,objectUrl='';
+        try{
+            if('createImageBitmap' in window)bitmap=await createImageBitmap(file);
+            else{
+                objectUrl=URL.createObjectURL(file);
+                bitmap=new Image();bitmap.src=objectUrl;await bitmap.decode();
+            }
+            const longest=Math.max(bitmap.width,bitmap.height),scale=Math.min(1,4096/longest);
+            let width=Math.max(1,Math.round(bitmap.width*scale)),height=Math.max(1,Math.round(bitmap.height*scale));
+            const canvas=document.createElement('canvas');
+            for(let attempt=0;attempt<12;attempt++){
+                canvas.width=width;canvas.height=height;
+                const context=canvas.getContext('2d',{alpha:false});
+                context.fillStyle='#fff';context.fillRect(0,0,width,height);context.drawImage(bitmap,0,0,width,height);
+                const quality=Math.max(.62,.92-attempt*.035);
+                const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',quality));
+                if(blob&&blob.size<=maxBytes-128*1024){
+                    const name=file.name.replace(/\.[^.]+$/,'')+'.jpg';
+                    canvas.width=canvas.height=1;
+                    return new File([blob],name,{type:'image/jpeg',lastModified:file.lastModified});
+                }
+                width=Math.max(1,Math.round(width*.88));height=Math.max(1,Math.round(height*.88));
+            }
+            throw new Error('No se pudo optimizar la foto por debajo del límite de subida.');
+        }finally{
+            if(bitmap&&typeof bitmap.close==='function')bitmap.close();
+            if(objectUrl)URL.revokeObjectURL(objectUrl);
+        }
+    };
     const postUploadForm=async body=>{
         let response;
         try{response=await fetch('/admin.php',{method:'POST',body,credentials:'same-origin'});}
@@ -718,18 +752,38 @@ const solvePerspectiveAffine = (src,dst) => {
     };
     $('editorChangePhoto').addEventListener('click',choosePhoto);
     $('detailsChangePhoto').addEventListener('click',()=>{details.hidden=true;editor.hidden=false;choosePhoto();});
-    fileInput.addEventListener('change',async()=>{
+    fileInput.addEventListener('change',()=>{
+        fileInput.removeAttribute('capture');
         ready=false;submitButton.disabled=true;editor.hidden=true;details.hidden=true;
-        $('fileSourceField').hidden=false;$('gpsStatus').hidden=false;setMessage('');
+        $('fileSourceField').hidden=false;$('gpsStatus').hidden=false;
         if(sourceUrl.startsWith('blob:'))URL.revokeObjectURL(sourceUrl);sourceUrl='';image=null;reviewPreview.removeAttribute('src');
-        const file=fileInput.files?.[0];if(!file)return;
-        if(file.size>maxBytes){setMessage('La imagen supera los 15 MB. Reduce su tamaño y vuelve a seleccionarla.',true);return;}
+        selectedUploadFile=fileInput.files?.[0]||null;
+        startEditingButton.disabled=!selectedUploadFile;
+        if(selectedUploadFile){
+            $('gpsStatus').textContent='Foto seleccionada. Pulsa «Continuar a la edición» para abrirla.';
+            setMessage('');
+        }else{
+            $('gpsStatus').textContent='Elige una imagen para detectar si incluye coordenadas GPS.';
+            setMessage('');
+        }
+    });
+    $('cameraSourceButton').addEventListener('click',()=>{
+        fileInput.setAttribute('capture','environment');
+        fileInput.click();
+    });
+    fileInput.addEventListener('cancel',()=>fileInput.removeAttribute('capture'));
+    startEditingButton.addEventListener('click',async()=>{
+        const file=selectedUploadFile;
+        if(!file||saving)return;
+        saving=true;startEditingButton.disabled=true;fileInput.disabled=true;
+        $('gpsStatus').textContent='Preparando la fotografía…';
         $('gpsFields').hidden=true;$('photoLatitude').required=false;$('photoLongitude').required=false;
-        $('gpsStatus').textContent='Revisando imagen y coordenadas GPS…';
-        const body=new FormData();body.append('action','inspect');body.append('csrf',csrf);body.append('photo',file);
+        const body=new FormData();body.append('action','inspect');body.append('csrf',csrf);
         try{
+            const uploadFile=await prepareUploadFile(file);
+            body.append('photo',uploadFile);
             const data=await postUploadForm(body);
-            sourceUrl=URL.createObjectURL(file);
+            sourceUrl=URL.createObjectURL(uploadFile);
             image=new Image();image.src=sourceUrl;await image.decode();
             backdrop.style.backgroundImage='url("'+sourceUrl+'")';
             resetControls();editor.hidden=false;$('fileSourceField').hidden=true;$('gpsStatus').hidden=true;
@@ -744,8 +798,12 @@ const solvePerspectiveAffine = (src,dst) => {
                 $('gpsStatusReview').textContent='Sin GPS. La ubicación es opcional; completa ambas coordenadas solo si quieres mostrar la foto en el mapa.';
                 $('photoGpsSummary').textContent='Sin ubicación GPS';
             }
-            ready=true;submitButton.disabled=false;scheduleRender();editor.scrollIntoView({behavior:'smooth',block:'start'});
-        }catch(error){$('gpsStatus').textContent='';setMessage(error.message||'No se pudo preparar la fotografía.',true);}
+            ready=true;submitButton.disabled=false;saving=false;scheduleRender();editor.scrollIntoView({behavior:'smooth',block:'start'});
+        }catch(error){
+            saving=false;startEditingButton.disabled=false;fileInput.disabled=false;
+            $('gpsStatus').textContent='No se pudo preparar la fotografía.';
+            setMessage(error.message||'No se pudo preparar la fotografía.',true);
+        }
     });
     window.addEventListener('resize',()=>{if(image&&!editor.hidden)scheduleRender();});
     async function renderEditedPhoto(){
