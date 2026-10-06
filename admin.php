@@ -123,6 +123,8 @@ function uploadPage(string $title, string $content, int $status = 200, bool $wid
     .upload-kicker{margin:.5rem 0 1.7rem;color:var(--fg-soft);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase}
     .upload-panel h1{margin:0 0 1.3rem;font:400 clamp(2rem,7vw,3rem)/1.05 var(--serif)}
     .upload-form{display:grid;gap:1rem}
+    .upload-flow-guide{margin:0 0 1rem;padding:1rem 1.1rem;border:1px solid rgba(212,165,116,.35);background:rgba(212,165,116,.06);color:var(--fg-soft);font-size:.88rem;line-height:1.55}
+    .upload-flow-guide strong{color:var(--fg)}
     .upload-field{display:grid;gap:.38rem}
     .upload-field label{font-size:.7rem;color:var(--fg-soft);letter-spacing:.08em;text-transform:uppercase}
     .upload-field input,.upload-field textarea,.upload-field select{width:100%;padding:.82rem .9rem;border:1px solid rgba(243,240,234,.14);border-radius:3px;background:#0a0a0a;color:var(--fg);font:400 .9rem var(--sans)}
@@ -414,12 +416,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             uploadJson(422, ['ok' => false, 'error' => 'Revisa el nombre, la categoría y la descripción (máximo 5000 caracteres).']);
         }
 
-        $gps = is_array($pending['gps'] ?? null) ? $pending['gps'] : null;
-        if ($gps === null) {
-            $latRaw = trim((string) ($_POST['latitude'] ?? ''));
-            $lngRaw = trim((string) ($_POST['longitude'] ?? ''));
+        $latRaw = trim((string) ($_POST['latitude'] ?? ''));
+        $lngRaw = trim((string) ($_POST['longitude'] ?? ''));
+        $gps = null;
+        if ($latRaw !== '' || $lngRaw !== '') {
             if (!is_numeric($latRaw) || !is_numeric($lngRaw)) {
-                uploadJson(422, ['ok' => false, 'error' => 'Esta imagen no contiene GPS. Añade latitud y longitud.']);
+                uploadJson(422, ['ok' => false, 'error' => 'Completa ambas coordenadas o deja los dos campos vacíos.']);
             }
             $lat = (float) $latRaw;
             $lng = (float) $lngRaw;
@@ -447,8 +449,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $sidecarText = $title;
         if ($description !== '') $sidecarText .= "\n---\n" . $description;
-        $sidecarText .= "\n\n# Categoría: " . $category
-            . "\n# Coordenadas: " . $gps['latitude'] . ',' . $gps['longitude'];
+        $sidecarText .= "\n\n# Categoría: " . $category;
+        if ($gps !== null) {
+            $sidecarText .= "\n# Coordenadas: " . $gps['latitude'] . ',' . $gps['longitude'];
+        }
         if ($description === '') $sidecarText .= "\n# auto-description-pending";
         if (($_POST['featured'] ?? '') === '1') $sidecarText .= "\n# Destacada: 1";
         if (($_POST['draft'] ?? '') === '1') $sidecarText .= "\n# Borrador: 1";
@@ -657,18 +661,19 @@ if (!empty($_SESSION['upload_authenticated'])) {
     );
     $formTemplate = <<<'HTML'
 __STATUS__
+__UPLOAD_GUIDE__
 <form class="upload-form" id="photoUploadForm" data-edit-file="__EDIT_FILE__" data-has-edited="__HAS_EDITED__" method="post" action="/admin.php">
     <input type="hidden" name="action" value="__ACTION__">
     <input type="hidden" name="csrf" value="__CSRF__">
     <input type="hidden" name="file" value="__EDIT_FILE__">
-    <div class="upload-field" id="fileSourceField" __FILE_HIDDEN__><label for="photoFile">Fotografía</label><input id="photoFile" name="photo" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" __FILE_REQUIRED__><div class="upload-source-actions"><button class="upload-logout" id="cameraSourceButton" type="button">Usar cámara</button></div><small class="upload-help">Puedes elegir una imagen del dispositivo o abrir la cámara. JPG o PNG, hasta 15 MB.</small></div>
+    <div class="upload-field" id="fileSourceField" __FILE_HIDDEN__><label for="photoFile">Fotografía</label><input id="photoFile" name="photo" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" __FILE_REQUIRED__><div class="upload-source-actions"><button class="upload-logout" id="cameraSourceButton" type="button">Usar cámara</button></div><small class="upload-help">Al elegir la foto se abrirá el editor. Ajusta luz, encuadre o filtros y pulsa «Continuar» para completar los detalles y publicarla. JPG o PNG, hasta 15 MB.</small></div>
     <p class="upload-gps-status" id="gpsStatus" aria-live="polite" __GPS_STATUS_HIDDEN__>Elige una imagen para detectar si incluye coordenadas GPS.</p>
     <section class="photo-editor" id="photoEditor" aria-label="Editor de fotografía" hidden>
         <header class="photo-editor__topbar">
             <button type="button" class="photo-editor__cancel" id="editorCancel" aria-label="Cancelar edición y volver al inicio" title="Cancelar y volver al inicio"><span aria-hidden="true">×</span><span class="photo-editor__cancel-label">Cancelar</span></button>
             <button type="button" class="photo-editor__top-action" id="editorChangePhoto">__CHANGE_LABEL__</button>
-            <span class="photo-editor__step">Editar fotografía</span>
-            <button type="button" class="photo-editor__next" id="editorContinue">Siguiente</button>
+            <span class="photo-editor__step">1 / 2 · Ajustes</span>
+            <button type="button" class="photo-editor__next" id="editorContinue" aria-label="Continuar a los detalles de publicación" title="Continuar a los detalles de publicación">Continuar</button>
         </header>
         <div class="photo-editor__stage" id="editorStage">
             <div class="photo-editor__backdrop" id="editorBackdrop" aria-hidden="true"></div>
@@ -721,7 +726,7 @@ __STATUS__
         <label class="upload-featured"><input type="checkbox" name="featured" value="1" __FEATURED_CHECKED__> <span>Marcar como fotografía destacada</span></label>
         <label class="upload-featured"><input type="checkbox" name="draft" value="1" __DRAFT_CHECKED__> <span>Guardar como borrador (no aparecerá públicamente)</span></label>
         __SLUG_FIELD__
-        <fieldset class="upload-gps" id="gpsFields" hidden><legend>Ubicación GPS</legend><p class="upload-help">No se encontró GPS en la foto; indica sus coordenadas.</p><div class="upload-form"><div class="upload-field"><label for="photoLatitude">Latitud</label><input id="photoLatitude" name="latitude" type="number" min="-90" max="90" step="any" value="__LATITUDE__"></div><div class="upload-field"><label for="photoLongitude">Longitud</label><input id="photoLongitude" name="longitude" type="number" min="-180" max="180" step="any" value="__LONGITUDE__"></div></div></fieldset>
+        <fieldset class="upload-gps" id="gpsFields" hidden><legend>Ubicación GPS (opcional)</legend><p class="upload-help">Puedes añadir coordenadas para mostrar la foto en el mapa. Deja ambos campos vacíos si no quieres compartir su ubicación.</p><div class="upload-form"><div class="upload-field"><label for="photoLatitude">Latitud</label><input id="photoLatitude" name="latitude" type="number" min="-90" max="90" step="any" value="__LATITUDE__"></div><div class="upload-field"><label for="photoLongitude">Longitud</label><input id="photoLongitude" name="longitude" type="number" min="-180" max="180" step="any" value="__LONGITUDE__"></div></div></fieldset>
         <div class="upload-actions"><button class="upload-submit" id="uploadSubmit" type="submit" disabled>__SUBMIT_LABEL__</button></div>
     </section>
     </form>
@@ -737,6 +742,7 @@ HTML;
         : '';
     $form = strtr($formTemplate, [
         '__STATUS__' => $status,
+        '__UPLOAD_GUIDE__' => $editMode ? '' : '<p class="upload-flow-guide"><strong>Publicar una fotografía:</strong> 1) selecciónala, 2) ajusta la imagen en el editor, 3) pulsa «Continuar» para añadir título y categoría y después «Publicar fotografía».</p>',
         '__CSRF__' => $csrf,
         '__OPTIONS__' => $options,
         '__CATEGORY_HELP__' => $editMode ? '<small class="upload-help">Aquí puedes cambiar la categoría de esta foto. Para cambiar varias a la vez, usa «Gestionar categorías».</small>' : '',
@@ -756,7 +762,7 @@ HTML;
         '__SLUG_FIELD__' => $slugField,
         '__LATITUDE__' => $editMode && $edit['latitude'] != 0.0 ? uploadEscape((string) $edit['latitude']) : '',
         '__LONGITUDE__' => $editMode && $edit['longitude'] != 0.0 ? uploadEscape((string) $edit['longitude']) : '',
-        '__SUBMIT_LABEL__' => $editMode ? 'Guardar cambios' : 'Compartir fotografía',
+        '__SUBMIT_LABEL__' => $editMode ? 'Guardar cambios' : 'Publicar fotografía',
     ]);
 
     uploadPage($editMode ? 'Editar fotografía' : 'Subir una fotografía',
