@@ -137,3 +137,8 @@ body[data-gallery-active][data-hover="shine"][data-grid] #masonry[data-layout] .
     transform:translateX(-130%)!important;transition:transform .75s ease!important;
 }
 body[data-gallery-active][data-hover="shine"][data-grid] #masonry[data-layout] .card__btn:is(:hover,:focus-visible,:active) .card__picture::after {transform:translateX(130%)!important}
+
+/* Las tarjetas inclinadas no deben ampliar el lienzo horizontal en móviles o pantallas estrechas. */
+body[data-gallery-active="scattered"][data-grid] #masonry[data-layout] {
+    overflow-x: clip !important;
+}

@@ -32,6 +32,9 @@
 html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    touch-action: pan-x pan-y;
+    width: 100%;
+    max-width: 100%;
 }
 
 body {
@@ -41,6 +44,11 @@ body {
     font-weight: 300;
     line-height: 1.6;
     overflow-x: hidden;
+    touch-action: pan-x pan-y;
+    width: 100%;
+    max-width: 100%;
+    min-width: 320px;
+    overscroll-behavior-x: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -2841,3 +2849,18 @@ html.js .project__link[data-reveal]   { transition-delay: 0.24s; }
 .photo-heart.is-liked [data-heart-count]{color:var(--fg)}
 .card__heart-count.is-liked{color:#e53935;border-color:rgba(229,57,53,.7);background:rgba(5,5,5,.78)}
 .card__heart-count.is-liked [data-heart-count]{color:#fff}
+
+
+/* Móviles estrechos: conserva la anchura útil y evita que controles y textos ensanchen la página. */
+@media (max-width: 380px) {
+    .hero__content { padding-inline: .75rem; }
+    .photo-detail { padding-inline: .75rem; }
+    .photo-detail__inner { gap: 1.2rem; }
+    .photo-detail__actions { gap: .45rem; }
+    .photo-detail__zoom,
+    .photo-detail__edit { padding: .7rem 1rem; font-size: .7rem; letter-spacing: .04em; }
+    .related__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .related__item,
+    .related__media,
+    .related__cap { min-width: 0; }
+}
