@@ -259,6 +259,13 @@
         button.addEventListener('click',()=>{selectTool(key);button.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});});
         toolRail.append(button);
     });
+    const saveButton=document.createElement('button');
+    saveButton.type='button';saveButton.className='photo-editor__tool photo-editor__tool--save';
+    saveButton.setAttribute('aria-label','Guardar una copia local de la fotografía editada');
+    saveButton.title='Guardar una copia en este dispositivo';
+    saveButton.innerHTML='<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5"/><path d="M5 16v4h14v-4"/></svg><span>Guardar copia</span>';
+    saveButton.addEventListener('click',saveEditedLocally);
+    toolRail.append(saveButton);
     toolSlider.addEventListener('input',()=>{
         adjustments[activeTool]=Number(toolSlider.value);
         toolValue.textContent=(adjustments[activeTool]>0?'+':'')+adjustments[activeTool]+'%';
@@ -938,6 +945,45 @@ const solvePerspectiveAffine = (src,dst) => {
         }
         output.width=output.height=1;throw new Error('La versión editada supera los 15 MB. Reduce la resolución de la imagen.');
     }
+    async function saveEditedLocally(){
+        if(!ready||!image||saveButton.disabled)return;
+        if(cropEditing){setMessage('Aplica o cancela el recorte antes de guardar la foto.',true);return;}
+        saveButton.disabled=true;
+        setMessage('Preparando una copia local de la foto editada…');
+        try{
+            const blob=await renderEditedPhoto();
+            const inputName=$('photoTitle').value.trim()||selectedUploadFile?.name?.replace(/\.[^.]+$/,'')||'foto-editada';
+            const safeName=inputName.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/[. -]+$/,'').trim()||'foto-editada';
+            const filename=safeName.toLowerCase().endsWith('.jpg')?safeName:safeName+'.jpg';
+            const file=new File([blob],filename,{type:'image/jpeg',lastModified:Date.now()});
+            const mobileDevice=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+            if(mobileDevice&&navigator.share&&navigator.canShare){
+                let canShareFile=false;
+                try{canShareFile=navigator.canShare({files:[file]});}catch(_){}
+                if(canShareFile){
+                    setMessage('Elige «Guardar imagen» o Fotos para añadirla a tu galería.');
+                    try{
+                        await navigator.share({files:[file],title:safeName});
+                        setMessage('Copia compartida desde este dispositivo. No se ha publicado en la web.');
+                    }catch(error){
+                        if(error.name==='AbortError'){setMessage('Guardado cancelado. La foto no se ha publicado en la web.');return;}
+                        setMessage('No se pudo abrir la galería; se descargará una copia en este dispositivo.');
+                    }
+                    return;
+                }
+            }
+            const url=URL.createObjectURL(blob),link=document.createElement('a');
+            link.href=url;link.download=filename;link.style.display='none';
+            document.body.append(link);link.click();link.remove();
+            window.setTimeout(()=>URL.revokeObjectURL(url),60000);
+            setMessage('Foto descargada en este dispositivo. No se ha publicado en la web.');
+        }catch(error){
+            setMessage(error.message||'No se pudo guardar la copia en este dispositivo.',true);
+        }finally{
+            saveButton.disabled=false;
+        }
+    }
+
     form.addEventListener('submit',async event=>{
         event.preventDefault();
         if(submitting||saving)return;

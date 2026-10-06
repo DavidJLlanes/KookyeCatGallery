@@ -155,3 +155,8 @@
 .photo-editor__compare:hover,.photo-editor__compare:focus-visible{border-color:#f2c99c;background:#211910;color:#ffe3c0;outline:none}
 .photo-editor__compare[aria-pressed="true"]{background:#d4a574;color:#1b130c;border-color:#f0cda7}
 @media(max-width:380px){.photo-editor__compare{top:.45rem;left:.45rem;min-width:68px;min-height:36px;padding:.4rem .65rem;font-size:.66rem}}
+
+.photo-editor__tool--save{flex-basis:94px;min-width:94px;margin-left:.2rem;border:1px solid #d4a57477;border-radius:7px;background:#d4a57418;color:#f4d3aa}
+.photo-editor__tool--save:hover,.photo-editor__tool--save:focus-visible{border-color:#f2c99c;background:#d4a57430;color:#ffe3c0}
+.photo-editor__tool--save:disabled{opacity:.55;cursor:wait}
+@media(max-width:760px){.photo-editor__tool--save{flex-basis:90px;min-width:90px}}
