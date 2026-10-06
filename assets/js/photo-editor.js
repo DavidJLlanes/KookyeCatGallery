@@ -48,7 +48,7 @@
                 if(marker===0x01||(marker>=0xd0&&marker<=0xd8)){markerOffset+=2;continue;}
                 const length=view.getUint16(markerOffset+2,false),dataOffset=markerOffset+4,end=markerOffset+2+length;
                 if(length<2||end>view.byteLength)break;
-                if(marker===0xe1&&length>=14&&textAt(dataOffset,6)==='Exif\\0\\0'){
+                if(marker===0xe1&&length>=14&&textAt(dataOffset,4)==='Exif'&&view.getUint16(dataOffset+4,false)===0){
                     const tiff=dataOffset+6,order=textAt(tiff,2),little=order==='II';
                     if(!little&&order!=='MM')return null;
                     const u16=offset=>view.getUint16(tiff+offset,little),u32=offset=>view.getUint32(tiff+offset,little);
@@ -62,20 +62,20 @@
                         for(let n=0;n<count;n++){
                             const entry=ifd+2+n*12;
                             if(u16(entry)!==tag)continue;
-                            const type=u16(entry+2),items=u32(entry+4),unit=type===2?1:type===5?8:0;
+                            const type=u16(entry+2),items=u32(entry+4),unit=type===2?1:type===4?4:type===5?8:0;
                             if(!unit)return null;
                             const size=items*unit,ptr=size<=4?entry+8:u32(entry+8);
                             if(ptr<0||ptr+size>tiffLength)return null;
-                            return {type,items,ptr};
+                            return {type,items,ptr,value:type===4?u32(entry+8):null};
                         }
                         return null;
                     };
                     const gpsPointer=readEntry(ifd0,0x8825);
                     if(!gpsPointer||gpsPointer.type!==4)return null;
-                    const gpsIfd=gpsPointer.ptr;
+                    const gpsIfd=gpsPointer.value;
                     const readAscii=tag=>{
                         const item=readEntry(gpsIfd,tag);
-                        return item&&item.type===2?textAt(tiff+item.ptr,item.items).replace(/\\0/g,'').trim():'';
+                        return item&&item.type===2?textAt(tiff+item.ptr,item.items).split(String.fromCharCode(0))[0].trim():'';
                     };
                     const readDms=tag=>{
                         const item=readEntry(gpsIfd,tag);
