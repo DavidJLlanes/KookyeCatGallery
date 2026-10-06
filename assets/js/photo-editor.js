@@ -8,7 +8,7 @@
     const toolRail=$('toolRail'),toolPanel=$('toolPanel'),toolSlider=$('toolSlider'),toolName=$('toolName'),toolValue=$('toolValue');
     const filterPanel=$('filterPanel'),filterList=$('photoEditorPresets'),filterCategory=$('filterCategory'),filterStrength=$('filterStrength'),filterStrengthValue=$('filterStrengthValue');
     const cropPanel=$('cropPanel'),cropRatios=$('cropRatios'),cropApply=$('cropApply'),cropCancel=$('cropCancel'),cropReset=$('cropReset');
-    const zoomReset=$('editorZoomReset'),reviewPreview=$('reviewPreview'),feedback=$('uploadFeedback'),submitButton=$('uploadSubmit');
+    const zoomReset=$('editorZoomReset'),compareButton=$('editorCompare'),reviewPreview=$('reviewPreview'),feedback=$('uploadFeedback'),submitButton=$('uploadSubmit');
     const csrf=form.querySelector('[name="csrf"]').value,maxBytes=15*1024*1024;
     const startEditingButton=$('startEditingButton');
     let selectedUploadFile=null;
@@ -28,6 +28,7 @@
     const defaults={exposure:0,highlights:0,shadows:0,contrast:0,temperature:0,tint:0,saturation:0,vibrance:0,sharpness:0,structure:0,perspectiveVertical:0,perspectiveHorizontal:0,fade:0,vignette:0};
     let adjustments={...defaults},image=null,sourceUrl='',ready=false,submitting=false,saving=false;
     let activePreset=null,filterMix=100,rotation=0,appliedCrop=null,draftCrop=null,draftRatio=null,cropEditing=false,activeTool='exposure';
+    let showingBefore=false;
     let zoom=1,panX=0,panY=0,zoomGesture=null,renderQueued=false,renderVersion=0,displayBox={left:0,top:0,width:1,height:1};
     const pointers=new Map(),thumbnailCache=new Map();
     let thumbnailObserver=null,thumbnailBase=null;
@@ -482,6 +483,30 @@
     }
     function resetZoom(){zoom=1;panX=panY=0;zoomGesture=null;pointers.clear();updateViewTransform();}
     zoomReset.addEventListener('click',resetZoom);
+    const setComparisonView=show=>{
+        showingBefore=show;
+        compareButton.textContent=show?'Después':'Antes';
+        compareButton.setAttribute('aria-pressed',show?'true':'false');
+        compareButton.setAttribute('aria-label',show?'Foto editada':'Mantén pulsado para ver la foto original');
+        compareButton.title=show?'Foto editada':'Mantén pulsado para ver el antes';
+        canvas.setAttribute('aria-label',show?'Fotografía original':'Previsualización de la fotografía editada');
+        scheduleRender();
+    };
+    compareButton.addEventListener('pointerdown',event=>{
+        if(!ready||event.button!==0)return;
+        event.preventDefault();
+        try{compareButton.setPointerCapture(event.pointerId);}catch(_){}
+        setComparisonView(true);
+    });
+    const finishComparison=()=>{if(showingBefore)setComparisonView(false);};
+    compareButton.addEventListener('pointerup',finishComparison);
+    compareButton.addEventListener('pointercancel',finishComparison);
+    compareButton.addEventListener('lostpointercapture',finishComparison);
+    compareButton.addEventListener('keydown',event=>{
+        if((event.key===' '||event.key==='Enter')&&ready){event.preventDefault();setComparisonView(true);}
+    });
+    compareButton.addEventListener('keyup',event=>{if(event.key===' '||event.key==='Enter')finishComparison();});
+    compareButton.addEventListener('blur',finishComparison);
 
     let cropDrag=null;
     stage.addEventListener('pointerdown',event=>{
@@ -744,8 +769,25 @@ const solvePerspectiveAffine = (src,dst) => {
         renderQueued=true;
         requestAnimationFrame(()=>{renderQueued=false;renderPreview();});
     }
+    function renderOriginalPreview(){
+        if(!image||!stage.clientWidth||!stage.clientHeight)return;
+        const edge=Math.min(1200,Math.max(540,Math.round(Math.max(stage.clientWidth,stage.clientHeight)*Math.min(window.devicePixelRatio||1,2.5))));
+        const sourceW=image.naturalWidth,sourceH=image.naturalHeight;
+        const scale=Math.min(1,edge/Math.max(sourceW,sourceH),Math.sqrt(8000000/(sourceW*sourceH)));
+        const width=Math.max(1,Math.round(sourceW*scale)),height=Math.max(1,Math.round(sourceH*scale));
+        canvas.width=width;canvas.height=height;
+        const context=canvas.getContext('2d',{alpha:false});
+        if(!context)return;
+        context.drawImage(image,0,0,width,height);
+        const displayScale=Math.min(stage.clientWidth/width,stage.clientHeight/height);
+        displayBox={left:(stage.clientWidth-width*displayScale)/2,top:(stage.clientHeight-height*displayScale)/2,width:width*displayScale,height:height*displayScale};
+        canvas.style.left=displayBox.left+'px';canvas.style.top=displayBox.top+'px';
+        canvas.style.width=displayBox.width+'px';canvas.style.height=displayBox.height+'px';
+        updateViewTransform();
+    }
     function renderPreview(){
         if(!image)return;
+        if(showingBefore){renderOriginalPreview();return;}
         try{
             const edge=Math.min(1200,Math.max(540,Math.round(Math.max(stage.clientWidth,stage.clientHeight)*Math.min(window.devicePixelRatio||1,2.5))));
             const result=renderFrame(edge);
