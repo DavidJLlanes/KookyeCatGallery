@@ -34,7 +34,7 @@
     const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
     const setMessage=(message,error=false)=>{feedback.textContent=message;feedback.classList.toggle('upload-message--error',error);editorProgress.textContent=message;editorProgress.hidden=!message||editor.hidden;editorProgress.classList.toggle('is-error',error);};
     const readExifGps=async file=>{
-        if(!/\\.(?:jpe?g)$/i.test(file.name||''))return null;
+        if(!/\.(?:jpe?g)$/i.test(file.name||''))return null;
         try{
             const bytes=await file.slice(0,Math.min(file.size,4*1024*1024)).arrayBuffer();
             const view=new DataView(bytes);
