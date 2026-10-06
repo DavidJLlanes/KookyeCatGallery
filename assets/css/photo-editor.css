@@ -125,3 +125,28 @@
  .photo-editor__top-action,.photo-editor__next,.photo-editor__cancel{padding-inline:.45rem;font-size:.64rem}
  .photo-details__topbar{gap:.35rem;padding-inline:.35rem}
 }
+
+
+/* Ajuste móvil del formulario de publicación: todos los campos caben en la pantalla. */
+@media(max-width:760px){
+ .upload-page{box-sizing:border-box;width:100%;min-width:0;overflow-x:clip;padding-left:max(.65rem,env(safe-area-inset-left));padding-right:max(.65rem,env(safe-area-inset-right))}
+ .upload-panel,.upload-panel--wide{box-sizing:border-box;width:100%;min-width:0;max-width:100%}
+ .photo-details,.photo-details *{box-sizing:border-box}
+ .photo-details{display:block;width:100%;max-width:100%;min-width:0;margin:0;padding:0 0 max(1rem,env(safe-area-inset-bottom));overflow-x:clip}
+ .photo-details__topbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:.35rem;width:100%;min-width:0}
+ .photo-details__topbar>span{display:block;min-width:0;max-width:100%;font-size:.58rem;letter-spacing:.025em}
+ .photo-details__topbar>.photo-editor__top-action,.photo-details__topbar>.photo-editor__cancel{min-width:0;max-width:100%;padding:.38rem .5rem;font-size:.62rem;white-space:nowrap}
+ .photo-details__topbar .photo-editor__cancel-label{display:none}
+ .photo-details__topbar .photo-editor__cancel>span:first-child{display:inline}
+ .photo-details__preview{width:100%;min-width:0}
+ .photo-details__preview>span{min-width:0;overflow-wrap:anywhere}
+ .photo-details .upload-field{display:grid;grid-template-columns:minmax(0,1fr);width:100%;min-width:0}
+ .photo-details .upload-field label{display:block;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;hyphens:auto}
+ .photo-details .upload-field input,.photo-details .upload-field textarea,.photo-details .upload-field select{display:block;width:100%;min-width:0;max-width:100%;font-size:16px}
+ .photo-details .upload-featured{display:flex;align-items:flex-start;width:100%;min-width:0;max-width:100%;overflow-wrap:anywhere}
+ .photo-details .upload-featured input{flex:0 0 auto}
+ .photo-details .upload-featured span{min-width:0;overflow-wrap:anywhere}
+ .photo-details .upload-gps{width:100%;min-width:0;max-width:100%;padding:.75rem}
+ .photo-details .upload-actions{width:100%;min-width:0}
+ .photo-details .upload-actions>*{min-width:0;max-width:100%}
+}
