@@ -150,3 +150,8 @@
  .photo-details .upload-actions{width:100%;min-width:0}
  .photo-details .upload-actions>*{min-width:0;max-width:100%}
 }
+
+.photo-editor__compare{position:absolute;z-index:6;top:.7rem;left:.7rem;display:inline-flex;align-items:center;justify-content:center;min-width:76px;min-height:38px;padding:.45rem .8rem;border:1px solid #d4a574aa;border-radius:999px;background:#0b0a09d9;color:#f5dfc6;font:600 .72rem/1 var(--sans);letter-spacing:.04em;box-shadow:0 3px 14px #0007;backdrop-filter:blur(10px);cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.photo-editor__compare:hover,.photo-editor__compare:focus-visible{border-color:#f2c99c;background:#211910;color:#ffe3c0;outline:none}
+.photo-editor__compare[aria-pressed="true"]{background:#d4a574;color:#1b130c;border-color:#f0cda7}
+@media(max-width:380px){.photo-editor__compare{top:.45rem;left:.45rem;min-width:68px;min-height:36px;padding:.4rem .65rem;font-size:.66rem}}

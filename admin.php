@@ -684,6 +684,7 @@ __UPLOAD_GUIDE__
                 <span data-crop-handle="sw" aria-hidden="true"></span><span data-crop-handle="se" aria-hidden="true"></span>
             </div>
             <button type="button" class="photo-editor__zoom-reset" id="editorZoomReset" aria-label="Restablecer zoom" hidden>Ajustar</button>
+            <button type="button" class="photo-editor__compare" id="editorCompare" aria-label="Mantén pulsado para ver la foto original" aria-pressed="false" title="Mantén pulsado para ver el antes">Antes</button>
             <span class="photo-editor__zoom-hint" aria-hidden="true">Pellizca o usa la rueda para ampliar</span>
             <p class="photo-editor__progress" id="editorProgress" aria-live="polite" hidden></p>
         </div>
