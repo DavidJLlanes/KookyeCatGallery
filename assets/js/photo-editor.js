@@ -33,6 +33,73 @@
     let thumbnailObserver=null,thumbnailBase=null;
     const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
     const setMessage=(message,error=false)=>{feedback.textContent=message;feedback.classList.toggle('upload-message--error',error);editorProgress.textContent=message;editorProgress.hidden=!message||editor.hidden;editorProgress.classList.toggle('is-error',error);};
+    const readExifGps=async file=>{
+        if(!/\\.(?:jpe?g)$/i.test(file.name||''))return null;
+        try{
+            const bytes=await file.slice(0,Math.min(file.size,4*1024*1024)).arrayBuffer();
+            const view=new DataView(bytes);
+            const textAt=(offset,length)=>{let value='';for(let n=0;n<length;n++)value+=String.fromCharCode(view.getUint8(offset+n));return value;};
+            if(view.byteLength<4||view.getUint16(0,false)!==0xffd8)return null;
+            let markerOffset=2;
+            while(markerOffset+4<=view.byteLength){
+                if(view.getUint8(markerOffset)!==0xff)break;
+                const marker=view.getUint8(markerOffset+1);
+                if(marker===0xda||marker===0xd9)break;
+                if(marker===0x01||(marker>=0xd0&&marker<=0xd8)){markerOffset+=2;continue;}
+                const length=view.getUint16(markerOffset+2,false),dataOffset=markerOffset+4,end=markerOffset+2+length;
+                if(length<2||end>view.byteLength)break;
+                if(marker===0xe1&&length>=14&&textAt(dataOffset,6)==='Exif\\0\\0'){
+                    const tiff=dataOffset+6,order=textAt(tiff,2),little=order==='II';
+                    if(!little&&order!=='MM')return null;
+                    const u16=offset=>view.getUint16(tiff+offset,little),u32=offset=>view.getUint32(tiff+offset,little);
+                    const tiffLength=end-tiff;
+                    if(u16(2)!==42)return null;
+                    const ifd0=u32(4);
+                    if(ifd0+2>tiffLength)return null;
+                    const readEntry=(ifd,tag)=>{
+                        const count=u16(ifd);
+                        if(count>4096||ifd+2+count*12>tiffLength)return null;
+                        for(let n=0;n<count;n++){
+                            const entry=ifd+2+n*12;
+                            if(u16(entry)!==tag)continue;
+                            const type=u16(entry+2),items=u32(entry+4),unit=type===2?1:type===5?8:0;
+                            if(!unit)return null;
+                            const size=items*unit,ptr=size<=4?entry+8:u32(entry+8);
+                            if(ptr<0||ptr+size>tiffLength)return null;
+                            return {type,items,ptr};
+                        }
+                        return null;
+                    };
+                    const gpsPointer=readEntry(ifd0,0x8825);
+                    if(!gpsPointer||gpsPointer.type!==4)return null;
+                    const gpsIfd=gpsPointer.ptr;
+                    const readAscii=tag=>{
+                        const item=readEntry(gpsIfd,tag);
+                        return item&&item.type===2?textAt(tiff+item.ptr,item.items).replace(/\\0/g,'').trim():'';
+                    };
+                    const readDms=tag=>{
+                        const item=readEntry(gpsIfd,tag);
+                        if(!item||item.type!==5||item.items<3)return null;
+                        const values=[];
+                        for(let n=0;n<3;n++){
+                            const numerator=u32(item.ptr+n*8),denominator=u32(item.ptr+n*8+4);
+                            if(!denominator)return null;
+                            values.push(numerator/denominator);
+                        }
+                        return values[0]+values[1]/60+values[2]/3600;
+                    };
+                    let latitude=readDms(2),longitude=readDms(4);
+                    if(latitude===null||longitude===null)return null;
+                    if(readAscii(1).toUpperCase()==='S')latitude*=-1;
+                    if(readAscii(3).toUpperCase()==='W')longitude*=-1;
+                    if(Math.abs(latitude)>90||Math.abs(longitude)>180)return null;
+                    return {latitude:Number(latitude.toFixed(6)),longitude:Number(longitude.toFixed(6))};
+                }
+                markerOffset=end;
+            }
+        }catch{/* Las imágenes sin EXIF GPS siguen siendo válidas. */}
+        return null;
+    };
     const prepareUploadFile=async file=>{
         if(file.size<=maxBytes)return file;
         setMessage('La foto supera 15 MB. Preparando una copia optimizada en este dispositivo…');
@@ -75,6 +142,13 @@
         return data;
     };
 
+    const updateGpsSummary=()=>{
+        const latitude=$('photoLatitude').value.trim(),longitude=$('photoLongitude').value.trim();
+        $('photoGpsSummary').textContent=latitude&&longitude?'Ubicación · '+latitude+', '+longitude
+            :latitude||longitude?'Completa ambas coordenadas':'Sin ubicación GPS';
+    };
+    $('photoLatitude').addEventListener('input',updateGpsSummary);
+    $('photoLongitude').addEventListener('input',updateGpsSummary);
     const cancelButtons=[$('editorCancel'),$('detailsCancel')];
     const cancelEditing=async()=>{
         if(saving||submitting)return;
@@ -780,6 +854,7 @@ const solvePerspectiveAffine = (src,dst) => {
         $('gpsFields').hidden=true;$('photoLatitude').required=false;$('photoLongitude').required=false;
         const body=new FormData();body.append('action','inspect');body.append('csrf',csrf);
         try{
+            const originalGps=file.size>maxBytes?await readExifGps(file):null;
             const uploadFile=await prepareUploadFile(file);
             body.append('photo',uploadFile);
             const data=await postUploadForm(body);
@@ -789,11 +864,12 @@ const solvePerspectiveAffine = (src,dst) => {
             resetControls();editor.hidden=false;$('fileSourceField').hidden=true;$('gpsStatus').hidden=true;
             $('gpsFields').hidden=false;
             $('photoLatitude').required=false;$('photoLongitude').required=false;
-            $('photoLatitude').value=data.gps?.latitude??'';
-            $('photoLongitude').value=data.gps?.longitude??'';
-            if(data.gps){
-                $('gpsStatusReview').textContent='GPS detectado. Puedes mantener las coordenadas o borrar ambos campos para no compartir la ubicación.';
-                $('photoGpsSummary').textContent='Ubicación · '+data.gps.latitude+', '+data.gps.longitude;
+            const detectedGps=data.gps||originalGps;
+            $('photoLatitude').value=detectedGps?.latitude??'';
+            $('photoLongitude').value=detectedGps?.longitude??'';
+            if(detectedGps){
+                $('gpsStatusReview').textContent='GPS detectado. Puedes editar las coordenadas o borrar ambos campos para no compartir la ubicación.';
+                $('photoGpsSummary').textContent='Ubicación · '+detectedGps.latitude+', '+detectedGps.longitude;
             }else{
                 $('gpsStatusReview').textContent='Sin GPS. La ubicación es opcional; completa ambas coordenadas solo si quieres mostrar la foto en el mapa.';
                 $('photoGpsSummary').textContent='Sin ubicación GPS';
