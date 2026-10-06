@@ -510,7 +510,7 @@
 
     let cropDrag=null;
     stage.addEventListener('pointerdown',event=>{
-        if(event.target.closest('#editorZoomReset'))return;
+        if(event.target.closest('#editorZoomReset,#editorCompare'))return;
         if(event.pointerType==='touch'){
             pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
             if(pointers.size>=2){
