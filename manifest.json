@@ -1,6 +1,6 @@
 {
   "name": "Kookye Cat Gallery",
-  "short_name": "Kookye Cats",
+  "short_name": "Kookye Gallery",
   "id": "/",
   "start_url": "/?source=pwa",
   "scope": "/",
@@ -11,7 +11,7 @@
   ],
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
-  "description": "A responsive cat photo gallery with a private management panel.",
+  "description": "A responsive photography portfolio with an easy photo upload and private management panel.",
   "lang": "en",
   "icons": [
     {

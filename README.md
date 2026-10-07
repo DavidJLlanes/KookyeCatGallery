@@ -1,30 +1,37 @@
 <p align="center">
-  <img src="assets/img/kookye-cat-gallery-og.png" alt="Kookye Cat Gallery, galería fotográfica de gatos" width="100%">
+  <img src="assets/img/kookyecatgallery-photographers-cover.png" alt="KookyeCatGallery — Tu fotografía. Tu web. Plantillas y galerías para fotógrafos." width="100%">
 </p>
 
-<h1 align="center">Kookye Cat Gallery</h1>
+<h1 align="center">KookyeCatGallery</h1>
 
 <p align="center">
-  Galería autohospedada para organizar y presentar fotografías de gatos.
-  Adaptable a móvil y escritorio, con administración y edición desde el navegador.
+  <strong>Tu fotografía. Tu web.</strong><br>
+  Una galería autoalojada para fotógrafos que quieren crear su web,<br>
+  subir imágenes fácilmente y elegir cómo presentar su trabajo.<br>
+  Personaliza tu portfolio y gestiona tus fotografías desde el navegador.
 </p>
 
-La portada también se usa como imagen Open Graph y Twitter Card al compartir la página principal; cada ficha de fotografía conserva su propia vista previa.
+<p align="center">
+  <a href="LICENSE"><img alt="Licencia PolyForm Noncommercial 1.0.0" src="https://img.shields.io/badge/LICENCIA-PolyForm_Noncommercial-d4a574?style=for-the-badge"></a>
+  <a href="manifest.json"><img alt="PWA instalable" src="https://img.shields.io/badge/PWA-INSTALABLE-6366f1?style=for-the-badge&logo=pwa&logoColor=white"></a>
+  <a href="#plantillas-y-modos-de-presentación"><img alt="10 modos de galería" src="https://img.shields.io/badge/GALERÍA-10_MODOS-52796f?style=for-the-badge"></a>
+</p>
 
 <p align="center">
+  <a href="#requisitos"><img alt="PHP 8.1 o posterior" src="https://img.shields.io/badge/PHP-8.1%2B-777bb4?logo=php&logoColor=white"></a>
+  <a href="#tecnología"><img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-f7df1e?logo=javascript&logoColor=black"></a>
+  <a href="#tecnología"><img alt="Sin compilación" src="https://img.shields.io/badge/build-sin_compilación-52796f"></a>
   <a href="https://github.com/DavidJLlanes/KookyeCatGallery/actions/workflows/validate.yml"><img alt="Validación automática" src="https://github.com/DavidJLlanes/KookyeCatGallery/actions/workflows/validate.yml/badge.svg?branch=main"></a>
-  <a href="LICENSE"><img alt="PolyForm Noncommercial License 1.0.0" src="https://img.shields.io/badge/licencia-PolyForm%20Noncommercial%201.0.0-D49B38?style=flat-square"></a>
-  <a href="#requisitos"><img alt="PHP 8.1 o posterior" src="https://img.shields.io/badge/PHP-8.1%2B-777BB4?style=flat-square&logo=php&logoColor=white"></a>
-  <a href="#caracter%C3%ADsticas"><img alt="Aplicación web instalable" src="https://img.shields.io/badge/PWA-instalable-6C4AB6?style=flat-square"></a>
 </p>
 
+<h3 align="center"><a href="#instalación">📷 Crear tu web con KookyeCatGallery</a></h3>
+
 <p align="center">
-  <a href="#caracter%C3%ADsticas">Características</a> ·
-  <a href="#tecnolog%C3%ADa">Tecnología</a> ·
-  <a href="#instalaci%C3%B3n">Instalación</a> ·
-  <a href="#configuraci%C3%B3n-privada">Configuración privada</a> ·
+  <a href="#plantillas-y-modos-de-presentación">Plantillas y presentación</a> ·
+  <a href="#instalación">Instalación</a> ·
+  <a href="docs/subida-fotografias.md">Subir fotografías</a> ·
+  <a href="docs/filtros-fotograficos.md">Editor y filtros</a> ·
   <a href="CONTRIBUTING.md">Contribuir</a> ·
-  <a href="https://github.com/DavidJLlanes/KookyeCatGallery/commits/main">Cambios</a> ·
   <a href="https://github.com/DavidJLlanes/KookyeCatGallery/issues">Incidencias</a>
 </p>
 
@@ -32,15 +39,60 @@ La portada también se usa como imagen Open Graph y Twitter Card al compartir la
 
 ## Características
 
-- Diseños de galería configurables: cuadrícula, mosaico masonry y composiciones editoriales.
-- Paletas, cabeceras móviles y de escritorio, columnas y efectos al pasar el cursor.
-- Administración de fotografías, categorías, metadatos, borradores, orden y favoritos.
-- Editor fotográfico integrado con filtros variados y navegación táctil.
-- Edición de textos del sitio y páginas legales desde el panel.
-- Mapa opcional, desactivado inicialmente para evitar publicar ubicaciones por accidente.
-- Aplicación web instalable, soporte básico sin conexión y generación de imágenes WebP.
+- **Tu portfolio en tu servidor:** presenta paisajes, retratos, arquitectura, fotografía de calle o cualquier otra especialidad con tu identidad y tus textos.
+- **Subida desde el navegador:** incorpora imágenes desde el panel de administración y organiza categorías, títulos, metadatos, borradores, orden y favoritos.
+- **Diseño configurable:** combina cabeceras, paletas y modos de galería, con ajustes independientes para móvil y escritorio.
+- **Editor integrado:** aplica filtros y ajustes fotográficos desde el navegador antes de publicar.
+- **Visor de fotografías:** navegación táctil, fotografía completa y modo de pantalla completa.
+- **Personalización del sitio:** edita perfil, logo, enlaces sociales, textos, proyecto y páginas legales desde el panel.
+- **PWA instalable:** diseño adaptable, soporte básico sin conexión y generación de imágenes WebP.
+- **Mapa opcional:** desactivado inicialmente; actívalo si quieres mostrar las ubicaciones de tus fotografías.
 
 Guías: [textos y diseño](docs/textos-y-diseno.md) · [filtros fotográficos](docs/filtros-fotograficos.md) · [navegación entre fotos](docs/navegacion-fotografias.md) · [subida de fotografías](docs/subida-fotografias.md).
+
+## Plantillas y modos de presentación
+
+Desde **Textos y diseño** puedes combinar las opciones del sitio sin editar código. La cabecera, el modo de galería y el número de columnas se eligen por separado para móvil y escritorio.
+
+### Cabeceras para dar personalidad a tu web
+
+| Móvil · 9 diseños | Escritorio · 9 diseños |
+| --- | --- |
+| Perfil social | Tipográfica |
+| Retrato centrado | Retrato centrado |
+| Compacta | Compacta |
+| Editorial | Editorial |
+| Cine · tira de película | Museo · galería blanca |
+| Atlas · cuaderno cartográfico | Observatorio · constelación 3D |
+| Estudio · retícula suiza | Periódico · portada de autor |
+| Órbita · cielo 3D | Noir · estreno de cine |
+| Álbum · recortes y postales | Plano · archivo técnico |
+
+### Diez formas de mostrar tus fotografías
+
+Todos los modos están disponibles tanto en móvil como en escritorio.
+
+| Modo | Presentación |
+| --- | --- |
+| **Masonry** | Columnas con alturas naturales que conservan las proporciones de cada fotografía. |
+| **Cuadrícula** | Miniaturas uniformes con proporción cuadrada, horizontal 4:3 o vertical 3:4. |
+| **Mosaico cromático** | Filas ajustadas que mantienen las proporciones originales y comparten sus bordes. |
+| **Editorial asimétrica** | Filas de distinta densidad para una composición editorial. |
+| **Filas por categoría** | Fotografías agrupadas en tiras por categoría. |
+| **Álbum desordenado** | Composición de imágenes cuadradas de distintos tamaños, con una ligera inclinación. |
+| **Sala de exposición** | Fotografías grandes y centradas, con espacio entre ellas. |
+| **Hoja de contactos** | Una vista compacta para recorrer una colección de imágenes. |
+| **Secuencia narrativa** | Una imagen protagonista seguida de una secuencia de fotografías. |
+| **Trípticos** | Composiciones de tres imágenes: una grande junto a dos más pequeñas. |
+
+### Color, proporciones y efectos
+
+- **7 paletas:** Elegante, Noche, Luz, Cyberpunk, Japón, Bosque y Océano.
+- **5 opciones de proporción:** adaptativa, masonry, cuadrada, horizontal 4:3 y vertical 3:4. La cuadrícula usa las proporciones fijas; masonry conserva las originales. El visor abre la fotografía completa.
+- **Columnas:** de 1 a 4 en móvil y de 1 a 10 en escritorio, respetando la composición de cada modo.
+- **10 efectos:** Suave, Acercamiento, Elevación, Revelado, Virado de color, Marco luminoso, Desplazamiento, Perspectiva, Enfoque y Destello.
+
+Las opciones documentadas corresponden al catálogo de [diseños del sitio](inc/site-settings.php) y al motor de [composición de galerías](assets/js/gallery-layout.js).
 
 ## Tecnología
 

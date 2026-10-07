@@ -2,9 +2,11 @@
 
 Entra en `/admin.php`, inicia sesión y abre **Textos y diseño**. Guarda para aplicar los cambios a la web pública.
 
-- Paletas: Elegante, Noche (negro y blanco), Luz (blanco y tinta), Cyberpunk (neón) y Japón (papel y carmesí).
+- Paletas: Elegante, Noche (negro y blanco), Luz (blanco y tinta), Cyberpunk (neón) Japón (papel y carmesí), Bosque (verde y marfil) y Océano (azul profundo y turquesa).
 - Galería: adaptativa, masonry, cuadrada, horizontal 4:3 o vertical 3:4. Todas usan las columnas seleccionadas: 1–4 en móvil y 1–10 en escritorio.
-- Cabeceras: cuatro para móvil y cuatro para escritorio, con selectores independientes de la cuadrícula y de la paleta. Móvil corresponde a hasta 768 px y escritorio a partir de 769 px.
+- Cabeceras: nueve para móvil y nueve para escritorio, con selectores independientes de la cuadrícula y de la paleta. Móvil corresponde a hasta 768 px y escritorio a partir de 769 px.
+- Modos de galería: masonry, cuadrícula, mosaico cromático, editorial asimétrica, filas por categoría, álbum desordenado, sala de exposición, hoja de contactos, secuencia narrativa y trípticos. Disponibles en móvil y escritorio; se eligen independientemente.
+- Efectos: Suave, Acercamiento, Elevación, Revelado, Virado de color, Marco luminoso, Desplazamiento, Perspectiva, Enfoque y Destello.
 - Textos: abre los grupos para editar el contenido de inicio, perfil, proyecto, contacto, controles, metadatos y páginas legales. Los títulos, descripciones y categorías de las fotos se editan en **Gestionar fotos**. Se conserva el formato de la página; los campos admiten texto plano y pueden quedar vacíos. En los textos de recuento, conserva `{count}` para mostrar el número de fotos.
 
 La configuración se guarda en `var/site-settings.json`, fuera del directorio público y de los archivos desplegados. El usuario que ejecuta PHP necesita permisos de escritura en esa carpeta. El archivo se crea al guardar por primera vez. Un error de guardado se muestra en el panel y conserva el archivo anterior. No se necesitan migraciones de base de datos.

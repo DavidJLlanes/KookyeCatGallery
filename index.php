@@ -184,7 +184,7 @@ $pageTitle    = site_text('text_1a0ef9e63d20942b');
 $pageDesc     = str_replace('{count}', (string) $totalFotos, site_text('text_506b817f8bd1888e'));
 $pageKeywords = str_replace('{count}', (string) $totalFotos, site_text('text_570bd4204e3d077b'));
 $pageCanonical = $siteUrl . '/';
-$pageOgImage   = $siteUrl . '/assets/img/kookye-cat-gallery-og.png';
+$pageOgImage   = $siteUrl . '/assets/img/kookyecatgallery-photographers-cover.png';
 $pageOgWidth   = 1730;
 $pageOgHeight  = 909;
 
@@ -228,7 +228,7 @@ if ($fotoItem !== null) {
     <meta property="og:image" content="<?= safe($pageOgImage) ?>">
     <meta property="og:image:width" content="<?= $pageOgWidth ?>">
     <meta property="og:image:height" content="<?= $pageOgHeight ?>">
-    <meta property="og:image:alt" content="<?= $fotoItem ? safe($fotoItem['title']) : 'Kookye Cat Gallery — galería de fotografías de gatos' ?>">
+    <meta property="og:image:alt" content="<?= $fotoItem ? safe($fotoItem['title']) : 'KookyeCatGallery — portfolio web para fotógrafos' ?>">
     <?php endif; ?>
 
     <!-- Twitter / X Card -->
@@ -284,7 +284,7 @@ if ($fotoItem !== null) {
             '@type' => 'ImageGallery',
             '@id'   => $siteUrl . '/#gallery',
             'name'  => $siteName,
-            'description' => 'Galería de gatos, retratos y momentos cotidianos.',
+            'description' => 'Galería fotográfica y portfolio de autor.',
             'url'   => $siteUrl . '/',
             'inLanguage' => 'es-ES',
             'isPartOf' => ['@id' => $siteUrl . '/#website'],
