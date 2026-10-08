@@ -131,12 +131,15 @@ const devices = [
                 await page.keyboard.press('End'); await settle();
                 const last = (await state()).index;
                 assert.equal(last, 5, `${label}: End va a la última foto`);
-                await page.mouse.wheel(0, 400); await page.waitForTimeout(500);
+                await page.mouse.wheel(0, 400);
+                // El scroll de la página es animado: se espera a que llegue (más lento en los ordenadores de CI).
+                await page.waitForFunction(min => scrollY > min, baseScroll + 50, {timeout: 6000}).catch(() => {});
                 assert((await state()).scrollY > baseScroll + 50, `${label}: tras la última foto la página debe seguir bajando`);
                 await toDeck();
                 await page.keyboard.press('Home'); await settle();
                 // Límite superior: en la primera foto la rueda hacia arriba libera la página.
-                await page.mouse.wheel(0, -400); await page.waitForTimeout(500);
+                await page.mouse.wheel(0, -400);
+                await page.waitForFunction(max => scrollY < max, baseScroll - 50, {timeout: 6000}).catch(() => {});
                 const top = await state();
                 assert(top.scrollY < baseScroll - 50 && top.index === 0, `${label}: antes de la primera foto la página debe subir`);
                 await toDeck();
@@ -164,6 +167,7 @@ const devices = [
                 // Límite: en la última foto, deslizar hacia arriba deja que la página siga.
                 await page.keyboard.press('End'); await settle();
                 await swipe(-260, 12);
+                await page.waitForFunction(min => scrollY > min, before.scrollY + 40, {timeout: 6000}).catch(() => {});
                 assert((await state()).scrollY > before.scrollY + 40, `${label}: tras la última foto el dedo debe mover la página`);
                 await toDeck();
                 await page.keyboard.press('Home'); await settle();
