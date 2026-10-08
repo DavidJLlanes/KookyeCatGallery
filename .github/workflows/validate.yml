@@ -52,6 +52,10 @@ jobs:
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/gallery-layout.cjs
+      - name: Comprobar la forma de la paginación
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/pagination-shape.cjs
       - name: Comprobar la visibilidad de las categorías
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules

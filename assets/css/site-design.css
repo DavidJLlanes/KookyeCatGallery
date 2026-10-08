@@ -227,3 +227,9 @@ body[data-show-categories="false"] [data-site-section="categories"] {display:non
 @media(min-width:769px) {
     body[data-show-header-desktop="false"] .hero { display:none !important; }
 }
+
+/* Forma de la paginación (ajuste «Forma de la paginación»): círculos por defecto o cuadrados. */
+body[data-pagination-shape="circle"] .pagination__page,
+body[data-pagination-shape="circle"] .pagination__nav { border-radius:50%; }
+body[data-pagination-shape="square"] .pagination__page,
+body[data-pagination-shape="square"] .pagination__nav { border-radius:4px; }

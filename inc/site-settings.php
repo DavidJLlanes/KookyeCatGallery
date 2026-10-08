@@ -46,6 +46,7 @@ function site_design_choices(): array
             'noir' => 'Noir · estreno de cine', 'blueprint' => 'Plano · archivo técnico'],
         'gallery_mobile' => ['standard' => 'Masonry · alturas naturales', 'grid' => 'Cuadrícula', 'mosaic' => 'Mosaico cromático', 'asymmetric' => 'Editorial asimétrica', 'category-rails' => 'Filas por categoría', 'scattered' => 'Álbum desordenado', 'exhibition' => 'Sala de exposición', 'contact-sheet' => 'Hoja de contactos', 'narrative' => 'Secuencia narrativa', 'triptych' => 'Trípticos'],
         'gallery_desktop' => ['standard' => 'Masonry · alturas naturales', 'grid' => 'Cuadrícula', 'mosaic' => 'Mosaico cromático', 'asymmetric' => 'Editorial asimétrica', 'category-rails' => 'Filas por categoría', 'scattered' => 'Álbum desordenado', 'exhibition' => 'Sala de exposición', 'contact-sheet' => 'Hoja de contactos', 'narrative' => 'Secuencia narrativa', 'triptych' => 'Trípticos'],
+        'pagination_shape' => ['circle' => 'Círculos', 'square' => 'Cuadrados'],
         'hover' => ['soft' => 'Suave', 'zoom' => 'Acercamiento', 'lift' => 'Elevación', 'reveal' => 'Revelado', 'tint' => 'Virado de color', 'frame' => 'Marco luminoso', 'slide' => 'Desplazamiento', 'tilt' => 'Perspectiva', 'focus' => 'Enfoque', 'shine' => 'Destello'],
     ];
 }
@@ -124,7 +125,7 @@ function site_settings_defaults(): array
 {
     return ['palette' => 'current', 'grid' => 'adaptive', 'columns_mobile' => 3,
         'columns_desktop' => 3, 'photos_mobile' => 12, 'photos_desktop' => 20, 'header_mobile' => 'current', 'header_desktop' => 'current',
-        'gallery_mobile' => 'standard', 'gallery_desktop' => 'standard', 'hover' => 'soft',
+        'gallery_mobile' => 'standard', 'gallery_desktop' => 'standard', 'hover' => 'soft', 'pagination_shape' => 'circle',
         'section_order' => array_keys(site_section_labels()), 'show_header_mobile' => true, 'show_header_desktop' => true,
         'show_categories' => true, 'show_map' => false, 'show_project' => true, 'show_social' => false,
         'texts' => [], 'pages' => [], 'profile_image' => '/profile-placeholder.svg', 'logo_image' => '/favicon.svg',
@@ -429,7 +430,7 @@ function site_design_attributes(): string
 {
     $settings = site_settings_load();
     $attributes = '';
-    foreach (['palette', 'grid', 'header_mobile', 'header_desktop', 'gallery_mobile', 'gallery_desktop', 'hover'] as $key) {
+    foreach (['palette', 'grid', 'header_mobile', 'header_desktop', 'gallery_mobile', 'gallery_desktop', 'hover', 'pagination_shape'] as $key) {
         $attributes .= ' data-' . str_replace('_', '-', $key) . '="' . htmlspecialchars($settings[$key], ENT_QUOTES, 'UTF-8') . '"';
     }
     foreach (site_toggle_keys() as $key) {

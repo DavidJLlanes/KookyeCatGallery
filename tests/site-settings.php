@@ -68,6 +68,12 @@ foreach (['show_header_mobile', 'show_header_desktop'] as $field) {
 check(str_contains(site_design_attributes(), 'data-show-header-mobile='), 'Header visibility must reach the page.');
 check(str_contains(site_settings_form('t', array_replace($defaults, ['section_order' => ['map', 'gallery', 'categories', 'project', 'social']]), 'design'), 'data-section-key="map"'), 'Section order list missing from the design form.');
 
+check($defaults['pagination_shape'] === 'circle', 'Pagination must be circular by default.');
+check(site_settings_validate(array_replace($defaults, ['pagination_shape' => 'square']))['pagination_shape'] === 'square', 'Square pagination was rejected.');
+rejects(array_replace($defaults, ['pagination_shape' => 'oval']));
+check(str_contains(site_design_attributes(), 'data-pagination-shape="circle"'), 'Pagination shape must reach the page.');
+check(str_contains(site_settings_form('t', $defaults, 'design'), 'name="pagination_shape"'), 'Pagination shape selector missing from the form.');
+
 $key = site_editable_text_keys()[0];
 $custom = array_replace($defaults, [
     'palette' => 'japanese', 'grid' => 'masonry', 'columns_mobile' => 4, 'columns_desktop' => 10,

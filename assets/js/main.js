@@ -253,7 +253,6 @@
     /* ---------- Funciones de web app: favoritos, compartir, presentación y continuidad ---------- */
     const initAppPhotoFeatures = () => {
         const FAVORITES_KEY = 'djl-photo-favorites-v1';
-        const LAST_KEY = 'djl-last-photo-v1';
         const readFavorites = () => {
             try { return new Set(JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]')); }
             catch (_) { return new Set(); }
@@ -408,29 +407,9 @@
         document.addEventListener('gallery:rendered', () => {
             if (favoritesOnly) applyFavoritesFilter();
         });
-        const remember = slug => { if (slug) try { localStorage.setItem(LAST_KEY, slug); } catch (_) {} };
-        $$('.card__btn').forEach(btn => btn.addEventListener('click', () => remember(btn.closest('.card')?.dataset.slug || '')));
         const detailSlug = currentSlug();
-        if (detailSlug) remember(detailSlug);
-        else {
-            let last = '';
-            try { last = localStorage.getItem(LAST_KEY) || ''; } catch (_) {}
-            const lastCard = last ? $$('.card').find(card => card.dataset.slug === last) : null;
-            if (last && !sessionStorage.getItem('djl-last-photo-offered')) {
-                sessionStorage.setItem('djl-last-photo-offered', '1');
-                const resume = document.createElement('aside');
-                resume.className = 'photo-resume';
-                resume.innerHTML = '<span>Continúa donde lo dejaste</span><button type="button">Abrir foto</button><button type="button" aria-label="Cerrar">×</button>';
-                const buttons = resume.querySelectorAll('button');
-                buttons[0].addEventListener('click', () => {
-                    const link = lastCard ? $('.card__btn', lastCard) : null;
-                    if (link) link.click(); else location.assign('/foto/' + encodeURIComponent(last));
-                    resume.remove();
-                });
-                buttons[1].addEventListener('click', () => resume.remove());
-                document.body.append(resume);
-            }
-        }
+        // La función «Continúa donde lo dejaste» se eliminó: se borra lo que guardaba.
+        try { localStorage.removeItem('djl-last-photo-v1'); sessionStorage.removeItem('djl-last-photo-offered'); } catch (_) {}
 
         const preloadAround = slug => {
             const cards = $$('.card');

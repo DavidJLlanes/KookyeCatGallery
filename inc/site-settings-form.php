@@ -31,7 +31,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . '<input type="hidden" name="csrf" value="' . $escape($csrf) . '">'
         . '<input type="hidden" name="section" value="' . $escape($section) . '">'
         . '<p>Personaliza la web. Los textos de fotografías y categorías se editan en Gestionar fotos. Los campos admiten texto plano.</p>';
-    $labels = ['palette' => 'Paleta de colores', 'grid' => 'Tipo de cuadrícula', 'header_mobile' => 'Cabecera móvil', 'header_desktop' => 'Cabecera de escritorio', 'gallery_mobile' => 'Galería móvil', 'gallery_desktop' => 'Galería de escritorio', 'hover' => 'Efecto Hover'];
+    $labels = ['palette' => 'Paleta de colores', 'grid' => 'Tipo de cuadrícula', 'header_mobile' => 'Cabecera móvil', 'header_desktop' => 'Cabecera de escritorio', 'gallery_mobile' => 'Galería móvil', 'gallery_desktop' => 'Galería de escritorio', 'hover' => 'Efecto Hover', 'pagination_shape' => 'Forma de la paginación'];
     $choices = site_design_choices();
     $select = static function (string $key, string $label, array $options, $current) use ($escape): string {
         $out = '<div class="upload-field"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '">';
@@ -62,6 +62,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         '<div class="admin-fields">' . $select('grid', $labels['grid'], $choices['grid'], $settings['grid'])
         . $select('gallery_mobile', $labels['gallery_mobile'], $choices['gallery_mobile'], $settings['gallery_mobile'])
         . $select('gallery_desktop', $labels['gallery_desktop'], $choices['gallery_desktop'], $settings['gallery_desktop'])
+        . $select('pagination_shape', $labels['pagination_shape'], $choices['pagination_shape'], $settings['pagination_shape'])
         . $range('columns_mobile', 'Columnas en móvil', $columnsMobile, $settings['columns_mobile'])
         . $range('columns_desktop', 'Columnas en escritorio', $columnsDesktop, $settings['columns_desktop'])
         . $range('photos_mobile', 'Fotos visibles a la vez en móvil', site_photos_per_view_choices(), $settings['photos_mobile'], 'Todas')

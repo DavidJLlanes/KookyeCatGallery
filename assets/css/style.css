@@ -1277,9 +1277,13 @@ body.photo-immersive-open .cursor-ring { display: none !important; }
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    /* Siempre cuadrado (width = height) para que el círculo no se ovale con números de 2 cifras. */
+    box-sizing: border-box;
+    width: 42px;
     min-width: 42px;
     height: 42px;
-    padding: 0 0.6rem;
+    padding: 0;
+    flex: 0 0 auto;
     color: var(--fg-soft);
     text-decoration: none;
     font-family: var(--serif);
@@ -1352,6 +1356,7 @@ body.photo-immersive-open .cursor-ring { display: none !important; }
     }
     .pagination__pages { gap: 0.15rem; }
     .pagination__page {
+        width: 36px;
         min-width: 36px;
         height: 36px;
         font-size: 0.95rem;
@@ -2684,7 +2689,7 @@ html.js .project__link[data-reveal]   { transition-delay: 0.24s; }
     .pagination__controls { gap: .4rem; }
     .pagination__nav { min-height: 38px; padding: .45rem .65rem; font-size: .68rem; }
     .pagination__nav span { display: none; }
-    .pagination__page { min-width: 34px; min-height: 38px; }
+    .pagination__page { width: 38px; min-width: 38px; height: 38px; min-height: 38px; }
     .pagination__info { margin-top: .55rem; font-size: .67rem; }
     .map-section { padding: 2rem 1rem 2.2rem; }
     .map-section__head { max-width: 38rem; margin: 0 auto 1rem; }
@@ -2809,8 +2814,6 @@ html.js .project__link[data-reveal]   { transition-delay: 0.24s; }
 .card[hidden]{display:none!important}
 @media(max-width:768px){.photo-app-action,.gallery-app-tool{min-height:44px;padding:.72rem 1rem}.gallery-app-tools{position:relative;z-index:3;margin-top:.75rem}}
 
-.photo-resume{position:fixed;z-index:9998;left:50%;bottom:max(1rem,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(92vw,430px);display:flex;align-items:center;gap:.7rem;padding:.75rem .8rem .75rem 1rem;border:1px solid rgba(212,165,116,.5);border-radius:999px;background:rgba(15,14,13,.96);box-shadow:0 14px 45px #0009;color:var(--fg);font:500 .72rem/1.2 var(--sans);backdrop-filter:blur(14px)}
-.photo-resume span{flex:1}.photo-resume button{appearance:none;border:0;background:transparent;color:var(--accent);font:600 .72rem var(--sans);cursor:pointer}.photo-resume button:last-child{font-size:1.2rem;color:var(--fg-soft)}
 @media(max-width:768px){.upload-form .upload-field input,.upload-form .upload-field textarea,.upload-form .upload-field select{font-size:16px}.upload-form{gap:1.1rem}.upload-submit{width:100%;position:sticky;bottom:max(.6rem,env(safe-area-inset-bottom));z-index:8}.upload-panel{padding:1rem}.upload-top{gap:.7rem}.upload-top__links{display:flex;gap:.45rem}.upload-top__links a,.upload-top__links button{min-height:44px;display:inline-flex;align-items:center}}
 
 .slideshow-open{overflow:hidden}
