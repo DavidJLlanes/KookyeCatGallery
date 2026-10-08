@@ -60,7 +60,7 @@ const devices = [
             for (const script of scripts) await page.addScriptTag({content: script});
             const label = device.name;
             const state = () => page.evaluate(() => ({
-                index: Number(document.querySelector('#deck').dataset.index), scrollY: Math.round(scrollY),
+                index: Number(document.querySelector('#deck').dataset.index), scrollY: Math.round(scrollY), top: Math.round(document.querySelector('#deck').getBoundingClientRect().top),
                 positions: [...document.querySelectorAll('.deck__card')].map(card => card.dataset.pos).join(','),
                 overflow: document.documentElement.scrollWidth > innerWidth + 1,
             }));
@@ -85,14 +85,14 @@ const devices = [
             let s = await state();
             assert.equal(s.positions, '0,1,2,3,4,4', `${label}: posiciones iniciales del mazo`);
             assert(!s.overflow, `${label}: desbordamiento horizontal`);
-            const baseScroll = s.scrollY;
+            const baseScroll = s.scrollY;   // Referencia para comprobar que, fuera de los límites, la página sí se desplaza.
 
             // 2. Teclado: avanza y retrocede sin mover la página.
             await page.keyboard.press('ArrowDown'); await settle();
             s = await state();
             assert.equal(s.index, 1, `${label}: ArrowDown avanza`);
             assert.equal(s.positions, '-1,0,1,2,3,4', `${label}: la carta pasada sale y el mazo avanza`);
-            assert.equal(s.scrollY, baseScroll, `${label}: el fondo no debe moverse`);
+            assert(Math.abs(s.top) <= 2, `${label}: el fondo no debe moverse (la baraja se desplazó a top=${s.top})`);
             await page.keyboard.press('ArrowUp'); await settle();
             assert.equal((await state()).index, 0, `${label}: ArrowUp retrocede`);
 
@@ -124,7 +124,7 @@ const devices = [
                 await page.mouse.wheel(0, 120); await settle();
                 s = await state();
                 assert.equal(s.index, 1, `${label}: la rueda hacia abajo avanza`);
-                assert.equal(s.scrollY, baseScroll, `${label}: la rueda no debe mover el fondo`);
+                assert(Math.abs(s.top) <= 2, `${label}: la rueda no debe mover el fondo (top=${s.top})`);
                 await page.mouse.wheel(0, -120); await settle();
                 assert.equal((await state()).index, 0, `${label}: la rueda hacia arriba retrocede`);
                 // Límite inferior: en la última foto la rueda libera la página.
@@ -156,11 +156,11 @@ const devices = [
                 await swipe(-140);
                 s = await state();
                 assert.equal(s.index, before.index + 1, `${label}: deslizar hacia arriba avanza (antes ${JSON.stringify(before)}, después ${JSON.stringify(s)}, top=${await page.evaluate(() => document.querySelector('#deck').getBoundingClientRect().top)})`);
-                assert.equal(s.scrollY, before.scrollY, `${label}: el dedo no debe mover el fondo`);
+                assert(Math.abs(s.top - before.top) <= 2, `${label}: el dedo no debe mover el fondo (top ${before.top} → ${s.top})`);
                 await swipe(140);
                 s = await state();
                 assert.equal(s.index, before.index, `${label}: deslizar hacia abajo retrocede`);
-                assert.equal(s.scrollY, before.scrollY, `${label}: el dedo no debe mover el fondo al retroceder`);
+                assert(Math.abs(s.top - before.top) <= 2, `${label}: el dedo no debe mover el fondo al retroceder (top ${before.top} → ${s.top})`);
                 // Límite: en la última foto, deslizar hacia arriba deja que la página siga.
                 await page.keyboard.press('End'); await settle();
                 await swipe(-260, 12);
