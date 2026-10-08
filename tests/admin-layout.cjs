@@ -25,12 +25,10 @@ function extractFunction(string $source, string $name): string {
 foreach (['uploadEscape', 'adminIcon', 'adminActiveSection', 'adminShellHtml', 'uploadPage', 'adminNavigation'] as $name) eval(extractFunction($source,$name));
 $_GET['settings'] = '1';
 $section = getenv('ADMIN_TEST_SECTION') ?: 'design';
-$start = strpos($source, '$tabs =');
-$end = strpos($source, 'uploadPage($section', $start);
-eval(substr($source,$start,$end-$start));
+$_GET['section'] = $section;
 $settings = site_settings_defaults();
 $settings['section_order'] = ['social', 'gallery', 'categories', 'map', 'project'];
-uploadPage($section === 'design' ? 'Diseño' : 'Perfil', adminNavigation('test-token') . $tabs . site_settings_form('test-token', $settings, $section), 200, true);
+uploadPage($section === 'design' ? 'Diseño' : 'Perfil', adminNavigation('test-token') . site_settings_form('test-token', $settings, $section), 200, true);
 `;
 (async()=>{
   const browser=await chromium.launch({headless:true,executablePath:process.env.TEST_BROWSER||undefined,args:['--no-sandbox']});
@@ -48,10 +46,11 @@ uploadPage($section === 'design' ? 'Diseño' : 'Perfil', adminNavigation('test-t
             const install=document.querySelector('#installAppButton');install.hidden=installed;
             const box=el=>el?el.getBoundingClientRect().toJSON():null;
             const visible=el=>!!el&&getComputedStyle(el).display!=='none';
-            const tabs=document.querySelector('.admin-subnav'),form=document.querySelector('.site-settings');
-            const links=[...tabs.querySelectorAll('a')].map(box);
+            const form=document.querySelector('.site-settings');
+            const active=[...document.querySelectorAll('.admin-sidebar .admin-nav__link.is-active')].map(a=>a.textContent.trim());
+            const navLabels=[...document.querySelectorAll('.admin-sidebar .admin-nav__link')].map(a=>a.textContent.trim());
             const sidebar=document.querySelector('.admin-sidebar'),tabbar=document.querySelector('.admin-tabbar'),topbar=document.querySelector('.admin-topbar');
-            return {nested:tabs.contains(form),tabs:box(tabs),form:box(form),links,install:box(install),installInTopbar:topbar.contains(install),
+            return {subnav:!!document.querySelector('.admin-subnav'),active,navLabels,form:box(form),install:box(install),installInTopbar:topbar.contains(install),
               sidebar:visible(sidebar),tabbar:visible(tabbar),tabbarBox:box(tabbar),
               savebar:box(document.querySelector('.admin-savebar')),
               fields:[...document.querySelectorAll('.admin-card select, .admin-card input:not([type=hidden]):not([type=checkbox]), .section-order__move button')].filter(visible).map(box).filter(b=>b.width>0),
@@ -59,9 +58,9 @@ uploadPage($section === 'design' ? 'Diseño' : 'Perfil', adminNavigation('test-t
               h1:document.querySelectorAll('h1').length,
               order:[...document.querySelectorAll('input[name="section_order[]"]')].map(i=>i.value)};
           },installed);
-          assert(!result.nested,'Settings form must not be inside navigation');
-          assert(result.tabs.bottom<=result.form.top+1,'Sub-tabs must be above, not beside the form');
-          assert(Math.abs(result.links[0].top-result.links[1].top)<1,'Perfil and Diseño must align');
+          assert(!result.subnav,'Perfil and Diseño are separate menu entries, not sub-tabs');
+          assert.deepEqual(result.navLabels,['Subir foto','Gestionar fotos','Categorías','Perfil','Diseño y textos'],'Menu entries');
+          assert.deepEqual(result.active,[section==='design'?'Diseño y textos':'Perfil'],'Active menu entry');
           assert(!result.overflow,`Admin overflow ${width}`);
           assert(result.installInTopbar,'Install belongs in the top bar');
           assert.equal(result.h1,1,'One h1 per page');
@@ -89,6 +88,6 @@ uploadPage($section === 'design' ? 'Diseño' : 'Perfil', adminNavigation('test-t
         await page.close();
       }
     }
-    console.log('Admin shell verified: sidebar/tab bar, sub-tabs, section ordering and save bar at seven widths.');
+    console.log('Admin shell verified: sidebar/tab bar, separate Perfil/Diseño menu entries, section ordering and save bar at seven widths.');
   } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1);});
