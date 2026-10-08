@@ -447,7 +447,6 @@
                 image.alt = card.dataset.title || 'Fotografía';
                 caption.textContent = card.dataset.title || '';
                 image.onload = () => image.classList.add('is-ready');
-                remember(card.dataset.slug || '');
                 preloadAround(card.dataset.slug || '');
             };
             const step = delta => { index = (index + delta + cards.length) % cards.length; render(); };

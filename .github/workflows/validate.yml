@@ -56,6 +56,10 @@ jobs:
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/pagination-shape.cjs
+      - name: Comprobar la presentación de fotos
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/slideshow.cjs
       - name: Comprobar la visibilidad de las categorías
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
