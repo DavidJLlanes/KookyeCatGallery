@@ -12,7 +12,8 @@
  *   .deck__card                Una carta por foto. El JS le pone data-pos (posición respecto a la carta
  *                              activa: 0 = encima, 1..3 = mazo, -1 = ya pasada) y el CSS la coloca en 3D.
  *   .deck__card[data-*]        category, slug, title… (los mismos data-* que las tarjetas estándar).
- *   .deck__ui                  Controles superpuestos: contador, flechas, herramientas y pista.
+ *   .deck__ui                  Controles superpuestos: contador, flechas, botón «Salir», herramientas y pista.
+ *   [data-deck-exit]           Botón «Salir»: baja la página hasta lo que sigue a la galería (deck.js, sección 9).
  *   #favoritesToggle           Mismos id que en la galería estándar: main.js gestiona su estado.
  *   #slideshowStart
  *
@@ -87,6 +88,12 @@ $deckTotal = count($galleryItems);
                 <p class="deck__counter" aria-live="polite"><span data-deck-current>1</span><span class="deck__counter-sep">/</span><span data-deck-total><?= $deckTotal ?></span></p>
                 <button type="button" class="deck__arrow" data-deck-next aria-label="<?= site_text_html('deck_next') ?>">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+                </button>
+                <span class="deck__nav-sep" aria-hidden="true"></span>
+                <!-- Salir del modo pantalla completa: baja la página hasta lo que sigue a la galería. -->
+                <button type="button" class="deck__exit" data-deck-exit aria-label="<?= site_text_html('deck_exit_label') ?>">
+                    <span class="deck__exit-text"><?= site_text_html('deck_exit') ?></span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l6 6 6-6M6 13l6 6 6-6"/></svg>
                 </button>
             </div>
 

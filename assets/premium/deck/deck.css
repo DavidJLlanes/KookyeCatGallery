@@ -53,7 +53,7 @@
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
-    touch-action: pan-y;                            /* El JS bloquea el scroll solo mientras mueve cartas. */
+    touch-action: pan-y;                            /* Mientras la baraja no llena la pantalla, el dedo desplaza la página. Acoplada: touch-action: none (ver más abajo). */
     /* Sin overscroll-behavior: en navegadores recientes impediría que la rueda siga desplazando la página al llegar
        a la primera o última foto. El JS ya controla cuándo se captura el gesto. */
 }
@@ -146,10 +146,18 @@
     pointer-events: none;
 }
 
-/* Solo la carta activa muestra su pie de foto y es interactiva. */
+/* Pie de foto y corazones: solo los de la carta activa, y sin solaparse con los de la que se va.
+   La carta que sale los oculta enseguida; la que llega los muestra cuando ya casi ha terminado de moverse. */
 .deck__card:not([data-pos="0"]) .deck__caption,
 .deck__card:not([data-pos="0"]) .deck__hearts {
     opacity: 0;
+    transition: opacity .12s ease;
+}
+
+.deck__card[data-pos="0"] .deck__caption,
+.deck__card[data-pos="0"] .deck__hearts {
+    opacity: 1;
+    transition: opacity .45s ease calc(var(--deck-duration) * .55);
 }
 
 /* ---------------------------------------------------------------------------
@@ -221,7 +229,6 @@
     background: linear-gradient(0deg, rgba(0, 0, 0, .66), rgba(0, 0, 0, 0));
     color: #fff;
     pointer-events: none;
-    transition: opacity .3s ease;
 }
 
 .deck__title {
@@ -246,7 +253,6 @@
     top: max(.9rem, env(safe-area-inset-top));
     right: auto;
     left: max(.9rem, env(safe-area-inset-left));
-    transition: opacity .3s ease;
 }
 
 /* ---------------------------------------------------------------------------
@@ -318,6 +324,35 @@
 .deck__arrow:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent); }
 .deck__arrow:disabled { opacity: .3; cursor: default; }
 
+.deck__nav-sep {
+    align-self: stretch;
+    width: 1px;
+    margin: .55rem .1rem;
+    background: var(--line);
+}
+
+/* Botón «Salir»: sale del modo pantalla completa y baja a lo que sigue en la web. */
+.deck__exit {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    height: 44px;
+    margin: 0;
+    padding: 0 .95rem 0 .75rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--fg);
+    font: 600 .72rem / 1 var(--sans);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease;
+}
+
+.deck__exit svg { width: 18px; height: 18px; }
+.deck__exit:hover { background: var(--accent-soft); color: var(--accent); }
+
 .deck__counter {
     min-width: 4.4ch;
     margin: 0;
@@ -376,8 +411,38 @@
 
 @media (max-width: 520px) {
     .deck__tools .gallery-app-tool { padding: .55rem .8rem; font-size: .68rem; }
-    .deck__nav { gap: .5rem; }
+    .deck__nav { gap: .35rem; }
     .deck__arrow { width: 40px; height: 40px; }
+    .deck__exit { width: 40px; height: 40px; padding: 0; justify-content: center; }
+    .deck__exit-text { display: none; }               /* En móvil estrecho solo el icono (con su etiqueta accesible). */
+}
+
+/* Pantallas bajas (móvil apaisado): menos pie de foto y controles más pequeños para que nada se pise. */
+@media (max-height: 520px) {
+    .deck__caption {
+        padding-top: 1.5rem;
+        padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+    }
+    .deck__title { font-size: clamp(1.15rem, 5.5vh, 1.7rem); max-width: 28ch; }
+    .deck__category { margin-top: .3rem; font-size: .62rem; }
+    .deck__nav { bottom: max(.5rem, env(safe-area-inset-bottom)); padding: .2rem; gap: .35rem; }
+    .deck__arrow, .deck__exit { height: 36px; }
+    .deck__arrow { width: 36px; }
+    .deck__hint { display: none; }
+}
+
+/* Baraja acoplada (llena la pantalla): el navegador no desplaza la página con el dedo. Los gestos los gestiona
+   deck.js, que también sale de la galería al deslizar más allá de la primera o la última foto. Sin esto, iOS y
+   Android empiezan a desplazar la página antes de que el JS pueda impedirlo. */
+html.deck-engaged .deck { touch-action: none; }
+
+/* Mientras la baraja llena la pantalla se apartan los botones flotantes de la web («Añadir foto» y «Subir»):
+   se pisaban con la barra inferior y con el pie de foto. Vuelven al salir de la galería. */
+html.deck-engaged .upload-fab,
+html.deck-engaged .top-btn {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity .25s ease;
 }
 
 /* ---------------------------------------------------------------------------

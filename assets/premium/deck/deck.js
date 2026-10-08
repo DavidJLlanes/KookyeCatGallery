@@ -17,6 +17,8 @@
        la baraja llena la pantalla (aunque haya inercia); a partir de ahí, los gestos mueven las fotos.
      · Desde la ficha de una foto, «Volver a la galería» regresa a esa misma foto, en la baraja a pantalla
        completa (enlace /#baraja=<slug>, y botón «Atrás» del navegador).
+     · El botón «Salir» baja la página hasta lo que sigue a la galería, sin volver a frenarse en ella.
+       En móvil, deslizar más allá de la primera o la última foto también sale de la galería.
      · Ajusta cada foto a la pantalla: la cubre entera si su proporción es parecida a la de la
        pantalla y, si no, la muestra completa sobre su propio desenfoque (sin recortes absurdos).
 
@@ -25,6 +27,7 @@
      2. Filtros                    6. Entrada: teclado, botones y filtros
      3. Pintado (render)           7. Parada del scroll al llegar a la baraja
      4. Entrada: rueda             8. Volver desde la ficha de una foto
+     9. Salir de la galería («Salir», gestos en los límites) y estado «acoplada»
    ============================================================================= */
 (() => {
     'use strict';
@@ -72,6 +75,10 @@
         window.setTimeout(() => { aligning = false; }, 450);
         startLock(450);   // Parada: lo que quede del gesto que trajo hasta aquí no debe pasar fotos.
     };
+
+    // Salida (botón «Salir» o gesto en un límite): mientras dura, la baraja no captura ningún gesto.
+    let exitUntil = 0;
+    const exiting = () => performance.now() < exitUntil;
 
     // «Parada»: mientras dura, la página no puede desplazarse (ver la sección 7). La usa también la rueda.
     let locked = false;
@@ -184,7 +191,7 @@
     let lastAbs = 0;
 
     window.addEventListener('wheel', event => {
-        if (event.ctrlKey || event.defaultPrevented) return;                   // ctrl+rueda = zoom del navegador.
+        if (event.ctrlKey || event.defaultPrevented || exiting()) return;      // ctrl+rueda = zoom del navegador.
         if (locked) {                      // Parada al llegar: se absorbe la inercia del gesto que trajo hasta aquí.
             event.preventDefault();
             extendLock(160);
@@ -233,7 +240,7 @@
     }, { passive: true });
 
     root.addEventListener('touchmove', event => {
-        if (locked) { touch = null; return; }   // Parada al llegar: este gesto no mueve cartas.
+        if (locked || exiting()) { touch = null; return; }   // Parada al llegar o salida: este gesto no mueve cartas.
         if (!touch || event.touches.length !== 1) return;
         // Un gesto que ya movió cartas se queda con TODO el recorrido del dedo: si no, el resto del gesto
         // desplazaría la página de fondo.
@@ -250,7 +257,14 @@
         }
         const delta = touch.axis === 'y' ? dy : dx;
         const direction = delta < 0 ? 1 : -1;
-        if (!canStep(direction)) { touch.done = true; return; }   // Límite: se deja pasar el scroll.
+        if (!canStep(direction)) {
+            // Límite (primera o última foto). Con la baraja acoplada el CSS usa touch-action: none, así que el
+            // navegador ya no desplaza la página por sí solo: se sale de la galería por script (sección 9).
+            if (event.cancelable) event.preventDefault();
+            touch.captured = true;
+            if (Math.abs(delta) >= 24) { touch.done = true; leaveDeck(direction); }   // Recorrido mínimo para salir.
+            return;
+        }
         if (event.cancelable) event.preventDefault();             // El fondo de la web no se mueve.
         touch.captured = true;                                    // A partir de aquí el gesto es de la baraja.
         if (!isAligned()) { align(); touch.done = true; return; }
@@ -272,7 +286,7 @@
        ------------------------------------------------------------------------- */
     document.addEventListener('keydown', event => {
         if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
-        if (document.body.classList.contains('slideshow-open')) return;
+        if (document.body.classList.contains('slideshow-open') || exiting()) return;
         const target = event.target;
         if (target instanceof Element && target.closest('input, select, textarea, [contenteditable="true"]')) return;
         if (!isEngaged()) return;
@@ -397,7 +411,34 @@
         window.setTimeout(showDeck, 500);
     };
 
+    /* -------------------------------------------------------------------------
+       9. Salir de la galería y estado «acoplada»
+       · El botón «Salir» baja la página hasta el final de la baraja (lo que sigue en la web).
+       · En móvil, con la baraja acoplada el navegador no desplaza la página con el dedo (touch-action: none en
+         el CSS: es lo único fiable en iOS y Android para que el fondo no se mueva). Por eso, deslizar más allá
+         de la última foto sale hacia abajo y más allá de la primera, hacia arriba, por script.
+       · Durante la salida la baraja no captura gestos ni vuelve a frenar la página. Para volver, basta con
+         desplazarse hacia ella: al cruzarla se detiene otra vez (sección 7).
+       · Mientras la baraja llena la pantalla, la página recibe html.deck-engaged: el CSS aparta los botones
+         flotantes de la web, que se pisaban con la barra inferior.
+       ------------------------------------------------------------------------- */
+    const leaveDeck = direction => {
+        const smooth = !reducedMotion.matches;
+        exitUntil = performance.now() + (smooth ? 1400 : 300);
+        skipCatchUntil = exitUntil;
+        lockUntil = 0;                                           // Cancela cualquier parada en curso.
+        const top = direction > 0 ? deckTop() + root.offsetHeight : Math.max(0, deckTop() - window.innerHeight);
+        window.scrollTo({ top, behavior: smooth ? 'smooth' : 'instant' });
+    };
+
+    root.querySelector('[data-deck-exit]')?.addEventListener('click', () => leaveDeck(1));
+
+    const syncEngaged = () => document.documentElement.classList.toggle('deck-engaged', isEngaged());
+    window.addEventListener('scroll', syncEngaged, { passive: true });
+    window.addEventListener('resize', syncEngaged);
+
     updateFit();
     render();
     restoreFromSlug();
+    syncEngaged();
 })();

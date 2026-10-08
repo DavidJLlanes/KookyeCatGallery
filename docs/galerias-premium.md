@@ -45,6 +45,10 @@ Se elige en el panel: **Textos y diseño → Diseño → Galería premium**.
 - **El scroll de la página se detiene al llegar a la galería.** Al bajar desde arriba (o subir desde abajo), la página frena justo cuando la baraja ocupa toda la pantalla, aunque el gesto traiga inercia, y esa inercia no pasa fotos. A partir de ahí, los gestos mueven las fotos.
 - **El fondo de la web no se mueve** mientras se pasan cartas. En la **primera** y en la **última** foto la galería deja de capturar el gesto y la página continúa su scroll normal, así se puede salir de la galería hacia arriba o hacia abajo.
 - Si la galería no está alineada con la pantalla, el primer gesto solo la encaja; los siguientes pasan cartas.
+- **Botón «Salir»** (a la derecha de la barra inferior): sale del modo pantalla completa y baja la página hasta lo que sigue a la galería, sin volver a frenarse en ella. Para volver, basta con subir: la página se detiene otra vez en la baraja.
+- **En móvil, la página no se mueve con el dedo mientras la baraja llena la pantalla** (el CSS usa `touch-action: none`: es lo único fiable en iOS y Android). Por eso, deslizar más allá de la última foto sale de la galería hacia abajo, y más allá de la primera, hacia arriba.
+- **Botones flotantes de la web** («Añadir foto» y «Subir»): se apartan mientras la baraja llena la pantalla, porque se pisaban con la barra inferior, y vuelven al salir.
+- **Pies de foto:** solo se ve el de la carta activa; el de la que sale se oculta enseguida y el de la que llega aparece cuando casi ha terminado de moverse, para que nunca se solapen. En pantallas bajas (móvil apaisado) el pie y los controles se reducen.
 - Pulsar una foto abre su ficha (`/foto/<slug>`). En la ficha, **«Volver a la galería»** (y el botón «Atrás» del navegador) regresa a **esa misma foto**, en la baraja a pantalla completa. El enlace usa `/#baraja=<slug>`; la dirección se limpia al llegar.
 - **Ajuste a la pantalla:** si la proporción de la foto se parece a la de la pantalla, la cubre entera; si no (por ejemplo una foto vertical en un monitor), se muestra **completa sobre su propio desenfoque**, sin recortes.
 - **Filtros:** los botones del bloque «Categorías» y el botón «Favoritas» filtran la baraja; si no hay fotos, avisa.
@@ -109,5 +113,5 @@ Reglas del contrato: una galería premium debe ocupar su bloque entero, no depen
 ## Pruebas
 
 - `php tests/site-settings.php`: validación del ajuste, campos opcionales con una galería premium y formulario.
-- `node tests/premium-deck.cjs`: Estilo Baraja en 5 dispositivos (escritorio, portátil, tablet, móvil y móvil apaisado): pantalla completa, parada del scroll al llegar, rueda, dedo, teclado, límites, ajuste de foto, filtros, vuelta desde la ficha, paletas y movimiento reducido.
+- `node tests/premium-deck.cjs`: Estilo Baraja en 5 dispositivos (escritorio, portátil, tablet, móvil y móvil apaisado): pantalla completa, parada del scroll al llegar, rueda, dedo (también gestos lentos y `touch-action`), teclado, límites, botón «Salir», botones flotantes, pies de foto sin solaparse, ajuste de foto, filtros, vuelta desde la ficha, paletas y movimiento reducido.
 - `node tests/admin-layout.cjs`: el panel desactiva y reactiva los campos de la galería estándar.

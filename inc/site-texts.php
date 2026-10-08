@@ -6,6 +6,8 @@ return [
     'deck_next' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Foto siguiente'],
     'deck_hint_touch' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Desliza hacia arriba'],
     'deck_hint_wheel' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Rueda del ratón o flechas'],
+    'deck_exit' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Salir'],
+    'deck_exit_label' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Salir de la galería y seguir viendo la web'],
     'deck_empty_filter' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'No hay fotos en esta selección'],
     'categories_title' => ['group' => 'Inicio y galería', 'default' => 'Categorías'],
     'photo_navigation' => ['group' => 'Controles e instalación', 'default' => 'Navegación entre fotografías'],

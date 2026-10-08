@@ -31,6 +31,7 @@ const pageHtml = palette => `<!doctype html><html lang="es"><head><meta charset=
 <div class="categories-filter" style="height:120px;overflow:hidden"><div class="categories-filter__inner"><button class="categories-filter__chip is-active" data-category="">Todas</button>
 <button class="categories-filter__chip" data-category="A">A</button><button class="categories-filter__chip" data-category="B">B</button></div></div>
 ${markup}
+<a class="upload-fab" href="#" aria-label="Subir">+</a><button class="top-btn" type="button" aria-label="Subir">↑</button>
 <section id="after" style="height:1600px">Siguiente bloque</section></body></html>`;
 
 const devices = [
@@ -195,6 +196,73 @@ const devices = [
                 await toDeck();
                 await page.keyboard.press('Home'); await settle();
             }
+
+            // 5b. Pies de foto sin solaparse: mientras una carta sale y otra llega, nunca se ven los dos pies a la vez.
+            if (!device.touch) {
+                await toDeck();
+                const overlap = await page.evaluate(() => new Promise(resolve => {
+                    const cards = [...document.querySelectorAll('.deck__card')];
+                    let worst = 0; const t0 = performance.now();
+                    document.dispatchEvent(new KeyboardEvent('keydown', {key: 'ArrowDown', bubbles: true}));
+                    const tick = () => {
+                        const opacities = cards.slice(0, 3).map(card => parseFloat(getComputedStyle(card.querySelector('.deck__caption')).opacity));
+                        const sorted = opacities.sort((x, y) => y - x);
+                        worst = Math.max(worst, sorted[1]);          // El segundo pie más visible: debe ser casi invisible.
+                        if (performance.now() - t0 < 1600) requestAnimationFrame(tick); else resolve(worst);
+                    };
+                    tick();
+                }));
+                assert(overlap < 0.35, `${label}: los pies de foto se solapan al pasar de carta (${overlap.toFixed(2)})`);
+                await settle();
+                await page.keyboard.press('Home'); await settle();
+            }
+
+            // 5c. Móvil: con la baraja acoplada el navegador NO debe poder desplazar la página con el dedo
+            //     (touch-action: none), aunque el gesto empiece despacio; y deslizar más allá de la primera foto sale hacia arriba.
+            if (device.touch) {
+                await toDeck();
+                assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#deck')).touchAction), 'none', `${label}: la baraja acoplada debe usar touch-action: none`);
+                const slowBefore = await state();
+                const x = device.viewport.width / 2; let y = device.viewport.height * 0.62;
+                await cdp.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [{x, y}]});
+                for (let i = 1; i <= 70; i++) { await cdp.send('Input.dispatchTouchEvent', {type: 'touchMove', touchPoints: [{x, y: y - 2 * i}]}); }
+                await cdp.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []});
+                await page.waitForTimeout(1500);
+                s = await state();
+                assert.equal(s.index, slowBefore.index + 1, `${label}: un gesto lento también avanza una foto`);
+                assert(Math.abs(s.top - slowBefore.top) <= 2, `${label}: un gesto lento no debe mover la página (top ${slowBefore.top} → ${s.top})`);
+                await page.keyboard.press('Home'); await settle();
+                await toDeck();
+                const upBefore = await state();
+                await swipe(260, 12, 1500);
+                await page.waitForFunction(max => scrollY < max, upBefore.scrollY - 100, {timeout: 6000}).catch(() => {});
+                const up = await state();
+                assert(up.scrollY < upBefore.scrollY - 100 && up.index === 0, `${label}: deslizar hacia abajo en la primera foto debe subir la página (${JSON.stringify({upBefore, up})})`);
+                await toDeck();
+            }
+
+            // 5d. Botón «Salir»: baja la página hasta lo que sigue a la galería y no vuelve a frenarse en ella.
+            //     Mientras la baraja llena la pantalla, los botones flotantes de la web se apartan; al salir, vuelven.
+            await toDeck();
+            const fabHidden = await page.evaluate(() => getComputedStyle(document.querySelector('.upload-fab')).opacity);
+            assert.equal(fabHidden, '0', `${label}: los botones flotantes deben apartarse mientras la baraja llena la pantalla`);
+            const exitBefore = await state();
+            await page.click('[data-deck-exit]');
+            await page.waitForFunction(() => document.querySelector('#after').getBoundingClientRect().top <= 5, null, {timeout: 6000}).catch(() => {});
+            await page.waitForTimeout(900);
+            const left = await page.evaluate(() => ({
+                afterTop: Math.round(document.querySelector('#after').getBoundingClientRect().top), scrollY: Math.round(scrollY),
+                deckBottom: Math.round(document.querySelector('#deck').getBoundingClientRect().bottom), fab: getComputedStyle(document.querySelector('.upload-fab')).opacity,
+                engaged: document.documentElement.classList.contains('deck-engaged'), index: Number(document.querySelector('#deck').dataset.index)}));
+            assert(left.afterTop <= 5 && left.deckBottom <= 5, `${label}: «Salir» debe dejar la web siguiente a pantalla completa (${JSON.stringify(left)})`);
+            assert.equal(left.engaged, false, `${label}: al salir la baraja ya no está acoplada`);
+            assert.equal(left.fab, '1', `${label}: al salir vuelven los botones flotantes`);
+            assert.equal(left.index, exitBefore.index, `${label}: salir no cambia la foto`);
+            assert(Math.abs(left.scrollY - (exitBefore.scrollY + box.vh)) <= 3, `${label}: «Salir» baja exactamente una pantalla (${JSON.stringify({left, exitBefore})})`);
+            // Subir otra vez hacia la baraja: se detiene en ella (parada) y no se queda pegada abajo.
+            await page.evaluate(() => window.scrollTo({top: 0, behavior: 'instant'}));
+            await page.waitForTimeout(400);
+            await toDeck();
 
             // 6. Ajuste a la pantalla: cada foto cubre la carta si su proporción se parece a la pantalla y, si no, se ve completa.
             const fits = await page.evaluate(() => [...document.querySelectorAll('.deck__card')].map(card => ({
