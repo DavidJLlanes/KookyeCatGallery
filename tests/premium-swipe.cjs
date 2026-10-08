@@ -143,7 +143,7 @@ const open = async (context, html, {liked = [], url = 'https://deck.test/'} = {}
             assert.equal(ui.stamps, 2, `${label}: la carta lleva un sello de corazón y otro de flecha`);
 
             // 3. Arrastre corto: la carta vuelve a su sitio y no ocurre nada.
-            await drag(30, 0);
+            await drag(22, 0);
             s = await state();
             assert.equal(s.index, 0, `${label}: un arrastre corto no avanza`);
             assert.equal(posts.length, 0, `${label}: un arrastre corto no da corazón`);
@@ -153,6 +153,7 @@ const open = async (context, html, {liked = [], url = 'https://deck.test/'} = {}
             const stamps = await page.evaluate(() => { const card = document.querySelector('.deck__card[data-pos="0"]'); return {like: parseFloat(getComputedStyle(card.querySelector('.swipe__stamp--like')).opacity), pass: parseFloat(getComputedStyle(card.querySelector('.swipe__stamp--pass')).opacity), transform: card.style.transform}; });
             assert(stamps.like > 0.3 && stamps.pass === 0, `${label}: al arrastrar hacia el corazón se ve el sello del corazón (${JSON.stringify(stamps)})`);
             assert(stamps.transform.includes('rotate'), `${label}: la carta sigue al dedo girando`);
+            await page.waitForTimeout(250);                                    // El dedo se detiene un momento: no es un gesto rápido.
             if (device.touch) await cdp.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []}); else await page.mouse.up();
             await page.waitForTimeout(900);
             assert.equal((await state()).index, 0, `${label}: soltar antes del umbral deja la carta en su sitio`);

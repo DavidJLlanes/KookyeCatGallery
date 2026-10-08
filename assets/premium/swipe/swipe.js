@@ -316,7 +316,9 @@
 
     const endDrag = event => {
         if (!drag || event.pointerId !== drag.id) return;
-        const { card, dx, vx, axis } = drag;
+        const { card, dx, axis } = drag;
+        // La velocidad solo vale si el dedo sigue moviéndose al soltar: si se detuvo un momento antes, no es un gesto rápido.
+        const vx = event.timeStamp - drag.lastT > 120 ? 0 : drag.vx;
         drag = null;
         if (axis !== 'x') return;
         suppressClickUntil = performance.now() + 60;               // Arrastrar no es pulsar: no abre la ficha.
