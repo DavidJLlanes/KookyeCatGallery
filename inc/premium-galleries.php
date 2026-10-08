@@ -73,6 +73,15 @@ function site_premium_gallery_definitions(): array
             'css' => ['assets/premium/deck/deck.css', 'assets/premium/drum/drum.css'],
             'js' => 'assets/premium/deck/deck.js',
         ],
+        // «Estilo Cilindro» lleva la interfaz de la baraja (deck.css) y su propio marcado, estilos y JS (geometría 3D calculada).
+        'cylinder' => [
+            'label' => 'Estilo Cilindro',
+            'description' => 'Pantalla completa. Varias filas de fotos de distintos tamaños forman un cilindro giratorio que ocupa todo el '
+                . 'ancho de la pantalla (en escritorio, estirado hacia los bordes). Misma interfaz que «Estilo Baraja».',
+            'partial' => 'cylinder',
+            'css' => ['assets/premium/deck/deck.css', 'assets/premium/cylinder/cylinder.css'],
+            'js' => 'assets/premium/cylinder/cylinder.js',
+        ],
     ];
 }
 

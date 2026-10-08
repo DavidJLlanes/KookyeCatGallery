@@ -23,3 +23,4 @@ y solo cambian cómo se colocan y se mueven las fotos. Se harán progresivamente
 - [x] **Estilo Burbujas** (`bubbles`): fotos en círculos de distintos tamaños que flotan lentamente, paginadas.
 - [x] **Estilo Cuadrados** (`squares`): lo mismo que las burbujas, con cuadrados.
 - [x] **Estilo Tambor** (`drum`): carrusel cilíndrico 3D con la interfaz de la baraja.
+- [x] **Estilo Cilindro** (`cylinder`): variación del tambor con varias filas de fotos de distintos tamaños que llenan la pantalla.

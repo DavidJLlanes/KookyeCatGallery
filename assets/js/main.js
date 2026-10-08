@@ -14,9 +14,9 @@
     const $  = (sel, ctx = document) => ctx.querySelector(sel);
     const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
     // Tarjetas de foto: las de la galería estándar (.card) y las de las galerías premium: «Estilo Baraja» (.deck__card)
-    // y «Estilo Burbujas» (.bubbles__item). La raíz de la galería es #masonry (estándar), #deck o #bubbles (premium).
+    // «Estilo Burbujas» (.bubbles__item) y «Estilo Cilindro» (.cyl__item). La raíz de la galería es #masonry (estándar), #deck o #bubbles (premium).
     // Ver docs/galerias-premium.md.
-    const CARDS = '.card, .deck__card, .bubbles__item';
+    const CARDS = '.card, .deck__card, .bubbles__item, .cyl__item';
     const galleryRoot = () => $('#masonry') || $('#deck') || $('#bubbles');
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;

@@ -12,6 +12,7 @@ Se elige en el panel: **Textos y diseño → Diseño → Galería premium**.
 | **Estilo Burbujas** | `bubbles` | Pantalla completa. Las fotos son círculos de distintos tamaños, con un pequeño marco, repartidos al azar por toda la pantalla y flotando lentamente. Se paginan. |
 | **Estilo Cuadrados** | `squares` | Igual que «Estilo Burbujas», pero con cuadrados de distintos tamaños (esquinas suavemente redondeadas). |
 | **Estilo Tambor** | `drum` | Pantalla completa. Las fotos giran como un tambor 3D (carrusel cilíndrico): la activa de frente y las vecinas curvadas hacia atrás a ambos lados. Misma interfaz que «Estilo Baraja». |
+| **Estilo Cilindro** | `cylinder` | Pantalla completa. Varias filas de fotos de distintos tamaños forman un cilindro giratorio que ocupa todo el ancho (en escritorio, estirado hacia los bordes). Misma interfaz que «Estilo Baraja». |
 
 ## Qué cambia al activar una galería premium
 
@@ -127,6 +128,20 @@ Carrusel cilíndrico: las fotos están en un cilindro 3D que gira en horizontal.
 - **Ajustes:** `--drum-angle` (giro entre cartas, 38°) y `--drum-r` (radio) en `.deck__stage` de `drum.css`; el tamaño del marco, en `--frame-w`. Duración y curva del giro: las de la baraja (`--deck-duration`, `--deck-ease`).
 - **Panel:** ignora los mismos ajustes de la galería estándar que la baraja (8 campos desactivados).
 
+## Estilo Cilindro (`cylinder`)
+
+Variación del tambor: en vez de una carta por posición, hay **varias filas de fotos de distintos tamaños** alrededor de un **cilindro** de eje vertical que gira. Lleva la **misma interfaz que la baraja** (herramientas «Favoritas» y «Presentación», barra con flechas y contador, botones «Salir» y «Salir hacia arriba», pista) y se comporta igual (rueda, dedo, teclado, parada del scroll en escritorio, fijación en móvil, filtros, vuelta a la misma foto).
+
+- **Marcado y estilos:** `inc/premium/cylinder.php` (la raíz es `#deck.deck[data-layout="cylinder"]`, así sirve la interfaz de `deck.css`) y `assets/premium/cylinder/cylinder.css` (el escenario 3D y el aspecto de cada foto). Se cargan `deck.css` y `cylinder.css`.
+- **Geometría calculada (`cylinder.js`, sección 3):** como el cilindro no es redondo, la posición de cada foto no está en el CSS: el JS la calcula y la pinta en cada fotograma de la animación.
+  - **Filas:** de 1 a 4 bandas apiladas (móvil vertical: unas 3-4; escritorio: 2). Las filas impares van medio hueco desplazadas, como un ladrillo.
+  - **Tamaños distintos:** cada foto tiene un ancho (78-100 % del hueco) y un alto (64-100 % de la fila) estables, derivados de su posición.
+  - **Ocupar la pantalla:** el radio horizontal se calcula (búsqueda binaria, ya con la perspectiva) para que la silueta del cilindro llegue justo a los bordes de la pantalla. En móvil vertical el cilindro es más redondo (profundidad = 0,78 del radio) y en escritorio / apaisado es una **elipse estirada hacia los bordes** (profundidad = 0,5 del radio).
+  - **3D:** cada foto de la mitad delantera se coloca con `translate3d` y `rotateY` según la normal de la elipse; los laterales se curvan hacia atrás y se oscurecen (`brightness`); el orden de apilado sale de la profundidad.
+- **Giro:** cada paso gira el cilindro una foto (todas las filas a la vez) en 850 ms. El anillo se cierra sobre sí mismo (tras la última foto aparece la primera por detrás), pero los pasos se detienen en la primera y la última para poder salir de la galería. El contador es «paso / pasos» (pasos = fotos ÷ filas).
+- **Ajustes:** `PERSPECTIVE` (debe coincidir con `perspective` de `.cyl__stage`), `STEP_TIME` y las proporciones del cilindro (`ratio`) están en `cylinder.js`; la reserva arriba y abajo (`--cyl-pad`), en `cylinder.css`.
+- **Panel:** ignora los mismos 8 ajustes de la galería estándar que la baraja.
+
 ## Arquitectura
 
 ```
@@ -137,6 +152,7 @@ assets/premium/<clave>/<clave>.js  Comportamiento (solo se carga si está activa
 inc/blocks/gallery.php             Si hay una galería premium activa, incluye su marcado en lugar de la galería estándar
 index.php                          «Volver a la galería» de la ficha apunta a /#baraja=<slug> si hay una galería premium activa
 inc/site-settings.php              Ajuste `gallery_premium` (validación, atributos del <body>)
+assets/premium/cylinder/           Estilo Cilindro (cylinder.css y cylinder.js; marcado en inc/premium/cylinder.php; interfaz de deck.css)
 assets/premium/drum/               Estilo Tambor (drum.css; reutiliza deck.js y el marcado de la baraja)
 assets/premium/bubbles/            Estilo Burbujas (bubbles.css y bubbles.js); marcado en inc/premium/bubbles.php
 inc/site-settings-form.php         Selector «Galería premium» y campos desactivados
@@ -171,6 +187,7 @@ Reglas del contrato: una galería premium debe ocupar su bloque entero, no depen
 ## Pruebas
 
 - `php tests/site-settings.php`: validación del ajuste, campos opcionales con una galería premium y formulario.
+- `node tests/premium-cylinder.cjs`: Estilo Cilindro en 5 dispositivos y 13 tamaños de pantalla: el cilindro llega a los bordes y queda centrado, varias filas con fotos de tamaños distintos sin solaparse, curvatura y oscurecimiento 3D, cierre del anillo, giro, interfaz de la baraja (rueda, dedo, teclado, flechas, salidas, filtros), fijación en móvil, vuelta desde la ficha, paleta y movimiento reducido.
 - `node tests/premium-drum.cjs`: Estilo Tambor en 5 dispositivos y 13 tamaños de pantalla: disposición cilíndrica simétrica y centrada (cartas ±1 y ±2, profundidad, oscurecimiento, ±3 ocultas), rueda, dedo, teclado, flechas, contador, botones de salir, filtros, fijación en móvil, vuelta desde la ficha, paleta y movimiento reducido.
 - `node tests/premium-squares.cjs`: la misma batería que las burbujas con la forma cuadrada (`BUBBLES_SHAPE=square`): separación entre cuadrados, tamaños distintos, paginación, rebote, fijación en móvil, etc.
 - `node tests/premium-bubbles.cjs`: Estilo Burbujas en 5 dispositivos: pantalla completa, «Fotos visibles a la vez» (20 / 12), círculos de tamaños distintos sin solaparse, sin salirse y repartidos por toda la pantalla, sin texto, flotación, paginación minimalista, teclado, rueda y dedo, fijación sin vibración en móvil, apertura con rebote, botones de salir, filtros, vuelta desde la ficha, paleta y movimiento reducido.

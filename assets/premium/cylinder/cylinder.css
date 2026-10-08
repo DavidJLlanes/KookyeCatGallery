@@ -1,0 +1,74 @@
+/* =============================================================================
+   GALERÍA PREMIUM · ESTILO CILINDRO (clave `cylinder`)
+   -----------------------------------------------------------------------------
+   Fotos de distintos tamaños en filas alrededor de un cilindro giratorio. Se carga DESPUÉS de deck.css, que aporta la raíz
+   (.deck: pantalla completa y fondo de la web) y toda la interfaz (herramientas, contador, flechas, botones de salir, pista).
+   Aquí solo está el escenario 3D y el aspecto de cada foto. La geometría (tamaños, giro, profundidad, oscurecimiento) la calcula
+   y la pinta cylinder.js en cada fotograma; este archivo no fija posiciones.
+   Marcado: inc/premium/cylinder.php · Documentación: docs/galerias-premium.md y README.md.
+   ============================================================================= */
+
+/* Escenario: ocupa la pantalla menos una reserva igual arriba y abajo (herramientas / barra de navegación), de modo que el
+   cilindro queda centrado en vertical. La perspectiva debe coincidir con PERSPECTIVE de cylinder.js. */
+.deck[data-layout="cylinder"] .cyl__stage {
+    --cyl-pad: 4.6rem;
+    position: absolute;
+    top: var(--cyl-pad);
+    bottom: var(--cyl-pad);
+    left: 0;
+    right: 0;
+    perspective: 1200px;
+    perspective-origin: 50% 50%;
+}
+
+/* Cada foto: sin posición propia (el JS le pone ancho, alto y transform). Esquinas suaves, marco fino y sombra. */
+.cyl__item {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 10px;
+    background: var(--bg-card);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .35), 0 0 0 1px var(--line);
+    backface-visibility: hidden;
+    will-change: transform;
+}
+
+.cyl__link {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.cyl__picture,
+.cyl__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.cyl__img {
+    object-fit: cover;
+    object-position: center;
+    pointer-events: none;
+    -webkit-user-drag: none;
+}
+
+.cyl__link:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+
+/* Pantallas bajas (móvil apaisado): menos reserva arriba y abajo para que el cilindro ocupe más. */
+@media (max-height: 520px) {
+    .deck[data-layout="cylinder"] .cyl__stage { --cyl-pad: 3.6rem; }
+}

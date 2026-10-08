@@ -71,7 +71,7 @@ uploadPage($section === 'design' ? 'Diseño' : 'Perfil', adminNavigation('test-t
             change('none');result.afterNone=count();result.noteHidden=document.querySelector('[data-premium-note]').hidden;
             return result;
           });
-          assert.deepEqual(premium,{total:8,initial:0,titleField:true,options:['none','deck','bubbles','squares','drum'],afterDeck:8,noteShown:true,dimmed:8,afterBubbles:6,photosEnabled:true,afterNone:0,noteHidden:true},'Premium gallery must toggle the standard gallery fields');
+          assert.deepEqual(premium,{total:8,initial:0,titleField:true,options:['none','deck','bubbles','squares','drum','cylinder'],afterDeck:8,noteShown:true,dimmed:8,afterBubbles:6,photosEnabled:true,afterNone:0,noteHidden:true},'Premium gallery must toggle the standard gallery fields');
         }
         if(section==='design') {
           // Reordering moves the DOM rows (which is what gets submitted) and disables the edge buttons.

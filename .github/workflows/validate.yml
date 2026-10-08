@@ -77,6 +77,10 @@ jobs:
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/premium-drum.cjs
+      - name: Probar la galería premium de cilindro
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/premium-cylinder.cjs
       - name: Comprobar la visibilidad de las categorías
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
