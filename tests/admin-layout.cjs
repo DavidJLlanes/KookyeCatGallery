@@ -8,21 +8,7 @@ const root = path.join(__dirname,'..');
 const fixture = String.raw`
 require 'inc/site-settings.php';
 function app_version(): string { return 'layout-test'; }
-$source = file_get_contents('admin.php');
-function extractFunction(string $source, string $name): string {
-    $start = strpos($source, 'function ' . $name . '(');
-    if ($start === false) throw new RuntimeException('Missing function: ' . $name);
-    $tokens = token_get_all('<?php ' . substr($source, $start));
-    $code = ''; $depth = 0; $opened = false;
-    foreach ($tokens as $token) {
-        if (is_array($token)) { if ($token[0] !== T_OPEN_TAG) $code .= $token[1]; continue; }
-        $code .= $token;
-        if ($token === '{') { $depth++; $opened = true; }
-        if ($token === '}' && --$depth === 0 && $opened) return $code;
-    }
-    throw new RuntimeException('Unclosed function: ' . $name);
-}
-foreach (['uploadEscape', 'adminIcon', 'adminActiveSection', 'adminShellHtml', 'uploadPage', 'adminNavigation'] as $name) eval(extractFunction($source,$name));
+require 'inc/admin-shell.php';
 $_GET['settings'] = '1';
 $section = getenv('ADMIN_TEST_SECTION') ?: 'design';
 $_GET['section'] = $section;

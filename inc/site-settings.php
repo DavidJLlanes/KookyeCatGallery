@@ -88,6 +88,17 @@ function site_section_labels(): array
 }
 
 /**
+ * Ajustes de tipo interruptor (true/false): el de cada bloque que se puede ocultar más los de las
+ * dos cabeceras. Los usan la validación y los atributos del <body>, así que añadir un bloque nuevo
+ * con `toggle` en site_section_definitions() basta para que se valide y llegue al CSS.
+ */
+function site_toggle_keys(): array
+{
+    $keys = array_values(array_filter(array_column(site_section_definitions(), 'toggle')));
+    return array_merge($keys, ['show_header_mobile', 'show_header_desktop']);
+}
+
+/**
  * Normaliza `section_order`: descarta claves desconocidas o repetidas y añade al final las que
  * falten, para que siempre estén todos los bloques.
  */
@@ -190,7 +201,7 @@ function site_settings_validate(array $input): array
         }
         $out[$key] = $input[$key];
     }
-    foreach (['show_categories', 'show_map', 'show_project', 'show_social', 'show_header_mobile', 'show_header_desktop'] as $key) {
+    foreach (site_toggle_keys() as $key) {
         $out[$key] = filter_var($input[$key] ?? false, FILTER_VALIDATE_BOOLEAN);
     }
     $out['section_order'] = site_section_order_normalize($input['section_order'] ?? null);
@@ -421,7 +432,7 @@ function site_design_attributes(): string
     foreach (['palette', 'grid', 'header_mobile', 'header_desktop', 'gallery_mobile', 'gallery_desktop', 'hover'] as $key) {
         $attributes .= ' data-' . str_replace('_', '-', $key) . '="' . htmlspecialchars($settings[$key], ENT_QUOTES, 'UTF-8') . '"';
     }
-    foreach (['show_categories', 'show_map', 'show_project', 'show_social', 'show_header_mobile', 'show_header_desktop'] as $key) {
+    foreach (site_toggle_keys() as $key) {
         $attributes .= ' data-' . str_replace('_', '-', $key) . '="' . ($settings[$key] ? 'true' : 'false') . '"';
     }
     $attributes .= ' data-photos-mobile="' . (int) $settings['photos_mobile'] . '" data-photos-desktop="' . (int) $settings['photos_desktop'] . '"';

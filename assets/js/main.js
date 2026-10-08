@@ -1195,6 +1195,8 @@
         const filterEl      = $('#categoriesFilter');
         const categorySelect = $('#mapCategory');
         const jsPagination  = $('#jsPagination');
+        // Fotos por página: `photos_mobile` / `photos_desktop` del panel (data-photos-* en <body>); 0 = todas.
+        // Es independiente de las columnas. El modo «filas por categoría» siempre muestra todas.
         const perPage = () => {
             if (getGalleryDesign() === 'category-rails') return Number.MAX_SAFE_INTEGER;
             const mobile = window.matchMedia('(max-width: 768px)').matches;
