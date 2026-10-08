@@ -211,11 +211,14 @@
 }
 
 .bubbles__tools .gallery-app-tool {
-    background: color-mix(in srgb, var(--bg) 62%, transparent);
+    /* Fondo casi opaco y SIN desenfoque de fondo (backdrop-filter): junto al borde superior de la pantalla, el desenfoque de Safari en
+       iPhone tomaba luz de fuera y pintaba una sombra clara en el borde de arriba de los botones. Sin sombras propias. */
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
     border-color: color-mix(in srgb, var(--fg) 24%, transparent);
     color: var(--fg);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
 }
 
 .bubbles__tools .gallery-app-tool:hover,

@@ -43,7 +43,47 @@
 }
 .lightbox--immersive .lightbox__img { will-change: transform; }
 .lightbox--immersive .lightbox__stage { overflow: hidden; }
-::view-transition-old(root), ::view-transition-new(root) { animation-duration: .24s; }
+
+/* ---- Transición entre fichas (main.js, transitionDetail) ----
+   Solo durante el cambio (<html class="photo-vt photo-vt-next|prev">) se nombran las piezas: la foto (con su marco), las flechas, el texto
+   y las relacionadas. El resto de la página no se anima (raíz sin animación): nada parpadea.
+   · Foto: el marco cambia de tamaño de forma continua (grupo) y la foto sale hacia el lado contrario mientras la nueva entra desde el lado
+     del que viene, con un leve desenfoque y escala: un fundido direccional.
+   · Texto y relacionadas: el anterior sube y se desvanece rápido; el nuevo entra desde abajo con un pequeño retraso.
+   · Flechas: se quedan quietas encima de la foto. */
+html.photo-vt .photo-detail__btn { view-transition-name: detail-photo; }
+html.photo-vt .photo-detail__navigation { view-transition-name: detail-nav; }
+html.photo-vt .photo-detail__info { view-transition-name: detail-info; }
+html.photo-vt .related { view-transition-name: detail-related; }
+html.photo-vt::view-transition-old(root),
+html.photo-vt::view-transition-new(root) { animation: none; }
+html.photo-vt::view-transition-group(*) { animation-duration: .56s; animation-timing-function: cubic-bezier(.22, .8, .24, 1); }
+html.photo-vt::view-transition-old(detail-nav) { display: none; }
+html.photo-vt::view-transition-new(detail-nav) { animation: none; }
+html.photo-vt::view-transition-old(detail-photo),
+html.photo-vt::view-transition-new(detail-photo) { height: 100%; object-fit: cover; mix-blend-mode: normal; }
+html.photo-vt-next::view-transition-old(detail-photo) { animation: photo-vt-out .5s cubic-bezier(.4, 0, .2, 1) both; --vt-shift: -7%; }
+html.photo-vt-next::view-transition-new(detail-photo) { animation: photo-vt-in .56s cubic-bezier(.22, .8, .24, 1) both; --vt-shift: 7%; }
+html.photo-vt-prev::view-transition-old(detail-photo) { animation: photo-vt-out .5s cubic-bezier(.4, 0, .2, 1) both; --vt-shift: 7%; }
+html.photo-vt-prev::view-transition-new(detail-photo) { animation: photo-vt-in .56s cubic-bezier(.22, .8, .24, 1) both; --vt-shift: -7%; }
+html.photo-vt::view-transition-old(detail-info),
+html.photo-vt::view-transition-old(detail-related) { animation: photo-vt-text-out .22s cubic-bezier(.4, 0, 1, 1) both; }
+html.photo-vt::view-transition-new(detail-info),
+html.photo-vt::view-transition-new(detail-related) { animation: photo-vt-text-in .46s cubic-bezier(.22, .8, .24, 1) .12s both; }
+@keyframes photo-vt-out { to { opacity: 0; transform: translateX(var(--vt-shift)) scale(.97); filter: blur(6px); } }
+@keyframes photo-vt-in { from { opacity: 0; transform: translateX(var(--vt-shift)) scale(1.03); filter: blur(6px); } }
+@keyframes photo-vt-text-out { to { opacity: 0; transform: translateY(-10px); } }
+@keyframes photo-vt-text-in { from { opacity: 0; transform: translateY(14px); } }
+
+/* En pantalla completa solo la foto: se apartan la barra de progreso y los botones flotantes de la web. */
+body.photo-immersive-open .scroll-progress,
+body.photo-immersive-open .upload-fab,
+body.photo-immersive-open .top-btn { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+
+/* Deslizar para cerrar: el fondo negro del visor se aclara con el gesto (main.js, pull/drop). */
+/* En pantalla completa el gesto vertical es del visor (deslizar para cerrar), no del navegador; se permite el pellizco para ampliar. */
+.lightbox--immersive .lightbox__stage { touch-action: pinch-zoom; }
+.lightbox--immersive { transition: opacity .4s var(--ease-out), visibility .4s, background-color .25s ease; }
 
 /* Si se recarga una ficha con el visor abierto (?viewer=1), se oculta lo de detrás hasta que el visor se abre: sin destello de la ficha. */
 html.viewer-pending, html.viewer-pending body { background: #000; }

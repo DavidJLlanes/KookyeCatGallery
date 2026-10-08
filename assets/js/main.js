@@ -22,9 +22,11 @@
     const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
     // Horizontal photo gestures navigate; browser page zoom is disabled outside the editor.
-    // `follow(dx)` (opcional) se llama mientras se arrastra en horizontal: el visor puede mover la foto con el dedo. Al soltar se llama a
-    // `navigate(direction, dx)` si el gesto vale (≥ 50 px y más horizontal que vertical) o a `release(dx)` si no.
-    const bindPhotoNavigation = (surface, navigate, { follow = null, release = null } = {}) => {
+    // Gestos sobre una foto. El primer movimiento claro decide el eje y ya no cambia durante el gesto:
+    //   · horizontal → `follow(dx)` mientras se arrastra (el visor mueve la foto con el dedo) y, al soltar, `navigate(direction, dx, vx)` si
+    //     el gesto vale (≥ 50 px, o un gesto rápido de ≥ 24 px) o `release(dx)` si no. `vx` es la velocidad final (px/ms).
+    //   · vertical (solo si hay `pull`) → `pull(dy)` mientras se arrastra y `drop(dy, vy)` al soltar (deslizar para cerrar el visor).
+    const bindPhotoNavigation = (surface, navigate, { follow = null, release = null, pull = null, drop = null } = {}) => {
         if (!surface) return;
         const pointers = new Set();
         let start = null;
@@ -35,16 +37,23 @@
             if (control && !control.matches('.photo-detail__btn')) return;
             pointers.add(event.pointerId);
             if (pointers.size !== 1) { start = null; return; }
-            start = { id: event.pointerId, x: event.clientX, y: event.clientY, following: false };
+            start = { id: event.pointerId, x: event.clientX, y: event.clientY, axis: null, lastX: event.clientX, lastY: event.clientY, lastT: event.timeStamp, vx: 0, vy: 0 };
             try { surface.setPointerCapture(event.pointerId); } catch (_) {}
         });
-        if (follow) surface.addEventListener('pointermove', (event) => {
+        surface.addEventListener('pointermove', (event) => {
             if (!start || start.id !== event.pointerId) return;
             const dx = event.clientX - start.x;
             const dy = event.clientY - start.y;
-            if (!start.following && (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy) * 1.2)) return;
-            start.following = true;
-            follow(dx);
+            const dt = Math.max(1, event.timeStamp - start.lastT);
+            start.vx = 0.6 * start.vx + 0.4 * ((event.clientX - start.lastX) / dt);
+            start.vy = 0.6 * start.vy + 0.4 * ((event.clientY - start.lastY) / dt);
+            start.lastX = event.clientX; start.lastY = event.clientY; start.lastT = event.timeStamp;
+            if (!start.axis) {
+                if (Math.hypot(dx, dy) < 10) return;
+                start.axis = Math.abs(dx) >= Math.abs(dy) * 1.2 ? 'x' : (pull && Math.abs(dy) > Math.abs(dx) * 1.2 ? 'y' : 'none');
+            }
+            if (start.axis === 'x' && follow) follow(dx);
+            else if (start.axis === 'y') pull(dy);
         });
         surface.addEventListener('pointerup', (event) => {
             const gesture = start;
@@ -53,15 +62,23 @@
             if (!gesture || gesture.id !== event.pointerId) return;
             const dx = event.clientX - gesture.x;
             const dy = event.clientY - gesture.y;
-            if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) { if (gesture.following && release) release(dx); return; }
+            const idle = event.timeStamp - gesture.lastT > 120;            // El dedo se paró antes de soltar: no hay inercia.
+            const vx = idle ? 0 : gesture.vx, vy = idle ? 0 : gesture.vy;
+            if (gesture.axis === 'y') { suppressClickUntil = performance.now() + 400; drop(dy, vy); return; }
+            const fast = Math.abs(vx) > 0.5 && Math.abs(dx) >= 24 && Math.sign(vx) === Math.sign(dx);
+            if ((Math.abs(dx) < 50 && !fast) || Math.abs(dx) < Math.abs(dy) * 1.5) {
+                if (gesture.axis === 'x') { suppressClickUntil = performance.now() + 400; if (release) release(dx); }   // Arrastrar no es pulsar.
+                return;
+            }
             suppressClickUntil = performance.now() + 400;
-            navigate(dx > 0 ? -1 : 1, dx);
+            navigate(dx > 0 ? -1 : 1, dx, vx);
         });
         const cancel = (event) => {
             const gesture = start;
             pointers.delete(event.pointerId);
             start = null;
-            if (gesture?.following && release) release(0);
+            if (gesture?.axis === 'x' && release) release(0);
+            if (gesture?.axis === 'y' && drop) drop(0, 0);
         };
         surface.addEventListener('pointercancel', cancel);
         surface.addEventListener('lostpointercapture', (event) => { pointers.delete(event.pointerId); });
@@ -76,12 +93,15 @@
 
     /* ---------- Cambio suave de foto en los visores ---------- */
     // Pasar de una foto a otra en pantalla completa es un deslizamiento continuo, como en un carrusel: la foto nueva se carga y se
-    // decodifica aparte, entra por el lado del que viene y la anterior sale por el contrario, las dos pegadas y a opacidad completa
-    // (nunca se ve el fondo ni hay saltos de tamaño). `from` es lo que el dedo ya ha arrastrado (px): la animación sigue desde ahí.
+    // decodifica aparte, entra por el lado del que viene y la anterior sale por el contrario, pegadas y a opacidad completa (nunca se
+    // ve el fondo ni hay saltos de tamaño). La que sale se oscurece un poco y la que entra se ilumina: da profundidad sin separar las fotos.
+    // `from` es lo que el dedo ya ha arrastrado (px) y `velocity` su velocidad (px/ms): la animación sigue desde ahí, con la inercia del
+    // gesto (más rápida cuanto más rápido el gesto). Con botones o teclado, curva suave de entrada y salida.
     // `layer` permite reutilizar la imagen vecina que se iba viendo mientras se arrastraba. Devuelve false si la foto no se pudo cargar
     // o si otra navegación más reciente la ha sustituido.
     const slides = new WeakMap();
-    const slideImage = async (img, src, alt, direction = 1, { from = 0, layer: peek = null } = {}) => {
+    const SLIDE_DIM = 0.55;                                          // Brillo de la foto que sale al final del deslizamiento.
+    const slideImage = async (img, src, alt, direction = 1, { from = 0, layer: peek = null, velocity = 0 } = {}) => {
         const state = slides.get(img) || { token: 0, layer: null };
         slides.set(img, state);
         const token = ++state.token;
@@ -97,6 +117,7 @@
         img.getAnimations?.().forEach(animation => animation.cancel());
         img.style.transform = '';
         img.style.transition = '';
+        img.style.filter = '';
         const visible = img.classList.contains('is-shown') && (img.currentSrc || img.src);
         if (prefersReducedMotion || !visible || !img.animate) {
             img.src = src; img.alt = alt;
@@ -111,9 +132,21 @@
         if (!layer.isConnected) img.insertAdjacentElement('afterend', layer);
         state.layer = layer;
         const width = img.parentElement?.clientWidth || window.innerWidth;
-        const timing = { duration: from ? 320 : 420, easing: 'cubic-bezier(.22, .8, .24, 1)', fill: 'both' };
-        const leaving = img.animate([{ transform: `translate3d(${from}px, 0, 0)` }, { transform: `translate3d(${-direction * width}px, 0, 0)` }], timing);
-        const entering = layer.animate([{ transform: `translate3d(${from + direction * width}px, 0, 0)` }, { transform: 'translate3d(0, 0, 0)' }], timing);
+        const progress = Math.min(1, Math.abs(from) / width);        // Lo que ya se recorrió con el dedo (0-1).
+        const remaining = width - Math.abs(from);
+        const speed = Math.abs(velocity);
+        const gesture = from !== 0;
+        const duration = gesture
+            ? Math.round(Math.min(460, Math.max(200, speed > 0.3 ? (remaining / speed) * 1.4 : 260 + remaining * 0.35)))
+            : 520;
+        const timing = { duration, easing: gesture ? 'cubic-bezier(.16, 1, .3, 1)' : 'cubic-bezier(.65, 0, .25, 1)', fill: 'both' };
+        const dimFrom = 1 - (1 - SLIDE_DIM) * progress;
+        const leaving = img.animate([
+            { transform: `translate3d(${from}px, 0, 0)`, filter: `brightness(${dimFrom})` },
+            { transform: `translate3d(${-direction * width}px, 0, 0)`, filter: `brightness(${SLIDE_DIM})` }], timing);
+        const entering = layer.animate([
+            { transform: `translate3d(${from + direction * width}px, 0, 0)`, filter: `brightness(${0.75 + 0.25 * progress})` },
+            { transform: 'translate3d(0, 0, 0)', filter: 'brightness(1)' }], timing);
         await Promise.allSettled([leaving.finished, entering.finished]);
         if (state.layer !== layer) return token === state.token;      // La terminó una navegación posterior.
         img.src = src; img.alt = alt;
@@ -1080,7 +1113,7 @@
         const prefetchNeighbors = () => {
             setTimeout(() => {
                 [detail.dataset.photoPrevious, detail.dataset.photoNext].filter(Boolean).forEach(path => fetchPhotoPage(path).catch(() => {}));
-                [detail.dataset.photoPreviousImage, detail.dataset.photoNextImage].filter(Boolean).forEach(src => { const image = new Image(); image.decoding = 'async'; image.src = src; });
+                [detail.dataset.photoPreviousImage, detail.dataset.photoNextImage].filter(Boolean).forEach(src => preloadImage(src));   // Descargadas y decodificadas: listas para deslizar.
             }, 250);
         };
 
@@ -1124,16 +1157,43 @@
             updateViewerButtons();
         };
 
+        /* ---- Transición en la ficha (sin visor) ----
+           Con View Transitions (Chrome, Edge, Safari 18+) la foto pasa a la nueva con un fundido direccional y su marco cambia de tamaño
+           de forma continua; el texto de debajo sale hacia arriba y el nuevo entra con un pequeño retraso; las flechas no se mueven.
+           Los nombres de transición solo se ponen durante el cambio (clase photo-vt en <html>): ver photo-navigation.css. Sin View
+           Transitions, la foto y el texto nuevos aparecen con un fundido corto. */
+        const detailImage = () => $('.photo-detail__img', detail);
+        const transitionDetail = async (commit, direction) => {
+            const html = document.documentElement;
+            if (prefersReducedMotion) { commit(); return; }
+            if (document.startViewTransition) {
+                html.classList.add('photo-vt', direction < 0 ? 'photo-vt-prev' : 'photo-vt-next');
+                try {
+                    const transition = document.startViewTransition(() => { commit(); const img = detailImage(); if (img) { img.style.transform = ''; img.style.opacity = ''; } });
+                    await transition.finished.catch(() => {});
+                } finally {
+                    html.classList.remove('photo-vt', 'photo-vt-prev', 'photo-vt-next');
+                }
+                return;
+            }
+            commit();
+            const img = detailImage();
+            if (img) { img.style.transform = ''; img.style.opacity = ''; }
+            const timing = { duration: 420, easing: 'cubic-bezier(.22, .8, .24, 1)' };
+            img?.animate?.([{ opacity: 0, transform: `translate3d(${direction * 24}px, 0, 0)` }, { opacity: 1, transform: 'translate3d(0, 0, 0)' }], timing);
+            $('.photo-detail__info', detail)?.animate?.([{ opacity: 0, transform: 'translate3d(0, 10px, 0)' }, { opacity: 1, transform: 'translate3d(0, 0, 0)' }], { ...timing, delay: 80, fill: 'backwards' });
+        };
+
         // Muestra la foto de `path`. `push` añade una entrada al historial (navegar) o no (Atrás / Adelante). Con el visor abierto, la foto
-        // desliza de inmediato con la imagen vecina que ya está precargada (sin esperar a la ficha), desde donde el dedo la dejó (`from`),
-        // y mientras tanto se pide la ficha para actualizar los textos y los datos.
+        // desliza de inmediato con la imagen vecina que ya está precargada (sin esperar a la ficha), desde donde el dedo la dejó (`from`) y
+        // con su velocidad (`velocity`), y mientras tanto se pide la ficha para actualizar los textos y los datos.
         let busy = false;
         let queued = 0;
-        const showPhoto = async (path, { push = true, viewer = isOpen(), direction = 1, from = 0, layer = null } = {}) => {
+        const showPhoto = async (path, { push = true, viewer = isOpen(), direction = 1, from = 0, layer = null, velocity = 0 } = {}) => {
             const open = isOpen();
             const early = open && path === (direction < 0 ? detail.dataset.photoPrevious : detail.dataset.photoNext)
                 ? (direction < 0 ? detail.dataset.photoPreviousImage : detail.dataset.photoNextImage) : '';
-            const slide = early ? slideImage(imgEl, early, '', direction, { from, layer }) : null;
+            const slide = early ? slideImage(imgEl, early, '', direction, { from, layer, velocity }) : null;
             if (!slide) layer?.remove();
             const doc = await fetchPhotoPage(path);
             const nextImg = $('.photo-detail__img', doc);
@@ -1150,10 +1210,8 @@
                 const now = current();
                 if (slide) { await slide; imgEl.alt = now.title; }
                 else await slideImage(imgEl, now.full, now.title, direction);
-            } else if (document.startViewTransition && !prefersReducedMotion) {
-                await document.startViewTransition(commit).finished.catch(() => {});
             } else {
-                commit();
+                await transitionDetail(commit, direction);
             }
             prefetchNeighbors();
         };
@@ -1177,7 +1235,8 @@
             if (queued) { const again = queued; queued = 0; go(again); }
         };
 
-        // Seguir al dedo en el visor: la foto se mueve con el gesto y, al lado hacia el que va, se ve ya la vecina (precargada).
+        // Seguir al dedo en el visor: la foto se mueve con el gesto y, al lado hacia el que va, se ve ya la vecina (precargada). La que se
+        // va se oscurece y la que llega se ilumina según avanza el gesto, igual que en el deslizamiento automático.
         const stage = $('.lightbox__stage', lightbox);
         let peek = null;
         const stageWidth = () => stage?.clientWidth || window.innerWidth;
@@ -1200,28 +1259,99 @@
             imgEl.getAnimations?.().forEach(animation => animation.cancel());
             imgEl.style.transition = 'none';
             const next = peekFor(direction);
-            if (!next) { imgEl.style.transform = `translate3d(${dx / 3}px, 0, 0)`; return; }    // Sin foto hacia ese lado: la foto se resiste.
+            if (!next) { imgEl.style.transform = `translate3d(${dx / 3}px, 0, 0)`; imgEl.style.filter = ''; return; }    // Sin foto hacia ese lado: la foto se resiste.
+            const progress = Math.min(1, Math.abs(dx) / stageWidth());
             imgEl.style.transform = `translate3d(${dx}px, 0, 0)`;
+            imgEl.style.filter = `brightness(${(1 - (1 - SLIDE_DIM) * progress).toFixed(3)})`;
             next.el.style.transform = `translate3d(${dx + direction * stageWidth()}px, 0, 0)`;
+            next.el.style.filter = `brightness(${(0.75 + 0.25 * progress).toFixed(3)})`;
         };
         const release = (dx) => {                                    // El gesto no llega a pasar de foto: todo vuelve a su sitio.
             const taken = peek; peek = null;
-            const timing = { duration: 260, easing: 'cubic-bezier(.22, .8, .24, 1)' };
+            const timing = { duration: 320, easing: 'cubic-bezier(.16, 1, .3, 1)' };
+            const progress = Math.min(1, Math.abs(dx) / stageWidth());
             imgEl.style.transition = '';
             imgEl.style.transform = '';
-            if (dx && imgEl.animate) imgEl.animate([{ transform: `translate3d(${taken ? dx : dx / 3}px, 0, 0)` }, { transform: 'translate3d(0, 0, 0)' }], timing);
+            imgEl.style.filter = '';
+            if (dx && imgEl.animate) imgEl.animate([
+                { transform: `translate3d(${taken ? dx : dx / 3}px, 0, 0)`, filter: `brightness(${taken ? 1 - (1 - SLIDE_DIM) * progress : 1})` },
+                { transform: 'translate3d(0, 0, 0)', filter: 'brightness(1)' }], timing);
             if (taken) {
                 const rest = taken.direction * stageWidth();
                 const back = taken.el.animate?.([{ transform: `translate3d(${dx + rest}px, 0, 0)` }, { transform: `translate3d(${rest}px, 0, 0)` }], timing);
                 if (back) back.finished.catch(() => {}).finally(() => taken.el.remove()); else taken.el.remove();
             }
         };
-        const swipe = (direction, dx) => {
+        const swipe = (direction, dx, velocity = 0) => {
             if (!isOpen()) { go(direction); return; }
             const layer = peek && peek.direction === direction ? peek.el : null;
             if (layer) peek = null;
             if (!layer && !(direction < 0 ? detail.dataset.photoPrevious : detail.dataset.photoNext)) { release(dx); return; }
-            go(direction, { from: layer ? dx : 0, layer });
+            imgEl.style.filter = '';
+            go(direction, { from: layer ? dx : 0, layer, velocity: layer ? velocity : 0 });
+        };
+
+        // Deslizar hacia abajo (o arriba) para cerrar el visor: la foto sigue al dedo, se encoge un poco y el fondo negro se aclara dejando
+        // ver la ficha. Al soltar lejos (o rápido) el visor se cierra con la foto saliendo; si no, todo vuelve a su sitio.
+        const CLOSE_DISTANCE = 110;
+        const chrome = () => [...lightbox.querySelectorAll('.lightbox__close, .lightbox__nav')];
+        const pull = (dy) => {
+            if (!isOpen() || busy) return;
+            const amount = Math.min(1, Math.abs(dy) / 420);
+            imgEl.getAnimations?.().forEach(animation => animation.cancel());
+            imgEl.style.transition = 'none';
+            imgEl.style.transform = `translate3d(0, ${dy}px, 0) scale(${(1 - amount * 0.22).toFixed(3)})`;
+            lightbox.style.backgroundColor = `rgba(0, 0, 0, ${(1 - amount * 0.85).toFixed(3)})`;
+            chrome().forEach(control => { control.style.transition = 'none'; control.style.opacity = String(Math.max(0, 1 - amount * 3)); });
+        };
+        const resetPull = () => {
+            imgEl.style.transition = ''; imgEl.style.transform = '';
+            lightbox.style.backgroundColor = '';
+            chrome().forEach(control => { control.style.transition = ''; control.style.opacity = ''; });
+        };
+        const drop = (dy, vy) => {
+            if (!isOpen()) return;
+            const amount = Math.min(1, Math.abs(dy) / 420);
+            const scale = 1 - amount * 0.22;
+            const closing = Math.abs(dy) > CLOSE_DISTANCE || (Math.abs(vy) > 0.6 && Math.abs(dy) > 30);
+            if (!imgEl.animate) { resetPull(); if (closing) closeFs(); return; }
+            if (!closing) {
+                const timing = { duration: 340, easing: 'cubic-bezier(.16, 1, .3, 1)' };
+                imgEl.animate([{ transform: `translate3d(0, ${dy}px, 0) scale(${scale})` }, { transform: 'translate3d(0, 0, 0) scale(1)' }], timing);
+                lightbox.animate([{ backgroundColor: `rgba(0, 0, 0, ${1 - amount * 0.85})` }, { backgroundColor: 'rgba(0, 0, 0, 1)' }], timing);
+                resetPull();
+                return;
+            }
+            const sign = dy < 0 ? -1 : 1;
+            const timing = { duration: 260, easing: 'cubic-bezier(.4, 0, 1, 1)', fill: 'forwards' };
+            const out = imgEl.animate([
+                { transform: `translate3d(0, ${dy}px, 0) scale(${scale})`, opacity: 1 },
+                { transform: `translate3d(0, ${dy + sign * window.innerHeight * 0.5}px, 0) scale(${scale * 0.9})`, opacity: 0 }], timing);
+            lightbox.animate([{ backgroundColor: `rgba(0, 0, 0, ${1 - amount * 0.85})` }, { backgroundColor: 'rgba(0, 0, 0, 0)' }], timing);
+            out.finished.catch(() => {}).finally(() => {
+                closeFs();
+                out.cancel();
+                lightbox.getAnimations().forEach(animation => animation.cancel());
+                resetPull();
+            });
+        };
+
+        // En la ficha, la foto también sigue al dedo (sin salirse de su sitio) y vuelve si el gesto se queda corto.
+        const detailFollow = (dx) => {
+            const img = detailImage();
+            if (!img || busy) return;
+            const edge = !(dx < 0 ? detail.dataset.photoNext : detail.dataset.photoPrevious);
+            const shift = edge ? dx / 3 : dx * 0.6;
+            img.style.transition = 'none';
+            img.style.transform = `translate3d(${shift}px, 0, 0)`;
+            img.style.opacity = String(Math.max(0.45, 1 - Math.abs(shift) / 500));
+        };
+        const detailRelease = () => {
+            const img = detailImage();
+            if (!img) return;
+            const from = img.style.transform, opacity = img.style.opacity || '1';
+            img.style.transition = ''; img.style.transform = ''; img.style.opacity = '';
+            if (from && img.animate) img.animate([{ transform: from, opacity }, { transform: 'translate3d(0, 0, 0)', opacity: 1 }], { duration: 320, easing: 'cubic-bezier(.16, 1, .3, 1)' });
         };
 
         const openFs = (nativeFullscreen = true) => {
@@ -1242,6 +1372,9 @@
 
         const closeFs = (syncUrl = true) => {
             exitNativeFs();
+            lightbox.style.backgroundColor = '';
+            imgEl.style.filter = '';
+            lightbox.querySelectorAll('.lightbox__close, .lightbox__nav').forEach(control => { control.style.transition = ''; control.style.opacity = ''; });
             lightbox.classList.remove('is-open');
             lightbox.classList.remove('lightbox--immersive');
             document.body.classList.remove('photo-immersive-open');
@@ -1293,8 +1426,8 @@
         if (closeBtn) closeBtn.addEventListener('click', () => closeFs());
         if (prevBtn) prevBtn.addEventListener('click', () => go(-1));
         if (nextBtn) nextBtn.addEventListener('click', () => go(1));
-        bindPhotoNavigation($('.photo-detail__btn', detail), (direction) => go(direction));
-        bindPhotoNavigation(stage, swipe, { follow, release });
+        bindPhotoNavigation($('.photo-detail__btn', detail), (direction) => go(direction), { follow: detailFollow, release: detailRelease });
+        bindPhotoNavigation(stage, swipe, { follow, release, pull, drop });
         lightbox.addEventListener('click', (e) => {
             if (e.target === lightbox || e.target.classList.contains('lightbox__stage')) closeFs();
         });

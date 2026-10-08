@@ -153,9 +153,26 @@ function testImage() {
 
         // 5. Flechas de la ficha (sin visor): también cambian en el sitio y siguen siendo enlaces normales (abrir en otra pestaña).
         assert.equal(await desktop.page.locator('a.photo-detail__nav--previous').getAttribute('href'), '/foto/first');
+        // La ficha usa una transición de vista con piezas con nombre (foto, flechas, texto) y dirección; al terminar se quitan las clases.
+        await desktop.page.evaluate(() => {
+            window.__vt = [];
+            const original = document.startViewTransition.bind(document);
+            document.startViewTransition = (callback) => {
+                const html = document.documentElement;
+                window.__vt.push({classes: html.className, photo: getComputedStyle(document.querySelector('.photo-detail__btn')).viewTransitionName,
+                    info: getComputedStyle(document.querySelector('.photo-detail__info')).viewTransitionName, nav: getComputedStyle(document.querySelector('.photo-detail__navigation')).viewTransitionName});
+                return original(callback);
+            };
+        });
         await desktop.page.locator('a.photo-detail__nav--previous').click();
         await waitSlug(desktop.page, 'first');
         assert.equal(await desktop.page.evaluate(() => window.__marker), 'mismo-documento', 'Las flechas de la ficha tampoco recargan');
+        const vt = await desktop.page.evaluate(() => window.__vt);
+        assert.equal(vt.length, 1, 'La ficha cambia con una transición de vista');
+        assert(vt[0].classes.includes('photo-vt') && vt[0].classes.includes('photo-vt-prev'), `Transición con dirección (${vt[0].classes})`);
+        assert.deepEqual([vt[0].photo, vt[0].info, vt[0].nav], ['detail-photo', 'detail-info', 'detail-nav'], 'La foto, el texto y las flechas tienen su propia transición');
+        await desktop.page.waitForFunction(() => !document.documentElement.classList.contains('photo-vt'));
+        assert.equal(await desktop.page.evaluate(() => getComputedStyle(document.querySelector('.photo-detail__btn')).viewTransitionName), 'none', 'Fuera del cambio la foto no lleva nombre de transición');
         assert.equal(await desktop.page.locator('#lightbox').getAttribute('aria-hidden'), 'true');
         assert.equal(await desktop.page.locator('.photo-detail__img').getAttribute('src').then(src => /first/.test(src)), true);
 
@@ -215,9 +232,43 @@ function testImage() {
         await finger('touchEnd');
         await mobile.page.waitForTimeout(500);
         assert.equal(await mobile.page.locator('.photo-detail__title').textContent(), 'last');
+        // 8. En pantalla completa se apartan la barra de progreso y los botones flotantes.
+        assert.equal(await mobile.page.evaluate(() => getComputedStyle(document.querySelector('.scroll-progress')).visibility), 'hidden', 'La barra de progreso no se ve en pantalla completa');
+        // 9. Deslizar hacia abajo: un gesto corto vuelve a su sitio; uno largo cierra el visor con la foto saliendo.
+        const pullFrom = await center();
+        await finger('touchStart', pullFrom.x, pullFrom.y);
+        for (let i = 1; i <= 4; i++) await finger('touchMove', pullFrom.x + 1, pullFrom.y + 12 * i);
+        await mobile.page.waitForTimeout(80);
+        const pulling = await mobile.page.evaluate(() => ({transform: document.querySelector('.lightbox__img').style.transform, bg: document.getElementById('lightbox').style.backgroundColor}));
+        assert(/translate3d\(0(px)?, 48px/.test(pulling.transform) && pulling.bg.startsWith('rgba'), `La foto sigue al dedo hacia abajo y el fondo se aclara (${JSON.stringify(pulling)})`);
+        await mobile.page.waitForTimeout(200);                      // El dedo se detiene: sin inercia, el gesto corto no cierra.
+        await finger('touchEnd');
+        await mobile.page.waitForTimeout(500);
+        assert.equal(await mobile.page.locator('#lightbox').getAttribute('aria-hidden'), 'false', 'Un gesto corto hacia abajo no cierra el visor');
+        assert.equal(await mobile.page.evaluate(() => document.querySelector('.lightbox__img').style.transform), '', 'La foto vuelve a su sitio');
+        const pullAgain = await center();
+        await finger('touchStart', pullAgain.x, pullAgain.y);
+        for (let i = 1; i <= 8; i++) await finger('touchMove', pullAgain.x + 1, pullAgain.y + 22 * i);
+        await finger('touchEnd');
+        await mobile.page.waitForFunction(() => document.getElementById('lightbox').getAttribute('aria-hidden') === 'true', null, {timeout: 3000});
+        assert.equal(new URL(mobile.page.url()).searchParams.has('viewer'), false, 'Al cerrar deslizando se quita ?viewer=1');
+        await mobile.page.waitForTimeout(400);
+        assert.equal(await mobile.page.evaluate(() => document.getElementById('lightbox').style.backgroundColor), '', 'El visor queda limpio para la próxima vez');
+        // 10. En la ficha la foto también sigue al dedo; un gesto corto vuelve y no abre el visor.
+        await mobile.page.evaluate(() => window.scrollTo(0, 0));
+        const detailBox = await mobile.page.locator('.photo-detail__img').boundingBox();
+        const dx0 = detailBox.x + detailBox.width / 2, dy0 = detailBox.y + detailBox.height / 2;
+        await finger('touchStart', dx0, dy0);
+        for (let i = 1; i <= 4; i++) await finger('touchMove', dx0 + 10 * i, dy0 + 1);
+        await mobile.page.waitForTimeout(80);
+        assert(/translate3d\(24px/.test(await mobile.page.evaluate(() => document.querySelector('.photo-detail__img').style.transform)), 'La foto de la ficha sigue al dedo');
+        await finger('touchEnd');
+        await mobile.page.waitForTimeout(500);
+        assert.equal(await mobile.page.evaluate(() => document.querySelector('.photo-detail__img').style.transform), '', 'La foto de la ficha vuelve a su sitio');
+        assert.equal(await mobile.page.locator('#lightbox').getAttribute('aria-hidden'), 'true', 'Arrastrar la foto de la ficha no abre el visor');
         assert.deepEqual(desktop.errors, []);
         assert.deepEqual(mobile.errors, []);
-        console.log('Photo transition passed: in-place sliding without reload, finger following with the neighbour visible, no gaps or strips, resistance at the ends, rapid presses, browser back, closing, detail arrows, ?viewer=1 reload and touch.');
+        console.log('Photo transition passed: detail view transition with named parts, pull to close, detail finger follow, in-place sliding without reload, finger following with the neighbour visible, no gaps or strips, resistance at the ends, rapid presses, browser back, closing, detail arrows, ?viewer=1 reload and touch.');
     } finally {
         if (browser) await browser.close();
         fs.rmSync(snapshot, { recursive: true, force: true });
