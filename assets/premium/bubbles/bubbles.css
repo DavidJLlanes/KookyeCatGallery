@@ -1,0 +1,364 @@
+/* =============================================================================
+   GALERÍA PREMIUM · ESTILO BURBUJAS (clave `bubbles`)
+   -----------------------------------------------------------------------------
+   Fotos en círculos de distintos tamaños, con un pequeño marco, que flotan lentamente por toda la pantalla.
+   Marcado: inc/premium/bubbles.php · Comportamiento: bubbles.js (reparto, paginación, fijación, apertura con rebote).
+   Documentación: docs/galerias-premium.md y README.md.
+
+   Índice
+     1. Variables y raíz (pantalla completa, fondo de la web)
+     2. Círculos: marco, flotación y animaciones de entrada / salida
+     3. Apertura con rebote (al pulsar un círculo)
+     4. Controles superpuestos (herramientas, paginación minimalista, pista)
+     5. Accesibilidad y movimiento reducido
+
+   Integración con la web
+     · Colores: solo variables de la paleta (--bg, --bg-card, --fg, --fg-soft, --accent, --accent-soft, --line, --sans).
+     · Cabeceras: el bloque va debajo de la cabecera activa; al alinearse ocupa la pantalla entera.
+   ============================================================================= */
+
+/* ---------------------------------------------------------------------------
+   1. Variables y raíz (pantalla completa, fondo de la web)
+   --------------------------------------------------------------------------- */
+.gallery-section--premium[data-premium-gallery="bubbles"] {
+    /* Anula el padding y el ancho máximo de la galería estándar: aquí manda la pantalla. */
+    padding: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+}
+
+.bubbles {
+    --bubbles-pad: 5.6rem;                          /* Reserva igual arriba (herramientas) y abajo (paginación): el conjunto queda centrado. */
+    --bubbles-side: max(1rem, env(safe-area-inset-left));
+    --bubbles-ring: 3px;                            /* Grosor del marco circular. */
+
+    position: relative;
+    width: 100%;
+    height: 100vh;                                  /* Respaldo para navegadores sin dvh. */
+    height: 100dvh;                                 /* 100 % del alto visible (también con barras móviles). */
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--bg);
+    color: var(--fg);
+    outline: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: pan-y;                            /* Acoplada: touch-action: none (ver más abajo). */
+}
+
+/* Resplandores de fondo, muy suaves y lentos, con el acento de la paleta: dan vida sin tapar las fotos. */
+.bubbles__glow {
+    position: absolute;
+    z-index: 0;
+    width: 60vmax;
+    height: 60vmax;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent), transparent 66%);
+    filter: blur(20px);
+    pointer-events: none;
+    animation: bubbles-glow 26s ease-in-out infinite alternate;
+}
+.bubbles__glow--a { left: -22vmax; top: -24vmax; }
+.bubbles__glow--b { right: -24vmax; bottom: -26vmax; animation-duration: 32s; animation-direction: alternate-reverse; }
+
+@keyframes bubbles-glow {
+    from { transform: translate3d(0, 0, 0) scale(1); opacity: .65; }
+    to   { transform: translate3d(6vmax, 4vmax, 0) scale(1.18); opacity: 1; }
+}
+
+/* Zona donde se reparten los círculos: mismas reservas arriba y abajo para que el conjunto quede centrado. */
+.bubbles__field {
+    position: absolute;
+    z-index: 1;
+    top: var(--bubbles-pad);
+    bottom: var(--bubbles-pad);
+    left: var(--bubbles-side);
+    right: var(--bubbles-side);
+}
+
+/* ---------------------------------------------------------------------------
+   2. Círculos
+   .bubbles__item  posición y tamaño (los pone el JS) + entrada / salida (propiedad `scale`)
+   .bubbles__float flotación lenta (propiedad `translate`, con valores propios de cada círculo)
+   .bubbles__link  marco circular y foto
+   --------------------------------------------------------------------------- */
+.bubbles__item {
+    position: absolute;
+    margin: 0;
+    border-radius: 50%;
+    scale: 1;
+    opacity: 1;
+}
+
+.bubbles__item[hidden] { display: none !important; }
+.bubbles__item:hover, .bubbles__item:focus-within { z-index: 5; }
+
+.bubbles__item.is-in { animation: bubbles-pop .85s cubic-bezier(.2, .9, .3, 1.25) both; animation-delay: calc(var(--i, 0) * 55ms); }
+.bubbles__item.is-out { animation: bubbles-out .38s cubic-bezier(.5, 0, .75, 0) both; animation-delay: calc(var(--i, 0) * 18ms); }
+.bubbles__item:not(.is-in):not(.is-out).is-waiting { scale: 0; opacity: 0; }
+
+/* Entrada con rebote: crece pasándose un poco de tamaño y se asienta. */
+@keyframes bubbles-pop {
+    0%   { scale: 0; opacity: 0; }
+    55%  { scale: 1.14; opacity: 1; }
+    75%  { scale: .95; }
+    100% { scale: 1; opacity: 1; }
+}
+
+@keyframes bubbles-out {
+    to { scale: 0; opacity: 0; }
+}
+
+.bubbles__float {
+    width: 100%;
+    height: 100%;
+    animation: bubbles-float var(--fd, 12s) ease-in-out var(--fl, 0s) infinite alternate;
+}
+
+/* Flotación: pequeños desplazamientos en cada círculo (amplitud --fx / --fy fijada por el JS, menor que la separación mínima
+   entre círculos, para que nunca se toquen). */
+@keyframes bubbles-float {
+    0%   { translate: 0 0; }
+    33%  { translate: var(--fx, 4px) calc(var(--fy, 4px) * -1); }
+    66%  { translate: calc(var(--fx, 4px) * -.7) var(--fy, 4px); }
+    100% { translate: calc(var(--fx, 4px) * .5) calc(var(--fy, 4px) * .6); }
+}
+
+.bubbles__link {
+    position: relative;
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: var(--bubbles-ring) solid var(--accent);
+    border-radius: 50%;
+    background: var(--bg-card);
+    color: inherit;
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    overflow: hidden;
+    /* Marco: el círculo de la foto, un aro del color de la web (separa del fondo) y un hilo fino exterior; luego la sombra. */
+    box-shadow:
+        0 0 0 4px var(--bg),
+        0 0 0 5.5px var(--line),
+        0 18px 38px rgba(0, 0, 0, .34);
+    transition: transform .45s cubic-bezier(.3, 1.5, .5, 1), box-shadow .35s ease, border-color .35s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.bubbles__link:hover,
+.bubbles__link:focus-visible {
+    transform: scale(1.07);
+    border-color: var(--fg);
+    box-shadow:
+        0 0 0 4px var(--bg),
+        0 0 0 6px var(--accent),
+        0 0 34px color-mix(in srgb, var(--accent) 55%, transparent),
+        0 22px 46px rgba(0, 0, 0, .4);
+}
+
+.bubbles__link:focus-visible { outline: none; }
+
+.bubbles__picture,
+.bubbles__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.bubbles__img {
+    object-fit: cover;
+    object-position: center;
+    border-radius: 50%;
+    pointer-events: none;
+    -webkit-user-drag: none;
+}
+
+/* ---------------------------------------------------------------------------
+   3. Apertura con rebote
+   Al pulsar un círculo rebota (bubbles.js, con la Web Animations API) y su foto se expande hasta llenar la pantalla
+   con un pequeño pasarse de tamaño. Este elemento es la foto que se expande; se añade al <body>.
+   --------------------------------------------------------------------------- */
+.bubbles-opener {
+    position: fixed;
+    z-index: 2147483000;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 50%;
+    background: #000 center / cover no-repeat;
+    pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
+   4. Controles superpuestos
+   --------------------------------------------------------------------------- */
+.bubbles__ui {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;                           /* Solo los controles reciben clics. */
+}
+
+.bubbles__tools {
+    position: absolute;
+    top: max(.9rem, env(safe-area-inset-top));
+    right: max(.9rem, env(safe-area-inset-right));
+    display: flex;
+    gap: .5rem;
+    pointer-events: auto;
+}
+
+.bubbles__tools .gallery-app-tool {
+    background: color-mix(in srgb, var(--bg) 62%, transparent);
+    border-color: color-mix(in srgb, var(--fg) 24%, transparent);
+    color: var(--fg);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+.bubbles__tools .gallery-app-tool:hover,
+.bubbles__tools .gallery-app-tool[aria-pressed="true"] {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* Paginación minimalista: sin caja ni fondo, flechas finas, el contador en grande y dos hilos finos (arriba y abajo). */
+.bubbles__pager {
+    position: absolute;
+    left: 50%;
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(.5rem, 3vw, 1.6rem);
+    width: min(30rem, calc(100% - 2rem));
+    padding: .55rem 0;
+    border-block: 1px solid var(--line);
+    background: color-mix(in srgb, var(--bg) 48%, transparent);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+}
+
+.bubbles__arrow,
+.bubbles__exit {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--fg);
+    cursor: pointer;
+    transition: color .2s ease, opacity .2s ease, transform .2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.bubbles__arrow svg { width: 24px; height: 24px; }
+.bubbles__exit svg { width: 20px; height: 20px; }
+.bubbles__exit { color: var(--fg-soft); }
+.bubbles__exit[hidden] { display: none; }
+.bubbles__arrow:hover:not(:disabled) { color: var(--accent); transform: scale(1.12); }
+.bubbles__exit:hover { color: var(--accent); }
+.bubbles__arrow:disabled { opacity: .28; cursor: default; }
+
+.bubbles__counter {
+    min-width: 5.5ch;
+    margin: 0;
+    color: var(--fg);
+    font: 500 clamp(1.25rem, 4.4vw, 1.7rem) / 1 var(--sans);
+    letter-spacing: .14em;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.bubbles__counter-sep { margin: 0 .3em; color: var(--fg-soft); }
+
+/* Pista inicial: desaparece al usar la galería por primera vez. */
+.bubbles__hint {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    padding: .7rem 1.2rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    color: var(--fg);
+    font: 600 .68rem / 1.2 var(--sans);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    opacity: .95;
+    transition: opacity .5s ease;
+    pointer-events: none;
+}
+
+.bubbles.is-used .bubbles__hint { opacity: 0; }
+.bubbles__hint--touch { display: none; }
+
+@media (hover: none) and (pointer: coarse) {
+    .bubbles__hint--touch { display: inline; }
+    .bubbles__hint--pointer { display: none; }
+}
+
+.bubbles__empty[hidden] { display: none; }
+
+.bubbles__empty {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: grid;
+    place-items: center;
+    margin: 0;
+    color: var(--fg-soft);
+    font: italic 400 1.4rem var(--serif);
+}
+
+@media (max-width: 520px) {
+    .bubbles__hint { max-width: calc(100% - 2rem); white-space: normal; text-align: center; }
+    .bubbles__tools .gallery-app-tool { padding: .55rem .8rem; font-size: .68rem; }
+    .bubbles__arrow, .bubbles__exit { width: 40px; height: 40px; }
+}
+
+/* Pantallas bajas (móvil apaisado): menos reserva arriba y abajo y controles más pequeños. */
+@media (max-height: 520px) {
+    .bubbles { --bubbles-pad: 3.6rem; }
+    .bubbles__pager { padding: .2rem 0; bottom: max(.4rem, env(safe-area-inset-bottom)); }
+    .bubbles__arrow, .bubbles__exit { width: 36px; height: 36px; }
+    .bubbles__counter { font-size: 1.1rem; }
+    .bubbles__hint { display: none; }
+}
+
+/* Galería acoplada (llena la pantalla): el navegador no desplaza la página con el dedo. Los gestos los gestiona bubbles.js. */
+html.deck-engaged .bubbles { touch-action: none; }
+
+/* Mientras la galería llena la pantalla se apartan los botones flotantes de la web («Añadir foto» y «Subir»). */
+html.deck-engaged .upload-fab,
+html.deck-engaged .top-btn {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity .25s ease;
+}
+
+/* ---------------------------------------------------------------------------
+   5. Accesibilidad y movimiento reducido
+   --------------------------------------------------------------------------- */
+.bubbles:focus-visible { box-shadow: inset 0 0 0 3px var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+    .bubbles__float, .bubbles__glow { animation: none; }
+    .bubbles__item.is-in, .bubbles__item.is-out { animation-duration: 1ms; animation-delay: 0s; }
+    .bubbles__link { transition: none; }
+}

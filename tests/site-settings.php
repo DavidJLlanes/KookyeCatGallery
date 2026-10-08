@@ -88,7 +88,7 @@ check(str_contains(site_settings_form('t', $defaults, 'design'), 'value="' . htm
 
 // ── Galerías premium ──────────────────────────────────────────────────────────
 check($defaults['gallery_premium'] === 'none', 'No premium gallery by default.');
-check(isset(site_premium_gallery_choices()['none'], site_premium_gallery_choices()['deck']), 'Premium choices must include none and deck.');
+check(isset(site_premium_gallery_choices()['none'], site_premium_gallery_choices()['deck'], site_premium_gallery_choices()['bubbles']), 'Premium choices must include none, deck and bubbles.');
 check(site_premium_gallery_active($defaults) === null, 'No premium gallery must be active by default.');
 $deck = array_replace($defaults, ['gallery_premium' => 'deck']);
 check(site_settings_validate($deck)['gallery_premium'] === 'deck', 'The deck gallery was rejected.');
@@ -96,18 +96,28 @@ check(site_premium_gallery_active($deck) === 'deck', 'The deck gallery must be a
 rejects(array_replace($defaults, ['gallery_premium' => 'inexistente']));
 // Con una galería premium los campos que ignora pueden faltar (el navegador no envía los desactivados).
 $partial = $deck;
-foreach (site_premium_ignored_settings() as $ignored) unset($partial[$ignored]);
+foreach (site_premium_ignored_settings('deck') as $ignored) unset($partial[$ignored]);
 $kept = site_settings_validate($partial);
 check($kept['gallery_premium'] === 'deck' && $kept['columns_desktop'] === $defaults['columns_desktop'], 'Ignored fields must be optional with a premium gallery.');
 $noPremiumPartial = $defaults; unset($noPremiumPartial['columns_desktop']);
 rejects($noPremiumPartial);   // Sin galería premium siguen siendo obligatorios.
 check(!in_array('gallery_premium', site_premium_ignored_settings(), true), 'The premium selector itself is never ignored.');
-check(site_premium_ignored_settings() === ['grid', 'gallery_mobile', 'gallery_desktop', 'pagination_shape', 'columns_mobile', 'columns_desktop', 'photos_mobile', 'photos_desktop'], 'Ignored settings list changed.');
+check(site_premium_ignored_settings('deck') === ['grid', 'gallery_mobile', 'gallery_desktop', 'pagination_shape', 'columns_mobile', 'columns_desktop', 'photos_mobile', 'photos_desktop'], 'Ignored settings list changed.');
 // Atributos del <body> y formulario.
 $formStandard = site_settings_form('t', $defaults, 'design');
 $formDeck = site_settings_form('t', $deck, 'design');
-check(substr_count($formStandard, 'data-premium-off') === 8 && substr_count($formStandard, ' disabled') === 0, 'Standard fields must be enabled without a premium gallery.');
-check(substr_count($formDeck, 'data-premium-off disabled') === 8, 'All 8 standard gallery fields must be disabled with a premium gallery.');
+check(substr_count($formStandard, 'data-premium-off=') === 8 && substr_count($formStandard, ' disabled') === 0, 'Standard fields must be enabled without a premium gallery.');
+check(substr_count($formDeck, ' disabled') === 8, 'All 8 standard gallery fields must be disabled with a premium gallery.');
+// «Estilo Burbujas»: ignora la galería estándar salvo «Fotos visibles a la vez» (móvil y escritorio).
+$bubbles = array_replace($defaults, ['gallery_premium' => 'bubbles']);
+check(site_premium_gallery_active($bubbles) === 'bubbles', 'The bubbles gallery must be active.');
+check(site_premium_ignored_settings('bubbles') === ['grid', 'gallery_mobile', 'gallery_desktop', 'pagination_shape', 'columns_mobile', 'columns_desktop'], 'Bubbles must honor the photos-per-view settings only.');
+$bubblesPartial = $bubbles;
+foreach (site_premium_ignored_settings('bubbles') as $ignored) unset($bubblesPartial[$ignored]);
+check(site_settings_validate($bubblesPartial)['photos_desktop'] === $defaults['photos_desktop'], 'Bubbles: ignored fields must be optional.');
+rejects(array_replace($bubbles, ['photos_desktop' => 7]));   // «Fotos visibles a la vez» se sigue validando.
+$formBubbles = site_settings_form('t', $bubbles, 'design');
+check(substr_count($formBubbles, ' disabled') === 6 && str_contains($formBubbles, 'name="photos_desktop" data-premium-off="deck">'), 'Bubbles: six standard fields disabled, photos per view enabled.');
 check(str_contains($formDeck, 'name="gallery_premium"') && str_contains($formDeck, 'Estilo Baraja'), 'Premium selector missing from the form.');
 check(premium_gallery_head_tags() === '' || str_contains(premium_gallery_head_tags(), 'deck.css'), 'Premium head tags.');
 

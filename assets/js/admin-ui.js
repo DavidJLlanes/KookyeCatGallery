@@ -11,8 +11,8 @@
     /* -------------------------------------------------------------------------
        1. Galería premium
        Al elegir una galería premium se desactivan los campos marcados con
-       data-premium-off (los genera site_settings_form()). Un campo desactivado no se
-       envía; el servidor conserva entonces los valores guardados (admin.php).
+       data-premium-off="<galerías que lo ignoran>" (los genera site_settings_form()). Un campo
+       desactivado no se envía; el servidor conserva entonces los valores guardados (admin.php).
        Los campos que ignora cada galería premium están en site_premium_ignored_settings().
        ------------------------------------------------------------------------- */
     const premiumSelect = document.getElementById('setting-gallery_premium');
@@ -20,12 +20,13 @@
         const fields = [...document.querySelectorAll('[data-premium-off]')];
         const note = document.querySelector('[data-premium-note]');
         const apply = () => {
-            const on = premiumSelect.value !== 'none';
+            const gallery = premiumSelect.value;
             fields.forEach(field => {
-                field.disabled = on;
-                field.closest('.upload-field')?.classList.toggle('is-disabled', on);
+                const off = gallery !== 'none' && (field.dataset.premiumOff || '').split(',').includes(gallery);
+                field.disabled = off;
+                field.closest('.upload-field')?.classList.toggle('is-disabled', off);
             });
-            if (note) note.hidden = !on;
+            if (note) note.hidden = gallery === 'none';
         };
         premiumSelect.addEventListener('change', apply);
         apply();

@@ -13,10 +13,11 @@
     /* ---------- Helpers ---------- */
     const $  = (sel, ctx = document) => ctx.querySelector(sel);
     const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
-    // Tarjetas de foto: las de la galería estándar (.card) y las de la galería premium «Estilo Baraja» (.deck__card).
-    // La raíz de la galería es #masonry (estándar) o #deck (premium). Ver docs/galerias-premium.md.
-    const CARDS = '.card, .deck__card';
-    const galleryRoot = () => $('#masonry') || $('#deck');
+    // Tarjetas de foto: las de la galería estándar (.card) y las de las galerías premium: «Estilo Baraja» (.deck__card)
+    // y «Estilo Burbujas» (.bubbles__item). La raíz de la galería es #masonry (estándar), #deck o #bubbles (premium).
+    // Ver docs/galerias-premium.md.
+    const CARDS = '.card, .deck__card, .bubbles__item';
+    const galleryRoot = () => $('#masonry') || $('#deck') || $('#bubbles');
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 

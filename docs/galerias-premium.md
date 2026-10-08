@@ -9,10 +9,11 @@ Se elige en el panel: **Textos y diseño → Diseño → Galería premium**.
 | Nombre | Clave | Resumen |
 | --- | --- | --- |
 | **Estilo Baraja** | `deck` | Pantalla completa sobre el fondo de la web. Las fotos son cartas apiladas: cada una sale hacia la izquierda, se encoge y se desvanece, y el mazo de debajo asoma en 3D. |
+| **Estilo Burbujas** | `bubbles` | Pantalla completa. Las fotos son círculos de distintos tamaños, con un pequeño marco, repartidos al azar por toda la pantalla y flotando lentamente. Se paginan. |
 
 ## Qué cambia al activar una galería premium
 
-- Se **ignoran** estos ajustes de la galería estándar, y el panel **desactiva** sus campos:
+- Se **ignoran** estos ajustes de la galería estándar, y el panel **desactiva** sus campos (cada galería puede respetar alguno: «Estilo Burbujas» sigue usando «Fotos visibles a la vez», clave `honors` de su definición):
   - Tipo de cuadrícula
   - Galería móvil
   - Galería de escritorio
@@ -70,6 +71,42 @@ El mínimo entre dos pasos con la rueda (`STEP_COOLDOWN`, 600 ms) está al princ
 - Las fotos sin `slug` (sin ficha propia) se ven, pero no se pueden abrir con un clic.
 - El nombre de la app instalada (`manifest.json`) no cambia con el título de la web.
 
+## Estilo Burbujas (`bubbles`)
+
+Reutiliza de la baraja todo el funcionamiento (fijación en móvil, parada del scroll en escritorio, botones de salir hacia abajo y hacia arriba, filtros, botones flotantes que se apartan, vuelta desde la ficha con `/#baraja=<slug>`, centrado) y cambia cómo se muestran y se mueven las fotos.
+
+### Qué ve el visitante
+
+- La galería ocupa **el 100 % del ancho y del alto** de la pantalla sobre el fondo de la web, con dos resplandores suaves del color de acento que se mueven despacio.
+- Cada foto es un **círculo con un pequeño marco** (el color de acento, un aro del color del fondo y un hilo fino exterior). Los círculos tienen **tamaños distintos**, se reparten **al azar** por toda la zona útil, **sin solaparse ni salirse** de la pantalla y **sin ningún texto**.
+- Los círculos **flotan lentamente** (cada uno con su propio ritmo). Su movimiento es menor que la separación mínima entre ellos, así que nunca se tocan.
+- **«Fotos visibles a la vez»** (la única opción de la galería estándar que respeta) fija cuántos círculos hay en cada página: el ajuste de escritorio por encima de 768 px de ancho y el de móvil por debajo; «Todas» muestra todos a la vez, con un tope para que ningún círculo sea diminuto. Si hay más fotos, se **pagina**.
+- **Paginación minimalista** sobre la interfaz de la baraja: flechas finas y «1 / 7», sin caja, entre dos hilos finos. A los lados, las flechas dobles de **salir hacia arriba** y **salir hacia abajo**.
+- **Cambiar de página:** rueda del ratón hacia abajo o dedo hacia arriba (o izquierda) pasa a la página siguiente; el gesto contrario, a la anterior. También flechas, RePág/AvPág, Espacio, Inicio y Fin. Las burbujas de la página actual se encogen y desaparecen y las nuevas entran con un pequeño rebote.
+- **Al pulsar un círculo** rebota (se encoge, se pasa de tamaño y se asienta) y su foto se expande hasta llenar la pantalla antes de abrir la ficha (`/foto/<slug>`). **«Volver a la galería»** regresa a la página de esa foto.
+- **Móvil y tablet:** al llegar, la galería se fija (el cuerpo de la página pasa a `position: fixed`): nada se desplaza ni vibra. Deslizar más allá de la última o la primera página sale de la galería. **Escritorio:** el scroll de la página se detiene al llegar y la rueda cambia de página; en la primera y la última página deja pasar la rueda.
+- **Filtros:** los botones del bloque «Categorías» y «Favoritas» filtran las fotos y recalculan las páginas. **Movimiento reducido:** sin flotación y con cambios instantáneos.
+
+### Cómo se reparten los círculos (`bubbles.js`, sección 3)
+
+1. Se calcula una lista de pesos aleatorios (con una semilla fija por página, así el reparto no «salta» al redimensionar).
+2. Se busca, por búsqueda binaria, el mayor tamaño base con el que caben todos los círculos colocándolos al azar con una separación mínima (`GAP`, 24 px).
+3. Cada círculo crece después hasta casi tocar a sus vecinos o el borde, para que no queden huecos grandes.
+
+Las constantes `GAP`, `FLOAT`, `MIN_RADIUS`, `STEP_COOLDOWN` y `OUT_TIME` están al principio de `bubbles.js`. Las reservas arriba y abajo (iguales, para que el conjunto quede centrado) están en `--bubbles-pad` de `bubbles.css`.
+
+### Contrato del marcado de `bubbles`
+
+| Elemento | Qué es |
+| --- | --- |
+| `#bubbles` | Raíz. `data-total` = número de fotos; el JS mantiene `data-page`. |
+| `.bubbles__field` | Zona donde el JS reparte los círculos. |
+| `.bubbles__item` | Un círculo por foto, con los `data-*` de la foto. El JS le pone `left/top/width/height` y lo oculta si no está en la página actual. |
+| `.bubbles__ui` | Controles superpuestos: herramientas, paginación, botones de salida y pista. |
+| `[data-bubbles-prev]`, `[data-bubbles-next]`, `[data-bubbles-current]`, `[data-bubbles-total]` | Paginación («1 / 7»). |
+| `[data-bubbles-exit]`, `[data-bubbles-exit-up]` | Salir hacia abajo / hacia arriba (este último oculto si no hay nada encima). |
+| `#favoritesToggle`, `#slideshowStart` | Mismos id que en la galería estándar: los gestiona `assets/js/main.js` (que reconoce `#bubbles` y `.bubbles__item`). |
+
 ## Arquitectura
 
 ```
@@ -80,6 +117,7 @@ assets/premium/<clave>/<clave>.js  Comportamiento (solo se carga si está activa
 inc/blocks/gallery.php             Si hay una galería premium activa, incluye su marcado en lugar de la galería estándar
 index.php                          «Volver a la galería» de la ficha apunta a /#baraja=<slug> si hay una galería premium activa
 inc/site-settings.php              Ajuste `gallery_premium` (validación, atributos del <body>)
+assets/premium/bubbles/            Estilo Burbujas (bubbles.css y bubbles.js); marcado en inc/premium/bubbles.php
 inc/site-settings-form.php         Selector «Galería premium» y campos desactivados
 assets/js/admin-ui.js              Desactiva los campos de la galería estándar al elegir una premium
 ```
@@ -102,7 +140,7 @@ Flujo: `index.php` → `page_block_render('gallery')` → `inc/blocks/gallery.ph
 
 1. Crea el marcado en `inc/premium/<clave>.php`. Empieza con un comentario que explique el diseño y las variables que recibe (`$galleryItems`, `$author`, `$rootDir`).
 2. Crea `assets/premium/<clave>/<clave>.css` y `<clave>.js`. Usa solo variables de la paleta para los colores y respeta `prefers-reduced-motion`.
-3. Regístrala en `site_premium_gallery_definitions()` (`inc/premium-galleries.php`) con `label`, `description`, `partial`, `css` y `js`. Aparecerá sola en el selector del panel y en `data-gallery-premium`.
+3. Regístrala en `site_premium_gallery_definitions()` (`inc/premium-galleries.php`) con `label`, `description`, `partial`, `css` y `js` (y `honors` si respeta algún ajuste de la galería estándar). Aparecerá sola en el selector del panel y en `data-gallery-premium`.
 4. Si necesita textos, añade claves en `inc/site-texts.php` y usa `site_text_html()`.
 5. Escribe un test con el marcado, el CSS y el JS reales (ver `tests/premium-deck.cjs`) y añádelo a `.github/workflows/validate.yml`.
 6. Documenta el diseño en este archivo (catálogo y sección propia) y en el `README.md`.
@@ -112,5 +150,6 @@ Reglas del contrato: una galería premium debe ocupar su bloque entero, no depen
 ## Pruebas
 
 - `php tests/site-settings.php`: validación del ajuste, campos opcionales con una galería premium y formulario.
+- `node tests/premium-bubbles.cjs`: Estilo Burbujas en 5 dispositivos: pantalla completa, «Fotos visibles a la vez» (20 / 12), círculos de tamaños distintos sin solaparse, sin salirse y repartidos por toda la pantalla, sin texto, flotación, paginación minimalista, teclado, rueda y dedo, fijación sin vibración en móvil, apertura con rebote, botones de salir, filtros, vuelta desde la ficha, paleta y movimiento reducido.
 - `node tests/premium-deck.cjs`: Estilo Baraja en 5 dispositivos (escritorio, portátil, tablet, móvil y móvil apaisado): pantalla completa, parada del scroll al llegar (escritorio) y galería fijada sin vibración (móvil), rueda, dedo (también gestos lentos), teclado, límites, botones «Salir» y «Salir hacia arriba», botones flotantes, pies de foto sin solaparse, marco uniforme, mazo visible y ajuste de foto, filtros, vuelta desde la ficha, paletas y movimiento reducido.
 - `node tests/admin-layout.cjs`: el panel desactiva y reactiva los campos de la galería estándar.

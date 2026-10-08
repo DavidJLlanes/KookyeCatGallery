@@ -230,7 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Con una galería premium activa, sus campos ignorados llegan desactivados (el navegador no los envía):
             // se conservan los valores guardados para cuando se vuelva a la galería estándar.
             if (($settingsInput['gallery_premium'] ?? 'none') !== 'none') {
-                foreach (site_premium_ignored_settings() as $ignoredKey) {
+                foreach (site_premium_ignored_settings((string) $settingsInput['gallery_premium']) as $ignoredKey) {
                     if (!isset($settingsInput[$ignoredKey])) $settingsInput[$ignoredKey] = $currentSettings[$ignoredKey];
                 }
             }

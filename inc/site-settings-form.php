@@ -35,19 +35,27 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     $choices = site_design_choices();
     // ¿Hay una galería premium activa? Entonces se desactivan los campos de la galería estándar (los marcados con $premiumOff).
     $premiumOn = site_premium_gallery_active($settings) !== null;
-    $select = static function (string $key, string $label, array $options, $current, bool $premiumOff = false) use ($escape, $premiumOn): string {
-        $out = '<div class="upload-field' . ($premiumOff && $premiumOn ? ' is-disabled' : '') . '"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '"'
-            . ($premiumOff ? ' data-premium-off' . ($premiumOn ? ' disabled' : '') : '') . '>';
+    // Cada galería premium ignora unos ajustes (y respeta otros). `data-premium-off` lista las galerías que ignoran el campo.
+    $premiumActive = site_premium_gallery_active($settings);
+    $ignoredBy = static fn(string $key): string => implode(',', array_keys(array_filter(
+        site_premium_gallery_definitions(), static fn($d, $k) => in_array($key, site_premium_ignored_settings($k), true), ARRAY_FILTER_USE_BOTH)));
+    $offAttr = static function (string $key) use ($ignoredBy, $premiumActive): string {
+        $list = $ignoredBy($key);
+        return $list === '' ? '' : ' data-premium-off="' . $list . '"' . ($premiumActive !== null && in_array($key, site_premium_ignored_settings($premiumActive), true) ? ' disabled' : '');
+    };
+    $select = static function (string $key, string $label, array $options, $current, bool $premiumOff = false) use ($escape, $offAttr, $premiumActive): string {
+        $out = '<div class="upload-field' . ($premiumOff && str_contains($offAttr($key), ' disabled') ? ' is-disabled' : '') . '"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '"'
+            . ($premiumOff ? $offAttr($key) : '') . '>';
         foreach ($options as $value => $text) $out .= '<option value="' . $escape((string) $value) . '"' . ((string) $current === (string) $value ? ' selected' : '') . '>' . $escape((string) $text) . '</option>';
         return $out . '</select></div>';
     };
     $switch = static fn(string $key, string $label, bool $on): string => '<label class="site-section-switch"><input type="checkbox" name="' . $key . '" value="1"' . ($on ? ' checked' : '') . '><span class="site-section-switch__track" aria-hidden="true"></span><span>' . $escape($label) . '</span></label>';
     $card = static fn(string $title, string $lead, string $body): string => '<section class="admin-card"><header class="admin-card__head"><h2>' . $escape($title) . '</h2><p>' . $escape($lead) . '</p></header><div class="admin-card__body">' . $body . '</div></section>';
-    $range = static function (string $key, string $label, array $values, $current, string $zero = '', bool $premiumOff = false) use ($escape, $premiumOn): string {
+    $range = static function (string $key, string $label, array $values, $current, string $zero = '', bool $premiumOff = false) use ($escape, $offAttr): string {
         $options = [];
         foreach ($values as $n) $options[$n] = $n === 0 ? $zero : (string) $n;
-        return '<div class="upload-field' . ($premiumOff && $premiumOn ? ' is-disabled' : '') . '"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '"'
-            . ($premiumOff ? ' data-premium-off' . ($premiumOn ? ' disabled' : '') : '') . '>'
+        return '<div class="upload-field' . ($premiumOff && str_contains($offAttr($key), ' disabled') ? ' is-disabled' : '') . '"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '"'
+            . ($premiumOff ? $offAttr($key) : '') . '>'
             . implode('', array_map(static fn($n) => '<option value="' . $n . '"' . ((int) $current === $n ? ' selected' : '') . '>' . $escape($options[$n]) . '</option>', $values)) . '</select></div>';
     };
 
@@ -75,7 +83,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     $html .= $card('Galería premium', 'Diseños completos que sustituyen a la galería estándar y se integran con la paleta y las cabeceras.',
         '<div class="admin-fields">' . $select('gallery_premium', $labels['gallery_premium'], $choices['gallery_premium'], $settings['gallery_premium'] ?? 'none') . '</div>'
         . '<ul class="admin-premium-list">' . $premiumList . '</ul>'
-        . '<p class="upload-help admin-premium-note" data-premium-note' . ($premiumOn ? '' : ' hidden') . '>Con una galería premium activa se ignoran los ajustes de la galería estándar de la tarjeta siguiente y sus campos se desactivan. Sus valores se conservan por si vuelves a la galería estándar.</p>');
+        . '<p class="upload-help admin-premium-note" data-premium-note' . ($premiumOn ? '' : ' hidden') . '>Con una galería premium activa se ignoran los ajustes de la galería estándar de la tarjeta siguiente que ella no use, y sus campos se desactivan (algunas galerías, como «Estilo Burbujas», siguen usando «Fotos visibles a la vez»). Sus valores se conservan por si vuelves a la galería estándar.</p>');
     // Tarjeta «Galería estándar»: composición, columnas y fotos visibles a la vez (paginación).
     $columnsMobile = range(1, 4); $columnsDesktop = range(1, 10);
     $html .= $card('Galería estándar', 'Composición, columnas y cuántas fotos se ven a la vez.',

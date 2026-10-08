@@ -27,8 +27,9 @@ declare(strict_types=1);
  *   description  Una frase para el panel.
  *   partial      Archivo de marcado dentro de inc/premium/ (sin .php).
  *   css / js     Rutas de los recursos, relativas a la raíz de la web.
+ *   honors       Ajustes de la galería estándar que SÍ aplica (el resto se ignora). Opcional.
  *
- * @return array<string, array{label: string, description: string, partial: string, css: string, js: string}>
+ * @return array<string, array{label: string, description: string, partial: string, css: string, js: string, honors?: list<string>}>
  */
 function site_premium_gallery_definitions(): array
 {
@@ -40,6 +41,15 @@ function site_premium_gallery_definitions(): array
             'partial' => 'deck',
             'css' => 'assets/premium/deck/deck.css',
             'js' => 'assets/premium/deck/deck.js',
+        ],
+        'bubbles' => [
+            'label' => 'Estilo Burbujas',
+            'description' => 'Pantalla completa. Las fotos son círculos de distintos tamaños con un pequeño marco, repartidos al azar por toda '
+                . 'la pantalla y flotando lentamente. Al pulsar uno se abre la foto con un efecto rebote. Respeta «Fotos visibles a la vez» y se pagina.',
+            'partial' => 'bubbles',
+            'css' => 'assets/premium/bubbles/bubbles.css',
+            'js' => 'assets/premium/bubbles/bubbles.js',
+            'honors' => ['photos_mobile', 'photos_desktop'],
         ],
     ];
 }
@@ -57,17 +67,30 @@ function site_premium_gallery_choices(): array
 }
 
 /**
- * Ajustes de la galería estándar que una galería premium ignora.
- *
- * Con una galería premium activa el panel desactiva estos campos (no se envían al guardar, así
- * que se conservan los valores guardados) y la web no los aplica.
+ * Todos los ajustes de la galería estándar (los que una galería premium puede ignorar).
  *
  * @return list<string>
  */
-function site_premium_ignored_settings(): array
+function site_standard_gallery_settings(): array
 {
     return ['grid', 'gallery_mobile', 'gallery_desktop', 'pagination_shape',
         'columns_mobile', 'columns_desktop', 'photos_mobile', 'photos_desktop'];
+}
+
+/**
+ * Ajustes de la galería estándar que una galería premium ignora.
+ *
+ * Con una galería premium activa el panel desactiva estos campos (no se envían al guardar, así
+ * que se conservan los valores guardados) y la web no los aplica. Cada galería puede respetar algunos
+ * (clave `honors` de su definición): p. ej. «Estilo Burbujas» sigue usando «Fotos visibles a la vez».
+ *
+ * @param string|null $gallery Clave de la galería premium; null = ninguno respetado (todos ignorados).
+ * @return list<string>
+ */
+function site_premium_ignored_settings(?string $gallery = null): array
+{
+    $honors = $gallery !== null ? (site_premium_gallery_definitions()[$gallery]['honors'] ?? []) : [];
+    return array_values(array_diff(site_standard_gallery_settings(), $honors));
 }
 
 /**

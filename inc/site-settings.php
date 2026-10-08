@@ -202,7 +202,7 @@ function site_settings_validate(array $input): array
     $out = site_settings_defaults();
     // Con una galería premium activa, sus campos ignorados llegan desactivados (no se envían): se dejan como estén.
     $premiumOn = isset($input['gallery_premium']) && is_string($input['gallery_premium']) && $input['gallery_premium'] !== 'none';
-    $ignored = $premiumOn ? site_premium_ignored_settings() : [];
+    $ignored = $premiumOn ? site_premium_ignored_settings($input['gallery_premium']) : [];
     foreach (site_design_choices() as $key => $choices) {
         if (in_array($key, $ignored, true) && !isset($input[$key])) continue;
         if (!isset($input[$key]) || !is_string($input[$key]) || !isset($choices[$input[$key]])) {

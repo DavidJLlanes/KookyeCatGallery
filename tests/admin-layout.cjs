@@ -58,7 +58,7 @@ uploadPage($section === 'design' ? 'Diseño' : 'Perfil', adminNavigation('test-t
           if(section==='design') assert.deepEqual(result.order,['social','gallery','categories','map','project'],'Saved order must reach the form');
         }
         if(section==='design') {
-          // Galería premium: al elegir una se desactivan los 8 ajustes de la galería estándar; al quitarla se reactivan.
+          // Galería premium: al elegir una se desactivan los ajustes de la galería estándar que no use (8 con la baraja; 6 con las burbujas, que respetan «Fotos visibles a la vez»); al quitarla se reactivan.
           const premium=await page.evaluate(()=>{
             const select=document.querySelector('#setting-gallery_premium');
             const fields=[...document.querySelectorAll('[data-premium-off]')];
@@ -67,10 +67,11 @@ uploadPage($section === 'design' ? 'Diseño' : 'Perfil', adminNavigation('test-t
             const result={total:fields.length,initial:count(),titleField:!!document.querySelector('#setting-site_title'),options:[...select.options].map(o=>o.value)};
             change('deck');result.afterDeck=count();result.noteShown=!document.querySelector('[data-premium-note]').hidden;
             result.dimmed=document.querySelectorAll('.upload-field.is-disabled').length;
+            change('bubbles');result.afterBubbles=count();result.photosEnabled=!document.querySelector('#setting-photos_desktop').disabled&&!document.querySelector('#setting-photos_mobile').disabled;
             change('none');result.afterNone=count();result.noteHidden=document.querySelector('[data-premium-note]').hidden;
             return result;
           });
-          assert.deepEqual(premium,{total:8,initial:0,titleField:true,options:['none','deck'],afterDeck:8,noteShown:true,dimmed:8,afterNone:0,noteHidden:true},'Premium gallery must toggle the standard gallery fields');
+          assert.deepEqual(premium,{total:8,initial:0,titleField:true,options:['none','deck','bubbles'],afterDeck:8,noteShown:true,dimmed:8,afterBubbles:6,photosEnabled:true,afterNone:0,noteHidden:true},'Premium gallery must toggle the standard gallery fields');
         }
         if(section==='design') {
           // Reordering moves the DOM rows (which is what gets submitted) and disables the edge buttons.

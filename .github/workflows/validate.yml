@@ -65,6 +65,10 @@ jobs:
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/premium-deck.cjs
+      - name: Probar la galería premium de burbujas
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/premium-bubbles.cjs
       - name: Comprobar la visibilidad de las categorías
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
