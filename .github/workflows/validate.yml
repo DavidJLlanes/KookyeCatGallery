@@ -52,6 +52,10 @@ jobs:
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/gallery-layout.cjs
+      - name: Comprobar la visibilidad de las categorías
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/categories-visibility.cjs
       - name: Comprobar el panel de administración
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules

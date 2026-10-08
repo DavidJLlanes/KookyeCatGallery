@@ -206,6 +206,11 @@ body[data-show-categories="false"] [data-site-section="categories"] {display:non
 @media(max-width:600px) { .categories-block { padding:4rem 1rem 0; } }
 @media(max-width:768px) {
     .categories-block { padding:0; }
+    /* Categorías en móvil: una sola fila que se desliza con el dedo, encima de la cuadrícula. */
+    .categories-filter { padding:.7rem 1rem; border-bottom:0; }
+    .categories-filter__inner { flex-wrap:nowrap; justify-content:flex-start; gap:.5rem; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+    .categories-filter__inner::-webkit-scrollbar { display:none; }
+    .categories-filter__chip { flex:0 0 auto; white-space:nowrap; }
     body[data-show-header-mobile="false"] .mobile-profile { display:none !important; }
 }
 @media(min-width:769px) {

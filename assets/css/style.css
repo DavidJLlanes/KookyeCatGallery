@@ -2661,7 +2661,8 @@ html.js .project__link[data-reveal]   { transition-delay: 0.24s; }
     .mobile-profile__website:hover { text-decoration: underline; text-underline-offset: .2em; }
     .mobile-profile__website:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
     .gallery-section { padding: 0; }
-    .gallery-intro, .categories-filter { display: none !important; }
+    /* El texto de introducción se oculta en móvil; las categorías se muestran según el ajuste «Mostrar categorías». */
+    .gallery-intro { display: none !important; }
     .masonry {
         display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
         gap: 2px !important; padding: 0 !important; margin: 0 !important; perspective: none !important;
