@@ -50,6 +50,13 @@ foreach (['columns_mobile' => 4, 'columns_desktop' => 10] as $field => $max) {
     foreach ([0, -1, $max + 1, '1.5', [], 'bad'] as $invalid) rejects(array_replace($defaults, [$field => $invalid]));
 }
 
+foreach (['photos_mobile', 'photos_desktop'] as $field) {
+    foreach (site_photos_per_view_choices() as $n) {
+        check(site_settings_validate(array_replace($defaults, [$field => (string) $n]))[$field] === $n, 'Photos per view rejected.');
+    }
+    foreach ([-1, 7, 101, '1.5', [], 'bad'] as $invalid) rejects(array_replace($defaults, [$field => $invalid]));
+}
+
 $key = site_editable_text_keys()[0];
 $custom = array_replace($defaults, [
     'palette' => 'japanese', 'grid' => 'masonry', 'columns_mobile' => 4, 'columns_desktop' => 10,

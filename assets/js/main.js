@@ -1195,8 +1195,13 @@
         const filterEl      = $('#categoriesFilter');
         const categorySelect = $('#mapCategory');
         const jsPagination  = $('#jsPagination');
-        const perPage = () => getGalleryDesign() === 'category-rails' ? Number.MAX_SAFE_INTEGER
-            : window.matchMedia('(max-width: 768px)').matches ? 12 : 20;
+        const perPage = () => {
+            if (getGalleryDesign() === 'category-rails') return Number.MAX_SAFE_INTEGER;
+            const mobile = window.matchMedia('(max-width: 768px)').matches;
+            const configured = Number(document.body.dataset[mobile ? 'photosMobile' : 'photosDesktop']);
+            if (configured === 0) return Number.MAX_SAFE_INTEGER;
+            return configured > 0 ? configured : (mobile ? 12 : 20);
+        };
         let   currentCat    = '';
         let   currentPage   = 1;
 

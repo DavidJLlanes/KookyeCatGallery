@@ -25,10 +25,16 @@ function site_design_choices(): array
     ];
 }
 
+// Fotos visibles a la vez por pantalla (0 = todas), independiente de las columnas.
+function site_photos_per_view_choices(): array
+{
+    return [6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 36, 40, 50, 60, 100, 0];
+}
+
 function site_settings_defaults(): array
 {
     return ['palette' => 'current', 'grid' => 'adaptive', 'columns_mobile' => 3,
-        'columns_desktop' => 3, 'header_mobile' => 'current', 'header_desktop' => 'current',
+        'columns_desktop' => 3, 'photos_mobile' => 12, 'photos_desktop' => 20, 'header_mobile' => 'current', 'header_desktop' => 'current',
         'gallery_mobile' => 'standard', 'gallery_desktop' => 'standard', 'hover' => 'soft',
         'show_categories' => true, 'show_map' => false, 'show_project' => true, 'show_social' => false,
         'texts' => [], 'pages' => [], 'profile_image' => '/profile-placeholder.svg', 'logo_image' => '/favicon.svg',
@@ -92,6 +98,13 @@ function site_settings_validate(array $input): array
         $value = filter_var($input[$key] ?? null, FILTER_VALIDATE_INT);
         if ($value === false || $value < 1 || $value > $max) {
             throw new InvalidArgumentException('El número de columnas debe estar entre 1 y ' . $max . '.');
+        }
+        $out[$key] = $value;
+    }
+    foreach (['photos_mobile', 'photos_desktop'] as $key) {
+        $value = filter_var($input[$key] ?? $out[$key], FILTER_VALIDATE_INT);
+        if ($value === false || !in_array($value, site_photos_per_view_choices(), true)) {
+            throw new InvalidArgumentException('Selecciona un número válido de fotos visibles.');
         }
         $out[$key] = $value;
     }
@@ -267,6 +280,7 @@ function site_design_attributes(): string
     foreach (['show_categories', 'show_map', 'show_project', 'show_social'] as $key) {
         $attributes .= ' data-' . str_replace('_', '-', $key) . '="' . ($settings[$key] ? 'true' : 'false') . '"';
     }
+    $attributes .= ' data-photos-mobile="' . (int) $settings['photos_mobile'] . '" data-photos-desktop="' . (int) $settings['photos_desktop'] . '"';
     return $attributes . ' style="--columns-mobile:' . $settings['columns_mobile'] . ';--columns-desktop:' . $settings['columns_desktop'] . '"';
 }
 
@@ -300,6 +314,12 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         for ($i = 1; $i <= $max; $i++) $html .= '<option value="' . $i . '"' . ((int) $settings[$key] === $i ? ' selected' : '') . '>' . $i . '</option>';
         $html .= '</select></div>';
     }
+    foreach (['photos_mobile' => 'Fotos visibles a la vez en móvil', 'photos_desktop' => 'Fotos visibles a la vez en escritorio'] as $key => $label) {
+        $html .= '<div class="upload-field"><label for="setting-' . $key . '">' . $label . '</label><select id="setting-' . $key . '" name="' . $key . '">';
+        foreach (site_photos_per_view_choices() as $n) $html .= '<option value="' . $n . '"' . ((int) $settings[$key] === $n ? ' selected' : '') . '>' . ($n === 0 ? 'Todas' : $n) . '</option>';
+        $html .= '</select></div>';
+    }
+    $html .= '<p class="upload-help">Las fotos visibles a la vez no dependen de las columnas: si hay más fotos, se paginan. Elige «Todas» para mostrarlas todas juntas.</p>';
     $html .= '<p class="upload-help">Masonry conserva siempre las proporciones originales y coloca cada foto en la columna más corta. Para fotos cuadradas, horizontales o verticales, elige la galería «Cuadrícula» y su tipo de cuadrícula. El resto de galerías conserva su composición propia. El efecto hover se elige por separado y también responde al foco de teclado y al toque.</p>';
     $html .= '<fieldset class="site-section-switches"><legend>Secciones de la página</legend>';
     foreach (['show_categories' => 'Mostrar categorías', 'show_map' => 'Mostrar mapa', 'show_project' => 'Mostrar «El proyecto»', 'show_social' => 'Mostrar enlaces sociales'] as $key => $label) {
