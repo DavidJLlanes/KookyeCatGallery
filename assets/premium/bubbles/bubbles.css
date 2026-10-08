@@ -1,5 +1,5 @@
 /* =============================================================================
-   GALERÍA PREMIUM · ESTILO BURBUJAS (clave `bubbles`)
+   GALERÍA PREMIUM · ESTILO BURBUJAS (clave `bubbles`) y ESTILO CUADRADOS (clave `squares`)
    -----------------------------------------------------------------------------
    Fotos en círculos de distintos tamaños, con un pequeño marco, que flotan lentamente por toda la pantalla.
    Marcado: inc/premium/bubbles.php · Comportamiento: bubbles.js (reparto, paginación, fijación, apertura con rebote).
@@ -14,6 +14,7 @@
 
    Integración con la web
      · Colores: solo variables de la paleta (--bg, --bg-card, --fg, --fg-soft, --accent, --accent-soft, --line, --sans).
+     · «Estilo Cuadrados» usa estos mismos estilos y el mismo JS; solo cambia la forma (data-shape="square").
      · Cabeceras: el bloque va debajo de la cabecera activa; al alinearse ocupa la pantalla entera.
    ============================================================================= */
 
@@ -176,6 +177,13 @@
     border-radius: 50%;
     pointer-events: none;
     -webkit-user-drag: none;
+}
+
+/* «Estilo Cuadrados» (data-shape="square"): la misma galería con cuadrados de esquinas suavemente redondeadas. */
+.bubbles[data-shape="square"] .bubbles__item,
+.bubbles[data-shape="square"] .bubbles__link,
+.bubbles[data-shape="square"] .bubbles__img {
+    border-radius: clamp(6px, 6%, 18px);
 }
 
 /* ---------------------------------------------------------------------------

@@ -88,7 +88,7 @@ check(str_contains(site_settings_form('t', $defaults, 'design'), 'value="' . htm
 
 // ── Galerías premium ──────────────────────────────────────────────────────────
 check($defaults['gallery_premium'] === 'none', 'No premium gallery by default.');
-check(isset(site_premium_gallery_choices()['none'], site_premium_gallery_choices()['deck'], site_premium_gallery_choices()['bubbles']), 'Premium choices must include none, deck and bubbles.');
+check(isset(site_premium_gallery_choices()['none'], site_premium_gallery_choices()['deck'], site_premium_gallery_choices()['bubbles'], site_premium_gallery_choices()['squares']), 'Premium choices must include none, deck, bubbles and squares.');
 check(site_premium_gallery_active($defaults) === null, 'No premium gallery must be active by default.');
 $deck = array_replace($defaults, ['gallery_premium' => 'deck']);
 check(site_settings_validate($deck)['gallery_premium'] === 'deck', 'The deck gallery was rejected.');
@@ -118,6 +118,10 @@ check(site_settings_validate($bubblesPartial)['photos_desktop'] === $defaults['p
 rejects(array_replace($bubbles, ['photos_desktop' => 7]));   // «Fotos visibles a la vez» se sigue validando.
 $formBubbles = site_settings_form('t', $bubbles, 'design');
 check(substr_count($formBubbles, ' disabled') === 6 && str_contains($formBubbles, 'name="photos_desktop" data-premium-off="deck">'), 'Bubbles: six standard fields disabled, photos per view enabled.');
+// «Estilo Cuadrados» respeta lo mismo que «Estilo Burbujas».
+check(site_premium_gallery_active(array_replace($defaults, ['gallery_premium' => 'squares'])) === 'squares', 'The squares gallery must be active.');
+check(site_premium_ignored_settings('squares') === site_premium_ignored_settings('bubbles'), 'Squares must honor the same settings as bubbles.');
+check(site_settings_validate(array_replace($defaults, ['gallery_premium' => 'squares']))['gallery_premium'] === 'squares', 'The squares gallery was rejected.');
 check(str_contains($formDeck, 'name="gallery_premium"') && str_contains($formDeck, 'Estilo Baraja'), 'Premium selector missing from the form.');
 check(premium_gallery_head_tags() === '' || str_contains(premium_gallery_head_tags(), 'deck.css'), 'Premium head tags.');
 

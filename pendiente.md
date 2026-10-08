@@ -23,3 +23,4 @@ y solo cambian cómo se colocan y se mueven las fotos. Se harán progresivamente
 ## Hecho
 
 - [x] **Estilo Burbujas** (`bubbles`): fotos en círculos de distintos tamaños que flotan lentamente, paginadas.
+- [x] **Estilo Cuadrados** (`squares`): lo mismo que las burbujas, con cuadrados.

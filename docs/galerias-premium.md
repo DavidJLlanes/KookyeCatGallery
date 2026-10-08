@@ -10,6 +10,7 @@ Se elige en el panel: **Textos y diseño → Diseño → Galería premium**.
 | --- | --- | --- |
 | **Estilo Baraja** | `deck` | Pantalla completa sobre el fondo de la web. Las fotos son cartas apiladas: cada una sale hacia la izquierda, se encoge y se desvanece, y el mazo de debajo asoma en 3D. |
 | **Estilo Burbujas** | `bubbles` | Pantalla completa. Las fotos son círculos de distintos tamaños, con un pequeño marco, repartidos al azar por toda la pantalla y flotando lentamente. Se paginan. |
+| **Estilo Cuadrados** | `squares` | Igual que «Estilo Burbujas», pero con cuadrados de distintos tamaños (esquinas suavemente redondeadas). |
 
 ## Qué cambia al activar una galería premium
 
@@ -107,6 +108,14 @@ Las constantes `GAP`, `FLOAT`, `MIN_RADIUS`, `STEP_COOLDOWN` y `OUT_TIME` están
 | `[data-bubbles-exit]`, `[data-bubbles-exit-up]` | Salir hacia abajo / hacia arriba (este último oculto si no hay nada encima). |
 | `#favoritesToggle`, `#slideshowStart` | Mismos id que en la galería estándar: los gestiona `assets/js/main.js` (que reconoce `#bubbles` y `.bubbles__item`). |
 
+## Estilo Cuadrados (`squares`)
+
+Es **«Estilo Burbujas» con cuadrados**: comparte el marcado (`inc/premium/bubbles.php`), los estilos (`bubbles.css`) y el comportamiento (`bubbles.js`), y se comporta exactamente igual (tamaños distintos, reparto al azar sin solaparse, flotación, «Fotos visibles a la vez», paginación minimalista, rebote al pulsar y apertura de la ficha, fijación en móvil, botones de salir, filtros y vuelta desde la ficha). Solo cambia la forma:
+
+- El marcado lleva `data-shape="square"` (lo decide el partial según la galería premium activa) y el CSS (`.bubbles[data-shape="square"]`) redondea suavemente las esquinas en lugar de hacer un círculo.
+- El reparto usa la distancia de **Chebyshev** (el mayor desplazamiento en un eje) en lugar de la euclídea para separar los cuadrados y hacerlos crecer hasta casi tocarse. Como un cuadrado ocupa más que un círculo del mismo radio, el tope de burbujas por página según el espacio es algo menor (p. ej. 18 en lugar de 20 en un móvil apaisado).
+- Los textos propios (`squares_label`) están en el catálogo «Galería premium · Estilo Cuadrados»; el resto de textos son los de la galería de burbujas.
+
 ## Arquitectura
 
 ```
@@ -150,6 +159,7 @@ Reglas del contrato: una galería premium debe ocupar su bloque entero, no depen
 ## Pruebas
 
 - `php tests/site-settings.php`: validación del ajuste, campos opcionales con una galería premium y formulario.
+- `node tests/premium-squares.cjs`: la misma batería que las burbujas con la forma cuadrada (`BUBBLES_SHAPE=square`): separación entre cuadrados, tamaños distintos, paginación, rebote, fijación en móvil, etc.
 - `node tests/premium-bubbles.cjs`: Estilo Burbujas en 5 dispositivos: pantalla completa, «Fotos visibles a la vez» (20 / 12), círculos de tamaños distintos sin solaparse, sin salirse y repartidos por toda la pantalla, sin texto, flotación, paginación minimalista, teclado, rueda y dedo, fijación sin vibración en móvil, apertura con rebote, botones de salir, filtros, vuelta desde la ficha, paleta y movimiento reducido.
 - `node tests/premium-deck.cjs`: Estilo Baraja en 5 dispositivos (escritorio, portátil, tablet, móvil y móvil apaisado): pantalla completa, parada del scroll al llegar (escritorio) y galería fijada sin vibración (móvil), rueda, dedo (también gestos lentos), teclado, límites, botones «Salir» y «Salir hacia arriba», botones flotantes, pies de foto sin solaparse, marco uniforme, mazo visible y ajuste de foto, filtros, vuelta desde la ficha, paletas y movimiento reducido.
 - `node tests/admin-layout.cjs`: el panel desactiva y reactiva los campos de la galería estándar.

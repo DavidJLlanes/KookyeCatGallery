@@ -1,4 +1,5 @@
-// Galería premium «Estilo Burbujas»: círculos de distintos tamaños repartidos por toda la pantalla sin solaparse, paginación,
+// Galerías premium «Estilo Burbujas» (círculos) y «Estilo Cuadrados» (cuadrados; BUBBLES_SHAPE=square, ver premium-squares.cjs):
+// círculos de distintos tamaños repartidos por toda la pantalla sin solaparse, paginación,
 // «Fotos visibles a la vez», apertura con rebote hacia la ficha, fijación en móvil, botones de salir, filtros y vuelta desde la ficha.
 // Renderiza el marcado real (inc/premium/bubbles.php) con el CSS y el JS reales (bubbles.css, bubbles.js, main.js).
 const {chromium} = require('playwright');
@@ -8,11 +9,14 @@ const path = require('path');
 const assert = require('assert/strict');
 const root = path.join(__dirname, '..');
 
+const SQUARE = process.env.BUBBLES_SHAPE === 'square';   // Mismo marcado, estilos y JS: solo cambia la forma.
+const GALLERY = SQUARE ? 'squares' : 'bubbles';
 const TOTAL = 30;
 const fixture = String.raw`
 require_once 'inc/helpers.php';
 require_once 'inc/site-settings.php';
 $rootDir = getcwd(); $author = 'Autor'; $galleryItems = [];
+$siteSettings = array_replace(site_settings_defaults(), ['gallery_premium' => '${GALLERY}']);
 for ($i = 0; $i < ${TOTAL}; $i++) {
     $galleryItems[] = ['slug' => "foto-$i", 'title' => "Foto $i", 'description' => '', 'desktop' => "imagenes/desktop/foto-$i.webp",
         'mobile' => "imagenes/mobile/foto-$i.webp", 'aspect' => 1.5, 'category' => $i % 3 ? 'B' : 'A', 'latitude' => 0, 'longitude' => 0];
@@ -27,7 +31,7 @@ const scripts = [fs.readFileSync(path.join(root, 'assets/js/site-texts.js'), 'ut
     fs.readFileSync(path.join(root, 'assets/premium/bubbles/bubbles.js'), 'utf8')];
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
 const pageHtml = (palette, desktop = 20, mobile = 12) => `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body data-palette="${palette}" data-grid="premium" data-gallery-premium="bubbles" data-gallery-mobile="premium" data-gallery-desktop="premium" data-photos-desktop="${desktop}" data-photos-mobile="${mobile}">
+<body data-palette="${palette}" data-grid="premium" data-gallery-premium="${GALLERY}" data-gallery-mobile="premium" data-gallery-desktop="premium" data-photos-desktop="${desktop}" data-photos-mobile="${mobile}">
 <header id="before" style="height:700px">Cabecera</header>
 <div class="categories-filter" style="height:120px;overflow:hidden"><div class="categories-filter__inner"><button class="categories-filter__chip is-active" data-category="">Todas</button>
 <button class="categories-filter__chip" data-category="A">A</button><button class="categories-filter__chip" data-category="B">B</button></div></div>
@@ -42,6 +46,9 @@ const devices = [
     {name: 'móvil 390×844', viewport: {width: 390, height: 844}, touch: true, per: 12},
     {name: 'móvil apaisado 844×390', viewport: {width: 844, height: 390}, touch: true, per: 20},
 ];
+
+// Los cuadrados ocupan más que los círculos: en el móvil apaisado (zona muy baja) el tope por tamaño mínimo deja 18 de las 20.
+if (SQUARE) devices[4].per = 18;
 
 // Abre la página con el mismo HTML y recursos de siempre; `navigate` captura las fichas de foto.
 const open = async (context, html, url = 'https://deck.test/') => {
@@ -125,22 +132,25 @@ const geometry = page => page.evaluate(() => {
 
             // 2. Reparto: tamaños distintos, sin solaparse, sin salirse, repartidas por toda la pantalla y sin texto.
             const g = await geometry(page);
+            assert.equal(await page.evaluate(() => document.querySelector('#bubbles').dataset.shape), SQUARE ? 'square' : 'circle', `${label}: la forma del marcado`);
+            const linkRadius = await page.evaluate(() => getComputedStyle(document.querySelector('.bubbles__item:not([hidden]) .bubbles__link')).borderTopLeftRadius);
+            assert(SQUARE ? linkRadius !== '50%' : linkRadius === '50%', `${label}: forma de los marcos (${linkRadius})`);
             const radii = g.circles.map(c => c.r);
             assert(Math.max(...radii) / Math.min(...radii) >= 1.25, `${label}: los círculos deben tener tamaños distintos (${Math.min(...radii).toFixed(0)}–${Math.max(...radii).toFixed(0)})`);
             for (const c of g.circles) {
-                assert(Math.abs(c.r - c.h) < 0.6, `${label}: cada burbuja debe ser un círculo`);
+                assert(Math.abs(c.r - c.h) < 0.6, `${label}: cada burbuja debe ser un ${SQUARE ? 'cuadrado' : 'círculo'}`);
                 assert(c.x - c.r >= -0.5 && c.x + c.r <= g.width + 0.5 && c.y - c.r >= -0.5 && c.y + c.r <= g.height + 0.5, `${label}: una burbuja se sale de la pantalla (${JSON.stringify(c)} en ${g.width}×${g.height})`);
                 assert.equal(c.text, '', `${label}: las burbujas no llevan texto`);
             }
             let minGap = Infinity;
             for (let i = 0; i < g.circles.length; i++) for (let j = i + 1; j < g.circles.length; j++) {
                 const a = g.circles[i], b = g.circles[j];
-                minGap = Math.min(minGap, Math.hypot(a.x - b.x, a.y - b.y) - a.r - b.r);
+                minGap = Math.min(minGap, (SQUARE ? Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) : Math.hypot(a.x - b.x, a.y - b.y)) - a.r - b.r);
             }
             assert(minGap >= 22, `${label}: las burbujas no deben tocarse ni solaparse (separación mínima ${minGap.toFixed(1)} px)`);
             const quadrants = new Set(g.circles.map(c => `${c.x < g.width / 2 ? 'L' : 'R'}${c.y < g.height / 2 ? 'T' : 'B'}`));
             assert.equal(quadrants.size, 4, `${label}: las burbujas deben repartirse por toda la pantalla (cuadrantes ${[...quadrants]})`);
-            const covered = g.circles.reduce((sum, c) => sum + Math.PI * c.r * c.r, 0) / (g.width * g.height);
+            const covered = g.circles.reduce((sum, c) => sum + (SQUARE ? 4 : Math.PI) * c.r * c.r, 0) / (g.width * g.height);
             assert(covered >= 0.3, `${label}: las burbujas deben llenar la pantalla (cobertura ${(covered * 100).toFixed(0)} %)`);
             // Centrado: la zona útil deja la misma reserva arriba y abajo.
             const reserve = await page.evaluate(() => { const d = document.querySelector('#bubbles').getBoundingClientRect(), f = document.querySelector('[data-bubbles-field]').getBoundingClientRect();
@@ -306,6 +316,6 @@ const geometry = page => page.evaluate(() => {
             await context.close();
         }
 
-        console.log('Burbujas verificadas: reparto sin solapes en 5 dispositivos, tamaños distintos, paginación, fotos visibles a la vez, rebote al abrir, fijación en móvil, salidas, filtros y vuelta desde la ficha.');
+        console.log(`${SQUARE ? 'Cuadrados verificados' : 'Burbujas verificadas'}: reparto sin solapes en 5 dispositivos, tamaños distintos, paginación, fotos visibles a la vez, rebote al abrir, fijación en móvil, salidas, filtros y vuelta desde la ficha.`);
     } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exit(1); });

@@ -69,6 +69,10 @@ jobs:
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/premium-bubbles.cjs
+      - name: Probar la galería premium de cuadrados
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/premium-squares.cjs
       - name: Comprobar la visibilidad de las categorías
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules

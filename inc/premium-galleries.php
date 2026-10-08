@@ -51,6 +51,17 @@ function site_premium_gallery_definitions(): array
             'js' => 'assets/premium/bubbles/bubbles.js',
             'honors' => ['photos_mobile', 'photos_desktop'],
         ],
+        // «Estilo Cuadrados» es «Estilo Burbujas» con cuadrados: comparte marcado, estilos y comportamiento (la forma la fija
+        // el atributo data-shape del marcado, que sale de la clave de la galería activa).
+        'squares' => [
+            'label' => 'Estilo Cuadrados',
+            'description' => 'Igual que «Estilo Burbujas», pero con cuadrados de distintos tamaños: pantalla completa, repartidos al azar, '
+                . 'flotando lentamente, paginados, y la foto se abre con un efecto rebote.',
+            'partial' => 'bubbles',
+            'css' => 'assets/premium/bubbles/bubbles.css',
+            'js' => 'assets/premium/bubbles/bubbles.js',
+            'honors' => ['photos_mobile', 'photos_desktop'],
+        ],
     ];
 }
 

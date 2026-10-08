@@ -5,7 +5,7 @@
    Documentación: docs/galerias-premium.md y README.md
 
    Qué hace
-     · Reparte las fotos de la página actual como círculos de distintos tamaños, al azar pero sin solaparse ni salirse de la
+     · Reparte las fotos de la página actual como círculos (o cuadrados, en «Estilo Cuadrados») de distintos tamaños, al azar pero sin solaparse ni salirse de la
        zona útil, de modo que llenan la pantalla entera en cualquier dispositivo. Cada círculo flota lentamente (CSS).
      · Pagina según «Fotos visibles a la vez» (data-photos-mobile / data-photos-desktop del <body>; 0 = todas, con un tope
        para que los círculos no se hagan diminutos). Cambia de página con: rueda del ratón, deslizar el dedo hacia arriba (o la
@@ -45,6 +45,7 @@
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const coarse = window.matchMedia('(hover: none) and (pointer: coarse)');   // Pantalla táctil sin ratón.
     const narrow = window.matchMedia('(max-width: 768px)');
+    const square = root.dataset.shape === 'square';   // «Estilo Cuadrados»: la misma galería con cuadrados en vez de círculos.
 
     let visible = items.slice();   // Fotos que pasan los filtros, en orden.
     let page = 0;                  // Página actual (empieza en 0).
@@ -154,7 +155,8 @@
         const configured = Number(document.body.dataset[narrow.matches ? 'photosMobile' : 'photosDesktop']);
         const wanted = configured === 0 ? Infinity : (configured > 0 ? configured : (narrow.matches ? 12 : 20));
         const { width, height } = fieldSize();
-        const fits = Math.max(1, Math.floor((width * height * 0.58) / (Math.PI * (MIN_RADIUS + GAP / 2) ** 2)));
+        const unit = (MIN_RADIUS + GAP / 2) ** 2;                       // Área de una burbuja mínima con su separación.
+        const fits = Math.max(1, Math.floor((width * height * 0.58) / (square ? 4 * unit : Math.PI * unit)));
         return Math.max(1, Math.min(wanted, fits));
     };
     const pageCount = () => Math.max(1, Math.ceil(visible.length / perPage()));
@@ -168,7 +170,9 @@
         const H = Math.max(10, height - margin * 2);
         const rng = seeded(seed);
         const weights = Array.from({ length: count }, () => 0.55 + rng() * 0.9).sort((a, b) => b - a);
-        const fits = (a, circles) => circles.every(b => Math.hypot(a.x - b.x, a.y - b.y) >= a.r + b.r + GAP);
+        // Distancia entre centros: euclídea para círculos y de Chebyshev (el mayor desplazamiento en un eje) para cuadrados.
+        const gapBetween = (a, b) => (square ? Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) : Math.hypot(a.x - b.x, a.y - b.y)) - a.r - b.r;
+        const fits = (a, circles) => circles.every(b => gapBetween(a, b) >= GAP);
 
         const attempt = (scale, attemptSeed) => {
             const random = seeded(attemptSeed);
@@ -207,7 +211,7 @@
             for (const i of order) {
                 const c = best[i];
                 let room = Math.min(c.x, W - c.x, c.y, H - c.y, limit);
-                for (let j = 0; j < best.length; j++) if (j !== i) room = Math.min(room, Math.hypot(c.x - best[j].x, c.y - best[j].y) - best[j].r - GAP);
+                for (let j = 0; j < best.length; j++) if (j !== i) room = Math.min(room, gapBetween({ x: c.x, y: c.y, r: 0 }, best[j]) - GAP);
                 if (room > c.r) c.r += (room - c.r) * (pass < 5 ? 0.7 : 1);
             }
         }

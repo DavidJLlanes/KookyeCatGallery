@@ -2,6 +2,9 @@
 /**
  * Galería premium «Estilo Burbujas» (clave `bubbles`): marcado.
  *
+ * Sirve a dos galerías premium: «Estilo Burbujas» (círculos, clave `bubbles`) y «Estilo Cuadrados» (cuadrados, clave `squares`);
+ * la forma va en data-shape (`circle` o `square`).
+ *
  * Una sola pantalla completa (100 % de ancho y de alto del dispositivo). Las fotos son círculos con un pequeño marco, de
  * distintos tamaños, repartidos al azar por toda la pantalla y flotando lentamente. Se paginan según «Fotos visibles a la
  * vez» (la única opción de la galería estándar que respeta). Comparte con «Estilo Baraja» la fijación en móvil, la parada
@@ -10,9 +13,9 @@
  *
  * Contrato con el JS y el CSS
  * ---------------------------
- *   #bubbles                   Raíz. data-total = número de fotos.
+ *   #bubbles                   Raíz. data-total = número de fotos; data-shape = `circle` o `square`.
  *   .bubbles__field            Zona donde el JS reparte los círculos (deja sitio a las herramientas y a la paginación).
- *   .bubbles__item             Un círculo por foto, con los mismos data-* que las tarjetas estándar. El JS le pone su
+ *   .bubbles__item             Una burbuja (círculo o cuadrado) por foto, con los mismos data-* que las tarjetas estándar. El JS le pone su
  *                              posición y tamaño (left/top/width/height) y lo oculta si no está en la página actual.
  *   .bubbles__ui               Controles superpuestos: herramientas, paginación minimalista, salidas y pista.
  *   [data-bubbles-prev|next]   Página anterior / siguiente. [data-bubbles-current|total]: «1 / 7».
@@ -24,10 +27,12 @@
  * Se incluye desde inc/blocks/gallery.php cuando hay fotos y esta galería premium está activa.
  */
 $bubblesTotal = count($galleryItems);
+// «Estilo Burbujas» (círculos) y «Estilo Cuadrados» comparten este marcado: la forma sale de la galería premium activa.
+$bubblesShape = site_premium_gallery_active($siteSettings ?? null) === 'squares' ? 'square' : 'circle';
 ?>
 <!-- GALERÍA PREMIUM · ESTILO BURBUJAS -->
 <main id="galeria" class="gallery-section gallery-section--premium" data-premium-gallery="bubbles">
-    <section class="bubbles" id="bubbles" role="region" aria-label="<?= site_text_html('bubbles_label') ?>" data-total="<?= $bubblesTotal ?>" tabindex="0">
+    <section class="bubbles" id="bubbles" role="region" aria-label="<?= site_text_html($bubblesShape === 'square' ? 'squares_label' : 'bubbles_label') ?>" data-shape="<?= $bubblesShape ?>" data-total="<?= $bubblesTotal ?>" tabindex="0">
         <span class="bubbles__glow bubbles__glow--a" aria-hidden="true"></span>
         <span class="bubbles__glow bubbles__glow--b" aria-hidden="true"></span>
 

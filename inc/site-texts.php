@@ -11,6 +11,7 @@ return [
     'deck_exit_up_label' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Salir de la galería hacia arriba'],
     'deck_empty_filter' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'No hay fotos en esta selección'],
     'bubbles_label' => ['group' => 'Galería premium · Estilo Burbujas', 'default' => 'Galería de fotografías en burbujas'],
+    'squares_label' => ['group' => 'Galería premium · Estilo Cuadrados', 'default' => 'Galería de fotografías en cuadrados'],
     'bubbles_prev' => ['group' => 'Galería premium · Estilo Burbujas', 'default' => 'Página anterior'],
     'bubbles_next' => ['group' => 'Galería premium · Estilo Burbujas', 'default' => 'Página siguiente'],
     'bubbles_hint_touch' => ['group' => 'Galería premium · Estilo Burbujas', 'default' => 'Desliza hacia arriba · pulsa una foto'],
