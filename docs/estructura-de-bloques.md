@@ -10,6 +10,7 @@ La portada se compone de piezas independientes. Cada una vive en su propio archi
 | Bloques reordenables | `inc/blocks/categories.php`, `gallery.php`, `map.php`, `project.php`, `social.php` |
 | Pintar bloques y orden | `inc/page-blocks.php` (`page_block_render()`, `page_blocks_render_home()`) |
 | Definición de cada bloque (nombre, ayuda, interruptor) | `site_section_definitions()` en `inc/site-settings.php` |
+| Galerías premium (sustituyen al bloque de galería) | `inc/premium-galleries.php`, `inc/premium/`, `assets/premium/` · ver [galerias-premium.md](galerias-premium.md) |
 | Ajustes: valores por defecto, validación y guardado | `inc/site-settings.php` |
 | Formularios del panel (Perfil y Diseño) | `inc/site-settings-form.php` |
 | Armazón del panel (menú y barras) | `inc/admin-shell.php`, estilos en `assets/css/admin.css` |

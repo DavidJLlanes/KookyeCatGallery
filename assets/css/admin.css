@@ -349,3 +349,16 @@
 .site-page-editor .upload-actions { margin-top: 1rem; }
 
 @media (max-width: 400px) { .admin-brand__text small { display: none; } .admin-topbar { padding-inline: .7rem; } }
+
+/* ---------- Galería premium ---------- */
+.admin-premium-list { display: grid; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.admin-premium-list li {
+    padding: .7rem .85rem; border: 1px solid var(--adm-line); border-radius: 12px;
+    background: var(--adm-surface-2); color: var(--fg-soft); font-size: .8rem; line-height: 1.5;
+}
+.admin-premium-list strong { color: var(--accent); }
+.admin-premium-note { padding: .7rem .85rem; border: 1px solid rgba(212, 165, 116, .3); border-radius: 12px; background: rgba(212, 165, 116, .07); }
+.admin-premium-note[hidden] { display: none; }
+/* Campos de la galería estándar desactivados por una galería premium. */
+.upload-field.is-disabled { opacity: .45; }
+.upload-field.is-disabled select { cursor: not-allowed; }

@@ -1,0 +1,233 @@
+// Galería premium «Estilo Baraja»: pantalla completa, rueda, dedo, teclado, límites, ajuste de foto, filtros y paletas.
+// Renderiza el marcado real (inc/premium/deck.php) con el CSS y el JS reales (deck.css, deck.js, main.js).
+const {chromium} = require('playwright');
+const {execFileSync} = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const assert = require('assert/strict');
+const root = path.join(__dirname, '..');
+
+const fixture = String.raw`
+require_once 'inc/helpers.php';
+require_once 'inc/site-settings.php';
+$rootDir = getcwd(); $author = 'Autor'; $galleryItems = [];
+$aspects = [1.5, 0.6667, 1.0, 1.7778, 0.56, 1.3333];
+foreach ($aspects as $i => $aspect) {
+    $galleryItems[] = ['slug' => "foto-$i", 'title' => "Foto $i", 'description' => '', 'desktop' => "imagenes/desktop/foto-$i.webp",
+        'mobile' => "imagenes/mobile/foto-$i.webp", 'aspect' => $aspect, 'category' => $i % 2 ? 'B' : 'A', 'latitude' => 0, 'longitude' => 0];
+}
+include 'inc/premium/deck.php';
+`;
+const markup = execFileSync('php', ['-r', fixture], {cwd: root, encoding: 'utf8'});
+const css = ['style', 'site-design', 'gallery-layout'].map(n => fs.readFileSync(path.join(root, `assets/css/${n}.css`), 'utf8')).join('\n')
+    + fs.readFileSync(path.join(root, 'assets/premium/deck/deck.css'), 'utf8');
+const scripts = [fs.readFileSync(path.join(root, 'assets/js/site-texts.js'), 'utf8'),
+    fs.readFileSync(path.join(root, 'assets/js/main.js'), 'utf8'),
+    fs.readFileSync(path.join(root, 'assets/premium/deck/deck.js'), 'utf8')];
+const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
+const pageHtml = palette => `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body data-palette="${palette}" data-grid="premium" data-gallery-premium="deck" data-gallery-mobile="premium" data-gallery-desktop="premium">
+<header id="before" style="height:700px">Cabecera</header>
+<div class="categories-filter"><div class="categories-filter__inner"><button class="categories-filter__chip is-active" data-category="">Todas</button>
+<button class="categories-filter__chip" data-category="A">A</button><button class="categories-filter__chip" data-category="B">B</button></div></div>
+${markup}
+<section id="after" style="height:1600px">Siguiente bloque</section></body></html>`;
+
+const devices = [
+    {name: 'escritorio 1440×900', viewport: {width: 1440, height: 900}},
+    {name: 'portátil 1280×720', viewport: {width: 1280, height: 720}},
+    {name: 'tablet 820×1180', viewport: {width: 820, height: 1180}, touch: true},
+    {name: 'móvil 390×844', viewport: {width: 390, height: 844}, touch: true},
+    {name: 'móvil apaisado 844×390', viewport: {width: 844, height: 390}, touch: true},
+];
+
+(async () => {
+    const browser = await chromium.launch({headless: true, executablePath: process.env.TEST_BROWSER || undefined, args: ['--no-sandbox']});
+    try {
+        for (const device of devices) {
+            const context = await browser.newContext({viewport: device.viewport, hasTouch: !!device.touch, isMobile: !!device.touch});
+            const page = await context.newPage();
+            const errors = [];
+            page.on('pageerror', error => errors.push(error.message));
+            await page.route('**/*', route => {
+                const url = route.request().url();
+                if (url.endsWith('.webp')) return route.fulfill({status: 200, contentType: 'image/png', body: png});
+                if (url === 'https://deck.test/') return route.fulfill({status: 200, contentType: 'text/html', body: pageHtml('current')});
+                return route.fulfill({status: 200, contentType: 'text/plain', body: ''});
+            });
+            await page.goto('https://deck.test/');
+            await page.addStyleTag({content: css});
+            for (const script of scripts) await page.addScriptTag({content: script});
+            const label = device.name;
+            const state = () => page.evaluate(() => ({
+                index: Number(document.querySelector('#deck').dataset.index), scrollY: Math.round(scrollY),
+                positions: [...document.querySelectorAll('.deck__card')].map(card => card.dataset.pos).join(','),
+                overflow: document.documentElement.scrollWidth > innerWidth + 1,
+            }));
+            // Lleva la baraja al borde superior (reintenta: la página puede recolocarse mientras carga).
+            const toDeck = async () => {
+                for (let attempt = 0; attempt < 8; attempt++) {
+                    await page.evaluate(() => window.scrollTo({top: document.querySelector('#deck').getBoundingClientRect().top + scrollY, behavior: 'instant'}));
+                    await page.waitForTimeout(150);
+                    if (Math.abs(await page.evaluate(() => document.querySelector('#deck').getBoundingClientRect().top)) <= 2) return;
+                }
+            };
+            const settle = () => page.waitForTimeout(800);   // El paso dura 520 ms (margen para dispositivos lentos).
+
+            // 1. A pantalla completa: 100 % de ancho y de alto del dispositivo.
+            await toDeck();
+            const box = await page.evaluate(() => {
+                const r = document.querySelector('#deck').getBoundingClientRect();
+                return {w: r.width, h: r.height, top: r.top, vw: innerWidth, vh: innerHeight};
+            });
+            assert(Math.abs(box.w - box.vw) < 1 && Math.abs(box.h - box.vh) < 1, `${label}: la baraja debe ocupar toda la pantalla (${box.w}×${box.h} en ${box.vw}×${box.vh})`);
+            assert(Math.abs(box.top) <= 2, `${label}: la baraja debe quedar alineada arriba (top=${box.top}, scrollY=${await page.evaluate(() => scrollY)})`);
+            let s = await state();
+            assert.equal(s.positions, '0,1,2,3,4,4', `${label}: posiciones iniciales del mazo`);
+            assert(!s.overflow, `${label}: desbordamiento horizontal`);
+            const baseScroll = s.scrollY;
+
+            // 2. Teclado: avanza y retrocede sin mover la página.
+            await page.keyboard.press('ArrowDown'); await settle();
+            s = await state();
+            assert.equal(s.index, 1, `${label}: ArrowDown avanza`);
+            assert.equal(s.positions, '-1,0,1,2,3,4', `${label}: la carta pasada sale y el mazo avanza`);
+            assert.equal(s.scrollY, baseScroll, `${label}: el fondo no debe moverse`);
+            await page.keyboard.press('ArrowUp'); await settle();
+            assert.equal((await state()).index, 0, `${label}: ArrowUp retrocede`);
+
+            // 3. Animación: la carta pasada acaba fuera (a la izquierda, pequeña y transparente) y la activa a pantalla completa.
+            await page.keyboard.press('ArrowDown'); await settle();
+            await page.waitForFunction(() => getComputedStyle(document.querySelector('.deck__card')).opacity === '0', null, {timeout: 4000});
+            const duration = await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('#deck')).getPropertyValue('--deck-duration')));
+            assert(duration > 0 && duration <= 700, `${label}: el movimiento debe ser rápido (${duration} ms)`);
+            const anim = await page.evaluate(() => {
+                const [gone, active] = document.querySelectorAll('.deck__card');
+                const leaving = getComputedStyle(gone), current = getComputedStyle(document.querySelectorAll('.deck__card')[1]);
+                const m = new DOMMatrix(leaving.transform);
+                return {goneOpacity: leaving.opacity, goneVisible: leaving.visibility, goneX: m.m41, goneScale: m.m11,
+                    activeOpacity: current.opacity, activeScale: new DOMMatrix(current.transform).m11};
+            });
+            assert.equal(anim.goneOpacity, '0', `${label}: la carta pasada se desvanece`);
+            assert(anim.goneX < 0, `${label}: la carta pasada sale hacia la izquierda`);
+            assert(anim.goneScale < 0.7, `${label}: la carta pasada se encoge`);
+            assert.equal(anim.activeOpacity, '1');
+            assert(Math.abs(anim.activeScale - 1) < 0.001, `${label}: la carta activa está a tamaño completo`);
+            // El mazo conserva un aspecto 3D: las cartas de debajo están más al fondo (matrix3d con z negativa).
+            const depth = await page.evaluate(() => new DOMMatrix(getComputedStyle(document.querySelectorAll('.deck__card')[3]).transform).m43);
+            assert(depth < 0, `${label}: el mazo debe tener profundidad 3D`);
+            await page.keyboard.press('ArrowUp'); await settle();
+
+            // 4. Rueda del ratón (solo escritorio/portátil): hacia abajo avanza; el fondo no se mueve.
+            if (!device.touch) {
+                await page.mouse.move(device.viewport.width / 2, device.viewport.height / 2);
+                await page.mouse.wheel(0, 120); await settle();
+                s = await state();
+                assert.equal(s.index, 1, `${label}: la rueda hacia abajo avanza`);
+                assert.equal(s.scrollY, baseScroll, `${label}: la rueda no debe mover el fondo`);
+                await page.mouse.wheel(0, -120); await settle();
+                assert.equal((await state()).index, 0, `${label}: la rueda hacia arriba retrocede`);
+                // Límite inferior: en la última foto la rueda libera la página.
+                await page.keyboard.press('End'); await settle();
+                const last = (await state()).index;
+                assert.equal(last, 5, `${label}: End va a la última foto`);
+                await page.mouse.wheel(0, 400); await page.waitForTimeout(500);
+                assert((await state()).scrollY > baseScroll + 50, `${label}: tras la última foto la página debe seguir bajando`);
+                await toDeck();
+                await page.keyboard.press('Home'); await settle();
+                // Límite superior: en la primera foto la rueda hacia arriba libera la página.
+                await page.mouse.wheel(0, -400); await page.waitForTimeout(500);
+                const top = await state();
+                assert(top.scrollY < baseScroll - 50 && top.index === 0, `${label}: antes de la primera foto la página debe subir`);
+                await toDeck();
+            }
+
+            // 5. Táctil (móvil y tablet): dedo hacia arriba avanza, hacia abajo retrocede, sin mover el fondo.
+            if (device.touch) {
+                const cdp = await context.newCDPSession(page);
+                const swipe = async (dy, steps = 8) => {
+                    const x = device.viewport.width / 2, y = device.viewport.height * 0.6;
+                    await cdp.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [{x, y}]});
+                    for (let i = 1; i <= steps; i++) await cdp.send('Input.dispatchTouchEvent', {type: 'touchMove', touchPoints: [{x, y: y + dy * i / steps}]});
+                    await cdp.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []});
+                    await page.waitForTimeout(800);
+                };
+                const before = await state();
+                await swipe(-140);
+                s = await state();
+                assert.equal(s.index, before.index + 1, `${label}: deslizar hacia arriba avanza (antes ${JSON.stringify(before)}, después ${JSON.stringify(s)}, top=${await page.evaluate(() => document.querySelector('#deck').getBoundingClientRect().top)})`);
+                assert.equal(s.scrollY, before.scrollY, `${label}: el dedo no debe mover el fondo`);
+                await swipe(140);
+                s = await state();
+                assert.equal(s.index, before.index, `${label}: deslizar hacia abajo retrocede`);
+                assert.equal(s.scrollY, before.scrollY, `${label}: el dedo no debe mover el fondo al retroceder`);
+                // Límite: en la última foto, deslizar hacia arriba deja que la página siga.
+                await page.keyboard.press('End'); await settle();
+                await swipe(-260, 12);
+                assert((await state()).scrollY > before.scrollY + 40, `${label}: tras la última foto el dedo debe mover la página`);
+                await toDeck();
+                await page.keyboard.press('Home'); await settle();
+            }
+
+            // 6. Ajuste a la pantalla: cada foto cubre la carta si su proporción se parece a la pantalla y, si no, se ve completa.
+            const fits = await page.evaluate(() => [...document.querySelectorAll('.deck__card')].map(card => ({
+                aspect: Number(card.dataset.aspect), contain: card.classList.contains('is-contain'),
+                fit: getComputedStyle(card.querySelector('.deck__img')).objectFit})));
+            const screen = device.viewport.width / device.viewport.height;
+            for (const fit of fits) {
+                const expectContain = Math.abs(Math.log(fit.aspect / screen)) > 0.3;
+                assert.equal(fit.contain, expectContain, `${label}: ajuste de la foto ${fit.aspect} en pantalla ${screen.toFixed(2)}`);
+                assert.equal(fit.fit, expectContain ? 'contain' : 'cover');
+            }
+
+            // 7. Filtros: categoría y favoritas (con main.js real).
+            await page.click('.categories-filter__chip[data-category="B"]');
+            s = await page.evaluate(() => ({total: document.querySelector('[data-deck-total]').textContent, hidden: [...document.querySelectorAll('.deck__card')].filter(c => c.hidden).length}));
+            assert.deepEqual(s, {total: '3', hidden: 3}, `${label}: el filtro por categoría deja 3 fotos`);
+            await page.click('.categories-filter__chip[data-category=""]');
+            await page.click('#favoritesToggle');
+            assert.equal(await page.evaluate(() => document.querySelector('[data-deck-empty]').hidden), false, `${label}: sin favoritas debe avisar`);
+            await page.click('#favoritesToggle');
+            assert.equal(await page.evaluate(() => document.querySelector('[data-deck-total]').textContent), '6');
+
+            assert.deepEqual(errors, [], `${label}: errores de JavaScript: ${errors.join(' | ')}`);
+            await context.close();
+        }
+
+        // 8. Integración con la paleta: el fondo y los controles usan las variables de cada paleta.
+        const expected = {current: null, white: 'rgb(255, 255, 255)', ocean: 'rgb(16, 39, 55)', japanese: 'rgb(247, 242, 232)'};
+        for (const [palette, background] of Object.entries(expected)) {
+            const page = await browser.newPage({viewport: {width: 1280, height: 720}});
+            await page.route('**/*', route => route.request().url() === 'https://deck.test/'
+                ? route.fulfill({status: 200, contentType: 'text/html', body: pageHtml(palette)})
+                : route.fulfill({status: 200, contentType: 'image/png', body: png}));
+            await page.goto('https://deck.test/');
+            await page.addStyleTag({content: css});
+            const colors = await page.evaluate(() => ({
+                deck: getComputedStyle(document.querySelector('#deck')).backgroundColor,
+                body: getComputedStyle(document.body).getPropertyValue('--bg').trim()}));
+            if (background) assert.equal(colors.deck, background, `Paleta ${palette}: el fondo de la baraja debe seguir la paleta`);
+            else assert.notEqual(colors.deck, 'rgba(0, 0, 0, 0)', 'Paleta por defecto: la baraja debe tener fondo');
+            await page.close();
+        }
+
+        // 9. Movimiento reducido: el paso es prácticamente instantáneo.
+        const reduced = await browser.newPage({viewport: {width: 1280, height: 720}});
+        await reduced.emulateMedia({reducedMotion: 'reduce'});
+        await reduced.route('**/*', route => route.request().url() === 'https://deck.test/'
+            ? route.fulfill({status: 200, contentType: 'text/html', body: pageHtml('current')})
+            : route.fulfill({status: 200, contentType: 'image/png', body: png}));
+        await reduced.goto('https://deck.test/');
+        await reduced.addStyleTag({content: css});
+        for (const script of scripts) await reduced.addScriptTag({content: script});
+        await reduced.waitForTimeout(300);
+        await reduced.evaluate(() => window.scrollTo({top: document.querySelector('#deck').getBoundingClientRect().top + scrollY, behavior: 'instant'}));
+        await reduced.waitForTimeout(300);
+        await reduced.keyboard.press('ArrowDown');
+        // Con movimiento reducido el paso dura ~1 ms: la carta pasada queda transparente casi al instante.
+        await reduced.waitForFunction(() => getComputedStyle(document.querySelector('.deck__card')).opacity === '0', null, {timeout: 400});
+        await reduced.close();
+
+        console.log('Baraja verificada: pantalla completa, rueda, dedo, teclado, límites, ajuste de foto, filtros y paletas en 5 dispositivos.');
+    } finally { await browser.close(); }
+})().catch(error => { console.error(error); process.exit(1); });

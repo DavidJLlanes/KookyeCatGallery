@@ -74,6 +74,43 @@ rejects(array_replace($defaults, ['pagination_shape' => 'oval']));
 check(str_contains(site_design_attributes(), 'data-pagination-shape="circle"'), 'Pagination shape must reach the page.');
 check(str_contains(site_settings_form('t', $defaults, 'design'), 'name="pagination_shape"'), 'Pagination shape selector missing from the form.');
 
+// ── Título de la web ──────────────────────────────────────────────────────────
+check($defaults['site_title'] === '', 'The site title must default to the catalog title.');
+check(site_title_default() === site_text_catalog()['text_52179dc42df7efe5']['default'], 'Default site title mismatch.');
+$titled = site_settings_validate(array_replace($defaults, ['site_title' => '  Mi Galería  ']));
+check($titled['site_title'] === 'Mi Galería', 'Site title must be trimmed.');
+check(site_settings_validate(array_replace($defaults, ['site_title' => site_title_default()]))['site_title'] === '', 'The default title is stored as empty.');
+check(site_settings_validate(array_replace($defaults, ['site_title' => '']))['site_title'] === '', 'An empty title falls back to the default.');
+rejects(array_replace($defaults, ['site_title' => str_repeat('a', 81)]));
+rejects(array_replace($defaults, ['site_title' => "Dos\nlíneas"]));
+check(str_contains(site_settings_form('t', array_replace($defaults, ['site_title' => 'Mi Galería']), 'design'), 'value="Mi Galería"'), 'The title field must show the saved title.');
+check(str_contains(site_settings_form('t', $defaults, 'design'), 'value="' . htmlspecialchars(site_title_default(), ENT_QUOTES) . '"'), 'The title field must show the default title.');
+
+// ── Galerías premium ──────────────────────────────────────────────────────────
+check($defaults['gallery_premium'] === 'none', 'No premium gallery by default.');
+check(isset(site_premium_gallery_choices()['none'], site_premium_gallery_choices()['deck']), 'Premium choices must include none and deck.');
+check(site_premium_gallery_active($defaults) === null, 'No premium gallery must be active by default.');
+$deck = array_replace($defaults, ['gallery_premium' => 'deck']);
+check(site_settings_validate($deck)['gallery_premium'] === 'deck', 'The deck gallery was rejected.');
+check(site_premium_gallery_active($deck) === 'deck', 'The deck gallery must be active.');
+rejects(array_replace($defaults, ['gallery_premium' => 'inexistente']));
+// Con una galería premium los campos que ignora pueden faltar (el navegador no envía los desactivados).
+$partial = $deck;
+foreach (site_premium_ignored_settings() as $ignored) unset($partial[$ignored]);
+$kept = site_settings_validate($partial);
+check($kept['gallery_premium'] === 'deck' && $kept['columns_desktop'] === $defaults['columns_desktop'], 'Ignored fields must be optional with a premium gallery.');
+$noPremiumPartial = $defaults; unset($noPremiumPartial['columns_desktop']);
+rejects($noPremiumPartial);   // Sin galería premium siguen siendo obligatorios.
+check(!in_array('gallery_premium', site_premium_ignored_settings(), true), 'The premium selector itself is never ignored.');
+check(site_premium_ignored_settings() === ['grid', 'gallery_mobile', 'gallery_desktop', 'pagination_shape', 'columns_mobile', 'columns_desktop', 'photos_mobile', 'photos_desktop'], 'Ignored settings list changed.');
+// Atributos del <body> y formulario.
+$formStandard = site_settings_form('t', $defaults, 'design');
+$formDeck = site_settings_form('t', $deck, 'design');
+check(substr_count($formStandard, 'data-premium-off') === 8 && substr_count($formStandard, ' disabled') === 0, 'Standard fields must be enabled without a premium gallery.');
+check(substr_count($formDeck, 'data-premium-off disabled') === 8, 'All 8 standard gallery fields must be disabled with a premium gallery.');
+check(str_contains($formDeck, 'name="gallery_premium"') && str_contains($formDeck, 'Estilo Baraja'), 'Premium selector missing from the form.');
+check(premium_gallery_head_tags() === '' || str_contains(premium_gallery_head_tags(), 'deck.css'), 'Premium head tags.');
+
 $key = site_editable_text_keys()[0];
 $custom = array_replace($defaults, [
     'palette' => 'japanese', 'grid' => 'masonry', 'columns_mobile' => 4, 'columns_desktop' => 10,

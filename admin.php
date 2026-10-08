@@ -227,6 +227,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $settingsInput = $_POST;
             $currentSettings = site_settings_load();
+            // Con una galería premium activa, sus campos ignorados llegan desactivados (el navegador no los envía):
+            // se conservan los valores guardados para cuando se vuelva a la galería estándar.
+            if (($settingsInput['gallery_premium'] ?? 'none') !== 'none') {
+                foreach (site_premium_ignored_settings() as $ignoredKey) {
+                    if (!isset($settingsInput[$ignoredKey])) $settingsInput[$ignoredKey] = $currentSettings[$ignoredKey];
+                }
+            }
             foreach (['profile_image_file' => 'profile_image', 'logo_image_file' => 'logo_image'] as $fileKey => $settingKey) {
                 $settingsInput[$settingKey] = $currentSettings[$settingKey] ?? ($settingKey === 'logo_image' ? '/favicon.svg' : '/profile-placeholder.svg');
                 $file = $_FILES[$fileKey] ?? null;

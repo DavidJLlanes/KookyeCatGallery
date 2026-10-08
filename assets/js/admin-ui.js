@@ -1,8 +1,40 @@
+/* =============================================================================
+   PANEL DE ADMINISTRACIÓN · comportamiento de la pantalla «Diseño»
+   -----------------------------------------------------------------------------
+   Índice
+     1. Galería premium: desactiva los ajustes de la galería estándar que ignora.
+     2. Orden de los bloques de la portada (flechas ↑ ↓).
+   ============================================================================= */
 (() => {
     'use strict';
 
-    // Orden de los bloques de la portada: el orden del DOM es el orden enviado
-    // (cada fila lleva su input oculto section_order[]).
+    /* -------------------------------------------------------------------------
+       1. Galería premium
+       Al elegir una galería premium se desactivan los campos marcados con
+       data-premium-off (los genera site_settings_form()). Un campo desactivado no se
+       envía; el servidor conserva entonces los valores guardados (admin.php).
+       Los campos que ignora cada galería premium están en site_premium_ignored_settings().
+       ------------------------------------------------------------------------- */
+    const premiumSelect = document.getElementById('setting-gallery_premium');
+    if (premiumSelect) {
+        const fields = [...document.querySelectorAll('[data-premium-off]')];
+        const note = document.querySelector('[data-premium-note]');
+        const apply = () => {
+            const on = premiumSelect.value !== 'none';
+            fields.forEach(field => {
+                field.disabled = on;
+                field.closest('.upload-field')?.classList.toggle('is-disabled', on);
+            });
+            if (note) note.hidden = !on;
+        };
+        premiumSelect.addEventListener('change', apply);
+        apply();
+    }
+
+    /* -------------------------------------------------------------------------
+       2. Orden de los bloques de la portada
+       El orden del DOM es el orden enviado (cada fila lleva su input oculto section_order[]).
+       ------------------------------------------------------------------------- */
     const list = document.querySelector('[data-section-order]');
     if (!list) return;
 

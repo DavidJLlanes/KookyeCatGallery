@@ -85,6 +85,16 @@ Todos los modos están disponibles tanto en móvil como en escritorio.
 | **Secuencia narrativa** | Una imagen protagonista seguida de una secuencia de fotografías. |
 | **Trípticos** | Composiciones de tres imágenes: una grande junto a dos más pequeñas. |
 
+### Galerías premium
+
+Diseños completos que **sustituyen** a la galería estándar. Se eligen en **Textos y diseño → Diseño → Galería premium**; al activar una se ignoran (y se desactivan en el panel) el tipo de cuadrícula, las galerías de móvil y de escritorio, la forma de la paginación, las columnas y las fotos visibles a la vez. Se integran con la paleta de colores y con las cabeceras.
+
+| Galería premium | Presentación |
+| --- | --- |
+| **Estilo Baraja** | Pantalla completa (100 % de ancho y alto en cualquier dispositivo). Las fotos son cartas apiladas en 3D: al avanzar —rueda del ratón hacia abajo o dedo hacia arriba— la carta sale hacia la izquierda, se encoge y se desvanece, dejando ver el mazo. La página de fondo no se mueve y, en la primera y última foto, el gesto vuelve a desplazar la página. |
+
+Todos los detalles (comportamiento, ajustes de la animación, arquitectura y cómo crear una galería premium nueva) están en [docs/galerias-premium.md](docs/galerias-premium.md).
+
 ### Color, proporciones y efectos
 
 - **7 paletas:** Elegante, Noche, Luz, Cyberpunk, Japón, Bosque y Océano.
@@ -144,6 +154,8 @@ node tests/photo-presets.cjs
 php tests/site-settings.php
 php tests/photo-navigation.php
 ```
+
+Con Playwright y Chromium: `node tests/premium-deck.cjs` (galería premium Estilo Baraja), `node tests/admin-layout.cjs` (panel), `node tests/gallery-layout.cjs` (galerías estándar) y el resto de `tests/*.cjs`.
 
 Para las comprobaciones de interfaz se necesitan Playwright y Chromium. Consulta el flujo de [validación automática](.github/workflows/validate.yml).
 

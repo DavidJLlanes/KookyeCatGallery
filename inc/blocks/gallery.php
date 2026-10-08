@@ -8,6 +8,15 @@
  * (las aporta page_block_render() desde $pageContext, definido en index.php).
  */
 ?>
+<?php
+// Galería premium: si hay una activa sustituye por completo a la galería estándar (inc/premium-galleries.php).
+// Cada una tiene su propio marcado en inc/premium/<clave>.php y usa las mismas variables que este bloque.
+$premiumKey = $heroItem ? site_premium_gallery_active($siteSettings) : null;
+if ($premiumKey !== null) {
+    include dirname(__DIR__) . '/premium/' . site_premium_gallery_definitions()[$premiumKey]['partial'] . '.php';
+    return;
+}
+?>
 <main id="galeria" class="gallery-section">
 
 

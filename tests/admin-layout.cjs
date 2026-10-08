@@ -58,6 +58,21 @@ uploadPage($section === 'design' ? 'Diseño' : 'Perfil', adminNavigation('test-t
           if(section==='design') assert.deepEqual(result.order,['social','gallery','categories','map','project'],'Saved order must reach the form');
         }
         if(section==='design') {
+          // Galería premium: al elegir una se desactivan los 8 ajustes de la galería estándar; al quitarla se reactivan.
+          const premium=await page.evaluate(()=>{
+            const select=document.querySelector('#setting-gallery_premium');
+            const fields=[...document.querySelectorAll('[data-premium-off]')];
+            const change=value=>{select.value=value;select.dispatchEvent(new Event('change',{bubbles:true}));};
+            const count=()=>fields.filter(field=>field.disabled).length;
+            const result={total:fields.length,initial:count(),titleField:!!document.querySelector('#setting-site_title'),options:[...select.options].map(o=>o.value)};
+            change('deck');result.afterDeck=count();result.noteShown=!document.querySelector('[data-premium-note]').hidden;
+            result.dimmed=document.querySelectorAll('.upload-field.is-disabled').length;
+            change('none');result.afterNone=count();result.noteHidden=document.querySelector('[data-premium-note]').hidden;
+            return result;
+          });
+          assert.deepEqual(premium,{total:8,initial:0,titleField:true,options:['none','deck'],afterDeck:8,noteShown:true,dimmed:8,afterNone:0,noteHidden:true},'Premium gallery must toggle the standard gallery fields');
+        }
+        if(section==='design') {
           // Reordering moves the DOM rows (which is what gets submitted) and disables the edge buttons.
           await page.click('.section-order__item[data-section-key="gallery"] [data-move="up"]');
           const order=await page.evaluate(()=>[...document.querySelectorAll('input[name="section_order[]"]')].map(i=>i.value));

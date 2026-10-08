@@ -31,24 +31,34 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . '<input type="hidden" name="csrf" value="' . $escape($csrf) . '">'
         . '<input type="hidden" name="section" value="' . $escape($section) . '">'
         . '<p>Personaliza la web. Los textos de fotografías y categorías se editan en Gestionar fotos. Los campos admiten texto plano.</p>';
-    $labels = ['palette' => 'Paleta de colores', 'grid' => 'Tipo de cuadrícula', 'header_mobile' => 'Cabecera móvil', 'header_desktop' => 'Cabecera de escritorio', 'gallery_mobile' => 'Galería móvil', 'gallery_desktop' => 'Galería de escritorio', 'hover' => 'Efecto Hover', 'pagination_shape' => 'Forma de la paginación'];
+    $labels = ['palette' => 'Paleta de colores', 'grid' => 'Tipo de cuadrícula', 'header_mobile' => 'Cabecera móvil', 'header_desktop' => 'Cabecera de escritorio', 'gallery_mobile' => 'Galería móvil', 'gallery_desktop' => 'Galería de escritorio', 'hover' => 'Efecto Hover', 'pagination_shape' => 'Forma de la paginación', 'gallery_premium' => 'Galería premium'];
     $choices = site_design_choices();
-    $select = static function (string $key, string $label, array $options, $current) use ($escape): string {
-        $out = '<div class="upload-field"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '">';
+    // ¿Hay una galería premium activa? Entonces se desactivan los campos de la galería estándar (los marcados con $premiumOff).
+    $premiumOn = site_premium_gallery_active($settings) !== null;
+    $select = static function (string $key, string $label, array $options, $current, bool $premiumOff = false) use ($escape, $premiumOn): string {
+        $out = '<div class="upload-field' . ($premiumOff && $premiumOn ? ' is-disabled' : '') . '"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '"'
+            . ($premiumOff ? ' data-premium-off' . ($premiumOn ? ' disabled' : '') : '') . '>';
         foreach ($options as $value => $text) $out .= '<option value="' . $escape((string) $value) . '"' . ((string) $current === (string) $value ? ' selected' : '') . '>' . $escape((string) $text) . '</option>';
         return $out . '</select></div>';
     };
     $switch = static fn(string $key, string $label, bool $on): string => '<label class="site-section-switch"><input type="checkbox" name="' . $key . '" value="1"' . ($on ? ' checked' : '') . '><span class="site-section-switch__track" aria-hidden="true"></span><span>' . $escape($label) . '</span></label>';
     $card = static fn(string $title, string $lead, string $body): string => '<section class="admin-card"><header class="admin-card__head"><h2>' . $escape($title) . '</h2><p>' . $escape($lead) . '</p></header><div class="admin-card__body">' . $body . '</div></section>';
-    $range = static function (string $key, string $label, array $values, $current, string $zero = '') use ($escape): string {
+    $range = static function (string $key, string $label, array $values, $current, string $zero = '', bool $premiumOff = false) use ($escape, $premiumOn): string {
         $options = [];
         foreach ($values as $n) $options[$n] = $n === 0 ? $zero : (string) $n;
-        return '<div class="upload-field"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '">'
+        return '<div class="upload-field' . ($premiumOff && $premiumOn ? ' is-disabled' : '') . '"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '"'
+            . ($premiumOff ? ' data-premium-off' . ($premiumOn ? ' disabled' : '') : '') . '>'
             . implode('', array_map(static fn($n) => '<option value="' . $n . '"' . ((int) $current === $n ? ' selected' : '') . '>' . $escape($options[$n]) . '</option>', $values)) . '</select></div>';
     };
 
     // ── Diseño ────────────────────────────────────────────────────────────
     $html .= '<div class="settings-design">';
+    // Tarjeta «Identidad»: título de la web. Vacío = el título original (site_title_default()).
+    $titleValue = (string) ($settings['site_title'] ?? '') !== '' ? (string) $settings['site_title'] : site_title_default();
+    $html .= $card('Identidad', 'El título aparece en la pestaña del navegador, en las cabeceras, en el pie y en los textos que mencionan la web.',
+        '<div class="upload-field"><label for="setting-site_title">Título de la web</label>'
+        . '<input id="setting-site_title" name="site_title" type="text" maxlength="80" autocomplete="off" value="' . $escape($titleValue) . '" placeholder="' . $escape(site_title_default()) . '">'
+        . '<small class="upload-help">Máximo 80 caracteres. Si lo dejas vacío se usa «' . $escape(site_title_default()) . '». El nombre de la app instalada (manifest.json) no cambia con este ajuste.</small></div>');
     // Tarjeta «Apariencia»: paleta y efecto hover.
     $html .= $card('Apariencia', 'Colores y efecto al pasar el ratón por las fotos.',
         '<div class="admin-fields">' . $select('palette', $labels['palette'], $choices['palette'], $settings['palette']) . $select('hover', $labels['hover'], $choices['hover'], $settings['hover']) . '</div>');
@@ -56,17 +66,27 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     $html .= $card('Cabecera', 'Elige el estilo y decide si se muestra en cada tipo de pantalla.',
         '<div class="admin-fields">' . $select('header_mobile', $labels['header_mobile'], $choices['header_mobile'], $settings['header_mobile']) . $select('header_desktop', $labels['header_desktop'], $choices['header_desktop'], $settings['header_desktop']) . '</div>'
         . '<div class="admin-switches">' . $switch('show_header_mobile', 'Mostrar la cabecera en móvil', !empty($settings['show_header_mobile'])) . $switch('show_header_desktop', 'Mostrar la cabecera en escritorio', !empty($settings['show_header_desktop'])) . '</div>');
-    // Tarjeta «Galería»: composición, columnas y fotos visibles a la vez (paginación).
+    // Tarjeta «Galería premium»: diseños completos que sustituyen a la galería estándar (inc/premium-galleries.php).
+    // El orden del JS (assets/js/admin-ui.js) desactiva los campos de la tarjeta siguiente al elegir una.
+    $premiumList = '';
+    foreach (site_premium_gallery_definitions() as $definition) {
+        $premiumList .= '<li><strong>' . $escape($definition['label']) . '</strong> · ' . $escape($definition['description']) . '</li>';
+    }
+    $html .= $card('Galería premium', 'Diseños completos que sustituyen a la galería estándar y se integran con la paleta y las cabeceras.',
+        '<div class="admin-fields">' . $select('gallery_premium', $labels['gallery_premium'], $choices['gallery_premium'], $settings['gallery_premium'] ?? 'none') . '</div>'
+        . '<ul class="admin-premium-list">' . $premiumList . '</ul>'
+        . '<p class="upload-help admin-premium-note" data-premium-note' . ($premiumOn ? '' : ' hidden') . '>Con una galería premium activa se ignoran los ajustes de la galería estándar de la tarjeta siguiente y sus campos se desactivan. Sus valores se conservan por si vuelves a la galería estándar.</p>');
+    // Tarjeta «Galería estándar»: composición, columnas y fotos visibles a la vez (paginación).
     $columnsMobile = range(1, 4); $columnsDesktop = range(1, 10);
-    $html .= $card('Galería', 'Composición, columnas y cuántas fotos se ven a la vez.',
-        '<div class="admin-fields">' . $select('grid', $labels['grid'], $choices['grid'], $settings['grid'])
-        . $select('gallery_mobile', $labels['gallery_mobile'], $choices['gallery_mobile'], $settings['gallery_mobile'])
-        . $select('gallery_desktop', $labels['gallery_desktop'], $choices['gallery_desktop'], $settings['gallery_desktop'])
-        . $select('pagination_shape', $labels['pagination_shape'], $choices['pagination_shape'], $settings['pagination_shape'])
-        . $range('columns_mobile', 'Columnas en móvil', $columnsMobile, $settings['columns_mobile'])
-        . $range('columns_desktop', 'Columnas en escritorio', $columnsDesktop, $settings['columns_desktop'])
-        . $range('photos_mobile', 'Fotos visibles a la vez en móvil', site_photos_per_view_choices(), $settings['photos_mobile'], 'Todas')
-        . $range('photos_desktop', 'Fotos visibles a la vez en escritorio', site_photos_per_view_choices(), $settings['photos_desktop'], 'Todas') . '</div>'
+    $html .= $card('Galería estándar', 'Composición, columnas y cuántas fotos se ven a la vez.',
+        '<div class="admin-fields" data-premium-fields>' . $select('grid', $labels['grid'], $choices['grid'], $settings['grid'], true)
+        . $select('gallery_mobile', $labels['gallery_mobile'], $choices['gallery_mobile'], $settings['gallery_mobile'], true)
+        . $select('gallery_desktop', $labels['gallery_desktop'], $choices['gallery_desktop'], $settings['gallery_desktop'], true)
+        . $select('pagination_shape', $labels['pagination_shape'], $choices['pagination_shape'], $settings['pagination_shape'], true)
+        . $range('columns_mobile', 'Columnas en móvil', $columnsMobile, $settings['columns_mobile'], '', true)
+        . $range('columns_desktop', 'Columnas en escritorio', $columnsDesktop, $settings['columns_desktop'], '', true)
+        . $range('photos_mobile', 'Fotos visibles a la vez en móvil', site_photos_per_view_choices(), $settings['photos_mobile'], 'Todas', true)
+        . $range('photos_desktop', 'Fotos visibles a la vez en escritorio', site_photos_per_view_choices(), $settings['photos_desktop'], 'Todas', true) . '</div>'
         . '<p class="upload-help">Las fotos visibles a la vez no dependen de las columnas: si hay más fotos, se paginan. Elige «Todas» para mostrarlas juntas. Masonry conserva las proporciones originales; para fotos cuadradas, horizontales o verticales, elige la galería «Cuadrícula» y su tipo de cuadrícula.</p>');
 
     $order = site_section_order_normalize($settings['section_order'] ?? null);

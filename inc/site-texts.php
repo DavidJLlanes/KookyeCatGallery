@@ -1,6 +1,12 @@
 <?php
 // Stable keys: do not regenerate this catalog when defaults change.
 return [
+    'deck_label' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Galería de fotografías en baraja'],
+    'deck_prev' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Foto anterior'],
+    'deck_next' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Foto siguiente'],
+    'deck_hint_touch' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Desliza hacia arriba'],
+    'deck_hint_wheel' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Rueda del ratón o flechas'],
+    'deck_empty_filter' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'No hay fotos en esta selección'],
     'categories_title' => ['group' => 'Inicio y galería', 'default' => 'Categorías'],
     'photo_navigation' => ['group' => 'Controles e instalación', 'default' => 'Navegación entre fotografías'],
     'social_threads_user' => ['group' => 'Perfil y redes', 'default' => '@kookyecatgallery'],

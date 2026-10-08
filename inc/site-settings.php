@@ -13,7 +13,10 @@ declare(strict_types=1);
  *   6. Páginas de texto editables
  *   7. Salida para la web pública
  *   (formularios del panel: inc/site-settings-form.php)
+ *   (galerías premium: inc/premium-galleries.php)
  */
+
+require_once __DIR__ . '/premium-galleries.php';
 
 // =============================================================================
 // 1. ALMACENAMIENTO Y OPCIONES DE DISEÑO
@@ -47,6 +50,7 @@ function site_design_choices(): array
         'gallery_mobile' => ['standard' => 'Masonry · alturas naturales', 'grid' => 'Cuadrícula', 'mosaic' => 'Mosaico cromático', 'asymmetric' => 'Editorial asimétrica', 'category-rails' => 'Filas por categoría', 'scattered' => 'Álbum desordenado', 'exhibition' => 'Sala de exposición', 'contact-sheet' => 'Hoja de contactos', 'narrative' => 'Secuencia narrativa', 'triptych' => 'Trípticos'],
         'gallery_desktop' => ['standard' => 'Masonry · alturas naturales', 'grid' => 'Cuadrícula', 'mosaic' => 'Mosaico cromático', 'asymmetric' => 'Editorial asimétrica', 'category-rails' => 'Filas por categoría', 'scattered' => 'Álbum desordenado', 'exhibition' => 'Sala de exposición', 'contact-sheet' => 'Hoja de contactos', 'narrative' => 'Secuencia narrativa', 'triptych' => 'Trípticos'],
         'pagination_shape' => ['circle' => 'Círculos', 'square' => 'Cuadrados'],
+        'gallery_premium' => site_premium_gallery_choices(),
         'hover' => ['soft' => 'Suave', 'zoom' => 'Acercamiento', 'lift' => 'Elevación', 'reveal' => 'Revelado', 'tint' => 'Virado de color', 'frame' => 'Marco luminoso', 'slide' => 'Desplazamiento', 'tilt' => 'Perspectiva', 'focus' => 'Enfoque', 'shine' => 'Destello'],
     ];
 }
@@ -125,7 +129,7 @@ function site_settings_defaults(): array
 {
     return ['palette' => 'current', 'grid' => 'adaptive', 'columns_mobile' => 3,
         'columns_desktop' => 3, 'photos_mobile' => 12, 'photos_desktop' => 20, 'header_mobile' => 'current', 'header_desktop' => 'current',
-        'gallery_mobile' => 'standard', 'gallery_desktop' => 'standard', 'hover' => 'soft', 'pagination_shape' => 'circle',
+        'gallery_mobile' => 'standard', 'gallery_desktop' => 'standard', 'hover' => 'soft', 'pagination_shape' => 'circle', 'gallery_premium' => 'none', 'site_title' => '',
         'section_order' => array_keys(site_section_labels()), 'show_header_mobile' => true, 'show_header_desktop' => true,
         'show_categories' => true, 'show_map' => false, 'show_project' => true, 'show_social' => false,
         'texts' => [], 'pages' => [], 'profile_image' => '/profile-placeholder.svg', 'logo_image' => '/favicon.svg',
@@ -196,7 +200,11 @@ function site_text_catalog(): array
 function site_settings_validate(array $input): array
 {
     $out = site_settings_defaults();
+    // Con una galería premium activa, sus campos ignorados llegan desactivados (no se envían): se dejan como estén.
+    $premiumOn = isset($input['gallery_premium']) && is_string($input['gallery_premium']) && $input['gallery_premium'] !== 'none';
+    $ignored = $premiumOn ? site_premium_ignored_settings() : [];
     foreach (site_design_choices() as $key => $choices) {
+        if (in_array($key, $ignored, true) && !isset($input[$key])) continue;
         if (!isset($input[$key]) || !is_string($input[$key]) || !isset($choices[$input[$key]])) {
             throw new InvalidArgumentException('Selecciona una opción válida para ' . $key . '.');
         }
@@ -207,6 +215,7 @@ function site_settings_validate(array $input): array
     }
     $out['section_order'] = site_section_order_normalize($input['section_order'] ?? null);
     foreach (['columns_mobile' => 4, 'columns_desktop' => 10] as $key => $max) {
+        if (in_array($key, $ignored, true) && !isset($input[$key])) continue;
         $value = filter_var($input[$key] ?? null, FILTER_VALIDATE_INT);
         if ($value === false || $value < 1 || $value > $max) {
             throw new InvalidArgumentException('El número de columnas debe estar entre 1 y ' . $max . '.');
@@ -214,12 +223,19 @@ function site_settings_validate(array $input): array
         $out[$key] = $value;
     }
     foreach (['photos_mobile', 'photos_desktop'] as $key) {
+        if (in_array($key, $ignored, true) && !isset($input[$key])) continue;
         $value = filter_var($input[$key] ?? $out[$key], FILTER_VALIDATE_INT);
         if ($value === false || !in_array($value, site_photos_per_view_choices(), true)) {
             throw new InvalidArgumentException('Selecciona un número válido de fotos visibles.');
         }
         $out[$key] = $value;
     }
+    // Título de la web: vacío = el de por defecto del catálogo de textos.
+    $title = trim((string) ($input['site_title'] ?? ''));
+    if (!preg_match('//u', $title) || preg_match('/[\x00-\x1F\x7F]/', $title) || mb_strlen($title) > 80) {
+        throw new InvalidArgumentException('El título de la web no es válido (máximo 80 caracteres y sin saltos de línea).');
+    }
+    $out['site_title'] = $title === site_title_default() ? '' : $title;
     if (!isset($input['texts']) || !is_array($input['texts'])) {
         throw new InvalidArgumentException('Los textos no tienen un formato válido.');
     }
@@ -331,7 +347,29 @@ function site_text(string $key): string
 {
     static $settings;
     $settings ??= site_settings_load();
-    return $settings['texts'][$key] ?? site_text_catalog()[$key]['default'] ?? '';
+    if (isset($settings['texts'][$key])) return $settings['texts'][$key];
+    $default = site_text_catalog()[$key]['default'] ?? '';
+    // Los textos por defecto que mencionan el título de la web siguen al título elegido en el panel.
+    $title = trim((string) ($settings['site_title'] ?? ''));
+    return $title === '' ? $default : str_replace(site_title_default(), $title, $default);
+}
+
+/**
+ * Título original de la web: el valor por defecto del texto «nombre del sitio» del catálogo.
+ */
+function site_title_default(): string
+{
+    return site_text_catalog()['text_52179dc42df7efe5']['default'];
+}
+
+/**
+ * Título actual de la web (ajuste «Título de la web»). Se usa en cabeceras, pie, <title>, textos
+ * accesibles y en el panel.
+ */
+function site_title(): string
+{
+    $title = trim((string) (site_settings_load()['site_title'] ?? ''));
+    return $title !== '' ? $title : site_title_default();
 }
 
 /**
@@ -430,8 +468,11 @@ function site_design_attributes(): string
 {
     $settings = site_settings_load();
     $attributes = '';
-    foreach (['palette', 'grid', 'header_mobile', 'header_desktop', 'gallery_mobile', 'gallery_desktop', 'hover', 'pagination_shape'] as $key) {
-        $attributes .= ' data-' . str_replace('_', '-', $key) . '="' . htmlspecialchars($settings[$key], ENT_QUOTES, 'UTF-8') . '"';
+    // Con una galería premium activa los ajustes estándar de galería no se aplican: el <body> los marca como «premium».
+    $premium = site_premium_gallery_active($settings);
+    foreach (['palette', 'grid', 'header_mobile', 'header_desktop', 'gallery_mobile', 'gallery_desktop', 'hover', 'pagination_shape', 'gallery_premium'] as $key) {
+        $value = $premium !== null && in_array($key, ['grid', 'gallery_mobile', 'gallery_desktop'], true) ? 'premium' : $settings[$key];
+        $attributes .= ' data-' . str_replace('_', '-', $key) . '="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '"';
     }
     foreach (site_toggle_keys() as $key) {
         $attributes .= ' data-' . str_replace('_', '-', $key) . '="' . ($settings[$key] ? 'true' : 'false') . '"';

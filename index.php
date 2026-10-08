@@ -341,6 +341,7 @@ if ($fotoItem !== null) {
     <link rel="stylesheet" href="/assets/css/photo-navigation.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/photo-navigation.css')) ?>">
     <link rel="stylesheet" href="/assets/css/interface-worlds.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/interface-worlds.css')) ?>">
     <link rel="stylesheet" href="/assets/css/gallery-layout.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/gallery-layout.css')) ?>">
+    <?php if ($fotoItem === null) echo premium_gallery_head_tags(); // Estilos de la galería premium activa (ver inc/premium-galleries.php). ?>
 </head>
 <?php
 // Datos compartidos por los bloques de la portada (inc/blocks/*.php).
@@ -535,6 +536,7 @@ echo page_blocks_render_home($pageContext, $siteSettings['section_order'] ?? nul
 <script src="/assets/js/pwa.js?v=<?= safe($appVersion) ?>" defer></script>
 <script src="/assets/js/gallery-layout.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/gallery-layout.js')) ?>" defer></script>
 <script src="/assets/js/main.js?v=<?= safe($appVersion) ?>" defer></script>
+<?php if ($fotoItem === null) echo premium_gallery_script_tags(); // Comportamiento de la galería premium activa. ?>
 <script type="module" src="/assets/js/interface-worlds.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/interface-worlds.js')) ?>"></script>
 </body>
 </html>

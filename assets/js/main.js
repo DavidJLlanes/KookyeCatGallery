@@ -13,6 +13,10 @@
     /* ---------- Helpers ---------- */
     const $  = (sel, ctx = document) => ctx.querySelector(sel);
     const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+    // Tarjetas de foto: las de la galería estándar (.card) y las de la galería premium «Estilo Baraja» (.deck__card).
+    // La raíz de la galería es #masonry (estándar) o #deck (premium). Ver docs/galerias-premium.md.
+    const CARDS = '.card, .deck__card';
+    const galleryRoot = () => $('#masonry') || $('#deck');
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
@@ -430,7 +434,7 @@
 
         const slideButton = $('#slideshowStart');
         if (slideButton) slideButton.addEventListener('click', () => {
-            const cards = $$('.card').filter(card => !card.hidden && !card.classList.contains('is-hidden') && card.dataset.slug);
+            const cards = $$(CARDS).filter(card => !card.hidden && !card.classList.contains('is-hidden') && card.dataset.slug);
             if (!cards.length) return;
             let index = 0, timer = 0, paused = false;
             const overlay = document.createElement('div');
@@ -582,7 +586,7 @@
         const prevBtn   = $('.lightbox__nav--prev', lightbox);
         const nextBtn   = $('.lightbox__nav--next', lightbox);
 
-        if (!$$('.card').length) return;
+        if (!$$(CARDS).length) return;
 
         // Siempre usa las fotos visibles en el momento (respeta filtro + página activa)
         const getCards = () => $('.card:not(.is-hidden):not([hidden])');
@@ -864,7 +868,7 @@
         };
 
         // Delegación: cualquier carta clicada (visible) abre el lightbox en la posición correcta
-        const masonry = $('#masonry');
+        const masonry = galleryRoot();
         if (masonry) {
             masonry.addEventListener('click', (e) => {
                 // Las fotos con URL propia son enlaces <a> → navegan solas a /foto/slug.
@@ -1440,7 +1444,7 @@
             return;
         }
 
-        const cards = $$('.card');
+        const cards = $$(CARDS);
         if (!cards.length) return;
 
         // Agrupa fotos por ubicación
@@ -1499,7 +1503,7 @@
                         if (!button) return;
                         button.onclick = () => {
                             marker.closePopup();
-                            $('#masonry')?.dispatchEvent(new CustomEvent('map:open-photo', {
+                            galleryRoot()?.dispatchEvent(new CustomEvent('map:open-photo', {
                                 detail: { card: loc.cards[0] }
                             }));
                         };
