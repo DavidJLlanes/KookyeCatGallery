@@ -28,7 +28,7 @@ const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
 const pageHtml = palette => `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body data-palette="${palette}" data-grid="premium" data-gallery-premium="deck" data-gallery-mobile="premium" data-gallery-desktop="premium">
 <header id="before" style="height:700px">Cabecera</header>
-<div class="categories-filter"><div class="categories-filter__inner"><button class="categories-filter__chip is-active" data-category="">Todas</button>
+<div class="categories-filter" style="height:120px;overflow:hidden"><div class="categories-filter__inner"><button class="categories-filter__chip is-active" data-category="">Todas</button>
 <button class="categories-filter__chip" data-category="A">A</button><button class="categories-filter__chip" data-category="B">B</button></div></div>
 ${markup}
 <section id="after" style="height:1600px">Siguiente bloque</section></body></html>`;
@@ -134,14 +134,14 @@ const devices = [
                 await page.mouse.wheel(0, 400);
                 // El scroll de la página es animado: se espera a que llegue (más lento en los ordenadores de CI).
                 await page.waitForFunction(min => scrollY > min, baseScroll + 50, {timeout: 6000}).catch(() => {});
-                assert((await state()).scrollY > baseScroll + 50, `${label}: tras la última foto la página debe seguir bajando`);
+                { const after = await state(); assert(after.scrollY > baseScroll + 50, `${label}: tras la última foto la página debe seguir bajando (${JSON.stringify({baseScroll, ...after})})`); }
                 await toDeck();
                 await page.keyboard.press('Home'); await settle();
                 // Límite superior: en la primera foto la rueda hacia arriba libera la página.
                 await page.mouse.wheel(0, -400);
                 await page.waitForFunction(max => scrollY < max, baseScroll - 50, {timeout: 6000}).catch(() => {});
                 const top = await state();
-                assert(top.scrollY < baseScroll - 50 && top.index === 0, `${label}: antes de la primera foto la página debe subir`);
+                assert(top.scrollY < baseScroll - 50 && top.index === 0, `${label}: antes de la primera foto la página debe subir (${JSON.stringify({baseScroll, ...top})})`);
                 await toDeck();
             }
 
@@ -168,7 +168,7 @@ const devices = [
                 await page.keyboard.press('End'); await settle();
                 await swipe(-260, 12);
                 await page.waitForFunction(min => scrollY > min, before.scrollY + 40, {timeout: 6000}).catch(() => {});
-                assert((await state()).scrollY > before.scrollY + 40, `${label}: tras la última foto el dedo debe mover la página`);
+                { const after = await state(); assert(after.scrollY > before.scrollY + 40, `${label}: tras la última foto el dedo debe mover la página (${JSON.stringify({before, after})})`); }
                 await toDeck();
                 await page.keyboard.press('Home'); await settle();
             }
