@@ -1,13 +1,38 @@
 <?php
 declare(strict_types=1);
 
-// Outside the document root and the deployment directory, like upload-auth.php.
+/**
+ * Configuración del sitio: ajustes de diseño, bloques de la portada, textos y páginas editables.
+ *
+ * Índice:
+ *   1. Almacenamiento y opciones de diseño
+ *   2. Bloques de la portada (orden y visibilidad)
+ *   3. Valores por defecto y textos editables
+ *   4. Validación y guardado
+ *   5. Textos del sitio
+ *   6. Páginas de texto editables
+ *   7. Salida para la web pública
+ *   (formularios del panel: inc/site-settings-form.php)
+ */
+
+// =============================================================================
+// 1. ALMACENAMIENTO Y OPCIONES DE DISEÑO
+// =============================================================================
+
+/**
+ * Ruta del JSON de configuración. Está fuera del directorio público y de los archivos desplegados
+ * (como upload-auth.php), así que un despliegue no la pisa.
+ */
 function site_settings_path(): string
 {
     $privateDir = getenv('GALLERY_PRIVATE_DIR') ?: dirname(__DIR__) . '/var';
     return rtrim($privateDir, '/\\') . '/site-settings.json';
 }
 
+/**
+ * Opciones permitidas para cada ajuste de diseño: clave => [valor => etiqueta]. Es la lista blanca
+ * que usa site_settings_validate().
+ */
 function site_design_choices(): array
 {
     return [
@@ -25,19 +50,47 @@ function site_design_choices(): array
     ];
 }
 
-// Fotos visibles a la vez por pantalla (0 = todas), independiente de las columnas.
+/**
+ * Fotos visibles a la vez por pantalla (0 = todas). Es independiente del número de columnas; main.js
+ * pagina con este valor.
+ */
 function site_photos_per_view_choices(): array
 {
     return [6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 36, 40, 50, 60, 100, 0];
 }
 
-// Bloques reordenables de la portada, en su orden por defecto.
-function site_section_labels(): array
+// =============================================================================
+// 2. BLOQUES DE LA PORTADA
+// =============================================================================
+
+/**
+ * Bloques reordenables de la portada, en su orden por defecto. Cada uno tiene su archivo en
+ * inc/blocks/ (ver inc/page-blocks.php).
+ * label: nombre en el panel · hint: ayuda · toggle: ajuste `show_*` que lo activa (null = siempre visible).
+ */
+function site_section_definitions(): array
 {
-    return ['categories' => 'Categorías', 'gallery' => 'Bloque de galería', 'map' => 'Mapa',
-        'project' => '«El proyecto»', 'social' => 'Enlaces sociales'];
+    return [
+        'categories' => ['label' => 'Categorías', 'hint' => 'Filtro por categorías', 'toggle' => 'show_categories'],
+        'gallery' => ['label' => 'Bloque de galería', 'hint' => 'Fotos, buscador y presentación', 'toggle' => null],
+        'map' => ['label' => 'Mapa', 'hint' => 'Mapa de ubicaciones', 'toggle' => 'show_map'],
+        'project' => ['label' => '«El proyecto»', 'hint' => 'Texto y retrato del proyecto', 'toggle' => 'show_project'],
+        'social' => ['label' => 'Enlaces sociales', 'hint' => 'Contacto y redes', 'toggle' => 'show_social'],
+    ];
 }
 
+/**
+ * Nombres de los bloques reordenables (clave => etiqueta).
+ */
+function site_section_labels(): array
+{
+    return array_map(static fn(array $definition): string => $definition['label'], site_section_definitions());
+}
+
+/**
+ * Normaliza `section_order`: descarta claves desconocidas o repetidas y añade al final las que
+ * falten, para que siempre estén todos los bloques.
+ */
 function site_section_order_normalize(mixed $order): array
 {
     $known = array_keys(site_section_labels());
@@ -48,6 +101,14 @@ function site_section_order_normalize(mixed $order): array
     return array_merge($result, array_values(array_diff($known, $result)));
 }
 
+// =============================================================================
+// 3. VALORES POR DEFECTO Y TEXTOS EDITABLES
+// =============================================================================
+
+/**
+ * Valores iniciales de todos los ajustes. Un archivo antiguo al que le falte una clave hereda estos
+ * valores.
+ */
 function site_settings_defaults(): array
 {
     return ['palette' => 'current', 'grid' => 'adaptive', 'columns_mobile' => 3,
@@ -61,6 +122,9 @@ function site_settings_defaults(): array
         'social_links' => []];
 }
 
+/**
+ * Claves de texto que se editan en la pestaña «Perfil» (el resto de textos se editan en las páginas).
+ */
 function site_editable_text_keys(): array
 {
     return [
@@ -74,6 +138,9 @@ function site_editable_text_keys(): array
     ];
 }
 
+/**
+ * Etiqueta que se muestra en el panel para cada texto editable.
+ */
 function site_admin_text_labels(): array
 {
     return [
@@ -86,6 +153,9 @@ function site_admin_text_labels(): array
     ];
 }
 
+/**
+ * URL local de la imagen de perfil o del logo; si la ruta no es válida, devuelve la imagen por defecto.
+ */
 function site_media_url(string $key): string
 {
     $settings = site_settings_load();
@@ -94,12 +164,23 @@ function site_media_url(string $key): string
     return preg_match('~^/[a-zA-Z0-9._/-]+$~', $value) ? $value : $default;
 }
 
+/**
+ * Catálogo de textos con su valor por defecto (inc/site-texts.php).
+ */
 function site_text_catalog(): array
 {
     static $catalog;
     return $catalog ??= require __DIR__ . '/site-texts.php';
 }
 
+// =============================================================================
+// 4. VALIDACIÓN Y GUARDADO
+// =============================================================================
+
+/**
+ * Valida y normaliza los ajustes recibidos (formulario o JSON). Lanza InvalidArgumentException si
+ * algo no es válido; devuelve siempre un conjunto completo de ajustes.
+ */
 function site_settings_validate(array $input): array
 {
     $out = site_settings_defaults();
@@ -181,6 +262,9 @@ function site_settings_validate(array $input): array
     return $out;
 }
 
+/**
+ * Lee los ajustes guardados. Si el archivo no existe o está dañado, devuelve los valores por defecto.
+ */
 function site_settings_load(?string $path = null): array
 {
     $path ??= site_settings_path();
@@ -200,6 +284,10 @@ function site_settings_load(?string $path = null): array
     return $settings;
 }
 
+/**
+ * Valida y guarda los ajustes de forma atómica (archivo temporal + rename). Lanza RuntimeException
+ * si no puede escribir.
+ */
 function site_settings_save(array $input, ?string $path = null): void
 {
     $settings = site_settings_validate($input);
@@ -220,6 +308,13 @@ function site_settings_save(array $input, ?string $path = null): void
     }
 }
 
+// =============================================================================
+// 5. TEXTOS DEL SITIO
+// =============================================================================
+
+/**
+ * Texto editable por clave: el guardado en los ajustes o, si no hay, el valor por defecto del catálogo.
+ */
 function site_text(string $key): string
 {
     static $settings;
@@ -227,22 +322,38 @@ function site_text(string $key): string
     return $settings['texts'][$key] ?? site_text_catalog()[$key]['default'] ?? '';
 }
 
+/**
+ * Igual que site_text(), escapado para usarlo dentro de HTML.
+ */
 function site_text_html(string $key): string
 {
     return htmlspecialchars(site_text($key), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+// =============================================================================
+// 6. PÁGINAS DE TEXTO EDITABLES
+// =============================================================================
+
+/**
+ * Páginas cuyo contenido se edita en el panel.
+ */
 function site_editable_page_keys(): array
 {
     return ['legal_notice', 'privacy_policy', 'cookies_policy', 'project'];
 }
 
+/**
+ * Nombre de cada página editable.
+ */
 function site_page_labels(): array
 {
     return ['legal_notice' => 'Aviso legal', 'privacy_policy' => 'Política de privacidad',
         'cookies_policy' => 'Política de cookies', 'project' => 'El Proyecto'];
 }
 
+/**
+ * Contenido por defecto de una página, construido con los textos del catálogo.
+ */
 function site_page_default_html(string $page): string
 {
     $content = [
@@ -254,6 +365,9 @@ function site_page_default_html(string $page): string
     return $content[$page] ?? '';
 }
 
+/**
+ * Deja solo las etiquetas y atributos permitidos en el contenido de una página.
+ */
 function site_sanitize_page_html(string $html): string
 {
     if (strlen($html) > 100000 || !preg_match('//u', $html)) {
@@ -282,6 +396,9 @@ function site_sanitize_page_html(string $html): string
     }, $html) ?? '';
 }
 
+/**
+ * Contenido actual de una página: el guardado o el de por defecto.
+ */
 function site_page_content(string $page): string
 {
     if (!in_array($page, site_editable_page_keys(), true)) return '';
@@ -289,6 +406,14 @@ function site_page_content(string $page): string
     return $settings['pages'][$page] ?? site_page_default_html($page);
 }
 
+// =============================================================================
+// 7. SALIDA PARA LA WEB PÚBLICA
+// =============================================================================
+
+/**
+ * Atributos del <body> (data-* y variables CSS) que activan en el CSS y el JS los ajustes de diseño,
+ * de visibilidad y de columnas.
+ */
 function site_design_attributes(): string
 {
     $settings = site_settings_load();
@@ -303,6 +428,9 @@ function site_design_attributes(): string
     return $attributes . ' style="--columns-mobile:' . $settings['columns_mobile'] . ';--columns-desktop:' . $settings['columns_desktop'] . '"';
 }
 
+/**
+ * Textos editables para el JS: JSON incrustado más site-texts.js.
+ */
 function site_client_texts(): string
 {
     $texts = [];
@@ -312,141 +440,5 @@ function site_client_texts(): string
         . '</script><script src="/assets/js/site-texts.js?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/js/site-texts.js'), 0, 12) . '"></script>';
 }
 
-function site_settings_form(string $csrf, ?array $values = null, string $section = 'profile'): string
-{
-    $settings = $values ?? site_settings_load();
-    $escape = fn(string $value): string => htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    $html = '<form method="post" action="/admin.php?settings=1" class="upload-form site-settings" data-settings-section="' . $escape($section) . '">'
-        . '<input type="hidden" name="action" value="save_site_settings">'
-        . '<input type="hidden" name="csrf" value="' . $escape($csrf) . '">'
-        . '<input type="hidden" name="section" value="' . $escape($section) . '">'
-        . '<p>Personaliza la web. Los textos de fotografías y categorías se editan en Gestionar fotos. Los campos admiten texto plano.</p>';
-    $labels = ['palette' => 'Paleta de colores', 'grid' => 'Tipo de cuadrícula', 'header_mobile' => 'Cabecera móvil', 'header_desktop' => 'Cabecera de escritorio', 'gallery_mobile' => 'Galería móvil', 'gallery_desktop' => 'Galería de escritorio', 'hover' => 'Efecto Hover'];
-    $choices = site_design_choices();
-    $select = static function (string $key, string $label, array $options, $current) use ($escape): string {
-        $out = '<div class="upload-field"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '">';
-        foreach ($options as $value => $text) $out .= '<option value="' . $escape((string) $value) . '"' . ((string) $current === (string) $value ? ' selected' : '') . '>' . $escape((string) $text) . '</option>';
-        return $out . '</select></div>';
-    };
-    $switch = static fn(string $key, string $label, bool $on): string => '<label class="site-section-switch"><input type="checkbox" name="' . $key . '" value="1"' . ($on ? ' checked' : '') . '><span class="site-section-switch__track" aria-hidden="true"></span><span>' . $escape($label) . '</span></label>';
-    $card = static fn(string $title, string $lead, string $body): string => '<section class="admin-card"><header class="admin-card__head"><h2>' . $escape($title) . '</h2><p>' . $escape($lead) . '</p></header><div class="admin-card__body">' . $body . '</div></section>';
-    $range = static function (string $key, string $label, array $values, $current, string $zero = '') use ($escape): string {
-        $options = [];
-        foreach ($values as $n) $options[$n] = $n === 0 ? $zero : (string) $n;
-        return '<div class="upload-field"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '">'
-            . implode('', array_map(static fn($n) => '<option value="' . $n . '"' . ((int) $current === $n ? ' selected' : '') . '>' . $escape($options[$n]) . '</option>', $values)) . '</select></div>';
-    };
-
-    $html .= '<div class="settings-design">';
-    $html .= $card('Apariencia', 'Colores y efecto al pasar el ratón por las fotos.',
-        '<div class="admin-fields">' . $select('palette', $labels['palette'], $choices['palette'], $settings['palette']) . $select('hover', $labels['hover'], $choices['hover'], $settings['hover']) . '</div>');
-    $html .= $card('Cabecera', 'Elige el estilo y decide si se muestra en cada tipo de pantalla.',
-        '<div class="admin-fields">' . $select('header_mobile', $labels['header_mobile'], $choices['header_mobile'], $settings['header_mobile']) . $select('header_desktop', $labels['header_desktop'], $choices['header_desktop'], $settings['header_desktop']) . '</div>'
-        . '<div class="admin-switches">' . $switch('show_header_mobile', 'Mostrar la cabecera en móvil', !empty($settings['show_header_mobile'])) . $switch('show_header_desktop', 'Mostrar la cabecera en escritorio', !empty($settings['show_header_desktop'])) . '</div>');
-    $columnsMobile = range(1, 4); $columnsDesktop = range(1, 10);
-    $html .= $card('Galería', 'Composición, columnas y cuántas fotos se ven a la vez.',
-        '<div class="admin-fields">' . $select('grid', $labels['grid'], $choices['grid'], $settings['grid'])
-        . $select('gallery_mobile', $labels['gallery_mobile'], $choices['gallery_mobile'], $settings['gallery_mobile'])
-        . $select('gallery_desktop', $labels['gallery_desktop'], $choices['gallery_desktop'], $settings['gallery_desktop'])
-        . $range('columns_mobile', 'Columnas en móvil', $columnsMobile, $settings['columns_mobile'])
-        . $range('columns_desktop', 'Columnas en escritorio', $columnsDesktop, $settings['columns_desktop'])
-        . $range('photos_mobile', 'Fotos visibles a la vez en móvil', site_photos_per_view_choices(), $settings['photos_mobile'], 'Todas')
-        . $range('photos_desktop', 'Fotos visibles a la vez en escritorio', site_photos_per_view_choices(), $settings['photos_desktop'], 'Todas') . '</div>'
-        . '<p class="upload-help">Las fotos visibles a la vez no dependen de las columnas: si hay más fotos, se paginan. Elige «Todas» para mostrarlas juntas. Masonry conserva las proporciones originales; para fotos cuadradas, horizontales o verticales, elige la galería «Cuadrícula» y su tipo de cuadrícula.</p>');
-
-    $order = site_section_order_normalize($settings['section_order'] ?? null);
-    $sectionSwitches = ['categories' => 'show_categories', 'map' => 'show_map', 'project' => 'show_project', 'social' => 'show_social'];
-    $sectionHints = ['categories' => 'Filtro por categorías', 'gallery' => 'Fotos, buscador y presentación', 'map' => 'Mapa de ubicaciones', 'project' => 'Texto y retrato del proyecto', 'social' => 'Contacto y redes'];
-    $list = '<ol class="section-order" data-section-order>';
-    foreach ($order as $key) {
-        $name = site_section_labels()[$key];
-        $control = isset($sectionSwitches[$key])
-            ? $switch($sectionSwitches[$key], 'Mostrar', !empty($settings[$sectionSwitches[$key]]))
-            : '<span class="section-order__fixed">Siempre visible</span>';
-        $list .= '<li class="section-order__item" data-section-key="' . $key . '"><input type="hidden" name="section_order[]" value="' . $key . '">'
-            . '<span class="section-order__grip" aria-hidden="true">⋮⋮</span>'
-            . '<span class="section-order__text"><strong>' . $escape($name) . '</strong><small>' . $escape($sectionHints[$key]) . '</small></span>'
-            . '<span class="section-order__control">' . $control . '</span>'
-            . '<span class="section-order__move"><button type="button" data-move="up" aria-label="Subir ' . $escape($name) . '">↑</button><button type="button" data-move="down" aria-label="Bajar ' . $escape($name) . '">↓</button></span></li>';
-    }
-    $list .= '</ol>';
-    $html .= $card('Estructura de la página', 'Ordena los bloques de la portada con las flechas y oculta los que no quieras mostrar.', $list);
-
-    $pages = '<div class="page-editor-options__grid">';
-    foreach (site_page_labels() as $key => $label) {
-        $pages .= '<a class="page-editor-option" href="/admin.php?settings=1&amp;section=page&amp;doc=' . $key . '"><span>' . $escape($label) . '</span><span aria-hidden="true">Editar →</span></a>';
-    }
-    $html .= $card('Textos de páginas', 'Abre una página para editar su contenido y formato.', $pages . '</div>') . '</div>';
-    $html = str_replace('<form method="post"', '<form method="post" enctype="multipart/form-data"', $html);
-    $html .= '<div class="settings-profile"><section class="admin-card"><header class="admin-card__head"><h2>Perfil</h2><p>Nombre, descripciones y enlaces que aparecen en la cabecera y en los contactos.</p></header><div class="admin-card__body">';
-    foreach (site_editable_text_keys() as $key) {
-        $entry = $key === 'social_threads_user'
-            ? ['default' => '@kookyecatgallery']
-            : site_text_catalog()[$key];
-        $value = $settings['texts'][$key] ?? $entry['default'];
-        $label = site_admin_text_labels()[$key] ?? $entry['default'];
-        $html .= '<div class="upload-field"><label for="text-' . $key . '">' . $escape($label) . '</label>'
-            . '<textarea id="text-' . $key . '" name="texts[' . $key . ']" rows="2" maxlength="20000">' . $escape($value) . '</textarea></div>';
-    }
-    $html .= '<div class="upload-field"><label for="instagram-url">Enlace de Instagram</label><input id="instagram-url" name="instagram_url" type="url" maxlength="500" value="' . $escape((string) $settings['instagram_url']) . '"></div>'
-        . '<div class="upload-field"><label for="threads-url">Enlace de Threads</label><input id="threads-url" name="threads_url" type="url" maxlength="500" value="' . $escape((string) $settings['threads_url']) . '"></div>';
-    $socialNames = ['facebook'=>'Facebook','x'=>'X','youtube'=>'YouTube','tiktok'=>'TikTok','flickr'=>'Flickr','linkedin'=>'LinkedIn','pinterest'=>'Pinterest','500px'=>'500px','bluesky'=>'Bluesky','mastodon'=>'Mastodon'];
-    $html .= '</div></section><section class="admin-card"><header class="admin-card__head"><h2>Más redes sociales</h2><p>Rellena solo las redes que quieras mostrar.</p></header><div class="admin-card__body">';
-    $html .= '<div class="upload-field"><label>Redes</label><div class="social-settings-list">';
-    for ($i = 0; $i < 12; $i++) {
-        $row = $settings['social_links'][$i] ?? ['network'=>'','url'=>'','handle'=>''];
-        $html .= '<div class="social-settings-row"><select name="social_links['.$i.'][network]"><option value="">Añadir red…</option>';
-        foreach ($socialNames as $value => $label) $html .= '<option value="'.$value.'"'.(($row['network'] ?? '') === $value ? ' selected' : '').'>'.$label.'</option>';
-        $html .= '</select><input type="url" name="social_links['.$i.'][url]" maxlength="500" placeholder="https://…" value="'.$escape((string)($row['url'] ?? '')).'"><input type="text" name="social_links['.$i.'][handle]" maxlength="120" placeholder="@usuario o nombre" value="'.$escape((string)($row['handle'] ?? '')).'"></div>';
-    }
-    $html .= '<small class="upload-help">Rellena solo las redes que quieras mostrar. Puedes añadir hasta 12.</small></div></div>';
-    $html .= '</div></section><section class="admin-card"><header class="admin-card__head"><h2>Imágenes</h2><p>Foto de perfil y logo de la web.</p></header><div class="admin-card__body">';
-    $html .= '<input type="hidden" name="profile_image" value="' . $escape((string) $settings['profile_image']) . '">'
-        . '<input type="hidden" name="logo_image" value="' . $escape((string) $settings['logo_image']) . '">'
-        . '<div class="upload-field"><label for="profile-image">Foto de perfil</label>'
-        . '<input id="profile-image" name="profile_image_file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
-        . '<small class="upload-help">JPG, PNG o WebP. Máximo 15 MB.</small></div>'
-        . '<div class="upload-field"><label for="logo-image">Logo</label>'
-        . '<input id="logo-image" name="logo_image_file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
-        . '<small class="upload-help">JPG, PNG o WebP. Máximo 15 MB.</small></div></div></section></div>';
-    return $html . '<div class="admin-savebar"><span class="admin-savebar__hint">Los cambios se aplican a la web al guardar.</span><a class="upload-logout" href="/" target="_blank" rel="noopener">Ver la web</a><button class="upload-submit" type="submit">Guardar configuración</button></div></form>';
-}
-
-function site_page_editor_form(string $csrf, string $page): string
-{
-    if (!in_array($page, site_editable_page_keys(), true)) throw new InvalidArgumentException('Selecciona una página válida.');
-    $escape = static fn(string $value): string => htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    $html = '<form method="post" action="/admin.php" class="upload-form site-page-editor" data-page-editor-form>'
-        . '<input type="hidden" name="action" value="save_site_page"><input type="hidden" name="csrf" value="' . $escape($csrf) . '">'
-        . '<input type="hidden" name="page" value="' . $escape($page) . '">'
-        . '<p class="upload-help">Edita el contenido y usa la vista previa para revisar el resultado antes de guardar.</p>'
-        . '<div class="page-editor-toolbar" role="toolbar" aria-label="Formato del texto" data-editor-toolbar>'
-        . '<div class="page-editor-tool-group" role="group" aria-label="Estilos"><select data-editor-block aria-label="Estilo de párrafo"><option value="">Párrafo</option><option value="h2">Título</option><option value="h3">Subtítulo</option><option value="h4">Encabezado pequeño</option><option value="blockquote">Cita</option></select>'
-        . '<button type="button" data-editor-command="bold" title="Negrita" aria-label="Negrita"><strong>N</strong></button>'
-        . '<button type="button" data-editor-command="italic" title="Cursiva" aria-label="Cursiva"><em>C</em></button>'
-        . '<button type="button" data-editor-command="underline" title="Subrayado" aria-label="Subrayado"><u>S</u></button>'
-        . '<button type="button" data-editor-command="strikeThrough" title="Tachado" aria-label="Tachado"><s>T</s></button></div>'
-        . '<div class="page-editor-tool-group" role="group" aria-label="Listas y sangría">'
-        . '<button type="button" data-editor-command="insertUnorderedList" title="Lista con viñetas" aria-label="Lista con viñetas">• Lista</button>'
-        . '<button type="button" data-editor-command="insertOrderedList" title="Lista numerada" aria-label="Lista numerada">1. Lista</button>'
-        . '<button type="button" data-editor-command="outdent" title="Reducir sangría" aria-label="Reducir sangría">←</button>'
-        . '<button type="button" data-editor-command="indent" title="Aumentar sangría" aria-label="Aumentar sangría">→</button></div>'
-        . '<div class="page-editor-tool-group" role="group" aria-label="Alineación">'
-        . '<button type="button" data-editor-command="justifyLeft" title="Alinear a la izquierda" aria-label="Alinear a la izquierda">Izquierda</button>'
-        . '<button type="button" data-editor-command="justifyCenter" title="Centrar" aria-label="Centrar">Centrar</button>'
-        . '<button type="button" data-editor-command="justifyRight" title="Alinear a la derecha" aria-label="Alinear a la derecha">Derecha</button></div>'
-        . '<div class="page-editor-tool-group" role="group" aria-label="Edición">'
-        . '<button type="button" data-editor-command="createLink" title="Insertar enlace" aria-label="Insertar enlace">Enlace</button>'
-        . '<button type="button" data-editor-command="unlink" title="Quitar enlace" aria-label="Quitar enlace">Quitar enlace</button>'
-        . '<button type="button" data-editor-command="undo" title="Deshacer" aria-label="Deshacer">↶</button>'
-        . '<button type="button" data-editor-command="redo" title="Rehacer" aria-label="Rehacer">↷</button>'
-        . '<button type="button" data-editor-command="removeFormat" title="Quitar formato" aria-label="Quitar formato">Limpiar</button></div>'
-        . '<button type="button" class="page-editor-preview-toggle" data-editor-preview aria-pressed="false">Vista previa</button></div>'
-        . '<div class="page-editor-link" data-link-panel hidden><label for="page-link-url">Dirección del enlace</label><input id="page-link-url" type="text" inputmode="url" placeholder="https://… o /ruta-interna" data-link-url><button type="button" data-link-apply>Insertar enlace</button><button type="button" data-link-cancel>Cancelar</button></div>'
-        . '<div class="page-editor-surface" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-label="Contenido editable" data-page-editor>'
-        . site_page_content($page) . '</div><div class="page-editor-status"><span data-editor-count aria-live="polite"></span><span>Los enlaces y el formato se revisan al guardar.</span></div>'
-        . '<textarea name="content" data-page-content hidden>' . $escape(site_page_content($page)) . '</textarea>'
-        . '<div class="upload-actions"><button class="upload-submit" type="submit">Guardar página</button><a class="upload-logout" href="/admin.php?settings=1&amp;section=design">Volver a Textos y diseño</a></div>'
-        . '</form><link rel="stylesheet" href="/assets/css/admin-page-editor.css?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/css/admin-page-editor.css'), 0, 12) . '"><script src="/assets/js/admin-settings.js?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/js/admin-settings.js'), 0, 12) . '" defer></script>';
-    return $html;
-}
+// Formularios del panel (solo HTML), en su propio archivo.
+require_once __DIR__ . '/site-settings-form.php';

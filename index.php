@@ -11,6 +11,7 @@ require __DIR__ . '/inc/helpers.php';
 require_once __DIR__ . '/inc/site-settings.php';
 require __DIR__ . '/inc/sitemap.php';
 require __DIR__ . '/inc/photo-navigation.php';
+require __DIR__ . '/inc/page-blocks.php';
 
 $appVersion = app_version();
 
@@ -341,6 +342,10 @@ if ($fotoItem !== null) {
     <link rel="stylesheet" href="/assets/css/interface-worlds.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/interface-worlds.css')) ?>">
     <link rel="stylesheet" href="/assets/css/gallery-layout.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/gallery-layout.css')) ?>">
 </head>
+<?php
+// Datos compartidos por los bloques de la portada (inc/blocks/*.php).
+$pageContext = ['author' => $author, 'categories' => $categories, 'galleryItems' => $galleryItems, 'heroItem' => $heroItem, 'rootDir' => __DIR__, 'siteSettings' => $siteSettings, 'totalFotos' => $totalFotos, 'yearLabel' => $yearLabel];
+?>
 <body<?= site_design_attributes() ?> class="<?= $heroItem ? 'has-photos' : 'no-photos' ?>"<?= $fotoSlug ? ' data-open-slug="' . safe($fotoSlug) . '"' : '' ?>>
 
 <?php if ($fotoItem === null): ?>
@@ -366,47 +371,6 @@ if ($fotoItem !== null) {
     <span class="upload-fab__label"><?= site_text_html('text_c55b46a0c60668c4') ?></span>
 </a>
 
-<?php $blocks = []; ob_start(); ?>
-<!-- CONTACTO -->
-<?php if ($siteSettings['show_social']): ?>
-<section class="contact" id="contacto" data-site-section="social">
-    <div class="contact__glow" aria-hidden="true"></div>
-    <div class="contact__inner">
-        <span class="contact__eyebrow"><?= site_text_html('text_bdd8f61b94c52379') ?></span>
-        <h2 class="contact__title"><?= site_text_html('text_49a006d539216e16') ?><br><?= site_text_html('text_f366ccf006a44b3f') ?></h2>
-        <p class="contact__text"><?= site_text_html('text_ab3ceef210237f9d') ?></p>
-        <div class="contact__links">
-            <a class="contact__link" href="<?= safe((string) $siteSettings['instagram_url']) ?>" target="_blank" rel="noopener">
-                <span class="contact__icon">
-                    <span class="contact__logo contact__logo--ig" aria-hidden="true"></span>
-                </span>
-                <span class="contact__net"><?= site_text_html('text_bad57ef7837c8e6b') ?></span>
-                <span class="contact__handle"><?= site_text_html('text_3b20084d3d94b4ee') ?></span>
-            </a>
-            <a class="contact__link" href="<?= safe((string) $siteSettings['threads_url']) ?>" target="_blank" rel="noopener">
-                <span class="contact__icon">
-                    <span class="contact__logo contact__logo--threads" aria-hidden="true"></span>
-                </span>
-                <span class="contact__net"><?= site_text_html('text_3e42e385075b9b56') ?></span>
-                <span class="contact__handle"><?= site_text_html('social_threads_user') ?></span>
-            </a>
-            <?php
-            $socialNames = ['facebook'=>'Facebook','x'=>'X','youtube'=>'YouTube','tiktok'=>'TikTok','flickr'=>'Flickr','linkedin'=>'LinkedIn','pinterest'=>'Pinterest','500px'=>'500px','bluesky'=>'Bluesky','mastodon'=>'Mastodon'];
-            foreach (($siteSettings['social_links'] ?? []) as $social):
-                $network = (string) ($social['network'] ?? '');
-                if (!isset($socialNames[$network]) || empty($social['url'])) continue;
-            ?>
-            <a class="contact__link" href="<?= safe((string) $social['url']) ?>" target="_blank" rel="noopener">
-                <span class="contact__icon"><?= social_profile_icon($network) ?></span>
-                <span class="contact__net"><?= safe($socialNames[$network]) ?></span>
-                <span class="contact__handle"><?= safe((string) (($social['handle'] ?? '') ?: $socialNames[$network])) ?></span>
-            </a>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</section>
-<?php endif; ?>
-<?php $blocks['social'] = ob_get_clean(); ?>
 
 <?php if ($fotoItem !== null): ?>
 <!-- DETALLE DE FOTO (permalink /foto/slug): contenido único renderizado por PHP para SEO -->
@@ -504,240 +468,12 @@ foreach ($items as $ri) {
 <?php endif; ?>
 <?php else: ?>
 
-<!-- HERO tipográfico maximalista (sin foto de fondo) -->
-<header class="hero hero--typography">
-    <div class="hero__gradient" aria-hidden="true"></div>
-    <div class="hero__glow" aria-hidden="true"></div>
-    <div class="hero__noise" aria-hidden="true"></div>
-
-    <div class="hero__ornament hero__ornament--tl" aria-hidden="true"></div>
-    <div class="hero__ornament hero__ornament--br" aria-hidden="true"></div>
-
-    <div class="hero__content">
-        <img class="hero__portrait" src="<?= safe(site_media_url('profile_image')) ?>" width="120" height="120" alt="<?= site_text_html('text_30170303c506cf6c') ?>" loading="lazy">
-        <a href="/" class="hero__crest" aria-label="<?= site_text_html('text_83f4e59e2da59d76') ?>">
-            <img src="<?= safe(site_media_url('logo_image')) ?>" width="500" height="640" alt="" loading="eager" decoding="async">
-        </a>
-        <span class="hero__eyebrow"><?= site_text_html('text_b6b50664e231e202') ?></span>
-        <h1 class="hero__title">
-            <span class="hero__title-line" data-reveal><?= site_text_html('text_cbbba360eb60dd04') ?></span>
-            <span class="hero__title-line hero__title-line--accent" data-reveal><?= site_text_html('text_2c1ac3057629f681') ?></span>
-        </h1>
-        <span class="hero__divider" aria-hidden="true"></span>
-        <p class="hero__subtitle" data-reveal><?= site_text_html('text_30170303c506cf6c') ?></p>
-        <?php if ($heroItem): ?>
-        <div class="hero__meta" data-reveal>
-            <span><?= $totalFotos ?> <?= site_text_html($totalFotos === 1 ? 'text_08e81d4e64f6b4ff' : 'text_577e559428a23438') ?></span>
-            <span class="hero__meta-sep">·</span>
-            <span><?= safe($yearLabel) ?></span>
-        </div>
-        <?php else: ?>
-        <p class="hero__empty-note" data-reveal><?= site_text_html('text_eefccddb211b22ea') ?> <code><?= site_text_html('text_7fe0e410821a1ee4') ?></code> <?= site_text_html('text_cc0ecea94d78a73f') ?></p>
-        <?php endif; ?>
-    </div>
-
-    <?php if ($heroItem): ?>
-    <a href="#galeria" class="hero__scroll" aria-label="<?= site_text_html('text_ddfe959388cbea71') ?>">
-        <span class="hero__scroll-line"></span>
-        <span class="hero__scroll-text"><?= site_text_html('text_b2cec4172b3ff4d2') ?></span>
-    </a>
-    <?php endif; ?>
-</header>
-
-<!-- Cabecera de perfil móvil -->
-<section class="mobile-profile" aria-label="<?= site_text_html('text_1d997c72b89b5e1f') ?>">
-    <div class="mobile-profile__masthead">
-        <a class="mobile-profile__brand" href="/" aria-label="<?= site_text_html('text_84f085942c2a2aa1') ?>"><?= site_text_html('text_52179dc42df7efe5') ?></a>
-        <span class="mobile-profile__edition"><?= site_text_html('text_8aa8595771f39463') ?></span>
-    </div>
-    <div class="mobile-profile__identity">
-        <div class="mobile-profile__portraits">
-            <a class="mobile-profile__avatar-link" href="/" aria-label="<?= site_text_html('text_84f085942c2a2aa1') ?>"><img class="mobile-profile__avatar" src="<?= safe(site_media_url('profile_image')) ?>" width="88" height="88" alt="<?= site_text_html('text_30170303c506cf6c') ?>"></a>
-            <span class="mobile-profile__crest-wrap"><img src="<?= safe(site_media_url('logo_image')) ?>" width="500" height="640" alt="<?= site_text_html('text_125ff372f2933b34') ?>"></span>
-        </div>
-        <div class="mobile-profile__stats" aria-label="<?= site_text_html('text_7f9488ff977b7f67') ?>">
-            <div><strong><?= $totalFotos ?></strong><span><?= site_text_html('text_577e559428a23438') ?></span></div>
-            <div><strong><?= count($categories) ?></strong><span><?= site_text_html('text_bb6db5ced87f3dfa') ?></span></div>
-            <div><strong><?= site_text_html('text_b5c772cf5b14f84e') ?></strong><span><?= site_text_html('text_ff1de97302308752') ?></span></div>
-        </div>
-    </div>
-    <div class="mobile-profile__bio">
-        <strong class="mobile-profile__name"><?= site_text_html('text_4577bab0d9627af1') ?> <span class="mobile-profile__verified" role="img" aria-label="<?= site_text_html('text_6ba397681d3ee9c1') ?>" title="<?= site_text_html('text_30170303c506cf6c') ?>">✓</span></strong>
-        <p><?= site_text_html('text_2e2b80d871481edc') ?></p>
-        <p><?= site_text_html('text_54b7645201863e32') ?></p>
-        <a class="mobile-profile__website" href="https://example.com" target="_blank" rel="noopener noreferrer" aria-label="<?= site_text_html('text_e5d843682b4f2596') ?>"><?= site_text_html('text_7e6debbd1dab03b1') ?></a>
-    </div>
-</section>
-
 <?php
-// Retrato opcional del fotógrafo: sube uno de estos por FTP a la raíz si lo deseas
-$portrait = null;
-$profilePath = site_media_url('profile_image');
-if (is_file(__DIR__ . $profilePath)) $portrait = ltrim($profilePath, '/');
+// Cabeceras fijas y bloques reordenables de la portada (ver inc/page-blocks.php).
+echo page_block_render('header-desktop', $pageContext);
+echo page_block_render('header-mobile', $pageContext);
+echo page_blocks_render_home($pageContext, $siteSettings['section_order'] ?? null);
 ?>
-<?php ob_start(); ?>
-    <?php if ($siteSettings['show_categories'] && $heroItem && !empty($categories)): ?>
-    <!-- SELECTOR DE CATEGORÍAS -->
-    <section class="categories-block" aria-label="Categorías">
-    <div class="categories-filter" id="categoriesFilter" data-site-section="categories" data-reveal>
-        <div class="categories-filter__inner">
-            <button class="categories-filter__chip is-active" data-category=""><?= site_text_html('text_aff4d19d6ee43b20') ?></button>
-            <?php foreach ($categories as $cat): ?>
-            <button class="categories-filter__chip" data-category="<?= safe($cat) ?>"><?= safe($cat) ?></button>
-            <?php endforeach; ?>
-        </div>
-    </div>
-    </section>
-    <?php endif; ?>
-<?php $blocks['categories'] = ob_get_clean(); ob_start(); ?>
-<main id="galeria" class="gallery-section">
-
-
-    <?php if ($heroItem): ?>
-    <div class="gallery-intro" data-site-section="intro">
-        <h2 class="gallery-intro__title" data-reveal><?= site_text_html('text_7d367bc92702d135') ?></h2>
-        <p class="gallery-intro__text" data-reveal>
-            <?= site_text_html('text_c15e876671f50d92') ?> <strong><?= site_text_html('text_b5c772cf5b14f84e') ?></strong><?= site_text_html('text_a9157ae01488ec67') ?>
-        </p>
-    </div>
-
-    <!-- GALERÍA MASONRY -->
-    <section class="masonry" id="masonry">
-        <?php
-        // Numeración cronológica (Opción B: la foto MÁS ANTIGUA es la nº 1).
-        // $galleryItems está ordenado de más nueva a más antigua, así que invertimos.
-        $totalPhotos = count($galleryItems);
-        $catCounts = [];                       // total de fotos por categoría
-        foreach ($galleryItems as $gi) {
-            $c = $gi['category'] ?? '';
-            $catCounts[$c] = ($catCounts[$c] ?? 0) + 1;
-        }
-        $catRunning = $catCounts;              // contador descendente por categoría
-        ?>
-        <?php foreach ($galleryItems as $i => $item): ?>
-            <?php
-            /**
-             * ESTRUCTURA DE CADA FOTO
-             *
-             * Para añadir título y descripción a una foto, crea un archivo .txt con el
-             * mismo nombre que la foto en la carpeta /img/ (formato: Título / --- / Descripción).
-             * Si no creas el .txt, la foto aparecerá sin texto y todo funciona igual.
-             */
-            $itemCat   = $item['category'] ?? '';
-            $numGlobal = $totalPhotos - $i;            // global: más antigua = 1
-            $numCat    = $catRunning[$itemCat]--;      // dentro de su categoría: más antigua = 1
-            $catTotal  = $catCounts[$itemCat];
-            $hasTitle  = $item['title'] !== '';
-            $aspect    = max(0.01, (float) ($item['aspect'] ?? 1.5));
-            ?>
-            <article
-                class="card<?= $hasTitle ? ' card--has-title' : '' ?>"
-                style="--aspect: <?= number_format($aspect, 4, '.', '') ?>"
-                data-reveal
-                data-index="<?= $i ?>"
-                data-title="<?= safe($item['title']) ?>"
-                data-description="<?= safe($item['description']) ?>"
-                data-full="<?= safe(photo_asset_url($item['desktop'], __DIR__)) ?>"
-                data-category="<?= safe($item['category'] ?? '') ?>"
-                data-lat="<?= $item['latitude'] ?? 0 ?>"
-                data-lng="<?= $item['longitude'] ?? 0 ?>"
-                data-slug="<?= safe($item['slug'] ?? '') ?>"
-                data-num-global="<?= $numGlobal ?>"
-                data-num-cat="<?= $numCat ?>"
-                data-cat-total="<?= $catTotal ?>"
-            >
-                <?php if (!empty($item['slug'])): ?>
-                <a class="card__btn" href="/foto/<?= safe($item['slug']) ?>" aria-label="<?= site_text_html('text_199d79e67ea29a83') ?><?= safe($item['title'] ?: site_text('text_08e81d4e64f6b4ff')) ?>">
-                <?php else: ?>
-                <button class="card__btn" type="button" aria-label="<?= site_text_html('text_7be0de9ca7203c46') ?><?= safe($item['title'] ?: site_text('text_08e81d4e64f6b4ff')) ?>">
-                <?php endif; ?>
-                    <picture class="card__picture">
-                        <source media="(max-width: 768px)" srcset="<?= safe(photo_asset_url($item['mobile'], __DIR__)) ?>" type="image/webp">
-                        <img
-                            class="card__img"
-                            loading="lazy"
-                            decoding="async"
-                            src="<?= safe(photo_asset_url($item['desktop'], __DIR__)) ?>"
-                            alt="<?= safe($item['title'] ?: site_text('text_c7ea52a379d46ca5') . $author) ?><?= site_text_html('text_70241acd5e85d5cc') ?>"
-                            title="<?= safe($item['title'] ?: site_text('text_52179dc42df7efe5')) ?>"
-                        >
-                    </picture>
-
-                    <?php if (!empty($item['slug'])): ?>
-                    <span class="card__heart-count" data-heart-display="<?= safe($item['slug']) ?>" aria-label="Corazones">♡ <span data-heart-count>0</span></span>
-                    <?php endif; ?>
-                    <?php if ($hasTitle): ?>
-                    <div class="card__title-base" aria-hidden="true">
-                        <h3 class="card__title"><?= safe($item['title']) ?></h3>
-                    </div>
-                    <?php endif; ?>
-                <?php if (!empty($item['slug'])): ?></a><?php else: ?></button><?php endif; ?>
-            </article>
-        <?php endforeach; ?>
-    </section>
-
-    <div class="gallery-app-tools" aria-label="Herramientas de galería">
-        <button type="button" class="gallery-app-tool" id="favoritesToggle" aria-pressed="false">♡ Favoritas</button>
-        <button type="button" class="gallery-app-tool" id="slideshowStart">▶ Presentación</button>
-    </div>
-
-    <!-- Paginación gestionada por JS (aparece cuando hay más de 20 fotos) -->
-    <nav class="pagination" id="jsPagination" aria-label="<?= site_text_html('text_5935e29992445803') ?>" hidden></nav>
-
-    <?php endif; ?>
-
-</main>
-<?php $blocks['gallery'] = ob_get_clean(); ob_start(); ?>
-
-<?php if ($siteSettings['show_map']): ?>
-<section class="map-section" id="mapa" data-site-section="map" aria-labelledby="mapHeading">
-    <div class="map-section__head">
-        <span class="map-section__eyebrow"><?= site_text_html('text_d50e1dd2fb1b8143') ?></span>
-        <h2 class="map-section__title" id="mapHeading"><?= site_text_html('text_525b8adbcb4f9654') ?></h2>
-        <label class="map-filter" for="mapCategory">
-            <span><?= site_text_html('text_b22780340ae5569f') ?></span>
-            <select id="mapCategory" aria-label="<?= site_text_html('text_68b4717007382b83') ?>">
-                <option value=""><?= site_text_html('text_425a839def0b84fd') ?></option>
-                <?php foreach ($categories as $cat): ?>
-                <option value="<?= safe($cat) ?>"><?= safe($cat) ?></option>
-                <?php endforeach; ?>
-            </select>
-            <span class="map-filter__chevron" aria-hidden="true">⌄</span>
-        </label>
-    </div>
-    <div class="map-container" id="mapContainer" data-reveal><div id="map" class="map"></div></div>
-</section>
-<?php endif; ?>
-
-<?php $blocks['map'] = ob_get_clean(); ob_start(); ?>
-<!-- SECCIÓN: EL PROYECTO -->
-<?php if ($siteSettings['show_project']): ?>
-<section class="project<?= $portrait ? '' : ' project--no-photo' ?>" id="proyecto" data-site-section="project">
-    <div class="project__inner">
-        <?php if ($portrait): ?>
-        <div class="project__media" data-reveal>
-            <div class="project__media-frame">
-                <img src="/<?= safe($portrait) ?>" alt="<?= site_text_html('text_ee497220c8c386d8') ?>" loading="lazy" decoding="async">
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <div class="project__text">
-            <span class="project__eyebrow" data-reveal><?= site_text_html('text_c9248cc61aa75376') ?></span>
-            <h2 class="project__title" data-reveal><?= site_text_html('text_6636c29ab23b6ec8') ?><br><?= site_text_html('text_3d9d76375e115725') ?></h2>
-            <div class="project__body" data-reveal>
-                <?= site_page_content('project') ?>
-            </div>
-            <a href="#galeria" class="project__link" data-reveal>
-                <span><?= site_text_html('text_92d07ee88e566b66') ?></span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </a>
-        </div>
-    </div>
-</section>
-<?php endif; ?>
-<?php $blocks['project'] = ob_get_clean(); ?>
-<?php foreach (site_section_order_normalize($siteSettings['section_order'] ?? null) as $blockKey) echo $blocks[$blockKey] ?? ''; ?>
 <?php endif; // fin: home vs página de foto ?>
 
 <!-- LIGHTBOX -->
@@ -782,7 +518,7 @@ if (is_file(__DIR__ . $profilePath)) $portrait = ltrim($profilePath, '/');
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
 </button>
 
-<?php if ($fotoItem !== null) echo $blocks['social']; // En la home se coloca según el orden elegido. ?>
+<?php if ($fotoItem !== null) echo page_block_render('social', $pageContext); // En la home lo coloca page_blocks_render_home(). ?>
 
 <footer class="site-footer">
     <p>&copy; <?= date('Y') ?> <?= site_text_html('text_318bb1fc64a6e036') ?></p>
