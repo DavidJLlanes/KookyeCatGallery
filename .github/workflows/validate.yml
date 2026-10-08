@@ -30,6 +30,7 @@ jobs:
           node --check assets/js/main.js
           node --check assets/js/admin-settings.js
           node --check assets/js/pwa.js
+          node --check assets/js/admin-ui.js
           node --check assets/js/site-texts.js
           node --check tests/photo-navigation.cjs
           node --check tests/photo-likes.cjs

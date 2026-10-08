@@ -57,6 +57,17 @@ foreach (['photos_mobile', 'photos_desktop'] as $field) {
     foreach ([-1, 7, 101, '1.5', [], 'bad'] as $invalid) rejects(array_replace($defaults, [$field => $invalid]));
 }
 
+check(site_settings_validate($defaults)['section_order'] === ['categories', 'gallery', 'map', 'project', 'social'], 'Default section order changed.');
+check(site_settings_validate(array_replace($defaults, ['section_order' => ['social', 'gallery', 'social', 'bad', 5]]))['section_order'] === ['social', 'gallery', 'categories', 'map', 'project'], 'Section order was not normalized.');
+check(site_settings_validate(array_replace($defaults, ['section_order' => 'gallery']))['section_order'] === ['categories', 'gallery', 'map', 'project', 'social'], 'Invalid section order must fall back to the default.');
+foreach (['show_header_mobile', 'show_header_desktop'] as $field) {
+    check($defaults[$field] === true, 'Headers must be visible by default.');
+    check(site_settings_validate(array_replace($defaults, [$field => '0']))[$field] === false, 'Header toggle did not turn off.');
+    check(site_settings_validate(array_replace($defaults, [$field => '1']))[$field] === true, 'Header toggle did not turn on.');
+}
+check(str_contains(site_design_attributes(), 'data-show-header-mobile='), 'Header visibility must reach the page.');
+check(str_contains(site_settings_form('t', array_replace($defaults, ['section_order' => ['map', 'gallery', 'categories', 'project', 'social']]), 'design'), 'data-section-key="map"'), 'Section order list missing from the design form.');
+
 $key = site_editable_text_keys()[0];
 $custom = array_replace($defaults, [
     'palette' => 'japanese', 'grid' => 'masonry', 'columns_mobile' => 4, 'columns_desktop' => 10,

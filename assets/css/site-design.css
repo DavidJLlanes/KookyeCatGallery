@@ -199,3 +199,15 @@ body[data-show-categories="false"] [data-site-section="categories"] {display:non
         min-height:100vh !important;
     }
 }
+
+/* Bloques reordenables de la portada */
+.categories-block { max-width:2200px; margin:0 auto; padding:6rem 2rem 0; }
+.categories-block + .gallery-section { padding-top:0; }
+@media(max-width:600px) { .categories-block { padding:4rem 1rem 0; } }
+@media(max-width:768px) {
+    .categories-block { padding:0; }
+    body[data-show-header-mobile="false"] .mobile-profile { display:none !important; }
+}
+@media(min-width:769px) {
+    body[data-show-header-desktop="false"] .hero { display:none !important; }
+}

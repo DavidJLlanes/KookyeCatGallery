@@ -31,11 +31,29 @@ function site_photos_per_view_choices(): array
     return [6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 36, 40, 50, 60, 100, 0];
 }
 
+// Bloques reordenables de la portada, en su orden por defecto.
+function site_section_labels(): array
+{
+    return ['categories' => 'Categorías', 'gallery' => 'Bloque de galería', 'map' => 'Mapa',
+        'project' => '«El proyecto»', 'social' => 'Enlaces sociales'];
+}
+
+function site_section_order_normalize(mixed $order): array
+{
+    $known = array_keys(site_section_labels());
+    $result = [];
+    foreach (is_array($order) ? $order : [] as $key) {
+        if (is_string($key) && in_array($key, $known, true) && !in_array($key, $result, true)) $result[] = $key;
+    }
+    return array_merge($result, array_values(array_diff($known, $result)));
+}
+
 function site_settings_defaults(): array
 {
     return ['palette' => 'current', 'grid' => 'adaptive', 'columns_mobile' => 3,
         'columns_desktop' => 3, 'photos_mobile' => 12, 'photos_desktop' => 20, 'header_mobile' => 'current', 'header_desktop' => 'current',
         'gallery_mobile' => 'standard', 'gallery_desktop' => 'standard', 'hover' => 'soft',
+        'section_order' => array_keys(site_section_labels()), 'show_header_mobile' => true, 'show_header_desktop' => true,
         'show_categories' => true, 'show_map' => false, 'show_project' => true, 'show_social' => false,
         'texts' => [], 'pages' => [], 'profile_image' => '/profile-placeholder.svg', 'logo_image' => '/favicon.svg',
         'instagram_url' => 'https://example.com',
@@ -91,9 +109,10 @@ function site_settings_validate(array $input): array
         }
         $out[$key] = $input[$key];
     }
-    foreach (['show_categories', 'show_map', 'show_project', 'show_social'] as $key) {
+    foreach (['show_categories', 'show_map', 'show_project', 'show_social', 'show_header_mobile', 'show_header_desktop'] as $key) {
         $out[$key] = filter_var($input[$key] ?? false, FILTER_VALIDATE_BOOLEAN);
     }
+    $out['section_order'] = site_section_order_normalize($input['section_order'] ?? null);
     foreach (['columns_mobile' => 4, 'columns_desktop' => 10] as $key => $max) {
         $value = filter_var($input[$key] ?? null, FILTER_VALIDATE_INT);
         if ($value === false || $value < 1 || $value > $max) {
@@ -277,7 +296,7 @@ function site_design_attributes(): string
     foreach (['palette', 'grid', 'header_mobile', 'header_desktop', 'gallery_mobile', 'gallery_desktop', 'hover'] as $key) {
         $attributes .= ' data-' . str_replace('_', '-', $key) . '="' . htmlspecialchars($settings[$key], ENT_QUOTES, 'UTF-8') . '"';
     }
-    foreach (['show_categories', 'show_map', 'show_project', 'show_social'] as $key) {
+    foreach (['show_categories', 'show_map', 'show_project', 'show_social', 'show_header_mobile', 'show_header_desktop'] as $key) {
         $attributes .= ' data-' . str_replace('_', '-', $key) . '="' . ($settings[$key] ? 'true' : 'false') . '"';
     }
     $attributes .= ' data-photos-mobile="' . (int) $settings['photos_mobile'] . '" data-photos-desktop="' . (int) $settings['photos_desktop'] . '"';
@@ -302,38 +321,64 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . '<input type="hidden" name="csrf" value="' . $escape($csrf) . '">'
         . '<input type="hidden" name="section" value="' . $escape($section) . '">'
         . '<p>Personaliza la web. Los textos de fotografías y categorías se editan en Gestionar fotos. Los campos admiten texto plano.</p>';
-    $html .= '<div class="settings-design"><h2>Diseño estándar</h2>';
     $labels = ['palette' => 'Paleta de colores', 'grid' => 'Tipo de cuadrícula', 'header_mobile' => 'Cabecera móvil', 'header_desktop' => 'Cabecera de escritorio', 'gallery_mobile' => 'Galería móvil', 'gallery_desktop' => 'Galería de escritorio', 'hover' => 'Efecto Hover'];
-    foreach (site_design_choices() as $key => $choices) {
-        $html .= '<div class="upload-field"><label for="setting-' . $key . '">' . $labels[$key] . '</label><select id="setting-' . $key . '" name="' . $key . '">';
-        foreach ($choices as $value => $label) $html .= '<option value="' . $value . '"' . ($settings[$key] === $value ? ' selected' : '') . '>' . $label . '</option>';
-        $html .= '</select></div>';
+    $choices = site_design_choices();
+    $select = static function (string $key, string $label, array $options, $current) use ($escape): string {
+        $out = '<div class="upload-field"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '">';
+        foreach ($options as $value => $text) $out .= '<option value="' . $escape((string) $value) . '"' . ((string) $current === (string) $value ? ' selected' : '') . '>' . $escape((string) $text) . '</option>';
+        return $out . '</select></div>';
+    };
+    $switch = static fn(string $key, string $label, bool $on): string => '<label class="site-section-switch"><input type="checkbox" name="' . $key . '" value="1"' . ($on ? ' checked' : '') . '><span class="site-section-switch__track" aria-hidden="true"></span><span>' . $escape($label) . '</span></label>';
+    $card = static fn(string $title, string $lead, string $body): string => '<section class="admin-card"><header class="admin-card__head"><h2>' . $escape($title) . '</h2><p>' . $escape($lead) . '</p></header><div class="admin-card__body">' . $body . '</div></section>';
+    $range = static function (string $key, string $label, array $values, $current, string $zero = '') use ($escape): string {
+        $options = [];
+        foreach ($values as $n) $options[$n] = $n === 0 ? $zero : (string) $n;
+        return '<div class="upload-field"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '">'
+            . implode('', array_map(static fn($n) => '<option value="' . $n . '"' . ((int) $current === $n ? ' selected' : '') . '>' . $escape($options[$n]) . '</option>', $values)) . '</select></div>';
+    };
+
+    $html .= '<div class="settings-design">';
+    $html .= $card('Apariencia', 'Colores y efecto al pasar el ratón por las fotos.',
+        '<div class="admin-fields">' . $select('palette', $labels['palette'], $choices['palette'], $settings['palette']) . $select('hover', $labels['hover'], $choices['hover'], $settings['hover']) . '</div>');
+    $html .= $card('Cabecera', 'Elige el estilo y decide si se muestra en cada tipo de pantalla.',
+        '<div class="admin-fields">' . $select('header_mobile', $labels['header_mobile'], $choices['header_mobile'], $settings['header_mobile']) . $select('header_desktop', $labels['header_desktop'], $choices['header_desktop'], $settings['header_desktop']) . '</div>'
+        . '<div class="admin-switches">' . $switch('show_header_mobile', 'Mostrar la cabecera en móvil', !empty($settings['show_header_mobile'])) . $switch('show_header_desktop', 'Mostrar la cabecera en escritorio', !empty($settings['show_header_desktop'])) . '</div>');
+    $columnsMobile = range(1, 4); $columnsDesktop = range(1, 10);
+    $html .= $card('Galería', 'Composición, columnas y cuántas fotos se ven a la vez.',
+        '<div class="admin-fields">' . $select('grid', $labels['grid'], $choices['grid'], $settings['grid'])
+        . $select('gallery_mobile', $labels['gallery_mobile'], $choices['gallery_mobile'], $settings['gallery_mobile'])
+        . $select('gallery_desktop', $labels['gallery_desktop'], $choices['gallery_desktop'], $settings['gallery_desktop'])
+        . $range('columns_mobile', 'Columnas en móvil', $columnsMobile, $settings['columns_mobile'])
+        . $range('columns_desktop', 'Columnas en escritorio', $columnsDesktop, $settings['columns_desktop'])
+        . $range('photos_mobile', 'Fotos visibles a la vez en móvil', site_photos_per_view_choices(), $settings['photos_mobile'], 'Todas')
+        . $range('photos_desktop', 'Fotos visibles a la vez en escritorio', site_photos_per_view_choices(), $settings['photos_desktop'], 'Todas') . '</div>'
+        . '<p class="upload-help">Las fotos visibles a la vez no dependen de las columnas: si hay más fotos, se paginan. Elige «Todas» para mostrarlas juntas. Masonry conserva las proporciones originales; para fotos cuadradas, horizontales o verticales, elige la galería «Cuadrícula» y su tipo de cuadrícula.</p>');
+
+    $order = site_section_order_normalize($settings['section_order'] ?? null);
+    $sectionSwitches = ['categories' => 'show_categories', 'map' => 'show_map', 'project' => 'show_project', 'social' => 'show_social'];
+    $sectionHints = ['categories' => 'Filtro por categorías', 'gallery' => 'Fotos, buscador y presentación', 'map' => 'Mapa de ubicaciones', 'project' => 'Texto y retrato del proyecto', 'social' => 'Contacto y redes'];
+    $list = '<ol class="section-order" data-section-order>';
+    foreach ($order as $key) {
+        $name = site_section_labels()[$key];
+        $control = isset($sectionSwitches[$key])
+            ? $switch($sectionSwitches[$key], 'Mostrar', !empty($settings[$sectionSwitches[$key]]))
+            : '<span class="section-order__fixed">Siempre visible</span>';
+        $list .= '<li class="section-order__item" data-section-key="' . $key . '"><input type="hidden" name="section_order[]" value="' . $key . '">'
+            . '<span class="section-order__grip" aria-hidden="true">⋮⋮</span>'
+            . '<span class="section-order__text"><strong>' . $escape($name) . '</strong><small>' . $escape($sectionHints[$key]) . '</small></span>'
+            . '<span class="section-order__control">' . $control . '</span>'
+            . '<span class="section-order__move"><button type="button" data-move="up" aria-label="Subir ' . $escape($name) . '">↑</button><button type="button" data-move="down" aria-label="Bajar ' . $escape($name) . '">↓</button></span></li>';
     }
-    foreach (['columns_mobile' => ['Columnas en móvil', 4], 'columns_desktop' => ['Columnas en escritorio', 10]] as $key => [$label, $max]) {
-        $html .= '<div class="upload-field"><label for="setting-' . $key . '">' . $label . '</label><select id="setting-' . $key . '" name="' . $key . '">';
-        for ($i = 1; $i <= $max; $i++) $html .= '<option value="' . $i . '"' . ((int) $settings[$key] === $i ? ' selected' : '') . '>' . $i . '</option>';
-        $html .= '</select></div>';
-    }
-    foreach (['photos_mobile' => 'Fotos visibles a la vez en móvil', 'photos_desktop' => 'Fotos visibles a la vez en escritorio'] as $key => $label) {
-        $html .= '<div class="upload-field"><label for="setting-' . $key . '">' . $label . '</label><select id="setting-' . $key . '" name="' . $key . '">';
-        foreach (site_photos_per_view_choices() as $n) $html .= '<option value="' . $n . '"' . ((int) $settings[$key] === $n ? ' selected' : '') . '>' . ($n === 0 ? 'Todas' : $n) . '</option>';
-        $html .= '</select></div>';
-    }
-    $html .= '<p class="upload-help">Las fotos visibles a la vez no dependen de las columnas: si hay más fotos, se paginan. Elige «Todas» para mostrarlas todas juntas.</p>';
-    $html .= '<p class="upload-help">Masonry conserva siempre las proporciones originales y coloca cada foto en la columna más corta. Para fotos cuadradas, horizontales o verticales, elige la galería «Cuadrícula» y su tipo de cuadrícula. El resto de galerías conserva su composición propia. El efecto hover se elige por separado y también responde al foco de teclado y al toque.</p>';
-    $html .= '<fieldset class="site-section-switches"><legend>Secciones de la página</legend>';
-    foreach (['show_categories' => 'Mostrar categorías', 'show_map' => 'Mostrar mapa', 'show_project' => 'Mostrar «El proyecto»', 'show_social' => 'Mostrar enlaces sociales'] as $key => $label) {
-        $checked = !empty($settings[$key]) ? ' checked' : '';
-        $html .= '<label class="site-section-switch"><input type="checkbox" name="' . $key . '" value="1"' . $checked . '><span class="site-section-switch__track" aria-hidden="true"></span><span>' . $label . '</span></label>';
-    }
-    $html .= '</fieldset></div>';
-    $html .= '<section class="page-editor-options"><h2>Editar textos de páginas</h2><p class="upload-help">Abre una página para editar su contenido y formato.</p><div class="page-editor-options__grid">';
+    $list .= '</ol>';
+    $html .= $card('Estructura de la página', 'Ordena los bloques de la portada con las flechas y oculta los que no quieras mostrar.', $list);
+
+    $pages = '<div class="page-editor-options__grid">';
     foreach (site_page_labels() as $key => $label) {
-        $html .= '<a class="page-editor-option" href="/admin.php?settings=1&amp;section=page&amp;doc=' . $key . '"><span>' . $escape($label) . '</span><span aria-hidden="true">Editar →</span></a>';
+        $pages .= '<a class="page-editor-option" href="/admin.php?settings=1&amp;section=page&amp;doc=' . $key . '"><span>' . $escape($label) . '</span><span aria-hidden="true">Editar →</span></a>';
     }
-    $html .= '</div></section>';
+    $html .= $card('Textos de páginas', 'Abre una página para editar su contenido y formato.', $pages . '</div>') . '</div>';
     $html = str_replace('<form method="post"', '<form method="post" enctype="multipart/form-data"', $html);
-    $html .= '<div class="settings-profile"><h2>Perfil</h2>';
+    $html .= '<div class="settings-profile"><section class="admin-card"><header class="admin-card__head"><h2>Perfil</h2><p>Nombre, descripciones y enlaces que aparecen en la cabecera y en los contactos.</p></header><div class="admin-card__body">';
     foreach (site_editable_text_keys() as $key) {
         $entry = $key === 'social_threads_user'
             ? ['default' => '@kookyecatgallery']
@@ -346,7 +391,8 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     $html .= '<div class="upload-field"><label for="instagram-url">Enlace de Instagram</label><input id="instagram-url" name="instagram_url" type="url" maxlength="500" value="' . $escape((string) $settings['instagram_url']) . '"></div>'
         . '<div class="upload-field"><label for="threads-url">Enlace de Threads</label><input id="threads-url" name="threads_url" type="url" maxlength="500" value="' . $escape((string) $settings['threads_url']) . '"></div>';
     $socialNames = ['facebook'=>'Facebook','x'=>'X','youtube'=>'YouTube','tiktok'=>'TikTok','flickr'=>'Flickr','linkedin'=>'LinkedIn','pinterest'=>'Pinterest','500px'=>'500px','bluesky'=>'Bluesky','mastodon'=>'Mastodon'];
-    $html .= '<div class="upload-field"><label>Más redes sociales</label><div class="social-settings-list">';
+    $html .= '</div></section><section class="admin-card"><header class="admin-card__head"><h2>Más redes sociales</h2><p>Rellena solo las redes que quieras mostrar.</p></header><div class="admin-card__body">';
+    $html .= '<div class="upload-field"><label>Redes</label><div class="social-settings-list">';
     for ($i = 0; $i < 12; $i++) {
         $row = $settings['social_links'][$i] ?? ['network'=>'','url'=>'','handle'=>''];
         $html .= '<div class="social-settings-row"><select name="social_links['.$i.'][network]"><option value="">Añadir red…</option>';
@@ -354,6 +400,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         $html .= '</select><input type="url" name="social_links['.$i.'][url]" maxlength="500" placeholder="https://…" value="'.$escape((string)($row['url'] ?? '')).'"><input type="text" name="social_links['.$i.'][handle]" maxlength="120" placeholder="@usuario o nombre" value="'.$escape((string)($row['handle'] ?? '')).'"></div>';
     }
     $html .= '<small class="upload-help">Rellena solo las redes que quieras mostrar. Puedes añadir hasta 12.</small></div></div>';
+    $html .= '</div></section><section class="admin-card"><header class="admin-card__head"><h2>Imágenes</h2><p>Foto de perfil y logo de la web.</p></header><div class="admin-card__body">';
     $html .= '<input type="hidden" name="profile_image" value="' . $escape((string) $settings['profile_image']) . '">'
         . '<input type="hidden" name="logo_image" value="' . $escape((string) $settings['logo_image']) . '">'
         . '<div class="upload-field"><label for="profile-image">Foto de perfil</label>'
@@ -361,8 +408,8 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . '<small class="upload-help">JPG, PNG o WebP. Máximo 15 MB.</small></div>'
         . '<div class="upload-field"><label for="logo-image">Logo</label>'
         . '<input id="logo-image" name="logo_image_file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
-        . '<small class="upload-help">JPG, PNG o WebP. Máximo 15 MB.</small></div></div>';
-    return $html . '<button class="upload-submit" type="submit">Guardar configuración</button><a href="/" target="_blank" rel="noopener">Ver la web</a></form>';
+        . '<small class="upload-help">JPG, PNG o WebP. Máximo 15 MB.</small></div></div></section></div>';
+    return $html . '<div class="admin-savebar"><span class="admin-savebar__hint">Los cambios se aplican a la web al guardar.</span><a class="upload-logout" href="/" target="_blank" rel="noopener">Ver la web</a><button class="upload-submit" type="submit">Guardar configuración</button></div></form>';
 }
 
 function site_page_editor_form(string $csrf, string $page): string

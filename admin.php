@@ -108,49 +108,75 @@ function safeUploadStem(string $title): string
     return substr($stem, 0, 70);
 }
 
+function adminIcon(string $name): string
+{
+    $paths = [
+        'upload' => '<path d="M12 5v14M5 12h14"/>',
+        'library' => '<rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/>',
+        'categories' => '<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.3"/>',
+        'settings' => '<path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="17" cy="18" r="2.2"/>',
+        'external' => '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+        'logout' => '<path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/>',
+    ];
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ($paths[$name] ?? '') . '</svg>';
+}
+
+function adminActiveSection(): string
+{
+    $action = (string) ($_POST['action'] ?? '');
+    if (isset($_GET['settings']) || in_array($action, ['save_site_settings', 'save_site_page'], true)) return 'settings';
+    if (isset($_GET['categories']) || $action === 'manage_category') return 'categories';
+    if (isset($_GET['library']) || isset($_GET['edit']) || $action === 'delete_existing') return 'library';
+    return 'upload';
+}
+
+function adminShellHtml(string $title, string $content, bool $wide): string
+{
+    $active = adminActiveSection();
+    $items = [
+        'upload' => ['/admin.php', 'Subir foto', 'Subir'],
+        'library' => ['/admin.php?library=1', 'Gestionar fotos', 'Fotos'],
+        'categories' => ['/admin.php?categories=1', 'Categorías', 'Categorías'],
+        'settings' => ['/admin.php?settings=1', 'Textos y diseño', 'Diseño'],
+    ];
+    $links = static function (bool $short) use ($items, $active): string {
+        $html = '';
+        foreach ($items as $key => [$href, $label, $shortLabel]) {
+            $html .= '<a class="admin-nav__link' . ($key === $active ? ' is-active' : '') . '" href="' . $href . '"'
+                . ($key === $active ? ' aria-current="page"' : '') . '>' . adminIcon($key) . '<span>' . uploadEscape($short ? $shortLabel : $label) . '</span></a>';
+        }
+        return $html;
+    };
+    $csrf = uploadEscape((string) ($GLOBALS['adminShell']['csrf'] ?? ''));
+    $brand = 'Kookye Cat Gallery';
+    $mark = uploadEscape(mb_strtoupper(mb_substr($brand, 0, 1)));
+    return '<body class="admin-body"><div class="admin-app">'
+        . '<aside class="admin-sidebar"><a class="admin-brand" href="/admin.php"><span class="admin-brand__mark" aria-hidden="true">' . $mark . '</span>'
+        . '<span class="admin-brand__text"><strong>' . uploadEscape($brand) . '</strong><small>Administración</small></span></a>'
+        . '<nav class="admin-nav" aria-label="Administración">' . $links(false) . '</nav>'
+        . '<p class="admin-sidebar__note">Área privada · Kookye Cat Gallery</p></aside>'
+        . '<div class="admin-main"><header class="admin-topbar">'
+        . '<a class="admin-brand" href="/admin.php"><span class="admin-brand__mark" aria-hidden="true">' . $mark . '</span>'
+        . '<span class="admin-brand__text"><strong>' . uploadEscape($brand) . '</strong><small>Administración</small></span></a>'
+        . '<span class="admin-topbar__title">' . uploadEscape($items[$active][1]) . '</span>'
+        . '<div class="admin-topbar__actions"><button class="pwa-install-button" id="installAppButton" type="button" hidden>Instalar app</button>'
+        . '<a class="admin-action" href="/" title="Volver a la web">' . adminIcon('external') . '<span class="admin-action__label">Ver la web</span></a>'
+        . '<form method="post" action="/admin.php"><input type="hidden" name="action" value="logout"><input type="hidden" name="csrf" value="' . $csrf . '">'
+        . '<button class="admin-action" type="submit" title="Cerrar sesión">' . adminIcon('logout') . '<span class="admin-action__label">Cerrar sesión</span></button></form></div></header>'
+        . '<main class="admin-content' . ($wide ? '' : ' admin-content--narrow') . '"><div class="admin-content__inner"><h1 class="admin-title">' . uploadEscape($title) . '</h1>' . $content . '</div></main></div>'
+        . '<nav class="admin-tabbar" aria-label="Administración (móvil)">' . $links(true) . '</nav></div></body>';
+}
+
 function uploadPage(string $title, string $content, int $status = 200, bool $wide = false): void
 {
     http_response_code($status);
     header('Content-Type: text/html; charset=utf-8');
     header('Cache-Control: no-store');
-    echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"><meta name="theme-color" content="#0a0a0a"><meta name="robots" content="noindex,nofollow"><meta name="app-version" content="' . uploadEscape(app_version()) . '"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Kookye Cat Gallery"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="manifest" href="/manifest.json?v=' . uploadEscape(app_version()) . '"><link rel="icon" type="image/png" sizes="32x32" href="/favicon.svg"><link rel="apple-touch-icon" sizes="180x180" href="/favicon.svg"><title>' . uploadEscape($title) . ' · Kookye Cat Gallery</title><link rel="stylesheet" href="/assets/css/style.css?v=' . uploadEscape(app_version()) . '"><link rel="stylesheet" href="/assets/css/photo-editor.css?v=' . uploadEscape(app_version()) . '"><link rel="stylesheet" href="/assets/css/photo-manager.css?v=' . uploadEscape(app_version()) . '"><script src="/assets/js/photo-filter-engine.js?v=' . uploadEscape(app_version()) . '" defer></script><script src="/assets/js/photo-editor-presets.js?v=' . uploadEscape(app_version()) . '" defer></script><script src="/assets/js/photo-editor.js?v=' . uploadEscape(app_version()) . '" defer></script><script src="/assets/js/photo-manager.js?v=' . uploadEscape(app_version()) . '" defer></script><style>
-    .pwa-install-button{padding:.6rem .85rem;border:1px solid rgba(212,165,116,.42);color:var(--accent);background:transparent;font:500 .7rem var(--sans);letter-spacing:.08em;cursor:pointer}
-    .pwa-install-button[hidden]{display:none}
-    .upload-page{min-height:100svh;padding:clamp(1rem,4vw,3rem);display:grid;place-items:center;background:radial-gradient(ellipse at 50% 0%,rgba(212,165,116,.1),transparent 55%)}
-    .upload-panel{width:min(100%,620px);padding:clamp(1.3rem,4vw,2.6rem);border:1px solid rgba(212,165,116,.28);background:linear-gradient(145deg,#171614,#0e0e0d);box-shadow:0 25px 80px #0008}
-    .upload-panel--wide{width:min(100%,1100px)}
-    .upload-brand{font:1.8rem/1.1 var(--serif);color:var(--accent)}
-    .upload-kicker{margin:.5rem 0 1.7rem;color:var(--fg-soft);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase}
-    .upload-panel h1{margin:0 0 1.3rem;font:400 clamp(2rem,7vw,3rem)/1.05 var(--serif)}
-    .upload-form{display:grid;gap:1rem}
-    .upload-flow-guide{margin:0 0 1rem;padding:1rem 1.1rem;border:1px solid rgba(212,165,116,.35);background:rgba(212,165,116,.06);color:var(--fg-soft);font-size:.88rem;line-height:1.55}
-    .upload-flow-guide strong{color:var(--fg)}
-    .upload-field{display:grid;gap:.38rem}
-    .upload-field label{font-size:.7rem;color:var(--fg-soft);letter-spacing:.08em;text-transform:uppercase}
-    .upload-field input,.upload-field textarea,.upload-field select{width:100%;padding:.82rem .9rem;border:1px solid rgba(243,240,234,.14);border-radius:3px;background:#0a0a0a;color:var(--fg);font:400 .9rem var(--sans)}
-    .upload-field input:focus,.upload-field textarea:focus,.upload-field select:focus{outline:1px solid var(--accent);border-color:var(--accent)}
-    .upload-help{color:var(--fg-soft);font-size:.75rem}
-    .upload-message{margin:0 0 1rem;padding:.8rem 1rem;border-left:2px solid var(--accent);background:rgba(212,165,116,.08);font-size:.84rem}
-    .upload-message--error{border-color:#cf7770}
-    .upload-actions{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:.4rem}
-    .upload-submit,.upload-logout{min-height:46px;padding:.7rem 1.1rem;border:1px solid rgba(212,165,116,.6);color:var(--fg);background:rgba(212,165,116,.1);font:500 .78rem var(--sans);letter-spacing:.05em;cursor:pointer}
-    .upload-logout{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;box-sizing:border-box}
-    .upload-submit{background:linear-gradient(135deg,#e8c59e,#c18e5d);color:#15110d;border:0}
-    .upload-submit:disabled{opacity:.45;cursor:not-allowed}.upload-continue{width:100%;margin:.25rem 0 1rem}.upload-continue:not(:disabled){box-shadow:0 0 0 2px rgba(212,165,116,.16)}
-    .upload-gps{padding:1rem;border:1px solid rgba(212,165,116,.25);background:#ffffff05}
-    .upload-gps[hidden]{display:none}
-    .upload-gps-status{color:var(--accent);font-size:.78rem}
-    .upload-top{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem}
-    .upload-top__links{display:flex;flex-wrap:wrap;gap:.5rem}
-    @media(max-width:520px){.upload-actions{align-items:stretch;flex-direction:column-reverse}.upload-actions>*{width:100%}.upload-top{align-items:stretch;flex-direction:column}.upload-top>*{width:100%}.upload-panel{padding:1.15rem}}@media(max-width:380px){.upload-panel{padding:.8rem}.upload-top__links a,.upload-top__links button{padding-inline:.5rem;font-size:.64rem}.upload-brand{font-size:1.55rem}.upload-panel h1{font-size:clamp(1.7rem,8vw,2.2rem)}}
-    .site-settings details{border:1px solid var(--line);padding:1rem;border-radius:8px}.site-settings summary{cursor:pointer;font-weight:600}.site-settings details .upload-field{margin-top:1rem}.site-settings textarea{width:100%;min-height:4rem;resize:vertical;box-sizing:border-box}.site-settings label{white-space:normal;overflow-wrap:anywhere}.site-settings .upload-submit{position:sticky;bottom:1rem;z-index:2}.upload-top__links{flex-wrap:wrap}
-    .upload-source-actions{display:flex;gap:.5rem;flex-wrap:wrap}.upload-featured{display:flex;align-items:center;gap:.65rem;padding:.8rem .9rem;border:1px solid rgba(243,240,234,.14);font:.8rem var(--sans);cursor:pointer}.upload-featured input{width:1.1rem;height:1.1rem;accent-color:var(--accent)}
-    .admin-photo-card.is-featured{outline:1px solid rgba(212,165,116,.55);outline-offset:-1px}.admin-library-tools{display:grid;grid-template-columns:minmax(0,1fr) 190px auto;gap:.8rem;align-items:end;margin:1rem 0}.admin-photo-order-actions{display:flex;gap:.35rem;margin:.55rem 0}.admin-photo-order-actions button{min-width:42px;min-height:38px;border:1px solid rgba(243,240,234,.18);background:#0a0a0a;color:var(--fg);cursor:pointer}.admin-published-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.65rem}@media(max-width:700px){.admin-library-tools{grid-template-columns:1fr}.admin-library-tools .upload-submit{width:100%}}.admin-photo-hearts{margin:.35rem 0;color:var(--accent);font:600 .68rem var(--sans);font-variant-numeric:tabular-nums}.admin-photo-card__heading{display:flex;align-items:flex-start;justify-content:space-between;gap:.7rem}.admin-photo-card.is-draft{opacity:.72}.admin-photo-draft{flex:0 0 auto;padding:.2rem .35rem;border:1px solid rgba(243,240,234,.22);color:var(--fg-soft);font:600 .58rem var(--sans);letter-spacing:.06em;text-transform:uppercase}.admin-photo-featured{flex:0 0 auto;color:var(--accent);font:600 .62rem var(--sans);letter-spacing:.06em;text-transform:uppercase}
-    .admin-settings-tabs{display:flex;gap:.55rem;flex-wrap:wrap;margin:0 0 1.2rem}.admin-settings-tabs a{padding:.65rem .9rem;border:1px solid rgba(243,240,234,.16);text-decoration:none;color:var(--fg-soft);font:.7rem var(--sans);letter-spacing:.06em}.admin-settings-tabs a.is-active{border-color:var(--accent);color:var(--accent);background:rgba(212,165,116,.08)}.site-settings[data-settings-section="profile"] .settings-design{display:none}.site-settings[data-settings-section="design"] .settings-profile{display:none}
-    .admin-settings-tabs{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:.55rem!important;width:100%!important;height:auto!important;min-height:0!important;flex:none!important}
-    .admin-settings-tabs a{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;width:auto!important;min-width:92px!important;height:42px!important;min-height:42px!important;padding:.55rem 1rem!important;writing-mode:horizontal-tb!important;white-space:nowrap!important}.admin-settings-tabs #installAppButton{position:static!important;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;margin:0 0 0 auto;min-height:42px;padding:.55rem .8rem;white-space:nowrap}.admin-settings-tabs #installAppButton[hidden]{display:none}
-    .site-section-switches{display:grid;gap:.75rem;margin:1.2rem 0 0;padding:1rem;border:1px solid rgba(212,165,116,.24)}.site-section-switches legend{padding:0 .35rem;color:var(--accent);font:.72rem var(--sans);letter-spacing:.08em;text-transform:uppercase}.site-section-switch{display:flex;align-items:center;gap:.7rem;min-height:42px;cursor:pointer;color:var(--fg);font:500 .82rem var(--sans);letter-spacing:0!important;text-transform:none!important}.site-section-switch input{position:absolute;opacity:0;width:1px;height:1px}.site-section-switch__track{position:relative;flex:0 0 42px;width:42px;height:24px;border-radius:99px;background:#383633;border:1px solid #ffffff30;transition:background .2s}.site-section-switch__track:after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#eee;transition:transform .2s}.site-section-switch input:checked+.site-section-switch__track{background:var(--accent)}.site-section-switch input:checked+.site-section-switch__track:after{transform:translateX(18px);background:#17120d}.site-section-switch input:focus-visible+.site-section-switch__track{outline:2px solid var(--fg);outline-offset:3px}
-    </style>' . site_client_texts() . '<script src="/assets/js/pwa.js?v=' . uploadEscape(app_version()) . '" defer></script></head><body><main class="upload-page"><section class="upload-panel' . ($wide ? ' upload-panel--wide' : '') . '"><div class="upload-brand">Kookye Cat Gallery</div><p class="upload-kicker">Área privada · Kookye Cat Gallery</p><h1>' . uploadEscape($title) . '</h1>' . $content . '<button class="pwa-install-button" id="installAppButton" type="button" hidden>Instalar app</button></section></main></body></html>';
+    $version = uploadEscape(app_version());
+    $body = isset($GLOBALS['adminShell'])
+        ? adminShellHtml($title, $content, $wide)
+        : '<body class="admin-body"><main class="upload-page"><section class="upload-panel"><div class="upload-brand">Kookye Cat Gallery</div><p class="upload-kicker">Área privada · Kookye Cat Gallery</p><h1>' . uploadEscape($title) . '</h1>' . $content . '<button class="pwa-install-button" id="installAppButton" type="button" hidden>Instalar app</button></section></main></body>';
+    echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"><meta name="theme-color" content="#0a0a0a"><meta name="robots" content="noindex,nofollow"><meta name="app-version" content="' . uploadEscape(app_version()) . '"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Kookye Cat Gallery"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="manifest" href="/manifest.json?v=' . uploadEscape(app_version()) . '"><link rel="icon" type="image/png" sizes="32x32" href="/favicon.svg"><link rel="apple-touch-icon" sizes="180x180" href="/favicon.svg"><title>' . uploadEscape($title) . ' · Kookye Cat Gallery</title><link rel="stylesheet" href="/assets/css/style.css?v=' . uploadEscape(app_version()) . '"><link rel="stylesheet" href="/assets/css/photo-editor.css?v=' . uploadEscape(app_version()) . '"><link rel="stylesheet" href="/assets/css/photo-manager.css?v=' . uploadEscape(app_version()) . '"><script src="/assets/js/photo-filter-engine.js?v=' . uploadEscape(app_version()) . '" defer></script><script src="/assets/js/photo-editor-presets.js?v=' . uploadEscape(app_version()) . '" defer></script><script src="/assets/js/photo-editor.js?v=' . uploadEscape(app_version()) . '" defer></script><script src="/assets/js/photo-manager.js?v=' . uploadEscape(app_version()) . '" defer></script><link rel="stylesheet" href="/assets/css/admin.css?v=' . $version . '"><script src="/assets/js/admin-ui.js?v=' . $version . '" defer></script>' . site_client_texts() . '<script src="/assets/js/pwa.js?v=' . $version . '" defer></script></head>' . $body . '</html>';
     exit;
 }
 
@@ -490,15 +516,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 function adminNavigation(string $csrf): string
 {
-    $token = uploadEscape($csrf);
-    return '<form method="post" action="/admin.php" class="upload-top">'
-        . '<input type="hidden" name="action" value="logout"><input type="hidden" name="csrf" value="' . $token . '">'
-        . '<div class="upload-top__links"><a href="/" class="upload-logout">Volver a la web</a>'
-        . '<a href="/admin.php" class="upload-logout">Subir foto</a>'
-        . '<a href="/admin.php?library=1" class="upload-logout">Gestionar fotos</a>'
-        . '<a href="/admin.php?categories=1" class="upload-logout">Gestionar categorías</a>'
-        . '<a href="/admin.php?settings=1" class="upload-logout">Textos y diseño</a></div>'
-        . '<button class="upload-logout" type="submit">Cerrar sesión</button></form>';
+    // Activa el armazón con menú; uploadPage() lo dibuja alrededor del contenido.
+    $GLOBALS['adminShell'] = ['csrf' => $csrf];
+    return '';
 }
 
 if (!empty($_SESSION['upload_authenticated'])) {
@@ -516,10 +536,10 @@ if (!empty($_SESSION['upload_authenticated'])) {
             if (!in_array($page, site_editable_page_keys(), true)) $page = 'legal_notice';
             $status = isset($_GET['saved']) ? '<p class="upload-message" role="status">Página guardada.</p>' : '';
             uploadPage(site_page_labels()[$page], adminNavigation((string) $_SESSION['csrf']) . $status
-                . '<nav class="admin-settings-tabs" aria-label="Secciones de configuración"><a href="/admin.php?settings=1&amp;section=design">← Textos y diseño</a></nav>'
+                . '<nav class="admin-subnav admin-subnav--back" aria-label="Secciones de configuración"><a href="/admin.php?settings=1&amp;section=design">← Textos y diseño</a></nav>'
                 . site_page_editor_form((string) $_SESSION['csrf'], $page), 200, true);
         }
-        $tabs = '<nav class="admin-settings-tabs" aria-label="Secciones de configuración">'
+        $tabs = '<nav class="admin-subnav" aria-label="Secciones de configuración">'
             . '<a class="' . ($section === 'profile' ? 'is-active' : '') . '" href="/admin.php?settings=1&section=profile">Perfil</a>'
             . '<a class="' . ($section === 'design' ? 'is-active' : '') . '" href="/admin.php?settings=1&section=design">Diseño</a></nav>';
         uploadPage($section === 'profile' ? 'Perfil' : 'Diseño', adminNavigation((string) $_SESSION['csrf']) . $status

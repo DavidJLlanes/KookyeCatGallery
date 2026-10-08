@@ -1,7 +1,5 @@
 (() => {
     const button = document.getElementById('installAppButton');
-    const settingsTabs = document.querySelector('.admin-settings-tabs');
-    if (button && settingsTabs) settingsTabs.append(button);
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
         || window.navigator.standalone === true;
     const isAppleMobile = /iPhone|iPad|iPod/.test(navigator.userAgent)

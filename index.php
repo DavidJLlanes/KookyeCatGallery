@@ -366,6 +366,48 @@ if ($fotoItem !== null) {
     <span class="upload-fab__label"><?= site_text_html('text_c55b46a0c60668c4') ?></span>
 </a>
 
+<?php $blocks = []; ob_start(); ?>
+<!-- CONTACTO -->
+<?php if ($siteSettings['show_social']): ?>
+<section class="contact" id="contacto" data-site-section="social">
+    <div class="contact__glow" aria-hidden="true"></div>
+    <div class="contact__inner">
+        <span class="contact__eyebrow"><?= site_text_html('text_bdd8f61b94c52379') ?></span>
+        <h2 class="contact__title"><?= site_text_html('text_49a006d539216e16') ?><br><?= site_text_html('text_f366ccf006a44b3f') ?></h2>
+        <p class="contact__text"><?= site_text_html('text_ab3ceef210237f9d') ?></p>
+        <div class="contact__links">
+            <a class="contact__link" href="<?= safe((string) $siteSettings['instagram_url']) ?>" target="_blank" rel="noopener">
+                <span class="contact__icon">
+                    <span class="contact__logo contact__logo--ig" aria-hidden="true"></span>
+                </span>
+                <span class="contact__net"><?= site_text_html('text_bad57ef7837c8e6b') ?></span>
+                <span class="contact__handle"><?= site_text_html('text_3b20084d3d94b4ee') ?></span>
+            </a>
+            <a class="contact__link" href="<?= safe((string) $siteSettings['threads_url']) ?>" target="_blank" rel="noopener">
+                <span class="contact__icon">
+                    <span class="contact__logo contact__logo--threads" aria-hidden="true"></span>
+                </span>
+                <span class="contact__net"><?= site_text_html('text_3e42e385075b9b56') ?></span>
+                <span class="contact__handle"><?= site_text_html('social_threads_user') ?></span>
+            </a>
+            <?php
+            $socialNames = ['facebook'=>'Facebook','x'=>'X','youtube'=>'YouTube','tiktok'=>'TikTok','flickr'=>'Flickr','linkedin'=>'LinkedIn','pinterest'=>'Pinterest','500px'=>'500px','bluesky'=>'Bluesky','mastodon'=>'Mastodon'];
+            foreach (($siteSettings['social_links'] ?? []) as $social):
+                $network = (string) ($social['network'] ?? '');
+                if (!isset($socialNames[$network]) || empty($social['url'])) continue;
+            ?>
+            <a class="contact__link" href="<?= safe((string) $social['url']) ?>" target="_blank" rel="noopener">
+                <span class="contact__icon"><?= social_profile_icon($network) ?></span>
+                <span class="contact__net"><?= safe($socialNames[$network]) ?></span>
+                <span class="contact__handle"><?= safe((string) (($social['handle'] ?? '') ?: $socialNames[$network])) ?></span>
+            </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+<?php $blocks['social'] = ob_get_clean(); ?>
+
 <?php if ($fotoItem !== null): ?>
 <!-- DETALLE DE FOTO (permalink /foto/slug): contenido único renderizado por PHP para SEO -->
 <section class="photo-detail" aria-label="<?= safe($fotoItem['title']) ?>"
@@ -533,10 +575,10 @@ $portrait = null;
 $profilePath = site_media_url('profile_image');
 if (is_file(__DIR__ . $profilePath)) $portrait = ltrim($profilePath, '/');
 ?>
-<main id="galeria" class="gallery-section">
-
+<?php ob_start(); ?>
     <?php if ($siteSettings['show_categories'] && $heroItem && !empty($categories)): ?>
     <!-- SELECTOR DE CATEGORÍAS -->
+    <section class="categories-block" aria-label="Categorías">
     <div class="categories-filter" id="categoriesFilter" data-site-section="categories" data-reveal>
         <div class="categories-filter__inner">
             <button class="categories-filter__chip is-active" data-category=""><?= site_text_html('text_aff4d19d6ee43b20') ?></button>
@@ -545,8 +587,11 @@ if (is_file(__DIR__ . $profilePath)) $portrait = ltrim($profilePath, '/');
             <?php endforeach; ?>
         </div>
     </div>
-
+    </section>
     <?php endif; ?>
+<?php $blocks['categories'] = ob_get_clean(); ob_start(); ?>
+<main id="galeria" class="gallery-section">
+
 
     <?php if ($heroItem): ?>
     <div class="gallery-intro" data-site-section="intro">
@@ -642,6 +687,7 @@ if (is_file(__DIR__ . $profilePath)) $portrait = ltrim($profilePath, '/');
     <?php endif; ?>
 
 </main>
+<?php $blocks['gallery'] = ob_get_clean(); ob_start(); ?>
 
 <?php if ($siteSettings['show_map']): ?>
 <section class="map-section" id="mapa" data-site-section="map" aria-labelledby="mapHeading">
@@ -663,6 +709,7 @@ if (is_file(__DIR__ . $profilePath)) $portrait = ltrim($profilePath, '/');
 </section>
 <?php endif; ?>
 
+<?php $blocks['map'] = ob_get_clean(); ob_start(); ?>
 <!-- SECCIÓN: EL PROYECTO -->
 <?php if ($siteSettings['show_project']): ?>
 <section class="project<?= $portrait ? '' : ' project--no-photo' ?>" id="proyecto" data-site-section="project">
@@ -689,6 +736,8 @@ if (is_file(__DIR__ . $profilePath)) $portrait = ltrim($profilePath, '/');
     </div>
 </section>
 <?php endif; ?>
+<?php $blocks['project'] = ob_get_clean(); ?>
+<?php foreach (site_section_order_normalize($siteSettings['section_order'] ?? null) as $blockKey) echo $blocks[$blockKey] ?? ''; ?>
 <?php endif; // fin: home vs página de foto ?>
 
 <!-- LIGHTBOX -->
@@ -733,45 +782,7 @@ if (is_file(__DIR__ . $profilePath)) $portrait = ltrim($profilePath, '/');
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
 </button>
 
-<!-- CONTACTO -->
-<?php if ($siteSettings['show_social']): ?>
-<section class="contact" id="contacto" data-site-section="social">
-    <div class="contact__glow" aria-hidden="true"></div>
-    <div class="contact__inner">
-        <span class="contact__eyebrow"><?= site_text_html('text_bdd8f61b94c52379') ?></span>
-        <h2 class="contact__title"><?= site_text_html('text_49a006d539216e16') ?><br><?= site_text_html('text_f366ccf006a44b3f') ?></h2>
-        <p class="contact__text"><?= site_text_html('text_ab3ceef210237f9d') ?></p>
-        <div class="contact__links">
-            <a class="contact__link" href="<?= safe((string) $siteSettings['instagram_url']) ?>" target="_blank" rel="noopener">
-                <span class="contact__icon">
-                    <span class="contact__logo contact__logo--ig" aria-hidden="true"></span>
-                </span>
-                <span class="contact__net"><?= site_text_html('text_bad57ef7837c8e6b') ?></span>
-                <span class="contact__handle"><?= site_text_html('text_3b20084d3d94b4ee') ?></span>
-            </a>
-            <a class="contact__link" href="<?= safe((string) $siteSettings['threads_url']) ?>" target="_blank" rel="noopener">
-                <span class="contact__icon">
-                    <span class="contact__logo contact__logo--threads" aria-hidden="true"></span>
-                </span>
-                <span class="contact__net"><?= site_text_html('text_3e42e385075b9b56') ?></span>
-                <span class="contact__handle"><?= site_text_html('social_threads_user') ?></span>
-            </a>
-            <?php
-            $socialNames = ['facebook'=>'Facebook','x'=>'X','youtube'=>'YouTube','tiktok'=>'TikTok','flickr'=>'Flickr','linkedin'=>'LinkedIn','pinterest'=>'Pinterest','500px'=>'500px','bluesky'=>'Bluesky','mastodon'=>'Mastodon'];
-            foreach (($siteSettings['social_links'] ?? []) as $social):
-                $network = (string) ($social['network'] ?? '');
-                if (!isset($socialNames[$network]) || empty($social['url'])) continue;
-            ?>
-            <a class="contact__link" href="<?= safe((string) $social['url']) ?>" target="_blank" rel="noopener">
-                <span class="contact__icon"><?= social_profile_icon($network) ?></span>
-                <span class="contact__net"><?= safe($socialNames[$network]) ?></span>
-                <span class="contact__handle"><?= safe((string) (($social['handle'] ?? '') ?: $socialNames[$network])) ?></span>
-            </a>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</section>
-<?php endif; ?>
+<?php if ($fotoItem !== null) echo $blocks['social']; // En la home se coloca según el orden elegido. ?>
 
 <footer class="site-footer">
     <p>&copy; <?= date('Y') ?> <?= site_text_html('text_318bb1fc64a6e036') ?></p>
