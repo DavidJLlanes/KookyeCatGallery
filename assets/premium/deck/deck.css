@@ -28,10 +28,17 @@
     margin: 0 !important;
 }
 
+/* El scroll de la página se detiene al llegar a la baraja (deck.js, sección 7). Con ratón o trackpad basta con
+   absorber los eventos de la rueda. En pantallas táctiles la inercia del dedo la gestiona el navegador y solo se
+   frena congelando el scroll un instante; allí las barras de desplazamiento son flotantes y no mueven la página. */
+@media (hover: none) and (pointer: coarse) {
+    html.deck-locked { overflow: hidden; }
+}
+
 .deck {
-    /* Ajustes de la animación: «suave y rápido». */
-    --deck-duration: 520ms;                         /* Duración del paso de una carta. */
-    --deck-ease: cubic-bezier(.2, .85, .25, 1);     /* Arranque rápido, final suave. */
+    /* Ajustes de la animación: pausada y suave. */
+    --deck-duration: 850ms;                         /* Duración del paso de una carta: pausada, para que se aprecie la baraja. */
+    --deck-ease: cubic-bezier(.22, .8, .24, 1);     /* Arranque ágil, final muy suave. */
     --deck-radius: 22px;                            /* Esquinas de las cartas que quedan debajo. */
 
     position: relative;

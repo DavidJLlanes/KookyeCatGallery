@@ -13,13 +13,18 @@
      · Mientras mueve cartas la página NO se desplaza. En el límite (primera o última foto) deja de
        capturar el gesto y la página sigue su scroll normal, así se puede salir de la galería.
      · Filtra por categoría (chips del bloque «Categorías») y por favoritas (botón «Favoritas»).
+     · Al llegar a la baraja desde arriba o desde abajo, el scroll de la página SE DETIENE justo cuando
+       la baraja llena la pantalla (aunque haya inercia); a partir de ahí, los gestos mueven las fotos.
+     · Desde la ficha de una foto, «Volver a la galería» regresa a esa misma foto, en la baraja a pantalla
+       completa (enlace /#baraja=<slug>, y botón «Atrás» del navegador).
      · Ajusta cada foto a la pantalla: la cubre entera si su proporción es parecida a la de la
        pantalla y, si no, la muestra completa sobre su propio desenfoque (sin recortes absurdos).
 
    Organización del archivo
-     1. Estado y utilidades        4. Entrada: rueda
-     2. Filtros                    5. Entrada: táctil
-     3. Pintado (render)           6. Entrada: teclado, botones, filtros y arranque
+     1. Estado y utilidades        5. Entrada: táctil
+     2. Filtros                    6. Entrada: teclado, botones y filtros
+     3. Pintado (render)           7. Parada del scroll al llegar a la baraja
+     4. Entrada: rueda             8. Volver desde la ficha de una foto
    ============================================================================= */
 (() => {
     'use strict';
@@ -41,8 +46,8 @@
     let visible = cards.slice();   // Cartas que pasan los filtros, en orden.
     let index = 0;                 // Posición de la carta activa dentro de `visible`.
 
-    // Tiempos (ms). El paso de carta dura lo que diga --deck-duration en el CSS (520 ms).
-    const STEP_COOLDOWN = 340;     // Mínimo entre dos pasos con la rueda: suave pero reactivo.
+    // Tiempos (ms). El paso de carta dura lo que diga --deck-duration en el CSS (850 ms).
+    const STEP_COOLDOWN = 600;     // Mínimo entre dos pasos con la rueda: deja ver el efecto de baraja completo.
     const WHEEL_QUIET = 120;       // Pausa que separa un gesto de rueda del siguiente.
 
     document.documentElement.classList.add('has-deck');   // Marca la página para que otros estilos puedan reaccionar (no se usa scroll-snap: dificultaría salir de la baraja).
@@ -65,6 +70,29 @@
         aligning = true;
         window.scrollBy({ top: rect().top, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
         window.setTimeout(() => { aligning = false; }, 450);
+        startLock(450);   // Parada: lo que quede del gesto que trajo hasta aquí no debe pasar fotos.
+    };
+
+    // «Parada»: mientras dura, la página no puede desplazarse (ver la sección 7). La usa también la rueda.
+    let locked = false;
+    let lockUntil = 0;
+    let touching = false;                     // Hay un dedo en la pantalla.
+    const extendLock = ms => { lockUntil = Math.max(lockUntil, performance.now() + ms); };
+    const startLock = ms => {
+        extendLock(ms);
+        if (locked) return;
+        locked = true;
+        document.documentElement.classList.add('deck-locked');
+        const tick = () => {
+            if (touching) extendLock(120);    // El dedo sigue puesto: se mantiene la parada hasta soltarlo.
+            if (performance.now() >= lockUntil) {
+                locked = false;
+                document.documentElement.classList.remove('deck-locked');
+                return;
+            }
+            window.requestAnimationFrame(tick);
+        };
+        window.requestAnimationFrame(tick);
     };
 
     /* -------------------------------------------------------------------------
@@ -156,7 +184,15 @@
     let lastAbs = 0;
 
     window.addEventListener('wheel', event => {
-        if (event.ctrlKey || event.defaultPrevented || !isEngaged()) return;   // ctrl+rueda = zoom del navegador.
+        if (event.ctrlKey || event.defaultPrevented) return;                   // ctrl+rueda = zoom del navegador.
+        if (locked) {                      // Parada al llegar: se absorbe la inercia del gesto que trajo hasta aquí.
+            event.preventDefault();
+            extendLock(160);
+            lastWheel = event.timeStamp;
+            lastAbs = 1e9;                 // Lo que siga no cuenta como «impulso nuevo».
+            return;
+        }
+        if (!isEngaged()) return;
         // El eje dominante manda: el trackpad también navega con gestos horizontales.
         const raw = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
         if (!raw) return;
@@ -197,6 +233,7 @@
     }, { passive: true });
 
     root.addEventListener('touchmove', event => {
+        if (locked) { touch = null; return; }   // Parada al llegar: este gesto no mueve cartas.
         if (!touch || event.touches.length !== 1) return;
         // Un gesto que ya movió cartas se queda con TODO el recorrido del dedo: si no, el resto del gesto
         // desplazaría la página de fondo.
@@ -278,6 +315,89 @@
         else image.addEventListener('load', () => setBackdrop(card), { once: true });
     });
 
+    /* -------------------------------------------------------------------------
+       7. Parada del scroll al llegar a la baraja
+       Cuando el scroll de la página cruza el punto en que la baraja llena la pantalla (bajando desde
+       arriba o subiendo desde abajo), se coloca la página exactamente ahí y se «congela» un instante:
+       así la inercia del gesto no pasa de largo ni mueve fotos por accidente. Pasada la parada, los
+       gestos siguientes mueven las fotos (secciones 4 y 5).
+       ------------------------------------------------------------------------- */
+    const deckTop = () => rect().top + window.scrollY;
+    let lastY = window.scrollY;
+    let skipCatchUntil = 0;
+
+    window.addEventListener('scroll', () => {
+        const y = window.scrollY;
+        const target = deckTop();
+        if (locked) {                                           // Durante la parada la página no se mueve.
+            if (Math.abs(y - target) > 1) window.scrollTo({ top: target, behavior: 'instant' });
+            lastY = target;
+            return;
+        }
+        const crossed = (lastY < target - 1 && y >= target - 1) || (lastY > target + 1 && y <= target + 1);
+        lastY = y;
+        if (!crossed || root.clientHeight === 0 || performance.now() < skipCatchUntil) return;
+        window.scrollTo({ top: target, behavior: 'instant' });
+        lastY = target;
+        startLock(450);
+    }, { passive: true });
+
+    // Un dedo en la pantalla mantiene la parada; y mientras dura, el dedo no desplaza la página.
+    document.addEventListener('touchstart', event => { touching = event.touches.length > 0; }, { passive: true });
+    document.addEventListener('touchend', event => { touching = event.touches.length > 0; }, { passive: true });
+    document.addEventListener('touchcancel', () => { touching = false; }, { passive: true });
+    document.addEventListener('touchmove', event => {
+        if (!locked) return;
+        extendLock(160);
+        if (event.cancelable) event.preventDefault();
+    }, { passive: false });
+
+    /* -------------------------------------------------------------------------
+       8. Volver desde la ficha de una foto
+       «Volver a la galería» enlaza a /#baraja=<slug>; el botón «Atrás» del navegador usa la última foto
+       abierta (sessionStorage). En ambos casos la baraja se abre en esa foto, a pantalla completa.
+       ------------------------------------------------------------------------- */
+    const SLUG_KEY = 'djl-deck-slug';
+
+    root.addEventListener('click', event => {
+        const card = event.target instanceof Element ? event.target.closest('.deck__card') : null;
+        if (card?.dataset.slug) {
+            try { sessionStorage.setItem(SLUG_KEY, card.dataset.slug); } catch (_) { /* sin almacenamiento: no pasa nada */ }
+        }
+    });
+
+    const slugFromHash = () => {
+        const match = /^#baraja=(.+)$/.exec(window.location.hash);
+        if (!match) return '';
+        try { return decodeURIComponent(match[1]); } catch (_) { return ''; }
+    };
+
+    const restoreFromSlug = () => {
+        const fromHash = slugFromHash();
+        let wanted = fromHash;
+        if (!wanted) {
+            const navigation = performance.getEntriesByType?.('navigation')?.[0];
+            if (navigation?.type === 'back_forward') {
+                try { wanted = sessionStorage.getItem(SLUG_KEY) || ''; } catch (_) { wanted = ''; }
+            }
+        }
+        const target = wanted ? visible.findIndex(card => card.dataset.slug === wanted) : -1;
+        if (target < 0) return;
+        index = target;
+        root.classList.add('is-used');
+        render();
+        if (fromHash) window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        // Lleva la baraja a pantalla completa. La página puede recolocarse mientras carga: se repite.
+        const showDeck = () => {
+            skipCatchUntil = performance.now() + 900;
+            window.scrollTo({ top: deckTop(), behavior: 'instant' });
+        };
+        showDeck();
+        window.addEventListener('load', showDeck, { once: true });
+        window.setTimeout(showDeck, 500);
+    };
+
     updateFit();
     render();
+    restoreFromSlug();
 })();

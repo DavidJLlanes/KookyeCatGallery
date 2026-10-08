@@ -72,7 +72,16 @@ const devices = [
                     if (Math.abs(await page.evaluate(() => document.querySelector('#deck').getBoundingClientRect().top)) <= 2) return;
                 }
             };
-            const settle = () => page.waitForTimeout(800);   // El paso dura 520 ms (margen para dispositivos lentos).
+            const settle = () => page.waitForTimeout(1300);  // El paso dura 850 ms (margen para dispositivos lentos).
+            // Gestos táctiles reales (CDP) para móvil y tablet.
+            const cdp = device.touch ? await context.newCDPSession(page) : null;
+            const swipe = async (dy, steps = 8, wait = 1300, fromY = device.viewport.height * 0.6) => {
+                const x = device.viewport.width / 2;
+                await cdp.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [{x, y: fromY}]});
+                for (let i = 1; i <= steps; i++) await cdp.send('Input.dispatchTouchEvent', {type: 'touchMove', touchPoints: [{x, y: fromY + dy * i / steps}]});
+                await cdp.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []});
+                await page.waitForTimeout(wait);
+            };
 
             // 1. A pantalla completa: 100 % de ancho y de alto del dispositivo.
             await toDeck();
@@ -96,11 +105,33 @@ const devices = [
             await page.keyboard.press('ArrowUp'); await settle();
             assert.equal((await state()).index, 0, `${label}: ArrowUp retrocede`);
 
+            // 2b. Parada al llegar: el scroll de la página se detiene cuando la baraja llena la pantalla, aunque el gesto
+            //     traiga inercia (aquí, un salto de scroll que pasa de largo), y las ruedas que sigan llegando no pasan
+            //     fotos. Pasada la parada, un gesto nuevo ya mueve las fotos.
+            const wheelBurst = (count, gap) => page.evaluate(([count, gap]) => new Promise(resolve => {
+                let sent = 0;
+                const timer = setInterval(() => {
+                    window.dispatchEvent(new WheelEvent('wheel', {deltaY: 120, bubbles: true, cancelable: true}));
+                    if (++sent >= count) { clearInterval(timer); resolve(); }
+                }, gap);
+            }), [count, gap]);
+            await page.evaluate(() => window.scrollTo({top: 0, behavior: 'instant'}));
+            await page.waitForTimeout(500);
+            await page.evaluate(() => window.scrollTo({top: document.querySelector('#deck').getBoundingClientRect().top + scrollY + 280, behavior: 'instant'}));
+            await wheelBurst(12, 30);                       // «Cola» del gesto: llega justo después del salto.
+            await page.waitForTimeout(900);
+            const arrived = await state();
+            assert(Math.abs(arrived.top) <= 2 && arrived.index === 0, `${label}: la página debe detenerse en la baraja sin pasar fotos (${JSON.stringify(arrived)})`);
+            await wheelBurst(1, 10); await settle();         // Un gesto nuevo, tras la pausa.
+            assert.equal((await state()).index, 1, `${label}: tras la parada, el siguiente gesto mueve las fotos`);
+            await page.keyboard.press('ArrowUp'); await settle();
+            await toDeck();
+
             // 3. Animación: la carta pasada acaba fuera (a la izquierda, pequeña y transparente) y la activa a pantalla completa.
             await page.keyboard.press('ArrowDown'); await settle();
             await page.waitForFunction(() => getComputedStyle(document.querySelector('.deck__card')).opacity === '0', null, {timeout: 4000});
             const duration = await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('#deck')).getPropertyValue('--deck-duration')));
-            assert(duration > 0 && duration <= 700, `${label}: el movimiento debe ser rápido (${duration} ms)`);
+            assert(duration >= 700 && duration <= 1200, `${label}: el movimiento debe ser pausado pero ágil (${duration} ms)`);
             const anim = await page.evaluate(() => {
                 const [gone, active] = document.querySelectorAll('.deck__card');
                 const leaving = getComputedStyle(gone), current = getComputedStyle(document.querySelectorAll('.deck__card')[1]);
@@ -147,14 +178,6 @@ const devices = [
 
             // 5. Táctil (móvil y tablet): dedo hacia arriba avanza, hacia abajo retrocede, sin mover el fondo.
             if (device.touch) {
-                const cdp = await context.newCDPSession(page);
-                const swipe = async (dy, steps = 8) => {
-                    const x = device.viewport.width / 2, y = device.viewport.height * 0.6;
-                    await cdp.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [{x, y}]});
-                    for (let i = 1; i <= steps; i++) await cdp.send('Input.dispatchTouchEvent', {type: 'touchMove', touchPoints: [{x, y: y + dy * i / steps}]});
-                    await cdp.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []});
-                    await page.waitForTimeout(800);
-                };
                 const before = await state();
                 await swipe(-140);
                 s = await state();
@@ -198,6 +221,33 @@ const devices = [
             await context.close();
         }
 
+        // 7b. Volver desde la ficha de una foto: /#baraja=<slug> abre la baraja en esa foto, a pantalla completa.
+        for (const viewport of [{width: 1440, height: 900}, {width: 390, height: 844}]) {
+            const back = await browser.newPage({viewport});
+            const backErrors = [];
+            back.on('pageerror', error => backErrors.push(error.message));
+            await back.route('**/*', route => {
+                const url = route.request().url();
+                if (url.endsWith('.webp')) return route.fulfill({status: 200, contentType: 'image/png', body: png});
+                if (url === 'https://deck.test/') return route.fulfill({status: 200, contentType: 'text/html', body: pageHtml('current')});
+                return route.fulfill({status: 200, contentType: 'text/plain', body: ''});
+            });
+            await back.goto('https://deck.test/#baraja=foto-3');
+            await back.addStyleTag({content: css});
+            for (const script of scripts) await back.addScriptTag({content: script});
+            await back.waitForTimeout(1800);
+            const returned = await back.evaluate(() => ({
+                index: Number(document.querySelector('#deck').dataset.index), top: Math.round(document.querySelector('#deck').getBoundingClientRect().top),
+                hash: location.hash, active: document.querySelector('.deck__card[data-pos="0"]')?.dataset.slug,
+                vh: innerHeight, deckHeight: Math.round(document.querySelector('#deck').getBoundingClientRect().height)}));
+            assert.equal(returned.index, 3, `Volver desde la ficha (${viewport.width}px): debe abrir la foto 4 (${JSON.stringify(returned)})`);
+            assert.equal(returned.active, 'foto-3', 'La carta activa debe ser la de la ficha');
+            assert(Math.abs(returned.top) <= 2 && returned.deckHeight === returned.vh, `Volver desde la ficha (${viewport.width}px): la baraja debe quedar a pantalla completa (${JSON.stringify(returned)})`);
+            assert.equal(returned.hash, '', 'El enlace de vuelta no debe quedarse en la dirección');
+            assert.deepEqual(backErrors, [], 'Volver desde la ficha: errores de JavaScript');
+            await back.close();
+        }
+
         // 8. Integración con la paleta: el fondo y los controles usan las variables de cada paleta.
         const expected = {current: null, white: 'rgb(255, 255, 255)', ocean: 'rgb(16, 39, 55)', japanese: 'rgb(247, 242, 232)'};
         for (const [palette, background] of Object.entries(expected)) {
@@ -232,6 +282,6 @@ const devices = [
         await reduced.waitForFunction(() => getComputedStyle(document.querySelector('.deck__card')).opacity === '0', null, {timeout: 400});
         await reduced.close();
 
-        console.log('Baraja verificada: pantalla completa, rueda, dedo, teclado, límites, ajuste de foto, filtros y paletas en 5 dispositivos.');
+        console.log('Baraja verificada: pantalla completa, parada del scroll al llegar, rueda, dedo, teclado, límites, ajuste de foto, filtros, vuelta desde la ficha y paletas en 5 dispositivos.');
     } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exit(1); });

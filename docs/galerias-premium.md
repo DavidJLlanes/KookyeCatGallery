@@ -36,15 +36,16 @@ Se elige en el panel: **Textos y diseño → Diseño → Galería premium**.
 
 - La galería ocupa **el 100 % del ancho y del alto** de la pantalla (`100dvh`: respeta las barras de los navegadores móviles). Funciona en escritorio, tablet, Android e iPhone, vertical y apaisado.
 - Las fotos son **cartas apiladas con perspectiva 3D**. La carta de arriba ocupa toda la pantalla; las de debajo forman el mazo.
-- Al pasar de foto, la carta sale **hacia la izquierda, se hace más pequeña y se desvanece** (≈ 0,5 s, arranque rápido y final suave), mientras la siguiente sube a primer plano.
+- Al pasar de foto, la carta sale **hacia la izquierda, se hace más pequeña y se desvanece** (≈ 0,85 s, arranque ágil y final muy suave: pausado para que se aprecie el efecto de baraja), mientras la siguiente sube a primer plano.
 - **Cómo se avanza**
   - Móvil y tablet: deslizar el dedo **hacia arriba** (o hacia la izquierda). Hacia abajo, retrocede.
   - Escritorio: **rueda del ratón hacia abajo**. Hacia arriba, retrocede. En trackpad también funcionan los gestos horizontales.
   - Teclado: flechas, RePág/AvPág, Espacio (Mayús+Espacio retrocede), Inicio y Fin.
   - Botones: flechas y contador «3 / 14» en la barra inferior.
+- **El scroll de la página se detiene al llegar a la galería.** Al bajar desde arriba (o subir desde abajo), la página frena justo cuando la baraja ocupa toda la pantalla, aunque el gesto traiga inercia, y esa inercia no pasa fotos. A partir de ahí, los gestos mueven las fotos.
 - **El fondo de la web no se mueve** mientras se pasan cartas. En la **primera** y en la **última** foto la galería deja de capturar el gesto y la página continúa su scroll normal, así se puede salir de la galería hacia arriba o hacia abajo.
 - Si la galería no está alineada con la pantalla, el primer gesto solo la encaja; los siguientes pasan cartas.
-- Pulsar una foto abre su ficha (`/foto/<slug>`).
+- Pulsar una foto abre su ficha (`/foto/<slug>`). En la ficha, **«Volver a la galería»** (y el botón «Atrás» del navegador) regresa a **esa misma foto**, en la baraja a pantalla completa. El enlace usa `/#baraja=<slug>`; la dirección se limpia al llegar.
 - **Ajuste a la pantalla:** si la proporción de la foto se parece a la de la pantalla, la cubre entera; si no (por ejemplo una foto vertical en un monitor), se muestra **completa sobre su propio desenfoque**, sin recortes.
 - **Filtros:** los botones del bloque «Categorías» y el botón «Favoritas» filtran la baraja; si no hay fotos, avisa.
 - **Movimiento reducido:** con `prefers-reduced-motion` el paso es instantáneo.
@@ -56,11 +57,11 @@ Están en variables CSS al principio de `assets/premium/deck/deck.css` (clase `.
 
 | Variable | Por defecto | Efecto |
 | --- | --- | --- |
-| `--deck-duration` | `520ms` | Duración del paso de una carta. |
-| `--deck-ease` | `cubic-bezier(.2,.85,.25,1)` | Curva: arranque rápido, final suave. |
+| `--deck-duration` | `850ms` | Duración del paso de una carta. |
+| `--deck-ease` | `cubic-bezier(.22,.8,.24,1)` | Curva: arranque ágil, final muy suave. |
 | `--deck-radius` | `22px` | Esquinas de las cartas del mazo. |
 
-Las posiciones del mazo (`data-pos="1..3"`) están en la sección 2 del CSS: desplazamiento, profundidad, escala y giro de cada carta.
+El mínimo entre dos pasos con la rueda (`STEP_COOLDOWN`, 600 ms) está al principio de `deck.js`. Las posiciones del mazo (`data-pos="1..3"`) están en la sección 2 del CSS: desplazamiento, profundidad, escala y giro de cada carta.
 
 ### Limitaciones conocidas
 
@@ -75,6 +76,7 @@ inc/premium/<clave>.php            Marcado HTML de la galería
 assets/premium/<clave>/<clave>.css Estilos y animación (solo se cargan si está activa)
 assets/premium/<clave>/<clave>.js  Comportamiento (solo se carga si está activa)
 inc/blocks/gallery.php             Si hay una galería premium activa, incluye su marcado en lugar de la galería estándar
+index.php                          «Volver a la galería» de la ficha apunta a /#baraja=<slug> si hay una galería premium activa
 inc/site-settings.php              Ajuste `gallery_premium` (validación, atributos del <body>)
 inc/site-settings-form.php         Selector «Galería premium» y campos desactivados
 assets/js/admin-ui.js              Desactiva los campos de la galería estándar al elegir una premium
@@ -107,5 +109,5 @@ Reglas del contrato: una galería premium debe ocupar su bloque entero, no depen
 ## Pruebas
 
 - `php tests/site-settings.php`: validación del ajuste, campos opcionales con una galería premium y formulario.
-- `node tests/premium-deck.cjs`: Estilo Baraja en 5 dispositivos (escritorio, portátil, tablet, móvil y móvil apaisado): pantalla completa, rueda, dedo, teclado, límites, ajuste de foto, filtros, paletas y movimiento reducido.
+- `node tests/premium-deck.cjs`: Estilo Baraja en 5 dispositivos (escritorio, portátil, tablet, móvil y móvil apaisado): pantalla completa, parada del scroll al llegar, rueda, dedo, teclado, límites, ajuste de foto, filtros, vuelta desde la ficha, paletas y movimiento reducido.
 - `node tests/admin-layout.cjs`: el panel desactiva y reactiva los campos de la galería estándar.

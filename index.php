@@ -380,7 +380,7 @@ $pageContext = ['author' => $author, 'categories' => $categories, 'galleryItems'
     data-photo-next="<?= $photoNeighbors['next'] ? '/foto/' . safe($photoNeighbors['next']['slug']) : '' ?>"
     data-photo-previous-image="<?= $photoNeighbors['previous'] ? safe(photo_asset_url($photoNeighbors['previous']['desktop'], __DIR__)) : '' ?>"
     data-photo-next-image="<?= $photoNeighbors['next'] ? safe(photo_asset_url($photoNeighbors['next']['desktop'], __DIR__)) : '' ?>">
-    <a href="/" class="photo-detail__back">
+    <a href="<?= safe(site_premium_gallery_active($siteSettings) ? '/#baraja=' . rawurlencode((string) ($fotoItem['slug'] ?? '')) : '/') ?>" class="photo-detail__back">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
         <?= site_text_html('text_f99ccb8765ac6c3a') ?>
     </a>
