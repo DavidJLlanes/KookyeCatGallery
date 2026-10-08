@@ -13,6 +13,8 @@ Se elige en el panel: **Textos y diseño → Diseño → Galería premium**.
 | **Estilo Cuadrados** | `squares` | Igual que «Estilo Burbujas», pero con cuadrados de distintos tamaños (esquinas suavemente redondeadas). |
 | **Estilo Tambor** | `drum` | Pantalla completa. Las fotos giran como un tambor 3D (carrusel cilíndrico): la activa de frente y las vecinas curvadas hacia atrás a ambos lados. Misma interfaz que «Estilo Baraja». |
 | **Estilo Cilindro** | `cylinder` | Pantalla completa. Varias filas de fotos de distintos tamaños forman un cilindro giratorio que ocupa todo el ancho (en escritorio, estirado hacia los bordes). Misma interfaz que «Estilo Baraja». |
+| **Estilo Polaroids** | `polaroid` | Pantalla completa. Polaroids esparcidas sobre una mesa: la activa se centra y se amplía y las demás quedan alrededor, giradas y algo desenfocadas. Misma interfaz que «Estilo Baraja». |
+| **Estilo Tinder** | `swipe` | Pantalla completa. Una carta que se desliza a un lado: hacia el corazón (derecha) da un corazón a la foto y pasa a la siguiente; hacia la flecha (izquierda) solo pasa. |
 
 ## Qué cambia al activar una galería premium
 
@@ -142,6 +144,34 @@ Variación del tambor: en vez de una carta por posición, hay **varias filas de 
 - **Ajustes:** `PERSPECTIVE` (debe coincidir con `perspective` de `.cyl__stage`), `STEP_TIME` y las proporciones del cilindro (`ratio`) están en `cylinder.js`; la reserva arriba y abajo (`--cyl-pad`), en `cylinder.css`.
 - **Panel:** ignora los mismos 8 ajustes de la galería estándar que la baraja.
 
+## Estilo Polaroids (`polaroid`)
+
+Reutiliza **toda la interfaz y el comportamiento de «Estilo Baraja»** (marcado `inc/premium/deck.php`, `deck.css` y `deck.js`) y solo cambia el aspecto y la colocación de las cartas (`assets/premium/polaroid/polaroid.css`, que se carga después de `deck.css`; `data-layout="polaroid"`).
+
+- **La carta es una Polaroid:** papel blanco roto (`--polaroid-paper`, el mismo en todas las paletas), foto casi cuadrada con borde y un pie más alto con el título en cursiva y la categoría. La foto siempre recorta (`cover`), como una Polaroid de verdad.
+- **Posiciones (`data-pos`):** `0` la activa, centrada, casi derecha (un pequeño giro por foto) y a tamaño completo · `±1..±4` esparcidas **alrededor** (más pequeñas, giradas, algo desenfocadas y oscurecidas) · `±5` ocultas. Las cartas pasadas no salen: quedan sobre la mesa.
+- **Desorden estable:** cada carta lleva `--j1..--j3` (valores 0-1 derivados de su posición, calculados en `deck.php`) que desplazan y giran un poco su hueco, de modo que cada Polaroid tiene su propio ángulo y no cambia al recargar ni al girar.
+- **Huecos:** `--p1x…--m4r` en `.deck__stage` (x en `cqw`, y en `cqh`, giro en grados). En pantallas altas y estrechas (móvil) las de fondo asoman por arriba y por abajo; en anchas, por los lados.
+- **Centrado:** la activa queda centrada en horizontal y en vertical en cualquier pantalla (reserva igual arriba y abajo: `--pad`).
+- **Panel:** ignora los mismos ajustes de la galería estándar que la baraja.
+
+## Estilo Tinder (`swipe`)
+
+Una carta alta a pantalla casi completa con otras dos asomando debajo, que se **arrastra a un lado** (dedo o ratón) como en Tinder:
+
+- **Hacia el lado del corazón (derecha):** se da un **corazón** a la foto (el mismo corazón que en el resto de la web: contador, «Favoritas», servidor) y se **pasa a la siguiente**.
+- **Hacia el otro lado (izquierda, la flecha):** **solo se pasa a la siguiente**.
+- En los dos casos se avanza. Si la foto **ya tenía tu corazón**, deslizar hacia el corazón solo avanza: nunca se quita un corazón por deslizar (para quitarlo, la ficha de la foto).
+- **La interfaz lo indica** con un corazón y una flecha: los dos botones de la barra inferior (la **flecha a la izquierda** y el **corazón a la derecha** del contador, que también se pueden pulsar), los **sellos** (un corazón arriba a la izquierda y una flecha arriba a la derecha) que aparecen y crecen sobre la carta según se arrastra, y la pista inicial («→ ♥ corazón · ← siguiente»).
+- **Al soltar:** pasado el 26 % del ancho de la carta, o con un gesto rápido, se decide; si no, la carta vuelve a su sitio. La carta sale desde donde se soltó, girando, por el lado elegido (por la derecha si recibió el corazón). Arrastrar no abre la ficha; pulsar sí.
+- **Teclado y rueda:** `→` corazón y siguiente · `←` siguiente · `↓`, RePág y Espacio siguiente · `↑`, RePág y Mayús+Espacio anterior · Inicio y Fin. La rueda hacia abajo pasa sin dar corazón.
+- **Final:** tras la última foto aparece «Has visto todas las fotos» con «Volver a empezar». Un gesto vertical (dedo) o la rueda ya salen de la galería, como en los demás estilos.
+- **Móvil y escritorio:** fijación en móvil, parada del scroll en escritorio, botones «Salir» y «Salir hacia arriba», filtros, favoritas y vuelta a la misma foto: los de la baraja.
+
+**Cómo se da el corazón.** Cada carta lleva un botón de corazón oculto (`[data-heart-photo]`, `swipe.php`); `swipe.js` lo pulsa y `assets/js/main.js` hace el resto. Antes mira las favoritas guardadas (`djl-photo-favorites-v1`) para no quitar un corazón existente.
+
+**Arquitectura.** `inc/premium/swipe.php` (marcado propio con los botones de corazón y flecha), `assets/premium/swipe/swipe.css` (carta, sellos, botones y aviso final) y `assets/premium/swipe/swipe.js` (el arrastre y el corazón; comparte con `deck.js` los filtros, la fijación, las salidas y la vuelta desde la ficha). La interfaz base es `deck.css`.
+
 ## Arquitectura
 
 ```
@@ -152,6 +182,8 @@ assets/premium/<clave>/<clave>.js  Comportamiento (solo se carga si está activa
 inc/blocks/gallery.php             Si hay una galería premium activa, incluye su marcado en lugar de la galería estándar
 index.php                          «Volver a la galería» de la ficha apunta a /#baraja=<slug> si hay una galería premium activa
 inc/site-settings.php              Ajuste `gallery_premium` (validación, atributos del <body>)
+assets/premium/swipe/              Estilo Tinder (swipe.css y swipe.js; marcado en inc/premium/swipe.php; interfaz de deck.css)
+assets/premium/polaroid/           Estilo Polaroids (polaroid.css; reutiliza deck.js y el marcado de la baraja)
 assets/premium/cylinder/           Estilo Cilindro (cylinder.css y cylinder.js; marcado en inc/premium/cylinder.php; interfaz de deck.css)
 assets/premium/drum/               Estilo Tambor (drum.css; reutiliza deck.js y el marcado de la baraja)
 assets/premium/bubbles/            Estilo Burbujas (bubbles.css y bubbles.js); marcado en inc/premium/bubbles.php
@@ -187,6 +219,8 @@ Reglas del contrato: una galería premium debe ocupar su bloque entero, no depen
 ## Pruebas
 
 - `php tests/site-settings.php`: validación del ajuste, campos opcionales con una galería premium y formulario.
+- `node tests/premium-swipe.cjs`: Estilo Tinder en 5 dispositivos y 13 tamaños de pantalla, con un servidor de corazones simulado: arrastre corto (vuelve), sellos al arrastrar, izquierda (solo avanza, sin corazón), derecha (corazón + avanza, foto en Favoritas), botones del corazón y la flecha, foto que ya tenía corazón (no se quita), teclado y rueda, aviso final y «Volver a empezar», pulsar abre la ficha y arrastrar no, salidas (botones y gesto vertical), filtros, vuelta desde la ficha, centrado, paleta y movimiento reducido.
+- `node tests/premium-polaroid.cjs`: Estilo Polaroids en 5 dispositivos y 13 tamaños: activa centrada y mayor, papel de Polaroid, las demás esparcidas, giradas y desenfocadas, ±5 ocultas, interfaz de la baraja, fijación en móvil, vuelta desde la ficha, paleta y movimiento reducido.
 - `node tests/premium-cylinder.cjs`: Estilo Cilindro en 5 dispositivos y 13 tamaños de pantalla: el cilindro llega a los bordes y queda centrado, varias filas con fotos de tamaños distintos sin solaparse, curvatura y oscurecimiento 3D, cierre del anillo, giro, interfaz de la baraja (rueda, dedo, teclado, flechas, salidas, filtros), fijación en móvil, vuelta desde la ficha, paleta y movimiento reducido.
 - `node tests/premium-drum.cjs`: Estilo Tambor en 5 dispositivos y 13 tamaños de pantalla: disposición cilíndrica simétrica y centrada (cartas ±1 y ±2, profundidad, oscurecimiento, ±3 ocultas), rueda, dedo, teclado, flechas, contador, botones de salir, filtros, fijación en móvil, vuelta desde la ficha, paleta y movimiento reducido.
 - `node tests/premium-squares.cjs`: la misma batería que las burbujas con la forma cuadrada (`BUBBLES_SHAPE=square`): separación entre cuadrados, tamaños distintos, paginación, rebote, fijación en móvil, etc.

@@ -26,10 +26,6 @@ baraja; mi recomendación: **mano de cartas** y **Polaroids**, o el **libro** si
 
 - [ ] **Mano de cartas (abanico).** Las cartas salen abiertas en abanico desde un punto inferior, como una mano de póker. La
       activa sube y se endereza al frente; al pasar de foto el abanico se reajusta. Muy reconocible y buena en móvil.
-- [ ] **Polaroids sobre la mesa.** Las fotos son Polaroids con borde blanco, esparcidas con giros aleatorios. La activa se centra
-      y se amplía; las demás quedan alrededor, ligeramente desenfocadas. Al pasar, la activa vuelve a la mesa y sube la siguiente.
-- [ ] **Estilo Tinder.** Una carta casi a pantalla completa con la siguiente asomando debajo. La que sale se desliza a un lado con
-      un giro, y el sentido depende del gesto. Muy natural en móvil.
 - [ ] **Escalera isométrica.** Las cartas apiladas en diagonal como peldaños, en 3D isométrico. Cada paso sube o baja un peldaño y
       la activa queda en el centro.
 - [ ] **Libro o álbum.** Páginas con las fotos que se pasan con un giro 3D de página. En móvil, una foto por página.
@@ -48,4 +44,6 @@ baraja; mi recomendación: **mano de cartas** y **Polaroids**, o el **libro** si
 - [x] **Estilo Burbujas** (`bubbles`): fotos en círculos de distintos tamaños que flotan lentamente, paginadas.
 - [x] **Estilo Cuadrados** (`squares`): lo mismo que las burbujas, con cuadrados.
 - [x] **Estilo Tambor** (`drum`): carrusel cilíndrico 3D con la interfaz de la baraja.
+- [x] **Estilo Polaroids** (`polaroid`): Polaroids esparcidas sobre una mesa; la activa se centra y se amplía.
+- [x] **Estilo Tinder** (`swipe`): una carta que se desliza; hacia el corazón da un corazón y avanza, hacia la flecha solo avanza.
 - [x] **Estilo Cilindro** (`cylinder`): variación del tambor con varias filas de fotos de distintos tamaños que llenan la pantalla.

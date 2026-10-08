@@ -82,6 +82,26 @@ function site_premium_gallery_definitions(): array
             'css' => ['assets/premium/deck/deck.css', 'assets/premium/cylinder/cylinder.css'],
             'js' => 'assets/premium/cylinder/cylinder.js',
         ],
+        // «Estilo Polaroids» reutiliza la interfaz y el comportamiento de la baraja (marcado, deck.css y deck.js) y solo cambia el aspecto
+        // de las cartas (marco blanco de Polaroid) y su colocación (esparcidas alrededor de la activa): polaroid.css.
+        'polaroid' => [
+            'label' => 'Estilo Polaroids',
+            'description' => 'Pantalla completa. Las fotos son Polaroids esparcidas sobre una mesa: la activa se centra y se amplía y las '
+                . 'demás quedan alrededor, ligeramente desenfocadas. Misma interfaz que «Estilo Baraja».',
+            'partial' => 'deck',
+            'css' => ['assets/premium/deck/deck.css', 'assets/premium/polaroid/polaroid.css'],
+            'js' => 'assets/premium/deck/deck.js',
+        ],
+        // «Estilo Tinder»: una carta que se desliza a un lado; hacia el lado del corazón da un corazón a la foto (y pasa a la siguiente)
+        // y hacia el otro solo pasa a la siguiente. Interfaz de la baraja con un corazón y una flecha que lo indican.
+        'swipe' => [
+            'label' => 'Estilo Tinder',
+            'description' => 'Pantalla completa. Una carta que se desliza a un lado: hacia el corazón da un corazón a la foto y hacia el otro '
+                . 'lado solo pasa a la siguiente. En los dos casos avanza. La interfaz lo indica con un corazón y una flecha.',
+            'partial' => 'swipe',
+            'css' => ['assets/premium/deck/deck.css', 'assets/premium/swipe/swipe.css'],
+            'js' => 'assets/premium/swipe/swipe.js',
+        ],
     ];
 }
 

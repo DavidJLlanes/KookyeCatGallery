@@ -1,34 +1,29 @@
 /* =============================================================================
-   GALERÍA PREMIUM · ESTILO BARAJA (clave `deck`) · comportamiento
+   GALERÍA PREMIUM · ESTILO TINDER (clave `swipe`) · comportamiento
    -----------------------------------------------------------------------------
-   Marcado: inc/premium/deck.php · Estilos y animación: deck.css
-   Documentación: docs/galerias-premium.md y README.md
+   Marcado: inc/premium/swipe.php · Estilos: deck.css (interfaz) + swipe.css · Documentación: docs/galerias-premium.md
 
    Qué hace
-     · Mantiene una posición activa (`index`) y le dice a cada carta dónde está respecto a ella
-       (data-pos). El CSS se encarga de colocarla y animarla en 3D. «Estilo Tambor» (data-layout="drum") usa este mismo
-       archivo: cambia el CSS (drum.css) y que las cartas pasadas no salen, sino que siguen en el cilindro.
-     · Avanza con: rueda del ratón hacia abajo, deslizar el dedo hacia arriba (o hacia la izquierda),
-       flechas del teclado, RePág/AvPág, Espacio y los botones de la barra inferior.
-     · Retrocede con los gestos contrarios.
-     · Filtra por categoría (chips del bloque «Categorías») y por favoritas (botón «Favoritas»).
-     · Ajusta cada foto a su carta: la cubre entera si su proporción es parecida a la del marco y, si no,
-       la muestra completa sobre el fondo de la carta (nada de recortes absurdos).
-
-   Cómo se queda fija la galería
-     · ESCRITORIO (ratón/trackpad): mientras la baraja llena la pantalla, la rueda mueve fotos y se cancela
-       el scroll de la página. Al llegar a la baraja el scroll se detiene (aunque haya inercia).
-     · MÓVIL/TABLET (táctil): al llegar, la baraja se FIJA: el cuerpo de la página pasa a position: fixed y
-       deja de existir el scroll, así que no hay nada que se mueva ni «vibre». Los gestos solo mueven fotos.
-       Se sale con el botón «Salir» (abajo o arriba) o deslizando más allá de la última o la primera foto.
-     · Desde la ficha de una foto, «Volver a la galería» regresa a esa misma foto (enlace /#baraja=<slug>).
+     · Una carta a pantalla casi completa con las siguientes asomando debajo. Se arrastra a un lado (dedo o ratón):
+         → hacia el lado del CORAZÓN (derecha): da un corazón a la foto y pasa a la siguiente.
+         ← hacia el otro lado (izquierda): solo pasa a la siguiente (la flecha).
+       En los dos casos se avanza a la siguiente foto. Si la foto ya tenía tu corazón, deslizar hacia el corazón solo avanza (nunca
+       se quita un corazón por deslizar).
+     · El corazón se da con el mismo mecanismo que el resto de la web: se pulsa un botón de corazón oculto de la carta ([data-heart-photo]),
+       que gestiona main.js (contador, estado, servidor y «Favoritas»).
+     · La interfaz de la baraja indica los dos lados con un corazón (derecha) y una flecha (izquierda), tanto en los botones de la barra
+       como en los sellos que aparecen sobre la carta mientras se arrastra.
+     · También con teclado (→ corazón, ← siguiente, ↓ siguiente, ↑ anterior) y con la rueda (abajo = siguiente, sin corazón).
+     · Comparte con «Estilo Baraja» (deck.js): filtros, parada del scroll en escritorio, fijación en móvil (body fixed), botones de
+       salir (abajo y arriba) y vuelta desde la ficha (/#baraja=<slug>).
+     · Tras la última foto aparece «Has visto todas las fotos» con un botón para volver a empezar.
 
    Organización del archivo
-     1. Estado y utilidades        6. Entrada: teclado, botones y filtros
-     2. Filtros                    7. Fijar la galería (móvil) / parada del scroll (escritorio)
-     3. Pintado (render)           8. Volver desde la ficha de una foto
-     4. Entrada: rueda             9. Salir de la galería y estado «acoplada»
-     5. Entrada: táctil
+     1. Estado y utilidades          6. Entrada: teclado, botones y filtros
+     2. Filtros                      7. Fijar la galería (móvil) / parada del scroll (escritorio)
+     3. Pintado                      8. Volver desde la ficha de una foto
+     4. Entrada: rueda               9. Salir de la galería y estado «acoplada»
+     5. Entrada: arrastrar la carta
    ============================================================================= */
 (() => {
     'use strict';
@@ -43,18 +38,17 @@
     const cards = [...root.querySelectorAll('.deck__card')];
     const counterCurrent = root.querySelector('[data-deck-current]');
     const counterTotal = root.querySelector('[data-deck-total]');
-    const prevButton = root.querySelector('[data-deck-prev]');
-    const nextButton = root.querySelector('[data-deck-next]');
+    const passButton = root.querySelector('[data-swipe-pass]');   // Flecha: pasar a la siguiente.
+    const likeButton = root.querySelector('[data-swipe-like]');   // Corazón: dar un corazón y pasar.
+    const restartButton = root.querySelector('[data-swipe-restart]');
     const exitDownButton = root.querySelector('[data-deck-exit]');
     const exitUpButton = root.querySelector('[data-deck-exit-up]');
     const emptyMessage = root.querySelector('[data-deck-empty]');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const coarse = window.matchMedia('(hover: none) and (pointer: coarse)');   // Pantalla táctil sin ratón.
-    // Disposiciones que dejan visibles las cartas pasadas: «Estilo Tambor» (3 a cada lado) y «Estilo Polaroids» (5, esparcidas).
-    const reach = { drum: 3, polaroid: 5 }[root.dataset.layout] || 0;
 
     let visible = cards.slice();   // Cartas que pasan los filtros, en orden.
-    let index = 0;                 // Posición de la carta activa dentro de `visible`.
+    let index = 0;                 // Posición de la carta activa dentro de `visible` (== visible.length: ya se vieron todas).
 
     // Tiempos (ms). El paso de carta dura lo que diga --deck-duration en el CSS (850 ms).
     const STEP_COOLDOWN = 600;     // Mínimo entre dos pasos con la rueda: deja ver el efecto de baraja completo.
@@ -153,30 +147,37 @@
 
     const render = () => {
         const total = visible.length;
+        const finished = total > 0 && index >= total;
         visible.forEach((card, i) => {
-            // Baraja: -2/-1 = ya pasadas (salen), 1..3 = mazo, 4 = oculta. Tambor y Polaroids: -reach..reach a ambos lados (los extremos = ocultas).
-            const pos = reach ? clamp(i - index, -reach, reach) : clamp(i - index, -2, 4);
+            // 0 = encima · 1, 2 = asoman debajo · 3 = oculta · -1 = ya pasada (sale por un lado).
+            const pos = clamp(i - index, -1, 3);
             card.dataset.pos = String(pos);
+            if (pos !== -1) {                                          // La carta que acaba de salir conserva su sello y su lado de salida.
+                card.classList.remove('is-out-right', 'is-stamp-like', 'is-stamp-pass');
+                card.style.removeProperty('--like');
+                card.style.removeProperty('--pass');
+            }
             const active = pos === 0;
             card.setAttribute('aria-hidden', active ? 'false' : 'true');
             card.toggleAttribute('inert', !active);
-            // Las fotos cercanas se cargan ya, para que el mazo nunca enseñe huecos.
-            if (i >= index - 2 && i <= index + 3) {
+            // Las fotos cercanas se cargan ya, para que la siguiente nunca aparezca vacía.
+            if (i >= index && i <= index + 3) {
                 const image = card.querySelector('.deck__img');
                 if (image && image.loading === 'lazy') image.loading = 'eager';
             }
         });
-        if (counterCurrent) counterCurrent.textContent = String(total ? index + 1 : 0);
+        if (counterCurrent) counterCurrent.textContent = String(total ? Math.min(index + 1, total) : 0);
         if (counterTotal) counterTotal.textContent = String(total);
-        if (prevButton) prevButton.disabled = index <= 0;
-        if (nextButton) nextButton.disabled = index >= total - 1;
+        if (passButton) passButton.disabled = total === 0 || index >= total;
+        if (likeButton) likeButton.disabled = total === 0 || index >= total;
         if (emptyMessage) emptyMessage.hidden = total > 0;
+        root.classList.toggle('is-finished', finished);
         root.dataset.index = String(index);
     };
 
-    // Mueve la carta activa. Devuelve false si ya estaba en el límite.
+    // Avanza (delta 1) o retrocede (delta -1) una foto. Devuelve false si ya estaba en el límite.
     const step = delta => {
-        const next = clamp(index + delta, 0, visible.length - 1);
+        const next = clamp(index + delta, 0, visible.length);
         if (next === index) return false;
         index = next;
         root.classList.add('is-used');   // Oculta la pista inicial.
@@ -186,7 +187,29 @@
 
     const canStep = delta => {
         const next = index + delta;
-        return next >= 0 && next <= visible.length - 1;
+        return visible.length > 0 && next >= 0 && next <= visible.length;
+    };
+
+    // ¿La foto ya tiene el corazón de este visitante? (favoritas guardadas por main.js)
+    const isLiked = slug => favorites().has(slug);
+
+    // Da un corazón a la foto de la carta: pulsa su botón de corazón oculto, que gestiona main.js (contador, servidor, estado).
+    // Si ya tenía corazón no se hace nada: deslizar hacia el corazón nunca lo quita.
+    const giveHeart = card => {
+        const slug = card.dataset.slug || '';
+        if (!slug || isLiked(slug)) return;
+        card.querySelector('[data-heart-photo]')?.click();
+    };
+
+    // Decide la carta activa: «like» (corazón + siguiente) o «pass» (solo siguiente). En los dos casos se avanza.
+    const decide = kind => {
+        if (index >= visible.length) return false;
+        const card = visible[index];
+        if (kind === 'like') giveHeart(card);
+        card.classList.toggle('is-out-right', kind === 'like');
+        card.classList.add(kind === 'like' ? 'is-stamp-like' : 'is-stamp-pass');   // El sello se ve mientras la carta sale.
+        card.style.setProperty(kind === 'like' ? '--like' : '--pass', '1');
+        return step(1);
     };
 
     /* -------------------------------------------------------------------------
@@ -231,58 +254,97 @@
     }, { passive: false });
 
     /* -------------------------------------------------------------------------
-       5. Entrada: táctil
-       Dedo hacia arriba (o hacia la izquierda) = siguiente. El gesto contrario = anterior.
-       En móvil la baraja está fijada (sección 7): el navegador no desplaza nada. Si el gesto va más allá de la
-       última o la primera foto, se sale de la galería por script (sección 9).
+       5. Entrada: arrastrar la carta (dedo o ratón)
+       Se arrastra la carta activa en horizontal: sigue al dedo girando un poco y muestra el sello del lado al que va. Al soltar:
+         · pasado un umbral (o con un gesto rápido) hacia la DERECHA → corazón y siguiente;
+         · hacia la IZQUIERDA → solo siguiente;
+         · si no, la carta vuelve a su sitio.
+       Un gesto vertical solo sirve para salir de la galería cuando no hay más fotos en esa dirección (primera o «ya las has visto
+       todas»); en móvil la página está fijada y no se mueve.
        ------------------------------------------------------------------------- */
-    const STEP_DISTANCE = 42;   // px de recorrido para pasar de carta durante el gesto.
-    const FLICK_DISTANCE = 18;  // px mínimos de un gesto rápido.
-    const FLICK_TIME = 220;     // ms máximos de un gesto rápido.
-    const LEAVE_DISTANCE = 24;  // px de recorrido para salir de la galería en un límite.
-    let touch = null;
+    const COMMIT_RATIO = 0.26;     // Fracción del ancho de la carta que hay que arrastrar para decidir.
+    const FLICK_SPEED = 0.55;      // px/ms: un gesto rápido decide aunque sea corto.
+    const LEAVE_DISTANCE = 40;     // px de gesto vertical para salir de la galería en un límite.
+    let drag = null;
+    let suppressClickUntil = 0;
 
-    root.addEventListener('touchstart', event => {
-        const point = event.touches[0];
-        touch = event.touches.length === 1 && isEngaged()
-            ? { x: point.clientX, y: point.clientY, time: event.timeStamp, axis: null, done: false, direction: 0, distance: 0 }
-            : null;
-    }, { passive: true });
-
-    root.addEventListener('touchmove', event => {
-        if (exiting()) { touch = null; return; }   // Salida en curso: este gesto no mueve cartas.
-        if (!touch || event.touches.length !== 1) return;
-        if (touch.done) return;                    // El gesto ya hizo lo suyo; el documento cancela el resto.
-        const point = event.touches[0];
-        const dx = point.clientX - touch.x;
-        const dy = point.clientY - touch.y;
-        if (touch.axis === null) {
-            if (Math.hypot(dx, dy) < 8) return;
-            touch.axis = Math.abs(dy) >= Math.abs(dx) ? 'y' : 'x';
-        }
-        const delta = touch.axis === 'y' ? dy : dx;
-        const direction = delta < 0 ? 1 : -1;
-        if (!canStep(direction)) {
-            // Límite (primera o última foto): se sale de la galería hacia ese lado.
-            if (Math.abs(delta) >= LEAVE_DISTANCE) { touch.done = true; leaveDeck(direction); }
-            return;
-        }
-        if (!isAligned()) { align(); touch.done = true; return; }
-        touch.direction = direction;
-        touch.distance = Math.abs(delta);
-        if (touch.distance >= STEP_DISTANCE) { step(direction); touch.done = true; }
-    }, { passive: true });
-
-    const endTouch = event => {
-        if (touch && !touch.done && touch.direction && touch.distance >= FLICK_DISTANCE
-            && event.timeStamp - touch.time <= FLICK_TIME) step(touch.direction);
-        touch = null;
+    const paintDrag = (card, dx, dy) => {
+        const width = card.clientWidth || 1;
+        card.style.transform = `translate3d(${dx}px, ${dy * 0.25}px, 0) rotate(${(dx / width * 18).toFixed(2)}deg)`;
+        const strength = clamp(Math.abs(dx) / (width * COMMIT_RATIO), 0, 1);
+        card.style.setProperty('--like', dx > 0 ? strength.toFixed(2) : '0');
+        card.style.setProperty('--pass', dx < 0 ? strength.toFixed(2) : '0');
     };
-    root.addEventListener('touchend', endTouch, { passive: true });
-    root.addEventListener('touchcancel', () => { touch = null; }, { passive: true });
+
+    const releaseDrag = card => {                                  // Quita el estilo de arrastre: el CSS anima el resto.
+        card.style.transition = '';
+        card.style.transform = '';
+        card.style.removeProperty('--like');
+        card.style.removeProperty('--pass');
+    };
+
+    root.addEventListener('pointerdown', event => {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        if (!isEngaged() || exiting()) return;
+        const card = event.target instanceof Element ? event.target.closest('.deck__card') : null;
+        if (!card || card !== visible[index]) return;
+        drag = { id: event.pointerId, card, x: event.clientX, y: event.clientY, lastX: event.clientX, lastT: event.timeStamp, vx: 0, dx: 0, dy: 0, axis: null };
+    });
+
+    root.addEventListener('pointermove', event => {
+        if (!drag || event.pointerId !== drag.id) return;
+        drag.dx = event.clientX - drag.x;
+        drag.dy = event.clientY - drag.y;
+        if (drag.axis === null) {
+            if (Math.hypot(drag.dx, drag.dy) < 8) return;
+            drag.axis = Math.abs(drag.dx) >= Math.abs(drag.dy) ? 'x' : 'y';
+            if (drag.axis === 'x') {
+                try { drag.card.setPointerCapture(drag.id); } catch (_) { /* sin captura: sigue funcionando dentro de la carta */ }
+                drag.card.style.transition = 'none';               // La carta sigue al dedo sin retraso.
+            }
+        }
+        if (drag.axis === 'x') {
+            const dt = Math.max(1, event.timeStamp - drag.lastT);
+            drag.vx = 0.7 * drag.vx + 0.3 * ((event.clientX - drag.lastX) / dt);
+            drag.lastX = event.clientX; drag.lastT = event.timeStamp;
+            paintDrag(drag.card, drag.dx, drag.dy);
+        } else if (Math.abs(drag.dy) >= LEAVE_DISTANCE) {
+            const direction = drag.dy < 0 ? 1 : -1;                // Dedo hacia arriba = seguir hacia abajo en la web.
+            if (!canStep(direction)) { drag = null; leaveDeck(direction); }
+        }
+    });
+
+    const endDrag = event => {
+        if (!drag || event.pointerId !== drag.id) return;
+        const { card, dx, vx, axis } = drag;
+        drag = null;
+        if (axis !== 'x') return;
+        suppressClickUntil = performance.now() + 60;               // Arrastrar no es pulsar: no abre la ficha.
+        const far = Math.abs(dx) > card.clientWidth * COMMIT_RATIO;
+        const fast = Math.abs(vx) > FLICK_SPEED && Math.abs(dx) > 30;
+        if (event.type === 'pointercancel' || !(far || fast)) { releaseDrag(card); return; }
+        const kind = (far ? dx : vx) > 0 ? 'like' : 'pass';
+        // La carta sale desde donde está: se fija su posición actual y el CSS la lleva fuera con su transición.
+        const current = card.style.transform;
+        card.style.transition = 'none';
+        card.style.transform = current;
+        void card.offsetWidth;
+        card.style.transition = '';
+        card.style.transform = '';
+        decide(kind);
+    };
+    root.addEventListener('pointerup', endDrag);
+    root.addEventListener('pointercancel', endDrag);
+
+    // Tras arrastrar, el clic que sigue al soltar no debe abrir la ficha.
+    root.addEventListener('click', event => {
+        if (event.target instanceof Element && event.target.closest('[data-heart-photo]')) return;   // El corazón que pulsa el propio JS sí pasa.
+        if (performance.now() < suppressClickUntil) { event.preventDefault(); event.stopPropagation(); }
+    }, true);
 
     /* -------------------------------------------------------------------------
        6. Entrada: teclado, botones y filtros
+       → corazón y siguiente · ← siguiente · ↓ / RePág / Espacio siguiente · ↑ / Mayús+Espacio anterior · Inicio / Fin.
        ------------------------------------------------------------------------- */
     document.addEventListener('keydown', event => {
         if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
@@ -290,19 +352,20 @@
         const target = event.target;
         if (target instanceof Element && target.closest('input, select, textarea, [contenteditable="true"]')) return;
         if (!isEngaged()) return;
-        let direction = 0;
-        if (['ArrowDown', 'ArrowRight', 'PageDown'].includes(event.key)) direction = 1;
-        else if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(event.key)) direction = -1;
-        else if (event.key === ' ' && !(target instanceof Element && target.closest('button, a'))) direction = event.shiftKey ? -1 : 1;
-        else if (event.key === 'Home' && index > 0) { event.preventDefault(); step(-index); return; }
-        else if (event.key === 'End' && index < visible.length - 1) { event.preventDefault(); step(visible.length - 1 - index); return; }
-        if (!direction || !canStep(direction)) return;   // En el límite, las teclas siguen moviendo la página.
-        event.preventDefault();
-        step(direction);
+        const onButton = target instanceof Element && target.closest('button, a');
+        let handled = false;
+        if (event.key === 'ArrowRight') handled = canStep(1) && (decide('like'), true);
+        else if (event.key === 'ArrowLeft') handled = canStep(1) && (decide('pass'), true);
+        else if (event.key === 'ArrowDown' || event.key === 'PageDown' || (event.key === ' ' && !onButton && !event.shiftKey)) handled = canStep(1) && (decide('pass'), true);
+        else if (event.key === 'ArrowUp' || event.key === 'PageUp' || (event.key === ' ' && !onButton && event.shiftKey)) handled = canStep(-1) && step(-1);
+        else if (event.key === 'Home' && index > 0) handled = step(-index);
+        else if (event.key === 'End' && index < visible.length) handled = step(visible.length - index);
+        if (handled) event.preventDefault();   // En el límite las teclas siguen moviendo la página.
     });
 
-    prevButton?.addEventListener('click', () => step(-1));
-    nextButton?.addEventListener('click', () => step(1));
+    passButton?.addEventListener('click', () => decide('pass'));
+    likeButton?.addEventListener('click', () => decide('like'));
+    restartButton?.addEventListener('click', () => { index = 0; root.classList.add('is-used'); render(); });
 
     // Chips del bloque «Categorías» (main.js no los gestiona porque no hay galería estándar).
     document.addEventListener('click', event => {

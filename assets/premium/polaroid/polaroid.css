@@ -1,0 +1,163 @@
+/* =============================================================================
+   GALERÍA PREMIUM · ESTILO POLAROIDS (clave `polaroid`)
+   -----------------------------------------------------------------------------
+   Las fotos son Polaroids esparcidas sobre una mesa: la activa se centra y se amplía; las demás quedan alrededor, giradas y
+   ligeramente desenfocadas. Se carga DESPUÉS de deck.css, que aporta la raíz (.deck: pantalla completa y fondo de la web) y toda la
+   interfaz (herramientas, contador, flechas, botones de salir, pista); el comportamiento es el de deck.js. Aquí solo cambian el
+   aspecto de las cartas (marco blanco, pie manuscrito) y su colocación.
+   Marcado: inc/premium/deck.php (data-layout="polaroid"; cada carta lleva --j1..--j3, valores estables para su desorden).
+   Documentación: docs/galerias-premium.md y README.md.
+
+   Posiciones (data-pos, las asigna deck.js): 0 = activa, centrada · ±1..±4 = esparcidas alrededor · ±5 = ocultas.
+   ============================================================================= */
+.deck[data-layout="polaroid"] {
+    --polaroid-paper: #f7f4ec;                       /* El papel de una Polaroid es siempre blanco roto, sea cual sea la paleta. */
+    --polaroid-ink: #2b2620;
+    background:
+        radial-gradient(120% 90% at 50% 40%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%),
+        var(--bg);
+}
+
+.deck[data-layout="polaroid"] .deck__stage {
+    perspective: none;
+    --pad: 5.2rem;
+    --frame-w: min(calc(100cqw * .84), calc((100cqh - var(--pad) * 2) / 1.22), 38rem);
+    --scatter: .6;                                   /* Tamaño de las Polaroids de fondo respecto a la activa. */
+
+    /* Huecos de las Polaroids de fondo (x en cqw, y en cqh, giro en grados): pasadas y por venir, repartidas a ambos lados. */
+    --p1x: 31; --p1y: 10;  --p1r: 6;
+    --p2x: -31; --p2y: -9; --p2r: -8;
+    --p3x: 26; --p3y: -27; --p3r: 9;
+    --p4x: -27; --p4y: 25; --p4r: -5;
+    --m1x: -31; --m1y: 14; --m1r: -7;
+    --m2x: 31; --m2y: -15; --m2r: 8;
+    --m3x: -24; --m3y: -29; --m3r: 6;
+    --m4x: 25; --m4y: 29; --m4r: -9;
+}
+
+/* Pantallas altas y estrechas (móvil): las Polaroids de fondo asoman por arriba y por abajo. */
+@media (max-aspect-ratio: 1 / 1) {
+    .deck[data-layout="polaroid"] .deck__stage {
+        --p1x: 20; --p1y: 36;  --p1r: 6;
+        --p2x: -20; --p2y: -36; --p2r: -8;
+        --p3x: -16; --p3y: 40;  --p3r: -9;
+        --p4x: 16; --p4y: -40;  --p4r: 7;
+        --m1x: -22; --m1y: 34; --m1r: -7;
+        --m2x: 22; --m2y: -34; --m2r: 8;
+        --m3x: 18; --m3y: 41;  --m3r: 5;
+        --m4x: -18; --m4y: -41; --m4r: -6;
+    }
+}
+
+/* La carta: marco de Polaroid (papel blanco roto, foto casi cuadrada y pie más alto), centrada con `translate`; la colocación y el
+   giro van en `transform`, que es lo que anima deck.css. */
+.deck[data-layout="polaroid"] .deck__card {
+    width: var(--frame-w);
+    height: calc(var(--frame-w) * 1.22);
+    translate: -50% -50%;
+    transform-origin: 50% 50%;
+    background: var(--polaroid-paper);
+    border-radius: 3px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .38), 0 2px 6px rgba(0, 0, 0, .25);
+    transition:
+        transform var(--deck-duration) var(--deck-ease),
+        opacity calc(var(--deck-duration) * .8) var(--deck-ease),
+        filter var(--deck-duration) var(--deck-ease),
+        visibility 0s linear var(--deck-duration);
+}
+
+/* Zona de la foto: dentro del marco, dejando abajo el pie. Siempre recorta (cover): así es una Polaroid. */
+.deck[data-layout="polaroid"] .deck__link {
+    inset: 4.6% 4.6% 21% 4.6%;
+    width: auto;
+    height: auto;
+}
+
+.deck[data-layout="polaroid"] .deck__link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .1), inset 0 0 18px rgba(0, 0, 0, .12);
+    pointer-events: none;
+}
+
+.deck[data-layout="polaroid"] .deck__card.is-contain .deck__img { object-fit: cover; }
+
+/* Pie manuscrito: título y categoría sobre el papel (sin degradado). */
+.deck[data-layout="polaroid"] .deck__caption {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 21%;
+    padding: 0 7%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: none;
+    color: var(--polaroid-ink);
+}
+
+.deck[data-layout="polaroid"] .deck__title {
+    max-width: none;
+    font-size: calc(var(--frame-w) * .068);
+    line-height: 1.1;
+    text-shadow: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.deck[data-layout="polaroid"] .deck__category {
+    margin-top: .25rem;
+    color: color-mix(in srgb, var(--polaroid-ink) 62%, var(--polaroid-paper));
+    font-size: calc(var(--frame-w) * .028);
+}
+
+/* Posiciones. La activa se endereza casi del todo (un pequeño giro por foto, como si se hubiera colocado a mano). */
+.deck[data-layout="polaroid"] .deck__card[data-pos="0"] {
+    transform: rotate(calc((var(--j3, .5) - .5) * 3deg));
+    filter: none;
+    opacity: 1;
+    z-index: 50;
+    visibility: visible;
+}
+
+/* Las de alrededor: más pequeñas, giradas, algo desenfocadas y oscurecidas, con un pequeño desorden propio de cada foto. */
+.deck[data-layout="polaroid"] .deck__card[data-pos="1"],
+.deck[data-layout="polaroid"] .deck__card[data-pos="2"],
+.deck[data-layout="polaroid"] .deck__card[data-pos="3"],
+.deck[data-layout="polaroid"] .deck__card[data-pos="4"],
+.deck[data-layout="polaroid"] .deck__card[data-pos="-1"],
+.deck[data-layout="polaroid"] .deck__card[data-pos="-2"],
+.deck[data-layout="polaroid"] .deck__card[data-pos="-3"],
+.deck[data-layout="polaroid"] .deck__card[data-pos="-4"] {
+    filter: blur(1.6px) brightness(.82);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: none;
+    transition-delay: 0s, 0s, 0s, 0s;
+}
+
+.deck[data-layout="polaroid"] .deck__card[data-pos="1"] { transform: translate(calc((var(--p1x) + (var(--j1, .5) - .5) * 4) * 1cqw), calc((var(--p1y) + (var(--j2, .5) - .5) * 4) * 1cqh)) rotate(calc((var(--p1r) + (var(--j3, .5) - .5) * 6) * 1deg)) scale(var(--scatter)); z-index: 40; }
+.deck[data-layout="polaroid"] .deck__card[data-pos="2"] { transform: translate(calc((var(--p2x) + (var(--j1, .5) - .5) * 4) * 1cqw), calc((var(--p2y) + (var(--j2, .5) - .5) * 4) * 1cqh)) rotate(calc((var(--p2r) + (var(--j3, .5) - .5) * 6) * 1deg)) scale(var(--scatter)); z-index: 39; }
+.deck[data-layout="polaroid"] .deck__card[data-pos="3"] { transform: translate(calc((var(--p3x) + (var(--j1, .5) - .5) * 4) * 1cqw), calc((var(--p3y) + (var(--j2, .5) - .5) * 4) * 1cqh)) rotate(calc((var(--p3r) + (var(--j3, .5) - .5) * 6) * 1deg)) scale(var(--scatter)); z-index: 38; }
+.deck[data-layout="polaroid"] .deck__card[data-pos="4"] { transform: translate(calc((var(--p4x) + (var(--j1, .5) - .5) * 4) * 1cqw), calc((var(--p4y) + (var(--j2, .5) - .5) * 4) * 1cqh)) rotate(calc((var(--p4r) + (var(--j3, .5) - .5) * 6) * 1deg)) scale(var(--scatter)); z-index: 37; }
+.deck[data-layout="polaroid"] .deck__card[data-pos="-1"] { transform: translate(calc((var(--m1x) + (var(--j1, .5) - .5) * 4) * 1cqw), calc((var(--m1y) + (var(--j2, .5) - .5) * 4) * 1cqh)) rotate(calc((var(--m1r) + (var(--j3, .5) - .5) * 6) * 1deg)) scale(var(--scatter)); z-index: 36; }
+.deck[data-layout="polaroid"] .deck__card[data-pos="-2"] { transform: translate(calc((var(--m2x) + (var(--j1, .5) - .5) * 4) * 1cqw), calc((var(--m2y) + (var(--j2, .5) - .5) * 4) * 1cqh)) rotate(calc((var(--m2r) + (var(--j3, .5) - .5) * 6) * 1deg)) scale(var(--scatter)); z-index: 35; }
+.deck[data-layout="polaroid"] .deck__card[data-pos="-3"] { transform: translate(calc((var(--m3x) + (var(--j1, .5) - .5) * 4) * 1cqw), calc((var(--m3y) + (var(--j2, .5) - .5) * 4) * 1cqh)) rotate(calc((var(--m3r) + (var(--j3, .5) - .5) * 6) * 1deg)) scale(var(--scatter)); z-index: 34; }
+.deck[data-layout="polaroid"] .deck__card[data-pos="-4"] { transform: translate(calc((var(--m4x) + (var(--j1, .5) - .5) * 4) * 1cqw), calc((var(--m4y) + (var(--j2, .5) - .5) * 4) * 1cqh)) rotate(calc((var(--m4r) + (var(--j3, .5) - .5) * 6) * 1deg)) scale(var(--scatter)); z-index: 33; }
+
+/* Más allá: ocultas (se aparecen al acercarse). */
+.deck[data-layout="polaroid"] .deck__card[data-pos="5"],
+.deck[data-layout="polaroid"] .deck__card[data-pos="-5"] {
+    transform: scale(.4);
+    filter: blur(3px);
+    opacity: 0;
+    z-index: 10;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+@media (max-height: 520px) {
+    .deck[data-layout="polaroid"] .deck__stage { --pad: 3.9rem; }
+}

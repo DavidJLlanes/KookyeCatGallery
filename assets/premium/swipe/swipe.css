@@ -1,0 +1,179 @@
+/* =============================================================================
+   GALERÍA PREMIUM · ESTILO TINDER (clave `swipe`)
+   -----------------------------------------------------------------------------
+   Una carta alta a pantalla casi completa con las siguientes asomando debajo; se arrastra a un lado: hacia el corazón (derecha)
+   da un corazón a la foto y pasa a la siguiente; hacia la flecha (izquierda) solo pasa. Se carga DESPUÉS de deck.css, que aporta la
+   raíz (.deck: pantalla completa y fondo de la web) y la interfaz (herramientas, contador, botones de salir, pista). Aquí están la
+   carta, los sellos del corazón y de la flecha, los botones de la barra y el aviso final. El comportamiento está en swipe.js.
+   Marcado: inc/premium/swipe.php · Documentación: docs/galerias-premium.md y README.md.
+
+   Posiciones (data-pos, las asigna swipe.js): 0 = encima · 1, 2 = asoman debajo · 3 = oculta · -1 = ya pasada (sale por un lado).
+   ============================================================================= */
+.deck[data-layout="swipe"] {
+    --deck-duration: 440ms;                          /* Más ágil que la baraja: deslizar debe sentirse inmediato. */
+    --deck-ease: cubic-bezier(.2, .8, .25, 1);
+    --swipe-like: var(--accent);                     /* Color del corazón (lado derecho). */
+}
+
+.deck[data-layout="swipe"] .deck__stage {
+    perspective: none;
+    --pad: 5.2rem;
+    --frame-h: calc(100cqh - var(--pad) * 2);
+    --frame-w: min(calc(100cqw - 2rem), calc(var(--frame-h) / 1.35), 32rem);
+}
+
+/* La carta: alta (proporción de retrato), centrada. Su posición y su salida las anima el transform. */
+.deck[data-layout="swipe"] .deck__card {
+    width: var(--frame-w);
+    height: min(var(--frame-h), calc(var(--frame-w) * 1.4));
+    translate: -50% -50%;
+    transform-origin: 50% 90%;
+    touch-action: none;
+    cursor: grab;
+    border-radius: 22px;
+    box-shadow: 0 22px 50px rgba(0, 0, 0, .4), 0 0 0 1px var(--line);
+    will-change: transform;
+    transition:
+        transform var(--deck-duration) var(--deck-ease),
+        opacity calc(var(--deck-duration) * .9) ease,
+        filter var(--deck-duration) ease,
+        visibility 0s linear var(--deck-duration);
+}
+
+.deck[data-layout="swipe"] .deck__card:active { cursor: grabbing; }
+
+.deck[data-layout="swipe"] .deck__card[data-pos="0"] {
+    transform: none;
+    filter: none;
+    opacity: 1;
+    z-index: 50;
+    visibility: visible;
+    transition-delay: 0s, 0s, 0s, 0s;
+}
+
+.deck[data-layout="swipe"] .deck__card[data-pos="1"] {
+    transform: translateY(16px) scale(.95);
+    filter: brightness(.82);
+    opacity: 1;
+    z-index: 40;
+    visibility: visible;
+    pointer-events: none;
+    transition-delay: 0s, 0s, 0s, 0s;
+}
+
+.deck[data-layout="swipe"] .deck__card[data-pos="2"] {
+    transform: translateY(32px) scale(.9);
+    filter: brightness(.64);
+    opacity: 1;
+    z-index: 30;
+    visibility: visible;
+    pointer-events: none;
+    transition-delay: 0s, 0s, 0s, 0s;
+}
+
+.deck[data-layout="swipe"] .deck__card[data-pos="3"] {
+    transform: translateY(46px) scale(.85);
+    filter: brightness(.5);
+    opacity: 0;
+    z-index: 20;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Carta ya pasada: sale por la izquierda (la flecha) o, si recibió el corazón, por la derecha. */
+.deck[data-layout="swipe"] .deck__card[data-pos="-1"] {
+    transform: translateX(-140%) rotate(-20deg);
+    opacity: 0;
+    z-index: 60;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.deck[data-layout="swipe"] .deck__card[data-pos="-1"].is-out-right { transform: translateX(140%) rotate(20deg); }
+
+/* El pie de foto de la carta que sale se queda visible mientras sale (el de deck.css lo apaga enseguida). */
+.deck[data-layout="swipe"] .deck__card[data-pos="-1"] .deck__caption { opacity: 1; }
+
+.deck[data-layout="swipe"] .deck__caption {
+    padding: 4rem 1.3rem 1.2rem;
+}
+
+.deck[data-layout="swipe"] .deck__title { font-size: clamp(1.4rem, 5vw, 2.1rem); max-width: none; }
+
+/* Sellos del corazón (derecha) y de la flecha (izquierda): crecen con el arrastre (--like / --pass de 0 a 1) o se quedan al máximo
+   mientras la carta sale tras pulsar un botón o una tecla. */
+.swipe__stamp {
+    position: absolute;
+    top: 3.6rem;
+    z-index: 5;
+    display: grid;
+    place-items: center;
+    width: 4.6rem;
+    height: 4.6rem;
+    border: 4px solid currentColor;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--bg) 55%, transparent);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.swipe__stamp svg { width: 2.4rem; height: 2.4rem; }
+.swipe__stamp--like { left: 1.2rem; color: var(--swipe-like); transform: rotate(-14deg) scale(calc(.7 + var(--like, 0) * .3)); opacity: var(--like, 0); }
+.swipe__stamp--pass { right: 1.2rem; color: var(--fg); transform: rotate(14deg) scale(calc(.7 + var(--pass, 0) * .3)); opacity: var(--pass, 0); }
+.deck__card.is-stamp-like .swipe__stamp--like { opacity: 1; transform: rotate(-14deg) scale(1); }
+.deck__card.is-stamp-pass .swipe__stamp--pass { opacity: 1; transform: rotate(14deg) scale(1); }
+
+/* Corazón oculto (lo pulsa swipe.js): nunca se ve. */
+.swipe__heart-btn { display: none !important; }
+
+/* Botones de la barra: la flecha (izquierda) y el corazón (derecha) indican hacia dónde deslizar y qué pasa. */
+.swipe__btn { width: 48px; height: 48px; }
+.swipe__btn svg { width: 24px; height: 24px; }
+.swipe__btn--like { color: var(--swipe-like); }
+.swipe__btn--like:hover:not(:disabled) { background: color-mix(in srgb, var(--swipe-like) 18%, transparent); color: var(--swipe-like); }
+.swipe__btn--pass:hover:not(:disabled) { background: color-mix(in srgb, var(--fg) 12%, transparent); color: var(--fg); }
+
+/* Fin de las fotos. */
+.swipe__end {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 1;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    transform: translate(-50%, -50%);
+    color: var(--fg);
+    text-align: center;
+}
+
+.deck.is-finished .swipe__end { display: flex; }
+.swipe__end p { margin: 0; font: italic 400 clamp(1.4rem, 5vw, 2rem) / 1.2 var(--serif); }
+
+.swipe__restart {
+    padding: .7rem 1.4rem;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--accent);
+    font: 600 .75rem / 1 var(--sans);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease;
+}
+
+.swipe__restart:hover { background: var(--accent); color: var(--bg); }
+
+@media (max-height: 520px) {
+    .deck[data-layout="swipe"] .deck__stage { --pad: 3.9rem; }
+    .swipe__stamp { top: 2.4rem; width: 3.4rem; height: 3.4rem; }
+    .swipe__stamp svg { width: 1.8rem; height: 1.8rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .deck[data-layout="swipe"] { --deck-duration: 1ms; }
+}

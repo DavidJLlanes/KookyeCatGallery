@@ -88,7 +88,7 @@ check(str_contains(site_settings_form('t', $defaults, 'design'), 'value="' . htm
 
 // ── Galerías premium ──────────────────────────────────────────────────────────
 check($defaults['gallery_premium'] === 'none', 'No premium gallery by default.');
-check(isset(site_premium_gallery_choices()['none'], site_premium_gallery_choices()['deck'], site_premium_gallery_choices()['bubbles'], site_premium_gallery_choices()['squares'], site_premium_gallery_choices()['drum'], site_premium_gallery_choices()['cylinder']), 'Premium choices must include none, deck, bubbles, squares, drum and cylinder.');
+check(isset(site_premium_gallery_choices()['none'], site_premium_gallery_choices()['deck'], site_premium_gallery_choices()['bubbles'], site_premium_gallery_choices()['squares'], site_premium_gallery_choices()['drum'], site_premium_gallery_choices()['cylinder'], site_premium_gallery_choices()['polaroid'], site_premium_gallery_choices()['swipe']), 'Premium choices must include none, deck, bubbles, squares, drum, cylinder, polaroid and swipe.');
 check(site_premium_gallery_active($defaults) === null, 'No premium gallery must be active by default.');
 $deck = array_replace($defaults, ['gallery_premium' => 'deck']);
 check(site_settings_validate($deck)['gallery_premium'] === 'deck', 'The deck gallery was rejected.');
@@ -129,6 +129,14 @@ check(site_premium_ignored_settings('cylinder') === site_premium_ignored_setting
 check(site_settings_validate(array_replace($defaults, ['gallery_premium' => 'cylinder']))['gallery_premium'] === 'cylinder', 'The cylinder gallery was rejected.');
 check(site_premium_gallery_definitions()['cylinder']['css'] === ['assets/premium/deck/deck.css', 'assets/premium/cylinder/cylinder.css'], 'Cylinder loads the deck interface styles plus its own.');
 check(is_file(dirname(__DIR__) . '/inc/premium/cylinder.php') && is_file(dirname(__DIR__) . '/assets/premium/cylinder/cylinder.js'), 'Cylinder files must exist.');
+// «Estilo Polaroids» (interfaz de la baraja + polaroid.css) y «Estilo Tinder» (swipe.php, swipe.css y swipe.js): ignoran la galería estándar como la baraja.
+foreach (['polaroid', 'swipe'] as $extra) {
+    check(site_premium_gallery_active(array_replace($defaults, ['gallery_premium' => $extra])) === $extra, "The $extra gallery must be active.");
+    check(site_premium_ignored_settings($extra) === site_premium_ignored_settings('deck'), "$extra must ignore the same settings as deck.");
+    check(site_settings_validate(array_replace($defaults, ['gallery_premium' => $extra]))['gallery_premium'] === $extra, "The $extra gallery was rejected.");
+}
+check(site_premium_gallery_definitions()['polaroid']['css'] === ['assets/premium/deck/deck.css', 'assets/premium/polaroid/polaroid.css'], 'Polaroid loads deck.css plus its own.');
+check(site_premium_gallery_definitions()['swipe']['js'] === 'assets/premium/swipe/swipe.js' && is_file(dirname(__DIR__) . '/inc/premium/swipe.php'), 'Swipe has its own script and markup.');
 // «Estilo Cuadrados» respeta lo mismo que «Estilo Burbujas».
 check(site_premium_gallery_active(array_replace($defaults, ['gallery_premium' => 'squares'])) === 'squares', 'The squares gallery must be active.');
 check(site_premium_ignored_settings('squares') === site_premium_ignored_settings('bubbles'), 'Squares must honor the same settings as bubbles.');
