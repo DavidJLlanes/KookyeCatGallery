@@ -201,13 +201,24 @@ body[data-show-categories="false"] [data-site-section="categories"] {display:non
 }
 
 /* Bloques reordenables de la portada */
-.categories-block { max-width:2200px; margin:0 auto; padding:6rem 2rem 0; }
+/* Categorías: título, filtro y un buen respiro antes del siguiente bloque. */
+.categories-block { max-width:2200px; margin:0 auto; padding:6rem 2rem 5rem; }
 .categories-block + .gallery-section { padding-top:0; }
-@media(max-width:600px) { .categories-block { padding:4rem 1rem 0; } }
+.categories-block__title {
+    margin:0; text-align:center; color:var(--fg);
+    font:italic 400 clamp(2rem,4.2vw,3rem)/1.1 var(--serif); letter-spacing:-.01em;
+}
+.categories-block__title::after {
+    content:""; display:block; width:56px; height:2px; margin:1.1rem auto 0; background:var(--accent);
+}
+.categories-block .categories-filter { padding-top:1.8rem; border-bottom:0; }
+@media(max-width:600px) { .categories-block { padding:4rem 1rem 3.5rem; } }
 @media(max-width:768px) {
-    .categories-block { padding:0; }
+    .categories-block { padding:1.1rem 0 2.4rem; }
+    .categories-block__title { padding:0 1rem; text-align:left; font-size:1.5rem; }
+    .categories-block__title::after { margin:.6rem 0 0; width:40px; }
     /* Categorías en móvil: una sola fila que se desliza con el dedo, encima de la cuadrícula. */
-    .categories-filter { padding:.7rem 1rem; border-bottom:0; }
+    .categories-block .categories-filter { padding:.9rem 1rem .4rem; }
     .categories-filter__inner { flex-wrap:nowrap; justify-content:flex-start; gap:.5rem; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
     .categories-filter__inner::-webkit-scrollbar { display:none; }
     .categories-filter__chip { flex:0 0 auto; white-space:nowrap; }

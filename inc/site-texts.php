@@ -1,6 +1,7 @@
 <?php
 // Stable keys: do not regenerate this catalog when defaults change.
 return [
+    'categories_title' => ['group' => 'Inicio y galería', 'default' => 'Categorías'],
     'photo_navigation' => ['group' => 'Controles e instalación', 'default' => 'Navegación entre fotografías'],
     'social_threads_user' => ['group' => 'Perfil y redes', 'default' => '@kookyecatgallery'],
     'text_52179dc42df7efe5' => ['group' => 'Inicio y galería · accesibilidad', 'default' => 'Kookye Cat Gallery'],
