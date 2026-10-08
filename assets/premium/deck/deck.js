@@ -10,24 +10,24 @@
      · Avanza con: rueda del ratón hacia abajo, deslizar el dedo hacia arriba (o hacia la izquierda),
        flechas del teclado, RePág/AvPág, Espacio y los botones de la barra inferior.
      · Retrocede con los gestos contrarios.
-     · Mientras mueve cartas la página NO se desplaza. En el límite (primera o última foto) deja de
-       capturar el gesto y la página sigue su scroll normal, así se puede salir de la galería.
      · Filtra por categoría (chips del bloque «Categorías») y por favoritas (botón «Favoritas»).
-     · Al llegar a la baraja desde arriba o desde abajo, el scroll de la página SE DETIENE justo cuando
-       la baraja llena la pantalla (aunque haya inercia); a partir de ahí, los gestos mueven las fotos.
-     · Desde la ficha de una foto, «Volver a la galería» regresa a esa misma foto, en la baraja a pantalla
-       completa (enlace /#baraja=<slug>, y botón «Atrás» del navegador).
-     · El botón «Salir» baja la página hasta lo que sigue a la galería, sin volver a frenarse en ella.
-       En móvil, deslizar más allá de la primera o la última foto también sale de la galería.
-     · Ajusta cada foto a la pantalla: la cubre entera si su proporción es parecida a la de la
-       pantalla y, si no, la muestra completa sobre su propio desenfoque (sin recortes absurdos).
+     · Ajusta cada foto a su carta: la cubre entera si su proporción es parecida a la del marco y, si no,
+       la muestra completa sobre el fondo de la carta (nada de recortes absurdos).
+
+   Cómo se queda fija la galería
+     · ESCRITORIO (ratón/trackpad): mientras la baraja llena la pantalla, la rueda mueve fotos y se cancela
+       el scroll de la página. Al llegar a la baraja el scroll se detiene (aunque haya inercia).
+     · MÓVIL/TABLET (táctil): al llegar, la baraja se FIJA: el cuerpo de la página pasa a position: fixed y
+       deja de existir el scroll, así que no hay nada que se mueva ni «vibre». Los gestos solo mueven fotos.
+       Se sale con el botón «Salir» (abajo o arriba) o deslizando más allá de la última o la primera foto.
+     · Desde la ficha de una foto, «Volver a la galería» regresa a esa misma foto (enlace /#baraja=<slug>).
 
    Organización del archivo
-     1. Estado y utilidades        5. Entrada: táctil
-     2. Filtros                    6. Entrada: teclado, botones y filtros
-     3. Pintado (render)           7. Parada del scroll al llegar a la baraja
-     4. Entrada: rueda             8. Volver desde la ficha de una foto
-     9. Salir de la galería («Salir», gestos en los límites) y estado «acoplada»
+     1. Estado y utilidades        6. Entrada: teclado, botones y filtros
+     2. Filtros                    7. Fijar la galería (móvil) / parada del scroll (escritorio)
+     3. Pintado (render)           8. Volver desde la ficha de una foto
+     4. Entrada: rueda             9. Salir de la galería y estado «acoplada»
+     5. Entrada: táctil
    ============================================================================= */
 (() => {
     'use strict';
@@ -38,13 +38,17 @@
     /* -------------------------------------------------------------------------
        1. Estado y utilidades
        ------------------------------------------------------------------------- */
+    const html = document.documentElement;
     const cards = [...root.querySelectorAll('.deck__card')];
     const counterCurrent = root.querySelector('[data-deck-current]');
     const counterTotal = root.querySelector('[data-deck-total]');
     const prevButton = root.querySelector('[data-deck-prev]');
     const nextButton = root.querySelector('[data-deck-next]');
+    const exitDownButton = root.querySelector('[data-deck-exit]');
+    const exitUpButton = root.querySelector('[data-deck-exit-up]');
     const emptyMessage = root.querySelector('[data-deck-empty]');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const coarse = window.matchMedia('(hover: none) and (pointer: coarse)');   // Pantalla táctil sin ratón.
 
     let visible = cards.slice();   // Cartas que pasan los filtros, en orden.
     let index = 0;                 // Posición de la carta activa dentro de `visible`.
@@ -53,53 +57,56 @@
     const STEP_COOLDOWN = 600;     // Mínimo entre dos pasos con la rueda: deja ver el efecto de baraja completo.
     const WHEEL_QUIET = 120;       // Pausa que separa un gesto de rueda del siguiente.
 
-    document.documentElement.classList.add('has-deck');   // Marca la página para que otros estilos puedan reaccionar (no se usa scroll-snap: dificultaría salir de la baraja).
+    html.classList.add('has-deck');   // Marca la página para que otros estilos puedan reaccionar.
 
     const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+    const rect = () => root.getBoundingClientRect();
+
+    // Fijación táctil (sección 7): el cuerpo de la página se congela con position: fixed.
+    let pinned = false;
+    let pinY = 0;                  // Posición de scroll en la que se fijó la baraja.
+
+    // Posición de la baraja en el documento. Fijada, el scroll vale 0 y se usa la guardada.
+    const deckTop = () => (pinned ? pinY : rect().top + window.scrollY);
 
     // «Acoplada»: la baraja llena la pantalla. Solo entonces captura la rueda, el dedo y el teclado.
-    const rect = () => root.getBoundingClientRect();
+    //   · Táctil: lo está cuando está fijada.
+    //   · Escritorio: cuando ocupa casi toda la pantalla.
     const isEngaged = () => {
+        if (coarse.matches) return pinned;
         const r = rect();
         const vh = window.innerHeight;
         return r.width > 0 && r.top <= vh * 0.12 && r.bottom >= vh * 0.88;
     };
     const isAligned = () => Math.abs(rect().top) <= 2;
 
-    // Alinea la baraja con el borde superior de la pantalla (una sola vez por gesto).
+    // Salida (botones «Salir» o gesto en un límite): mientras dura, la baraja no captura ningún gesto.
+    let exitUntil = 0;
+    const exiting = () => performance.now() < exitUntil;
+
+    // «Parada» (solo escritorio): mientras dura, se absorbe la rueda que sigue llegando de un gesto con inercia.
+    let locked = false;
+    let lockUntil = 0;
+    const extendLock = ms => { lockUntil = Math.max(lockUntil, performance.now() + ms); };
+    const startLock = ms => {
+        extendLock(ms);
+        if (locked) return;
+        locked = true;
+        const tick = () => {
+            if (performance.now() >= lockUntil) { locked = false; return; }
+            window.requestAnimationFrame(tick);
+        };
+        window.requestAnimationFrame(tick);
+    };
+
+    // Alinea la baraja con el borde superior de la pantalla (escritorio; una sola vez por gesto).
     let aligning = false;
     const align = () => {
         if (aligning || isAligned()) return;
         aligning = true;
         window.scrollBy({ top: rect().top, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
         window.setTimeout(() => { aligning = false; }, 450);
-        startLock(450);   // Parada: lo que quede del gesto que trajo hasta aquí no debe pasar fotos.
-    };
-
-    // Salida (botón «Salir» o gesto en un límite): mientras dura, la baraja no captura ningún gesto.
-    let exitUntil = 0;
-    const exiting = () => performance.now() < exitUntil;
-
-    // «Parada»: mientras dura, la página no puede desplazarse (ver la sección 7). La usa también la rueda.
-    let locked = false;
-    let lockUntil = 0;
-    let touching = false;                     // Hay un dedo en la pantalla.
-    const extendLock = ms => { lockUntil = Math.max(lockUntil, performance.now() + ms); };
-    const startLock = ms => {
-        extendLock(ms);
-        if (locked) return;
-        locked = true;
-        document.documentElement.classList.add('deck-locked');
-        const tick = () => {
-            if (touching) extendLock(120);    // El dedo sigue puesto: se mantiene la parada hasta soltarlo.
-            if (performance.now() >= lockUntil) {
-                locked = false;
-                document.documentElement.classList.remove('deck-locked');
-                return;
-            }
-            window.requestAnimationFrame(tick);
-        };
-        window.requestAnimationFrame(tick);
+        startLock(450);   // Lo que quede del gesto que trajo hasta aquí no debe pasar fotos.
     };
 
     /* -------------------------------------------------------------------------
@@ -123,27 +130,23 @@
         cards.forEach(card => { card.hidden = !visible.includes(card); });
         index = 0;
         render();
+        fitCards();
     };
 
     /* -------------------------------------------------------------------------
        3. Pintado
        ------------------------------------------------------------------------- */
-    const fitCard = card => {
-        // Proporción de la foto (ancho/alto) frente a la de la pantalla. Si difieren más de ~35 %, se
-        // muestra completa (contain) para no recortarla; si no, cubre la carta (cover).
-        const photo = Number(card.dataset.aspect) || 1.5;
-        const screen = root.clientWidth / Math.max(1, root.clientHeight);
-        card.classList.toggle('is-contain', Math.abs(Math.log(photo / screen)) > 0.3);
+    // Todas las cartas tienen el mismo marco (lo fija el CSS). Si la proporción de la foto se parece a la del marco
+    // la cubre (cover); si difiere más de ~35 % se muestra completa (contain) sobre el fondo de la carta.
+    const fitCards = () => {
+        const frame = visible[0];
+        if (!frame || !frame.clientHeight) return;
+        const ratio = frame.clientWidth / frame.clientHeight;
+        cards.forEach(card => {
+            const photo = Number(card.dataset.aspect) || 1.5;
+            card.classList.toggle('is-contain', Math.abs(Math.log(photo / ratio)) > 0.3);
+        });
     };
-
-    const setBackdrop = card => {
-        const image = card.querySelector('.deck__img');
-        const backdrop = card.querySelector('.deck__backdrop');
-        if (!image || !backdrop || !image.currentSrc) return;
-        backdrop.style.backgroundImage = `url("${image.currentSrc.replace(/"/g, '%22')}")`;
-    };
-
-    const updateFit = () => cards.forEach(fitCard);
 
     const render = () => {
         const total = visible.length;
@@ -192,6 +195,7 @@
 
     window.addEventListener('wheel', event => {
         if (event.ctrlKey || event.defaultPrevented || exiting()) return;      // ctrl+rueda = zoom del navegador.
+        if (pinned) { event.preventDefault(); return; }                        // Fijada: la página no se mueve.
         if (locked) {                      // Parada al llegar: se absorbe la inercia del gesto que trajo hasta aquí.
             event.preventDefault();
             extendLock(160);
@@ -225,11 +229,13 @@
     /* -------------------------------------------------------------------------
        5. Entrada: táctil
        Dedo hacia arriba (o hacia la izquierda) = siguiente. El gesto contrario = anterior.
-       preventDefault solo si hay carta a la que ir: en los límites el dedo sigue moviendo la página.
+       En móvil la baraja está fijada (sección 7): el navegador no desplaza nada. Si el gesto va más allá de la
+       última o la primera foto, se sale de la galería por script (sección 9).
        ------------------------------------------------------------------------- */
     const STEP_DISTANCE = 42;   // px de recorrido para pasar de carta durante el gesto.
     const FLICK_DISTANCE = 18;  // px mínimos de un gesto rápido.
     const FLICK_TIME = 220;     // ms máximos de un gesto rápido.
+    const LEAVE_DISTANCE = 24;  // px de recorrido para salir de la galería en un límite.
     let touch = null;
 
     root.addEventListener('touchstart', event => {
@@ -240,14 +246,9 @@
     }, { passive: true });
 
     root.addEventListener('touchmove', event => {
-        if (locked || exiting()) { touch = null; return; }   // Parada al llegar o salida: este gesto no mueve cartas.
+        if (exiting()) { touch = null; return; }   // Salida en curso: este gesto no mueve cartas.
         if (!touch || event.touches.length !== 1) return;
-        // Un gesto que ya movió cartas se queda con TODO el recorrido del dedo: si no, el resto del gesto
-        // desplazaría la página de fondo.
-        if (touch.done) {
-            if (touch.captured && event.cancelable) event.preventDefault();   // Paso ya dado: se sigue bloqueando la página.
-            return;                                                           // done sin captured = gesto cedido a la página.
-        }
+        if (touch.done) return;                    // El gesto ya hizo lo suyo; el documento cancela el resto.
         const point = event.touches[0];
         const dx = point.clientX - touch.x;
         const dy = point.clientY - touch.y;
@@ -258,20 +259,15 @@
         const delta = touch.axis === 'y' ? dy : dx;
         const direction = delta < 0 ? 1 : -1;
         if (!canStep(direction)) {
-            // Límite (primera o última foto). Con la baraja acoplada el CSS usa touch-action: none, así que el
-            // navegador ya no desplaza la página por sí solo: se sale de la galería por script (sección 9).
-            if (event.cancelable) event.preventDefault();
-            touch.captured = true;
-            if (Math.abs(delta) >= 24) { touch.done = true; leaveDeck(direction); }   // Recorrido mínimo para salir.
+            // Límite (primera o última foto): se sale de la galería hacia ese lado.
+            if (Math.abs(delta) >= LEAVE_DISTANCE) { touch.done = true; leaveDeck(direction); }
             return;
         }
-        if (event.cancelable) event.preventDefault();             // El fondo de la web no se mueve.
-        touch.captured = true;                                    // A partir de aquí el gesto es de la baraja.
         if (!isAligned()) { align(); touch.done = true; return; }
         touch.direction = direction;
         touch.distance = Math.abs(delta);
         if (touch.distance >= STEP_DISTANCE) { step(direction); touch.done = true; }
-    }, { passive: false });
+    }, { passive: true });
 
     const endTouch = event => {
         if (touch && !touch.done && touch.direction && touch.distance >= FLICK_DISTANCE
@@ -282,7 +278,7 @@
     root.addEventListener('touchcancel', () => { touch = null; }, { passive: true });
 
     /* -------------------------------------------------------------------------
-       6. Entrada: teclado, botones, filtros y arranque
+       6. Entrada: teclado, botones y filtros
        ------------------------------------------------------------------------- */
     document.addEventListener('keydown', event => {
         if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
@@ -316,33 +312,100 @@
     // main.js alterna body.favorites-only y avisa con este evento.
     document.addEventListener('favorites:changed', applyFilters);
 
-    // Ajuste a la pantalla al cargar, al girar el dispositivo y al redimensionar.
-    let resizeTimer = 0;
-    const onResize = () => { window.clearTimeout(resizeTimer); resizeTimer = window.setTimeout(updateFit, 80); };
-    window.addEventListener('resize', onResize);
-    window.addEventListener('orientationchange', onResize);
-
-    cards.forEach(card => {
-        const image = card.querySelector('.deck__img');
-        if (!image) return;
-        if (image.complete) setBackdrop(card);
-        else image.addEventListener('load', () => setBackdrop(card), { once: true });
-    });
-
     /* -------------------------------------------------------------------------
-       7. Parada del scroll al llegar a la baraja
-       Cuando el scroll de la página cruza el punto en que la baraja llena la pantalla (bajando desde
-       arriba o subiendo desde abajo), se coloca la página exactamente ahí y se «congela» un instante:
-       así la inercia del gesto no pasa de largo ni mueve fotos por accidente. Pasada la parada, los
-       gestos siguientes mueven las fotos (secciones 4 y 5).
+       7. Fijar la galería (móvil) y parada del scroll (escritorio)
+
+       MÓVIL / TABLET. En cuanto la baraja llena la pantalla se FIJA: se coloca el scroll exactamente en ella y el
+       <body> pasa a position: fixed (con top negativo para no perder el sitio). Sin scroll no hay nada que se
+       mueva, rebote ni «vibre», ni con la inercia del dedo, ni con la barra de direcciones del navegador. Es la
+       técnica fiable en iOS y Android; luchar contra el scroll nativo con scrollTo() provoca temblores.
+       Para llegar se vigila la posición de la baraja fotograma a fotograma mientras está cerca de la pantalla
+       (en iOS los eventos de scroll durante la inercia no son fiables).
+
+       ESCRITORIO. Cuando el scroll cruza la baraja se coloca la página justo ahí y se «congela» un instante
+       (la rueda que sigue llegando se absorbe) para que la inercia no pase de largo ni mueva fotos.
        ------------------------------------------------------------------------- */
-    const deckTop = () => rect().top + window.scrollY;
-    let lastY = window.scrollY;
+    let savedBodyStyle = '';
     let skipCatchUntil = 0;
 
+    const setEngagedClass = () => html.classList.toggle('deck-engaged', isEngaged());
+
+    const pin = () => {
+        if (pinned || !coarse.matches) return;
+        window.scrollTo({ top: deckTop(), behavior: 'instant' });
+        pinY = window.scrollY;
+        const body = document.body;
+        savedBodyStyle = body.getAttribute('style') || '';
+        body.style.position = 'fixed';
+        body.style.top = `-${pinY}px`;
+        body.style.left = '0';
+        body.style.right = '0';
+        body.style.width = '100%';
+        pinned = true;
+        html.classList.add('deck-pinned');
+        setEngagedClass();
+        updateExitUp();
+    };
+
+    const unpin = () => {
+        if (!pinned) return;
+        const body = document.body;
+        if (savedBodyStyle) body.setAttribute('style', savedBodyStyle); else body.removeAttribute('style');
+        pinned = false;
+        html.classList.remove('deck-pinned');
+        window.scrollTo({ top: pinY, behavior: 'instant' });
+        setEngagedClass();
+        updateExitUp();
+    };
+
+    // Mientras está fijada no hay gesto nativo que valga: se cancela todo (también el «tirar para recargar»).
+    document.addEventListener('touchmove', event => {
+        if (pinned && event.cancelable) event.preventDefault();
+    }, { passive: false });
+
+    // Táctil: vigilancia de llegada (solo mientras la baraja está a menos de una pantalla de distancia).
+    let near = false;
+    let watching = false;
+    let lastTop = 0;
+    const watch = () => {
+        if (watching) return;
+        watching = true;
+        lastTop = rect().top;
+        const loop = () => {
+            if (!near && !pinned) { watching = false; return; }
+            if (coarse.matches && !pinned && !exiting() && performance.now() >= skipCatchUntil) {
+                const top = rect().top;
+                // La baraja cruza el borde superior de la pantalla (bajando desde arriba o subiendo desde abajo) o ya está justo en él.
+                if ((lastTop > 1 && top <= 1) || (lastTop < -1 && top >= -1) || Math.abs(top) <= 1) pin();
+            }
+            lastTop = rect().top;
+            window.requestAnimationFrame(loop);
+        };
+        loop();
+    };
+
+    if ('IntersectionObserver' in window) {
+        new IntersectionObserver(entries => {
+            near = entries[entries.length - 1].isIntersecting;
+            if (near) watch();
+        }, { rootMargin: '100% 0px 100% 0px' }).observe(root);
+    } else {
+        near = true;
+        watch();
+    }
+
+    // Cruce por eventos de scroll (táctil: fija; escritorio: para el scroll). Complementa la vigilancia fotograma a fotograma.
+    let lastY = window.scrollY;
     window.addEventListener('scroll', () => {
+        if (pinned) { lastY = window.scrollY; return; }
         const y = window.scrollY;
         const target = deckTop();
+        if (coarse.matches) {                                   // Táctil: cruzar la baraja la fija (también si el salto es grande).
+            const passed = (lastY < target - 1 && y >= target - 1) || (lastY > target + 1 && y <= target + 1);
+            lastY = y;
+            if (passed && root.clientHeight > 0 && !exiting() && performance.now() >= skipCatchUntil) pin();
+            return;
+        }
         if (locked) {                                           // Durante la parada la página no se mueve.
             if (Math.abs(y - target) > 1) window.scrollTo({ top: target, behavior: 'instant' });
             lastY = target;
@@ -350,21 +413,11 @@
         }
         const crossed = (lastY < target - 1 && y >= target - 1) || (lastY > target + 1 && y <= target + 1);
         lastY = y;
-        if (!crossed || root.clientHeight === 0 || performance.now() < skipCatchUntil) return;
+        if (!crossed || root.clientHeight === 0 || exiting() || performance.now() < skipCatchUntil) return;
         window.scrollTo({ top: target, behavior: 'instant' });
         lastY = target;
         startLock(450);
     }, { passive: true });
-
-    // Un dedo en la pantalla mantiene la parada; y mientras dura, el dedo no desplaza la página.
-    document.addEventListener('touchstart', event => { touching = event.touches.length > 0; }, { passive: true });
-    document.addEventListener('touchend', event => { touching = event.touches.length > 0; }, { passive: true });
-    document.addEventListener('touchcancel', () => { touching = false; }, { passive: true });
-    document.addEventListener('touchmove', event => {
-        if (!locked) return;
-        extendLock(160);
-        if (event.cancelable) event.preventDefault();
-    }, { passive: false });
 
     /* -------------------------------------------------------------------------
        8. Volver desde la ficha de una foto
@@ -404,7 +457,9 @@
         // Lleva la baraja a pantalla completa. La página puede recolocarse mientras carga: se repite.
         const showDeck = () => {
             skipCatchUntil = performance.now() + 900;
+            if (pinned) unpin();
             window.scrollTo({ top: deckTop(), behavior: 'instant' });
+            pin();
         };
         showDeck();
         window.addEventListener('load', showDeck, { once: true });
@@ -413,32 +468,57 @@
 
     /* -------------------------------------------------------------------------
        9. Salir de la galería y estado «acoplada»
-       · El botón «Salir» baja la página hasta el final de la baraja (lo que sigue en la web).
-       · En móvil, con la baraja acoplada el navegador no desplaza la página con el dedo (touch-action: none en
-         el CSS: es lo único fiable en iOS y Android para que el fondo no se mueva). Por eso, deslizar más allá
-         de la última foto sale hacia abajo y más allá de la primera, hacia arriba, por script.
-       · Durante la salida la baraja no captura gestos ni vuelve a frenar la página. Para volver, basta con
-         desplazarse hacia ella: al cruzarla se detiene otra vez (sección 7).
-       · Mientras la baraja llena la pantalla, la página recibe html.deck-engaged: el CSS aparta los botones
-         flotantes de la web, que se pisaban con la barra inferior.
+       · «Salir» (abajo) baja la página hasta el final de la baraja: lo que sigue en la web.
+       · «Salir hacia arriba» sube hasta lo que hay antes de la baraja (solo si hay algo encima).
+       · En móvil, deslizar más allá de la última foto sale hacia abajo y más allá de la primera, hacia arriba.
+       · Durante la salida la baraja no captura gestos ni vuelve a frenar o fijar la página. Para volver, basta
+         con desplazarse hacia ella: al cruzarla se detiene o se fija otra vez (sección 7).
+       · Mientras la baraja está acoplada, la página recibe html.deck-engaged: el CSS aparta los botones
+         flotantes de la web (se pisaban con la barra inferior).
        ------------------------------------------------------------------------- */
     const leaveDeck = direction => {
         const smooth = !reducedMotion.matches;
         exitUntil = performance.now() + (smooth ? 1400 : 300);
         skipCatchUntil = exitUntil;
         lockUntil = 0;                                           // Cancela cualquier parada en curso.
-        const top = direction > 0 ? deckTop() + root.offsetHeight : Math.max(0, deckTop() - window.innerHeight);
+        const from = deckTop();
+        unpin();                                                 // Devuelve el scroll a la baraja antes de salir.
+        const top = direction > 0 ? from + root.offsetHeight : Math.max(0, from - window.innerHeight);
         window.scrollTo({ top, behavior: smooth ? 'smooth' : 'instant' });
     };
 
-    root.querySelector('[data-deck-exit]')?.addEventListener('click', () => leaveDeck(1));
+    // «Salir hacia arriba» solo tiene sentido si hay contenido encima de la baraja.
+    function updateExitUp() {
+        if (exitUpButton) exitUpButton.hidden = deckTop() < 4;
+    }
 
-    const syncEngaged = () => document.documentElement.classList.toggle('deck-engaged', isEngaged());
-    window.addEventListener('scroll', syncEngaged, { passive: true });
-    window.addEventListener('resize', syncEngaged);
+    exitDownButton?.addEventListener('click', () => leaveDeck(1));
+    exitUpButton?.addEventListener('click', () => leaveDeck(-1));
 
-    updateFit();
+    window.addEventListener('scroll', setEngagedClass, { passive: true });
+
+    // Ajuste a la pantalla al cargar, al girar el dispositivo y al redimensionar.
+    let resizeTimer = 0;
+    const onResize = () => {
+        window.clearTimeout(resizeTimer);
+        resizeTimer = window.setTimeout(() => {
+            fitCards();
+            if (pinned) {                                        // Cambió el tamaño: se vuelve a fijar en el sitio exacto.
+                unpin();
+                window.requestAnimationFrame(() => pin());
+            }
+            setEngagedClass();
+            updateExitUp();
+        }, 120);
+    };
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+
+    fitCards();
     render();
     restoreFromSlug();
-    syncEngaged();
+    setEngagedClass();
+    updateExitUp();
+    // Si la web arranca con la baraja ya a pantalla completa (p. ej. cabecera oculta), en táctil se fija desde el principio.
+    if (coarse.matches && Math.abs(rect().top) <= 1 && window.scrollY <= 1) pin();
 })();

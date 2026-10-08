@@ -28,13 +28,6 @@
     margin: 0 !important;
 }
 
-/* El scroll de la página se detiene al llegar a la baraja (deck.js, sección 7). Con ratón o trackpad basta con
-   absorber los eventos de la rueda. En pantallas táctiles la inercia del dedo la gestiona el navegador y solo se
-   frena congelando el scroll un instante; allí las barras de desplazamiento son flotantes y no mueven la página. */
-@media (hover: none) and (pointer: coarse) {
-    html.deck-locked { overflow: hidden; }
-}
-
 .deck {
     /* Ajustes de la animación: pausada y suave. */
     --deck-duration: 850ms;                         /* Duración del paso de una carta: pausada, para que se aprecie la baraja. */
@@ -66,69 +59,80 @@
 .deck__stage {
     position: absolute;
     inset: 0;
-    perspective: 1700px;
-    perspective-origin: 62% 50%;
+    perspective: 1500px;
+    perspective-origin: 50% 40%;
+    container-type: size;                           /* Las cartas se miden con cqw/cqh: mismo marco en todas. */
+
+    /* Reservas alrededor del marco: arriba las herramientas, abajo la barra de navegación y a los lados el mazo. */
+    --pad-top: 4.2rem;
+    --pad-bottom: 5.6rem;
+    --side: clamp(3rem, 10cqw, 6rem);
+    --frame-h: calc(100cqh - var(--pad-top) - var(--pad-bottom));
+    --frame-w: min(calc(100cqw - var(--side) * 2), calc(var(--frame-h) * 1.6));
 }
 
+/* Todas las cartas comparten el mismo marco, centrado. Se coloca con las propiedades individuales `translate` y
+   `transform` (esta última queda libre para el mazo y la animación). */
 .deck__card {
     position: absolute;
-    inset: 0;
+    top: var(--pad-top);
+    left: 50%;
+    width: var(--frame-w);
+    height: min(var(--frame-h), calc(var(--frame-w) * 1.75));
+    translate: -50% 0;
     margin: 0;
     overflow: hidden;
     background: var(--bg-card);
-    border-radius: 0;
-    box-shadow: 0 30px 80px rgba(0, 0, 0, .45), 0 0 0 1px var(--line);
-    transform-origin: 50% 50%;
+    border-radius: var(--deck-radius);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .38), 0 0 0 1px var(--line);
+    transform-origin: 50% 60%;
     backface-visibility: hidden;
     will-change: transform, opacity;
     transition:
         transform var(--deck-duration) var(--deck-ease),
         opacity calc(var(--deck-duration) * .8) var(--deck-ease),
-        border-radius var(--deck-duration) var(--deck-ease),
         visibility 0s linear var(--deck-duration);  /* Se oculta al terminar de moverse. */
 }
 
 .deck__card[hidden] { display: none !important; }
 
-/* Carta activa: ocupa todo. */
+/* Carta activa: encima del mazo. */
 .deck__card[data-pos="0"] {
-    transform: translate3d(0, 0, 0) scale(1) rotateY(0deg);
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
     opacity: 1;
     z-index: 50;
     visibility: visible;
-    transition-delay: 0s, 0s, 0s, 0s;
+    transition-delay: 0s, 0s, 0s;
 }
 
-/* Mazo visible debajo: cada carta un poco más hacia el fondo, a la derecha y más pequeña. */
+/* Mazo visible debajo: cada carta asoma por la derecha y por abajo, más al fondo y con un giro distinto,
+   como cartas apiladas a mano. */
 .deck__card[data-pos="1"] {
-    transform: translate3d(2.4%, 0, -90px) scale(.985) rotateY(-1.6deg);
+    transform: translate3d(calc(var(--side) * .34), 8px, -30px) rotate(1.6deg);
     opacity: 1;
     z-index: 40;
-    border-radius: var(--deck-radius);
     visibility: visible;
-    transition-delay: 0s, 0s, 0s, 0s;
+    transition-delay: 0s, 0s, 0s;
 }
 
 .deck__card[data-pos="2"] {
-    transform: translate3d(4.8%, 0, -180px) scale(.97) rotateY(-3.2deg);
-    opacity: .92;
+    transform: translate3d(calc(var(--side) * .62), 15px, -60px) rotate(-1.4deg);
+    opacity: 1;
     z-index: 30;
-    border-radius: var(--deck-radius);
     visibility: visible;
-    transition-delay: 0s, 0s, 0s, 0s;
+    transition-delay: 0s, 0s, 0s;
 }
 
 .deck__card[data-pos="3"] {
-    transform: translate3d(7.2%, 0, -270px) scale(.955) rotateY(-4.8deg);
-    opacity: .55;
+    transform: translate3d(calc(var(--side) * .86), 22px, -90px) rotate(2.2deg);
+    opacity: 1;
     z-index: 20;
-    border-radius: var(--deck-radius);
     visibility: visible;
-    transition-delay: 0s, 0s, 0s, 0s;
+    transition-delay: 0s, 0s, 0s;
 }
 
 .deck__card[data-pos="4"] {
-    transform: translate3d(9.6%, 0, -360px) scale(.94) rotateY(-6deg);
+    transform: translate3d(calc(var(--side) * 1.05), 28px, -120px) rotate(-2deg);
     opacity: 0;
     z-index: 10;
     visibility: hidden;
@@ -138,10 +142,9 @@
 /* Cartas ya pasadas: salen hacia la izquierda, se encogen y se desvanecen. Van por encima del mazo. */
 .deck__card[data-pos="-1"],
 .deck__card[data-pos="-2"] {
-    transform: translate3d(-46%, 0, 40px) scale(.5) rotateY(16deg);
+    transform: translate3d(-70%, -2%, 60px) scale(.55) rotate(-9deg) rotateY(18deg);
     opacity: 0;
     z-index: 60;
-    border-radius: calc(var(--deck-radius) * 1.4);
     visibility: hidden;
     pointer-events: none;
 }
@@ -164,7 +167,7 @@
    3. Foto, ajuste a la pantalla y pie de foto
    Ajuste adaptativo (lo decide el JS según la proporción de la foto y de la pantalla):
        sin clase     → la foto cubre la carta entera (object-fit: cover)
-       .is-contain   → la foto se ve completa, sobre su propio desenfoque (sin recortes)
+       .is-contain   → la foto se ve completa, sobre el fondo de la carta (sin recortes)
    --------------------------------------------------------------------------- */
 .deck__link {
     position: absolute;
@@ -203,29 +206,12 @@
 
 .deck__card.is-contain .deck__img { object-fit: contain; }
 
-/* Fondo desenfocado con la propia foto (el JS le pone la imagen). Solo se ve con .is-contain. */
-.deck__backdrop {
-    position: absolute;
-    inset: -8%;
-    background-position: center;
-    background-size: cover;
-    filter: blur(30px) saturate(1.15) brightness(.55);
-    opacity: 0;
-    transition: opacity .35s ease;
-}
-
-.deck__card.is-contain .deck__backdrop { opacity: 1; }
-
 .deck__caption {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    padding:
-        clamp(3rem, 8vw, 6rem)
-        max(clamp(1.2rem, 5vw, 4.5rem), env(safe-area-inset-right))
-        calc(clamp(5.4rem, 9vw, 6.8rem) + env(safe-area-inset-bottom))
-        max(clamp(1.2rem, 5vw, 4.5rem), env(safe-area-inset-left));
+    padding: clamp(2.5rem, 7vw, 4.5rem) clamp(1rem, 3vw, 2.2rem) clamp(.9rem, 2.4vw, 1.6rem);
     background: linear-gradient(0deg, rgba(0, 0, 0, .66), rgba(0, 0, 0, 0));
     color: #fff;
     pointer-events: none;
@@ -234,7 +220,7 @@
 .deck__title {
     margin: 0;
     max-width: 18ch;
-    font: italic 400 clamp(1.7rem, 4.6vw, 3.6rem) / 1.08 var(--serif);
+    font: italic 400 clamp(1.4rem, 3.6vw, 2.8rem) / 1.08 var(--serif);
     letter-spacing: -.01em;
     text-shadow: 0 2px 24px rgba(0, 0, 0, .5);
 }
@@ -331,7 +317,7 @@
     background: var(--line);
 }
 
-/* Botón «Salir»: sale del modo pantalla completa y baja a lo que sigue en la web. */
+/* Botones «Salir» (abajo) y «Salir hacia arriba»: salen del modo pantalla completa hacia lo que hay a cada lado. */
 .deck__exit {
     display: inline-flex;
     align-items: center;
@@ -350,6 +336,8 @@
     transition: background .2s ease, color .2s ease;
 }
 
+.deck__exit[hidden],
+.deck__nav-sep[hidden] { display: none; }
 .deck__exit svg { width: 18px; height: 18px; }
 .deck__exit:hover { background: var(--accent-soft); color: var(--accent); }
 
@@ -419,10 +407,8 @@
 
 /* Pantallas bajas (móvil apaisado): menos pie de foto y controles más pequeños para que nada se pise. */
 @media (max-height: 520px) {
-    .deck__caption {
-        padding-top: 1.5rem;
-        padding-bottom: calc(4rem + env(safe-area-inset-bottom));
-    }
+    .deck__stage { --pad-top: 3rem; --pad-bottom: 3.9rem; }
+    .deck__caption { padding-top: 1.2rem; padding-bottom: .7rem; }
     .deck__title { font-size: clamp(1.15rem, 5.5vh, 1.7rem); max-width: 28ch; }
     .deck__category { margin-top: .3rem; font-size: .62rem; }
     .deck__nav { bottom: max(.5rem, env(safe-area-inset-bottom)); padding: .2rem; gap: .35rem; }

@@ -8,7 +8,7 @@ Se elige en el panel: **Textos y diseño → Diseño → Galería premium**.
 
 | Nombre | Clave | Resumen |
 | --- | --- | --- |
-| **Estilo Baraja** | `deck` | Pantalla completa. Las fotos se reparten como una baraja de cartas: cada una sale hacia la izquierda, se encoge y se desvanece, dejando ver el mazo en 3D. |
+| **Estilo Baraja** | `deck` | Pantalla completa sobre el fondo de la web. Las fotos son cartas apiladas: cada una sale hacia la izquierda, se encoge y se desvanece, y el mazo de debajo asoma en 3D. |
 
 ## Qué cambia al activar una galería premium
 
@@ -35,22 +35,20 @@ Se elige en el panel: **Textos y diseño → Diseño → Galería premium**.
 ### Qué ve el visitante
 
 - La galería ocupa **el 100 % del ancho y del alto** de la pantalla (`100dvh`: respeta las barras de los navegadores móviles). Funciona en escritorio, tablet, Android e iPhone, vertical y apaisado.
-- Las fotos son **cartas apiladas con perspectiva 3D**. La carta de arriba ocupa toda la pantalla; las de debajo forman el mazo.
+- Las fotos son **cartas apiladas con perspectiva 3D**, todas con el mismo marco, sobre el **fondo de la web** (el de la paleta, no uno con los colores de la foto). La carta de arriba está centrada; las tres de debajo asoman por la derecha y por abajo, cada una más al fondo y con un giro distinto, como un mazo de cartas.
 - Al pasar de foto, la carta sale **hacia la izquierda, se hace más pequeña y se desvanece** (≈ 0,85 s, arranque ágil y final muy suave: pausado para que se aprecie el efecto de baraja), mientras la siguiente sube a primer plano.
 - **Cómo se avanza**
   - Móvil y tablet: deslizar el dedo **hacia arriba** (o hacia la izquierda). Hacia abajo, retrocede.
   - Escritorio: **rueda del ratón hacia abajo**. Hacia arriba, retrocede. En trackpad también funcionan los gestos horizontales.
   - Teclado: flechas, RePág/AvPág, Espacio (Mayús+Espacio retrocede), Inicio y Fin.
   - Botones: flechas y contador «3 / 14» en la barra inferior.
-- **El scroll de la página se detiene al llegar a la galería.** Al bajar desde arriba (o subir desde abajo), la página frena justo cuando la baraja ocupa toda la pantalla, aunque el gesto traiga inercia, y esa inercia no pasa fotos. A partir de ahí, los gestos mueven las fotos.
-- **El fondo de la web no se mueve** mientras se pasan cartas. En la **primera** y en la **última** foto la galería deja de capturar el gesto y la página continúa su scroll normal, así se puede salir de la galería hacia arriba o hacia abajo.
-- Si la galería no está alineada con la pantalla, el primer gesto solo la encaja; los siguientes pasan cartas.
-- **Botón «Salir»** (a la derecha de la barra inferior): sale del modo pantalla completa y baja la página hasta lo que sigue a la galería, sin volver a frenarse en ella. Para volver, basta con subir: la página se detiene otra vez en la baraja.
-- **En móvil, la página no se mueve con el dedo mientras la baraja llena la pantalla** (el CSS usa `touch-action: none`: es lo único fiable en iOS y Android). Por eso, deslizar más allá de la última foto sale de la galería hacia abajo, y más allá de la primera, hacia arriba.
+- **Escritorio (ratón/trackpad): el scroll de la página se detiene al llegar a la galería.** Al bajar desde arriba (o subir desde abajo), la página frena justo cuando la baraja ocupa toda la pantalla, aunque el gesto traiga inercia, y esa inercia no pasa fotos. A partir de ahí la rueda mueve las fotos y el fondo de la web no se mueve. En la **primera** y en la **última** foto la galería deja pasar la rueda y la página continúa su scroll normal. Si la galería no está alineada, el primer gesto solo la encaja.
+- **Móvil y tablet: la galería se queda fija.** Al llegar, el cuerpo de la página se fija (`position: fixed`): no hay scroll, así que nada se desplaza ni vibra, ni con la inercia del dedo ni con la barra de direcciones del navegador. Los gestos solo mueven fotos; deslizar más allá de la última foto sale hacia abajo y más allá de la primera, hacia arriba.
+- **Botones «Salir»** (a ambos lados de la barra inferior): la flecha doble hacia abajo («Salir») baja la página hasta lo que sigue a la galería; la flecha doble hacia arriba sube hasta lo que hay antes (solo aparece si hay algo encima). Tras salir, la galería no vuelve a frenar ni a fijarse hasta que se vuelva a ella: basta con desplazarse hacia ella.
 - **Botones flotantes de la web** («Añadir foto» y «Subir»): se apartan mientras la baraja llena la pantalla, porque se pisaban con la barra inferior, y vuelven al salir.
 - **Pies de foto:** solo se ve el de la carta activa; el de la que sale se oculta enseguida y el de la que llega aparece cuando casi ha terminado de moverse, para que nunca se solapen. En pantallas bajas (móvil apaisado) el pie y los controles se reducen.
 - Pulsar una foto abre su ficha (`/foto/<slug>`). En la ficha, **«Volver a la galería»** (y el botón «Atrás» del navegador) regresa a **esa misma foto**, en la baraja a pantalla completa. El enlace usa `/#baraja=<slug>`; la dirección se limpia al llegar.
-- **Ajuste a la pantalla:** si la proporción de la foto se parece a la de la pantalla, la cubre entera; si no (por ejemplo una foto vertical en un monitor), se muestra **completa sobre su propio desenfoque**, sin recortes.
+- **Ajuste al marco:** si la proporción de la foto se parece a la del marco, lo cubre entero; si no (por ejemplo una foto vertical en un marco apaisado), se muestra **completa sobre el fondo de la carta**, sin recortes.
 - **Filtros:** los botones del bloque «Categorías» y el botón «Favoritas» filtran la baraja; si no hay fotos, avisa.
 - **Movimiento reducido:** con `prefers-reduced-motion` el paso es instantáneo.
 - **Accesibilidad:** región con `role="region"`, cartas como diapositivas, solo la activa es interactiva (`inert` en el resto), contador con `aria-live` y controles con etiqueta.
@@ -65,7 +63,7 @@ Están en variables CSS al principio de `assets/premium/deck/deck.css` (clase `.
 | `--deck-ease` | `cubic-bezier(.22,.8,.24,1)` | Curva: arranque ágil, final muy suave. |
 | `--deck-radius` | `22px` | Esquinas de las cartas del mazo. |
 
-El mínimo entre dos pasos con la rueda (`STEP_COOLDOWN`, 600 ms) está al principio de `deck.js`. Las posiciones del mazo (`data-pos="1..3"`) están en la sección 2 del CSS: desplazamiento, profundidad, escala y giro de cada carta.
+El mínimo entre dos pasos con la rueda (`STEP_COOLDOWN`, 600 ms) está al principio de `deck.js`. Las posiciones del mazo (`data-pos="1..3"`) están en la sección 2 del CSS: desplazamiento (en múltiplos de `--side`, el margen lateral reservado al mazo), profundidad y giro de cada carta. El marco de las cartas se calcula con unidades de contenedor (`cqw`/`cqh`) a partir de `--pad-top`, `--pad-bottom` y `--side` en `.deck__stage`.
 
 ### Limitaciones conocidas
 
@@ -94,7 +92,8 @@ Flujo: `index.php` → `page_block_render('gallery')` → `inc/blocks/gallery.ph
 | --- | --- |
 | `#deck` | Raíz de la galería. `data-total` = número de fotos; el JS mantiene `data-index`. |
 | `.deck__card` | Una carta por foto, con los `data-*` de la foto. El JS le pone `data-pos`: `0` activa, `1..3` mazo, `4` oculta, `-1/-2` ya pasadas. |
-| `.deck__ui` | Controles superpuestos: herramientas, contador, flechas y pista. |
+| `.deck__ui` | Controles superpuestos: herramientas, contador, flechas, botones de salida y pista. |
+| `[data-deck-exit]`, `[data-deck-exit-up]` | Botones «Salir» (abajo) y «Salir hacia arriba» (oculto si no hay nada encima). |
 | `#favoritesToggle`, `#slideshowStart` | Mismos id que en la galería estándar: los gestiona `assets/js/main.js`. |
 
 `assets/js/main.js` reconoce la galería premium: la raíz puede ser `#masonry` (estándar) o `#deck`, y las tarjetas `.card` o `.deck__card` (presentación, mapa y visor).
@@ -113,5 +112,5 @@ Reglas del contrato: una galería premium debe ocupar su bloque entero, no depen
 ## Pruebas
 
 - `php tests/site-settings.php`: validación del ajuste, campos opcionales con una galería premium y formulario.
-- `node tests/premium-deck.cjs`: Estilo Baraja en 5 dispositivos (escritorio, portátil, tablet, móvil y móvil apaisado): pantalla completa, parada del scroll al llegar, rueda, dedo (también gestos lentos y `touch-action`), teclado, límites, botón «Salir», botones flotantes, pies de foto sin solaparse, ajuste de foto, filtros, vuelta desde la ficha, paletas y movimiento reducido.
+- `node tests/premium-deck.cjs`: Estilo Baraja en 5 dispositivos (escritorio, portátil, tablet, móvil y móvil apaisado): pantalla completa, parada del scroll al llegar (escritorio) y galería fijada sin vibración (móvil), rueda, dedo (también gestos lentos), teclado, límites, botones «Salir» y «Salir hacia arriba», botones flotantes, pies de foto sin solaparse, marco uniforme, mazo visible y ajuste de foto, filtros, vuelta desde la ficha, paletas y movimiento reducido.
 - `node tests/admin-layout.cjs`: el panel desactiva y reactiva los campos de la galería estándar.

@@ -14,6 +14,7 @@
  *   .deck__card[data-*]        category, slug, title… (los mismos data-* que las tarjetas estándar).
  *   .deck__ui                  Controles superpuestos: contador, flechas, botón «Salir», herramientas y pista.
  *   [data-deck-exit]           Botón «Salir»: baja la página hasta lo que sigue a la galería (deck.js, sección 9).
+ *   [data-deck-exit-up]        Botón «Salir hacia arriba»: sube hasta lo que hay antes (oculto si no hay nada encima).
  *   #favoritesToggle           Mismos id que en la galería estándar: main.js gestiona su estado.
  *   #slideshowStart
  *
@@ -49,7 +50,6 @@ $deckTotal = count($galleryItems);
                          data-lng="<?= $item['longitude'] ?? 0 ?>"
                          role="group" aria-roledescription="diapositiva"
                          aria-label="<?= $i + 1 ?> / <?= $deckTotal ?>">
-                    <span class="deck__backdrop" aria-hidden="true"></span>
                     <<?= $linkTag ?> class="deck__link"
                         <?php if ($hasSlug): ?>href="/foto/<?= safe($item['slug']) ?>"<?php else: ?>type="button"<?php endif; ?>
                         aria-label="<?= site_text_html('text_199d79e67ea29a83') ?><?= safe($title ?: site_text('text_08e81d4e64f6b4ff')) ?>">
@@ -82,6 +82,11 @@ $deckTotal = count($galleryItems);
             </div>
 
             <div class="deck__nav">
+                <!-- Salir hacia arriba: sube hasta lo que hay antes de la galería (el JS lo oculta si no hay nada encima). -->
+                <button type="button" class="deck__exit deck__exit--up" data-deck-exit-up hidden aria-label="<?= site_text_html('deck_exit_up_label') ?>">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 11l6-6 6 6M6 18l6-6 6 6"/></svg>
+                </button>
+                <span class="deck__nav-sep" aria-hidden="true"></span>
                 <button type="button" class="deck__arrow" data-deck-prev aria-label="<?= site_text_html('deck_prev') ?>">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
                 </button>

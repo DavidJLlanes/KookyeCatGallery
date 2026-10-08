@@ -61,17 +61,26 @@ const devices = [
             for (const script of scripts) await page.addScriptTag({content: script});
             const label = device.name;
             const state = () => page.evaluate(() => ({
-                index: Number(document.querySelector('#deck').dataset.index), scrollY: Math.round(scrollY), top: Math.round(document.querySelector('#deck').getBoundingClientRect().top),
+                index: Number(document.querySelector('#deck').dataset.index), pinned: document.documentElement.classList.contains('deck-pinned'),
+                scrollY: document.documentElement.classList.contains('deck-pinned') ? -parseInt(document.body.style.top, 10) : Math.round(scrollY), top: Math.round(document.querySelector('#deck').getBoundingClientRect().top),
                 positions: [...document.querySelectorAll('.deck__card')].map(card => card.dataset.pos).join(','),
                 overflow: document.documentElement.scrollWidth > innerWidth + 1,
             }));
             // Lleva la baraja al borde superior (reintenta: la página puede recolocarse mientras carga).
             const toDeck = async () => {
-                for (let attempt = 0; attempt < 8; attempt++) {
+                for (let attempt = 0; attempt < 14; attempt++) {
+                    // Táctil: la baraja se fija al llegar (body fixed): ya no hay nada que alinear.
+                    if (device.touch && await page.evaluate(() => document.documentElement.classList.contains('deck-pinned'))) return;
                     await page.evaluate(() => window.scrollTo({top: document.querySelector('#deck').getBoundingClientRect().top + scrollY, behavior: 'instant'}));
                     await page.waitForTimeout(150);
                     if (Math.abs(await page.evaluate(() => document.querySelector('#deck').getBoundingClientRect().top)) <= 2) return;
                 }
+            };
+            // Táctil: suelta la baraja (si está fijada) y vuelve arriba del todo, esperando a que acabe la salida.
+            const freeTouch = async () => {
+                if (await page.evaluate(() => document.documentElement.classList.contains('deck-pinned'))) { await page.click('[data-deck-exit-up]'); await page.waitForTimeout(2000); }
+                await page.evaluate(() => window.scrollTo({top: 0, behavior: 'instant'}));
+                await page.waitForTimeout(500);
             };
             const settle = () => page.waitForTimeout(1300);  // El paso dura 850 ms (margen para dispositivos lentos).
             // Gestos táctiles reales (CDP) para móvil y tablet.
@@ -116,6 +125,26 @@ const devices = [
                     if (++sent >= count) { clearInterval(timer); resolve(); }
                 }, gap);
             }), [count, gap]);
+            if (device.touch) {
+                // Táctil: al llegar la baraja se FIJA (body fixed): la página no se mueve, ni siquiera con un salto que pasa de largo.
+                await freeTouch();
+                await page.evaluate(() => window.scrollTo({top: document.querySelector('#deck').getBoundingClientRect().top + scrollY + 280, behavior: 'instant'}));
+                await page.waitForTimeout(700);
+                const pinned = await state();
+                assert(pinned.pinned && Math.abs(pinned.top) <= 1 && pinned.index === 0, `${label}: la baraja debe quedar fijada al llegar (${JSON.stringify(pinned)})`);
+                assert.equal(await page.evaluate(() => getComputedStyle(document.body).position), 'fixed', `${label}: el cuerpo de la página debe quedar fijo`);
+                // Estable: ni un píxel de movimiento (sin vibración) durante un segundo, ni con intentos de scroll programático.
+                const tops = [];
+                for (let i = 0; i < 10; i++) {
+                    await page.evaluate(dy => window.scrollBy(0, dy), i % 2 ? 40 : -40);
+                    tops.push((await state()).top); await page.waitForTimeout(100);
+                }
+                assert(tops.every(top => top === 0), `${label}: la baraja fijada no debe moverse (${tops.join(',')})`);
+                await swipe(-140);
+                assert.equal((await state()).index, 1, `${label}: tras fijarse, el dedo mueve las fotos`);
+                await page.keyboard.press('ArrowUp'); await settle();
+                await toDeck();
+            } else {
             await page.evaluate(() => window.scrollTo({top: 0, behavior: 'instant'}));
             await page.waitForTimeout(500);
             await page.evaluate(() => window.scrollTo({top: document.querySelector('#deck').getBoundingClientRect().top + scrollY + 280, behavior: 'instant'}));
@@ -127,6 +156,7 @@ const devices = [
             assert.equal((await state()).index, 1, `${label}: tras la parada, el siguiente gesto mueve las fotos`);
             await page.keyboard.press('ArrowUp'); await settle();
             await toDeck();
+            }
 
             // 3. Animación: la carta pasada acaba fuera (a la izquierda, pequeña y transparente) y la activa a pantalla completa.
             await page.keyboard.press('ArrowDown'); await settle();
@@ -244,12 +274,15 @@ const devices = [
             // 5d. Botón «Salir»: baja la página hasta lo que sigue a la galería y no vuelve a frenarse en ella.
             //     Mientras la baraja llena la pantalla, los botones flotantes de la web se apartan; al salir, vuelven.
             await toDeck();
+            // Los botones flotantes se apartan con una transición de 250 ms: se espera a que termine.
+            await page.waitForFunction(() => getComputedStyle(document.querySelector('.upload-fab')).opacity === '0', null, {timeout: 4000}).catch(() => {});
             const fabHidden = await page.evaluate(() => getComputedStyle(document.querySelector('.upload-fab')).opacity);
             assert.equal(fabHidden, '0', `${label}: los botones flotantes deben apartarse mientras la baraja llena la pantalla`);
             const exitBefore = await state();
             await page.click('[data-deck-exit]');
             await page.waitForFunction(() => document.querySelector('#after').getBoundingClientRect().top <= 5, null, {timeout: 6000}).catch(() => {});
             await page.waitForTimeout(900);
+            await page.waitForFunction(() => getComputedStyle(document.querySelector('.upload-fab')).opacity === '1', null, {timeout: 4000}).catch(() => {});
             const left = await page.evaluate(() => ({
                 afterTop: Math.round(document.querySelector('#after').getBoundingClientRect().top), scrollY: Math.round(scrollY),
                 deckBottom: Math.round(document.querySelector('#deck').getBoundingClientRect().bottom), fab: getComputedStyle(document.querySelector('.upload-fab')).opacity,
@@ -264,18 +297,44 @@ const devices = [
             await page.waitForTimeout(400);
             await toDeck();
 
-            // 6. Ajuste a la pantalla: cada foto cubre la carta si su proporción se parece a la pantalla y, si no, se ve completa.
-            const fits = await page.evaluate(() => [...document.querySelectorAll('.deck__card')].map(card => ({
-                aspect: Number(card.dataset.aspect), contain: card.classList.contains('is-contain'),
-                fit: getComputedStyle(card.querySelector('.deck__img')).objectFit})));
-            const screen = device.viewport.width / device.viewport.height;
-            for (const fit of fits) {
-                const expectContain = Math.abs(Math.log(fit.aspect / screen)) > 0.3;
-                assert.equal(fit.contain, expectContain, `${label}: ajuste de la foto ${fit.aspect} en pantalla ${screen.toFixed(2)}`);
+            // 5e. Botón «Salir hacia arriba»: sube hasta lo que hay antes de la baraja (hay una cabecera encima) y no vuelve a frenarse.
+            await toDeck();
+            assert.equal(await page.evaluate(() => document.querySelector('[data-deck-exit-up]').hidden), false, `${label}: con contenido encima debe haber botón para salir hacia arriba`);
+            const upExitBefore = await state();
+            await page.click('[data-deck-exit-up]');
+            await page.waitForFunction(() => document.querySelector('#deck').getBoundingClientRect().top >= innerHeight - 5, null, {timeout: 6000}).catch(() => {});
+            await page.waitForTimeout(600);
+            const exitedUp = await page.evaluate(() => ({scrollY: Math.round(scrollY), deckTop: Math.round(document.querySelector('#deck').getBoundingClientRect().top),
+                vh: innerHeight, engaged: document.documentElement.classList.contains('deck-engaged'), index: Number(document.querySelector('#deck').dataset.index)}));
+            assert(exitedUp.scrollY < upExitBefore.scrollY - 100 && exitedUp.engaged === false, `${label}: «Salir hacia arriba» debe subir por encima de la baraja (${JSON.stringify({upExitBefore, exitedUp})})`);
+            assert.equal(exitedUp.index, upExitBefore.index, `${label}: salir hacia arriba no cambia la foto`);
+            await page.evaluate(() => window.scrollTo({top: 0, behavior: 'instant'}));
+            await page.waitForTimeout(400);
+            await toDeck();
+
+            // 6. Marco uniforme y mazo visible, con el fondo de la web (sin fondo desenfocado con los colores de la foto).
+            assert.equal(await page.evaluate(() => document.querySelector('.deck__backdrop')), null, `${label}: no debe haber fondo con los colores de la foto`);
+            const frames = await page.evaluate(() => [...document.querySelectorAll('.deck__card')].map(card => ({
+                w: card.clientWidth, h: card.clientHeight, aspect: Number(card.dataset.aspect), contain: card.classList.contains('is-contain'),
+                fit: getComputedStyle(card.querySelector('.deck__img')).objectFit, pos: Number(card.dataset.pos), right: card.getBoundingClientRect().right,
+                bottom: card.getBoundingClientRect().bottom, left: card.getBoundingClientRect().left})));
+            assert(frames.every(f => f.w === frames[0].w && f.h === frames[0].h), `${label}: todas las cartas deben tener el mismo marco`);
+            const frameRatio = frames[0].w / frames[0].h;
+            for (const fit of frames) {
+                const expectContain = Math.abs(Math.log(fit.aspect / frameRatio)) > 0.3;
+                assert.equal(fit.contain, expectContain, `${label}: ajuste de la foto ${fit.aspect} en un marco ${frameRatio.toFixed(2)}`);
                 assert.equal(fit.fit, expectContain ? 'contain' : 'cover');
             }
+            const [active, p1, p2, p3] = [0, 1, 2, 3].map(pos => frames.find(f => f.pos === pos));
+            assert(p1.right > active.right + 6 && p2.right > p1.right + 6 && p3.right > p2.right + 6, `${label}: las cartas del mazo deben asomar por la derecha, una tras otra (${[active, p1, p2, p3].map(f => Math.round(f.right)).join(',')})`);
+            assert(p3.right <= box.vw, `${label}: el mazo debe caber en la pantalla (${p3.right} > ${box.vw})`);
+            assert(active.left >= 8 && active.bottom <= box.vh - 40, `${label}: la carta activa deja sitio a los controles (${JSON.stringify(active)})`);
+            const decks = await page.evaluate(() => [1, 2, 3].map(pos => getComputedStyle(document.querySelector(`.deck__card[data-pos="${pos}"]`)).transform));
+            assert.equal(new Set(decks).size, 3, `${label}: cada carta del mazo debe tener su propia posición y giro`);
+            assert(await page.evaluate(() => [1, 2, 3].every(pos => Number(getComputedStyle(document.querySelector(`.deck__card[data-pos="${pos}"]`)).opacity) >= 0.85)), `${label}: el mazo debe verse (opacidad)`);
 
-            // 7. Filtros: categoría y favoritas (con main.js real).
+            // 7. Filtros: categoría y favoritas (con main.js real). En táctil se suelta la baraja: los chips están fuera de ella.
+            if (device.touch) await freeTouch();
             await page.click('.categories-filter__chip[data-category="B"]');
             s = await page.evaluate(() => ({total: document.querySelector('[data-deck-total]').textContent, hidden: [...document.querySelectorAll('.deck__card')].filter(c => c.hidden).length}));
             assert.deepEqual(s, {total: '3', hidden: 3}, `${label}: el filtro por categoría deja 3 fotos`);
@@ -290,8 +349,9 @@ const devices = [
         }
 
         // 7b. Volver desde la ficha de una foto: /#baraja=<slug> abre la baraja en esa foto, a pantalla completa.
-        for (const viewport of [{width: 1440, height: 900}, {width: 390, height: 844}]) {
-            const back = await browser.newPage({viewport});
+        for (const viewport of [{width: 1440, height: 900}, {width: 390, height: 844, touch: true}]) {
+            const backContext = await browser.newContext({viewport: {width: viewport.width, height: viewport.height}, hasTouch: !!viewport.touch, isMobile: !!viewport.touch});
+            const back = await backContext.newPage();
             const backErrors = [];
             back.on('pageerror', error => backErrors.push(error.message));
             await back.route('**/*', route => {
@@ -313,7 +373,8 @@ const devices = [
             assert(Math.abs(returned.top) <= 2 && returned.deckHeight === returned.vh, `Volver desde la ficha (${viewport.width}px): la baraja debe quedar a pantalla completa (${JSON.stringify(returned)})`);
             assert.equal(returned.hash, '', 'El enlace de vuelta no debe quedarse en la dirección');
             assert.deepEqual(backErrors, [], 'Volver desde la ficha: errores de JavaScript');
-            await back.close();
+            if (viewport.touch) assert.equal(await back.evaluate(() => document.documentElement.classList.contains('deck-pinned')), true, 'Volver desde la ficha (móvil): la baraja debe quedar fijada');
+            await backContext.close();
         }
 
         // 8. Integración con la paleta: el fondo y los controles usan las variables de cada paleta.
