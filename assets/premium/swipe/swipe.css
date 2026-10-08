@@ -15,10 +15,14 @@
     --swipe-like: var(--accent);                     /* Color del corazón (lado derecho). */
 }
 
+/* El escenario ocupa SOLO el hueco libre entre las herramientas de arriba y la barra de abajo (con sus márgenes y el área segura de los
+   móviles con muesca), así la carta queda centrada en vertical en ese hueco: la misma distancia hasta las herramientas que hasta la barra. */
 .deck[data-layout="swipe"] .deck__stage {
+    --swipe-top: calc(max(.9rem, env(safe-area-inset-top)) + 2.8rem + 1rem);       /* margen + alto de las herramientas + hueco */
+    --swipe-bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 3.9rem + 1rem);  /* margen + alto de la barra + hueco */
+    inset: var(--swipe-top) 0 var(--swipe-bottom) 0;
     perspective: none;
-    --pad: 5.2rem;
-    --frame-h: calc(100cqh - var(--pad) * 2);
+    --frame-h: 100cqh;
     --frame-w: min(calc(100cqw - 2rem), calc(var(--frame-h) / 1.35), 32rem);
 }
 
@@ -169,7 +173,7 @@
 .swipe__restart:hover { background: var(--accent); color: var(--bg); }
 
 @media (max-height: 520px) {
-    .deck[data-layout="swipe"] .deck__stage { --pad: 3.9rem; }
+    .deck[data-layout="swipe"] .deck__stage { --swipe-top: calc(max(.6rem, env(safe-area-inset-top)) + 2.4rem + .5rem); --swipe-bottom: calc(max(.5rem, env(safe-area-inset-bottom)) + 3.4rem + .5rem); }
     .swipe__stamp { top: 2.4rem; width: 3.4rem; height: 3.4rem; }
     .swipe__stamp svg { width: 1.8rem; height: 1.8rem; }
 }

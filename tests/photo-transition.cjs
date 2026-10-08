@@ -79,7 +79,9 @@ function testImage() {
                     if (!window.__sampling) return;
                     const imgs = [...document.querySelectorAll('#lightbox .lightbox__img')];
                     const lightbox = document.getElementById('lightbox');
+                    const rects = imgs.map(i => i.getBoundingClientRect());
                     window.__samples.push({max: Math.max(...imgs.map(i => parseFloat(getComputedStyle(i).opacity))), layers: imgs.length,
+                        left: Math.min(...rects.map(r => r.left)), right: Math.max(...rects.map(r => r.right)), tops: rects.map(r => Math.round(r.top)),
                         open: lightbox.classList.contains('is-open'), bg: getComputedStyle(lightbox).backgroundColor});
                     requestAnimationFrame(tick);
                 };
@@ -103,7 +105,8 @@ function testImage() {
         const worst = Math.min(...samples.map(sample => sample.max));
         assert(worst >= 0.99, `Al cambiar de foto en pantalla completa siempre debe haber una foto a opacidad completa (peor fotograma: ${worst.toFixed(2)})`);
         assert(samples.every(sample => sample.open), 'El visor no debe cerrarse al cambiar de foto');
-        assert(samples.some(sample => sample.layers === 2), 'La foto nueva debe fundirse sobre la anterior (dos capas durante el cambio)');
+        assert(samples.some(sample => sample.layers === 2), 'La foto nueva debe entrar mientras la anterior sale (dos capas durante el cambio)');
+        assert(new Set(samples.map(sample => Math.round(sample.left))).size > 4, 'Las fotos deben deslizar de forma continua (la posición cambia fotograma a fotograma)');
         await waitSlug(desktop.page, 'last');
         assert.equal(await desktop.page.evaluate(() => window.__marker), 'mismo-documento', 'No debe recargarse la página al cambiar de foto');
         assert.equal(new URL(desktop.page.url()).pathname, '/foto/last');
@@ -161,26 +164,60 @@ function testImage() {
         await desktop.page.waitForFunction(() => document.querySelector('#lightbox.is-open .lightbox__img.is-shown'));
         assert.equal(await desktop.page.evaluate(() => document.documentElement.classList.contains('viewer-pending')), false, 'El estado pendiente se quita al abrir el visor');
 
-        // 7. Móvil: el gesto de deslizar en pantalla completa cambia de foto con fundido y sin recargar.
+        // 7. Móvil: el visor a pantalla completa sigue al dedo, enseña ya la foto vecina y desliza sin franjas ni saltos.
         const mobile = await makePage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
         const cdp = await mobile.context.newCDPSession(mobile.page);
         await mobile.page.goto(`${origin}/foto/middle?viewer=1`);
         await mobile.page.evaluate(() => { window.__marker = 'mismo-documento'; });
         await mobile.page.waitForFunction(() => document.querySelector('#lightbox.is-open .lightbox__img.is-shown'));
         await mobile.page.waitForTimeout(700);
+        const center = async () => { const box = await mobile.page.locator('.lightbox__img').first().boundingBox(); return { x: box.x + box.width / 2, y: box.y + box.height / 2 }; };
+        const finger = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
+        const first = await mobile.page.locator('.lightbox__img').first().boundingBox();
+        // 7a. Mientras se arrastra, la foto sigue al dedo y la vecina asoma por el lado hacia el que se arrastra.
+        const c = await center();
+        await finger('touchStart', c.x, c.y);
+        for (let i = 1; i <= 6; i++) await finger('touchMove', c.x - 15 * i, c.y + 1);
+        await mobile.page.waitForTimeout(100);
+        const dragging = await mobile.page.evaluate(() => { const imgs = [...document.querySelectorAll('#lightbox .lightbox__img')].map(i => ({left: i.getBoundingClientRect().left, src: i.getAttribute('src'), cls: i.className})); return imgs; });
+        assert(dragging.length === 2, `Al arrastrar debe verse la foto vecina (${JSON.stringify(dragging)})`);
+        assert(Math.abs(dragging[0].left - (first.x - 90)) <= 4, `La foto sigue al dedo (${dragging[0].left} frente a ${first.x - 90})`);
+        assert(dragging[1].left > 250 && dragging[1].left < 390 && /last/.test(dragging[1].src), `La foto siguiente asoma por la derecha (${JSON.stringify(dragging[1])})`);
+        // 7b. Un gesto que se queda corto (el dedo vuelve atrás antes de soltar): todo vuelve a su sitio, sin cambiar de foto.
+        for (let i = 1; i <= 3; i++) await finger('touchMove', c.x - 90 + 20 * i, c.y + 1);
+        await finger('touchEnd');
+        await mobile.page.waitForTimeout(600);
+        assert.equal(await mobile.page.locator('.photo-detail__title').textContent(), 'middle', 'Un gesto corto no cambia de foto');
+        assert.equal(await mobile.page.locator('#lightbox .lightbox__img').count(), 1, 'La foto vecina se retira');
+        const back = await mobile.page.locator('.lightbox__img').first().boundingBox();
+        assert(Math.abs(back.x - first.x) <= 1, 'La foto vuelve a su sitio');
+        // 7c. Un gesto largo cambia de foto deslizando: nunca hay hueco entre las dos fotos (cubren todo el ancho en cada fotograma).
         const swipeSamples = await sampleViewer(mobile.page, async () => {
-            const box = await mobile.page.locator('.lightbox__img').first().boundingBox();
-            const x = box.x + box.width / 2, y = box.y + box.height / 2;
-            await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
-            await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - 120, y: y + 2 }] });
-            await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+            const origin2 = await center();
+            await finger('touchStart', origin2.x, origin2.y);
+            for (let i = 1; i <= 4; i++) await finger('touchMove', origin2.x - 30 * i, origin2.y + 1);
+            await finger('touchEnd');
         });
         await waitSlug(mobile.page, 'last');
+        const during = swipeSamples.filter(sample => sample.layers === 2);
+        assert(during.length > 5, 'Durante el deslizamiento hay dos fotos a la vez');
         assert(Math.min(...swipeSamples.map(sample => sample.max)) >= 0.99, 'Móvil: al deslizar nunca debe verse el fondo');
+        assert(during.every(sample => sample.left <= 0.5 && sample.right >= 389.5), `Móvil: las dos fotos cubren todo el ancho en cada fotograma, sin franjas (${JSON.stringify(during.filter(sample => sample.left > 0.5 || sample.right < 389.5).slice(0, 3))})`);
         assert.equal(await mobile.page.evaluate(() => window.__marker), 'mismo-documento', 'Móvil: no se recarga la página');
+        await mobile.page.waitForFunction(() => document.querySelectorAll('#lightbox .lightbox__img').length === 1);
+        // 7d. En la última foto, arrastrar hacia el lado sin foto se resiste (un tercio) y vuelve.
+        const edge = await center();
+        await finger('touchStart', edge.x, edge.y);
+        for (let i = 1; i <= 6; i++) await finger('touchMove', edge.x - 15 * i, edge.y + 1);
+        await mobile.page.waitForTimeout(100);
+        const resisted = await mobile.page.locator('.lightbox__img').first().boundingBox();
+        assert(Math.abs(resisted.x - (first.x - 30)) <= 5 && await mobile.page.locator('#lightbox .lightbox__img').count() === 1, `Sin foto vecina la foto se resiste (${resisted.x})`);
+        await finger('touchEnd');
+        await mobile.page.waitForTimeout(500);
+        assert.equal(await mobile.page.locator('.photo-detail__title').textContent(), 'last');
         assert.deepEqual(desktop.errors, []);
         assert.deepEqual(mobile.errors, []);
-        console.log('Photo transition passed: in-place change without reload, cross-fade over the previous photo (background never visible), rapid presses, browser back, closing, detail arrows, ?viewer=1 reload and touch.');
+        console.log('Photo transition passed: in-place sliding without reload, finger following with the neighbour visible, no gaps or strips, resistance at the ends, rapid presses, browser back, closing, detail arrows, ?viewer=1 reload and touch.');
     } finally {
         if (browser) await browser.close();
         fs.rmSync(snapshot, { recursive: true, force: true });

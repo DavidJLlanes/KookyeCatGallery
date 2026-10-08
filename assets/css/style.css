@@ -913,6 +913,11 @@ body.photo-immersive-open .cursor-ring { display: none !important; }
 }
 
 .lightbox__img {
+    /* Siempre centrada en el escenario con posición absoluta: la foto base y la que entra (.lightbox__img--incoming) comparten exactamente
+       la misma geometría, así que al deslizar de una a otra nunca hay saltos de tamaño ni franjas. */
+    position: absolute;
+    inset: 0;
+    margin: auto;
     max-width: 100%;
     max-height: 100%;
     width: auto;

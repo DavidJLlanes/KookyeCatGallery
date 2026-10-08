@@ -655,7 +655,10 @@
         window.clearTimeout(resizeTimer);
         resizeTimer = window.setTimeout(() => {
             relayout();
-            if (pinned) {                                        // Cambió el tamaño: se vuelve a fijar en el sitio exacto.
+            // Fijada, la baraja se adapta sola al nuevo tamaño (el cuerpo es fijo y el alto es 100dvh). Solo si ya no queda en el borde
+            // superior (el contenido de encima cambió de alto) se vuelve a fijar. Volver a fijar siempre provocaba, en iPhone, un bucle
+            // de «soltar y fijar» con cada cambio de la barra del navegador.
+            if (pinned && Math.abs(rect().top) > 2) {
                 unpin();
                 window.requestAnimationFrame(() => pin());
             }

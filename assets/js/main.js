@@ -22,7 +22,9 @@
     const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
     // Horizontal photo gestures navigate; browser page zoom is disabled outside the editor.
-    const bindPhotoNavigation = (surface, navigate) => {
+    // `follow(dx)` (opcional) se llama mientras se arrastra en horizontal: el visor puede mover la foto con el dedo. Al soltar se llama a
+    // `navigate(direction, dx)` si el gesto vale (≥ 50 px y más horizontal que vertical) o a `release(dx)` si no.
+    const bindPhotoNavigation = (surface, navigate, { follow = null, release = null } = {}) => {
         if (!surface) return;
         const pointers = new Set();
         let start = null;
@@ -33,8 +35,16 @@
             if (control && !control.matches('.photo-detail__btn')) return;
             pointers.add(event.pointerId);
             if (pointers.size !== 1) { start = null; return; }
-            start = { id: event.pointerId, x: event.clientX, y: event.clientY };
+            start = { id: event.pointerId, x: event.clientX, y: event.clientY, following: false };
             try { surface.setPointerCapture(event.pointerId); } catch (_) {}
+        });
+        if (follow) surface.addEventListener('pointermove', (event) => {
+            if (!start || start.id !== event.pointerId) return;
+            const dx = event.clientX - start.x;
+            const dy = event.clientY - start.y;
+            if (!start.following && (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy) * 1.2)) return;
+            start.following = true;
+            follow(dx);
         });
         surface.addEventListener('pointerup', (event) => {
             const gesture = start;
@@ -43,13 +53,18 @@
             if (!gesture || gesture.id !== event.pointerId) return;
             const dx = event.clientX - gesture.x;
             const dy = event.clientY - gesture.y;
-            if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+            if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) { if (gesture.following && release) release(dx); return; }
             suppressClickUntil = performance.now() + 400;
-            navigate(dx > 0 ? -1 : 1);
+            navigate(dx > 0 ? -1 : 1, dx);
         });
-        const cancel = (event) => { pointers.delete(event.pointerId); start = null; };
+        const cancel = (event) => {
+            const gesture = start;
+            pointers.delete(event.pointerId);
+            start = null;
+            if (gesture?.following && release) release(0);
+        };
         surface.addEventListener('pointercancel', cancel);
-        surface.addEventListener('lostpointercapture', cancel);
+        surface.addEventListener('lostpointercapture', (event) => { pointers.delete(event.pointerId); });
         surface.addEventListener('click', (event) => {
             if (performance.now() < suppressClickUntil) {
                 event.preventDefault();
@@ -60,47 +75,50 @@
     };
 
     /* ---------- Cambio suave de foto en los visores ---------- */
-    // La foto nueva se carga y se decodifica aparte; después se superpone con un fundido SOBRE la anterior (que sigue a opacidad
-    // completa: el fondo nunca se ve) y solo entonces se retira la vieja. Así pasar de una foto a otra en pantalla completa es
-    // continuo, sin parpadeos ni huecos, con cualquier tamaño de foto. Devuelve false si la foto no se pudo cargar o si otra
-    // navegación más reciente la ha sustituido.
-    const crossfades = new WeakMap();
-    const crossfadeImage = async (img, src, alt) => {
-        const state = crossfades.get(img) || { token: 0, layer: null };
-        crossfades.set(img, state);
+    // Pasar de una foto a otra en pantalla completa es un deslizamiento continuo, como en un carrusel: la foto nueva se carga y se
+    // decodifica aparte, entra por el lado del que viene y la anterior sale por el contrario, las dos pegadas y a opacidad completa
+    // (nunca se ve el fondo ni hay saltos de tamaño). `from` es lo que el dedo ya ha arrastrado (px): la animación sigue desde ahí.
+    // `layer` permite reutilizar la imagen vecina que se iba viendo mientras se arrastraba. Devuelve false si la foto no se pudo cargar
+    // o si otra navegación más reciente la ha sustituido.
+    const slides = new WeakMap();
+    const slideImage = async (img, src, alt, direction = 1, { from = 0, layer: peek = null } = {}) => {
+        const state = slides.get(img) || { token: 0, layer: null };
+        slides.set(img, state);
         const token = ++state.token;
         const loader = new Image();
         loader.src = src;
         try { await loader.decode(); }
         catch (_) { if (!loader.complete) await new Promise(resolve => { loader.onload = resolve; loader.onerror = resolve; }); }
-        if (token !== state.token) return false;
-        if (!loader.naturalWidth) return false;
-        if (state.layer) {                                           // Una foto a medio fundir se da por terminada antes de empezar la siguiente.
+        if (token !== state.token || !loader.naturalWidth) { if (peek && peek !== state.layer) peek.remove(); return false; }
+        if (state.layer && state.layer !== peek) {                   // Un cambio a medias se da por terminado antes de empezar el siguiente.
             img.src = state.layer.src; img.alt = state.layer.alt;
             state.layer.remove(); state.layer = null;
         }
+        img.getAnimations?.().forEach(animation => animation.cancel());
+        img.style.transform = '';
+        img.style.transition = '';
         const visible = img.classList.contains('is-shown') && (img.currentSrc || img.src);
-        if (prefersReducedMotion || !visible) {
+        if (prefersReducedMotion || !visible || !img.animate) {
             img.src = src; img.alt = alt;
             img.classList.add('is-shown');
+            peek?.remove();
             return true;
         }
-        const layer = document.createElement('img');
-        layer.className = 'lightbox__img lightbox__img--incoming';
+        const layer = peek || document.createElement('img');
+        layer.className = 'lightbox__img lightbox__img--incoming is-shown';
         layer.alt = alt;
-        layer.src = src;
+        if (layer.getAttribute('src') !== src) layer.src = src;
+        if (!layer.isConnected) img.insertAdjacentElement('afterend', layer);
         state.layer = layer;
-        img.insertAdjacentElement('afterend', layer);
-        void layer.offsetWidth;
-        layer.classList.add('is-shown');
-        await new Promise(resolve => {
-            const finish = event => { if (!event || event.propertyName === 'opacity') { layer.removeEventListener('transitionend', finish); resolve(); } };
-            layer.addEventListener('transitionend', finish);
-            setTimeout(finish, 650);
-        });
+        const width = img.parentElement?.clientWidth || window.innerWidth;
+        const timing = { duration: from ? 320 : 420, easing: 'cubic-bezier(.22, .8, .24, 1)', fill: 'both' };
+        const leaving = img.animate([{ transform: `translate3d(${from}px, 0, 0)` }, { transform: `translate3d(${-direction * width}px, 0, 0)` }], timing);
+        const entering = layer.animate([{ transform: `translate3d(${from + direction * width}px, 0, 0)` }, { transform: 'translate3d(0, 0, 0)' }], timing);
+        await Promise.allSettled([leaving.finished, entering.finished]);
         if (state.layer !== layer) return token === state.token;      // La terminó una navegación posterior.
         img.src = src; img.alt = alt;
         try { await img.decode(); } catch (_) {}
+        leaving.cancel(); entering.cancel();                          // Todo en el mismo fotograma: la base pasa a ser la foto nueva y la capa desaparece.
         layer.remove();
         state.layer = null;
         return true;
@@ -903,8 +921,8 @@
             if (slug) history.replaceState({ slug }, '', `/foto/${slug}`);
             else if (location.pathname.startsWith('/foto/')) history.replaceState(null, '', '/');
             document.dispatchEvent(new CustomEvent('photo:changed', { detail: { slug } }));
-            // Fundido sobre la foto anterior (sin pasar por el fondo): ver crossfadeImage.
-            crossfadeImage(imgEl, card.dataset.full, card.dataset.title || window.siteText("Fotografía de gatos"));
+            // Deslizamiento continuo entre las dos fotos (sin pasar por el fondo): ver slideImage.
+            slideImage(imgEl, card.dataset.full, card.dataset.title || window.siteText("Fotografía de gatos"), dir);
             preloadNeighbors();
         };
 
@@ -977,7 +995,7 @@
     // Visor a pantalla completa autónomo: no depende de la galería (que aquí no existe).
     // Pasar de una foto a otra (flechas de la ficha o del visor, teclado, gestos) NO recarga la página: se pide la ficha de la foto
     // vecina al servidor (así título, descripción, enlaces y opciones privadas siguen siendo los del servidor), se precarga su imagen
-    // y se cambia todo en el sitio. En pantalla completa la foto nueva se funde sobre la anterior (ver crossfadeImage); en la ficha
+    // y se cambia todo en el sitio. En pantalla completa la foto nueva desliza con el dedo o la animación (ver slideImage); en la ficha
     // se usa un fundido de página si el navegador lo permite. Si algo falla, se navega a la página como siempre.
     const initPhotoPage = () => {
         const detail   = $('.photo-detail');
@@ -1106,24 +1124,32 @@
             updateViewerButtons();
         };
 
-        // Muestra la foto de la ficha `doc`. `push` añade una entrada al historial (navegar) o no (Atrás / Adelante).
+        // Muestra la foto de `path`. `push` añade una entrada al historial (navegar) o no (Atrás / Adelante). Con el visor abierto, la foto
+        // desliza de inmediato con la imagen vecina que ya está precargada (sin esperar a la ficha), desde donde el dedo la dejó (`from`),
+        // y mientras tanto se pide la ficha para actualizar los textos y los datos.
         let busy = false;
         let queued = 0;
-        const showPhoto = async (path, { push = true, viewer = isOpen() } = {}) => {
+        const showPhoto = async (path, { push = true, viewer = isOpen(), direction = 1, from = 0, layer = null } = {}) => {
+            const open = isOpen();
+            const early = open && path === (direction < 0 ? detail.dataset.photoPrevious : detail.dataset.photoNext)
+                ? (direction < 0 ? detail.dataset.photoPreviousImage : detail.dataset.photoNextImage) : '';
+            const slide = early ? slideImage(imgEl, early, '', direction, { from, layer }) : null;
+            if (!slide) layer?.remove();
             const doc = await fetchPhotoPage(path);
             const nextImg = $('.photo-detail__img', doc);
-            await preloadImage(nextImg ? new URL(nextImg.getAttribute('src'), location.href).href : '');   // La foto nueva está lista antes de tocar nada.
+            if (!slide) await preloadImage(nextImg ? new URL(nextImg.getAttribute('src'), location.href).href : '');   // La foto nueva está lista antes de tocar nada.
             pageCache.delete(path);
             const commit = () => {
                 applyPhoto(doc);
                 if (push) history.pushState(null, '', path + (viewer ? '?viewer=1' : ''));
                 document.dispatchEvent(new CustomEvent('photo:changed', { detail: { slug: document.body.dataset.openSlug || '' } }));
             };
-            if (isOpen()) {
+            if (open) {
                 commit();                                    // La ficha de debajo se actualiza sin que se vea.
                 fillViewerText();
                 const now = current();
-                await crossfadeImage(imgEl, now.full, now.title);
+                if (slide) { await slide; imgEl.alt = now.title; }
+                else await slideImage(imgEl, now.full, now.title, direction);
             } else if (document.startViewTransition && !prefersReducedMotion) {
                 await document.startViewTransition(commit).finished.catch(() => {});
             } else {
@@ -1133,13 +1159,13 @@
         };
 
         // Foto anterior (-1) o siguiente (1). Pulsaciones rápidas: se encadenan, sin perder la última.
-        const go = async (direction) => {
+        const go = async (direction, options = {}) => {
             const path = direction < 0 ? detail.dataset.photoPrevious : detail.dataset.photoNext;
-            if (!path) return;
-            if (busy) { queued = direction; return; }
+            if (!path) { options.layer?.remove(); return; }
+            if (busy) { queued = direction; options.layer?.remove(); return; }
             busy = true;
             try {
-                await showPhoto(path);
+                await showPhoto(path, { direction, ...options });
             } catch (_) {
                 const url = new URL(path, location.origin);
                 if (isOpen()) url.searchParams.set('viewer', '1');
@@ -1149,6 +1175,53 @@
                 busy = false;
             }
             if (queued) { const again = queued; queued = 0; go(again); }
+        };
+
+        // Seguir al dedo en el visor: la foto se mueve con el gesto y, al lado hacia el que va, se ve ya la vecina (precargada).
+        const stage = $('.lightbox__stage', lightbox);
+        let peek = null;
+        const stageWidth = () => stage?.clientWidth || window.innerWidth;
+        const peekFor = (direction) => {
+            if (peek && peek.direction === direction) return peek;
+            peek?.el.remove(); peek = null;
+            const src = direction > 0 ? detail.dataset.photoNextImage : detail.dataset.photoPreviousImage;
+            if (!src) return null;
+            const el = document.createElement('img');
+            el.className = 'lightbox__img lightbox__img--incoming is-shown';
+            el.alt = '';
+            el.src = src;
+            imgEl.insertAdjacentElement('afterend', el);
+            peek = { el, direction };
+            return peek;
+        };
+        const follow = (dx) => {
+            if (!isOpen() || busy) return;
+            const direction = dx < 0 ? 1 : -1;
+            imgEl.getAnimations?.().forEach(animation => animation.cancel());
+            imgEl.style.transition = 'none';
+            const next = peekFor(direction);
+            if (!next) { imgEl.style.transform = `translate3d(${dx / 3}px, 0, 0)`; return; }    // Sin foto hacia ese lado: la foto se resiste.
+            imgEl.style.transform = `translate3d(${dx}px, 0, 0)`;
+            next.el.style.transform = `translate3d(${dx + direction * stageWidth()}px, 0, 0)`;
+        };
+        const release = (dx) => {                                    // El gesto no llega a pasar de foto: todo vuelve a su sitio.
+            const taken = peek; peek = null;
+            const timing = { duration: 260, easing: 'cubic-bezier(.22, .8, .24, 1)' };
+            imgEl.style.transition = '';
+            imgEl.style.transform = '';
+            if (dx && imgEl.animate) imgEl.animate([{ transform: `translate3d(${taken ? dx : dx / 3}px, 0, 0)` }, { transform: 'translate3d(0, 0, 0)' }], timing);
+            if (taken) {
+                const rest = taken.direction * stageWidth();
+                const back = taken.el.animate?.([{ transform: `translate3d(${dx + rest}px, 0, 0)` }, { transform: `translate3d(${rest}px, 0, 0)` }], timing);
+                if (back) back.finished.catch(() => {}).finally(() => taken.el.remove()); else taken.el.remove();
+            }
+        };
+        const swipe = (direction, dx) => {
+            if (!isOpen()) { go(direction); return; }
+            const layer = peek && peek.direction === direction ? peek.el : null;
+            if (layer) peek = null;
+            if (!layer && !(direction < 0 ? detail.dataset.photoPrevious : detail.dataset.photoNext)) { release(dx); return; }
+            go(direction, { from: layer ? dx : 0, layer });
         };
 
         const openFs = (nativeFullscreen = true) => {
@@ -1176,6 +1249,9 @@
             document.body.style.overflow = '';
             imgEl.classList.remove('is-shown');
             lightbox.querySelectorAll('.lightbox__img--incoming').forEach(layer => layer.remove());
+            peek = null;
+            imgEl.getAnimations?.().forEach(animation => animation.cancel());
+            imgEl.style.transform = ''; imgEl.style.transition = '';
             const url = new URL(location.href);
             if (syncUrl && url.searchParams.get('viewer') === '1') {
                 url.searchParams.delete('viewer');
@@ -1217,10 +1293,8 @@
         if (closeBtn) closeBtn.addEventListener('click', () => closeFs());
         if (prevBtn) prevBtn.addEventListener('click', () => go(-1));
         if (nextBtn) nextBtn.addEventListener('click', () => go(1));
-        bindPhotoNavigation($('.photo-detail__btn', detail), go);
-        bindPhotoNavigation($('.lightbox__stage', lightbox), (direction) => {
-            if (isOpen()) go(direction);
-        });
+        bindPhotoNavigation($('.photo-detail__btn', detail), (direction) => go(direction));
+        bindPhotoNavigation(stage, swipe, { follow, release });
         lightbox.addEventListener('click', (e) => {
             if (e.target === lightbox || e.target.classList.contains('lightbox__stage')) closeFs();
         });

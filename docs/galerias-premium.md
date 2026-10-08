@@ -153,6 +153,8 @@ Reutiliza **toda la interfaz y el comportamiento de «Estilo Baraja»** (marcado
 - **Desorden estable:** cada carta lleva `--j1..--j3` (valores 0-1 derivados de su posición, calculados en `deck.php`) que desplazan y giran un poco su hueco, de modo que cada Polaroid tiene su propio ángulo y no cambia al recargar ni al girar.
 - **Huecos:** `--p1x…--m4r` en `.deck__stage` (x en `cqw`, y en `cqh`, giro en grados). En pantallas altas y estrechas (móvil) las de fondo asoman por arriba y por abajo; en anchas, por los lados.
 - **Centrado:** la activa queda centrada en horizontal y en vertical en cualquier pantalla (reserva igual arriba y abajo: `--pad`).
+- **Marcado inicial ligero:** antes de que el JS ordene las cartas, `deck.php` marca como «oculta» (`data-pos` 5 en las Polaroids, 3 en el tambor, 4 en la baraja) a todas las cartas lejanas. Si no, con la galería entera (decenas de fotos) se veían todas a la vez, desenfocadas y cargando, y el móvil se quedaba sin memoria y cerraba la página al volver de una ficha.
+- **Móvil:** en pantallas táctiles las de alrededor no se desenfocan (solo se oscurecen): el desenfoque (`blur`) de muchas capas es muy pesado para la GPU del móvil.
 - **Panel:** ignora los mismos ajustes de la galería estándar que la baraja.
 
 ## Estilo Tinder (`swipe`)
@@ -166,6 +168,7 @@ Una carta alta a pantalla casi completa con otras dos asomando debajo, que se **
 - **Al soltar:** pasado el 26 % del ancho de la carta, o con un gesto rápido, se decide; si no, la carta vuelve a su sitio. La carta sale desde donde se soltó, girando, por el lado elegido (por la derecha si recibió el corazón). Arrastrar no abre la ficha; pulsar sí.
 - **Teclado y rueda:** `→` corazón y siguiente · `←` siguiente · `↓`, RePág y Espacio siguiente · `↑`, RePág y Mayús+Espacio anterior · Inicio y Fin. La rueda hacia abajo pasa sin dar corazón.
 - **Final:** tras la última foto aparece «Has visto todas las fotos» con «Volver a empezar». Un gesto vertical (dedo) o la rueda ya salen de la galería, como en los demás estilos.
+- **Centrado vertical:** la carta queda centrada **en el hueco libre entre las herramientas de arriba y la barra de abajo** (la misma distancia hasta una que hasta la otra), respetando el área segura de los móviles con muesca. `swipe.js` (`fitStage`) mide esos dos elementos y fija el escenario entre ellos; el CSS (`--swipe-top` / `--swipe-bottom`) tiene un valor aproximado de reserva. El test lo comprueba en 14 tamaños de pantalla.
 - **Móvil y escritorio:** fijación en móvil, parada del scroll en escritorio, botones «Salir» y «Salir hacia arriba», filtros, favoritas y vuelta a la misma foto: los de la baraja.
 
 **Cómo se da el corazón.** Cada carta lleva un botón de corazón oculto (`[data-heart-photo]`, `swipe.php`); `swipe.js` lo pulsa y `assets/js/main.js` hace el resto. Antes mira las favoritas guardadas (`djl-photo-favorites-v1`) para no quitar un corazón existente.

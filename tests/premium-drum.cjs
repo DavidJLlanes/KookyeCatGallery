@@ -254,6 +254,22 @@ const layout = page => page.evaluate(() => {
             await context.close();
         }
 
+        // 10. Marcado inicial (antes de que el JS ordene las cartas): solo unas pocas cartas visibles, no todas. Con las tambor visibles a la vez
+        //     (cada una con su foto) el móvil se quedaba sin memoria y cerraba la página al volver de una ficha.
+        {
+            const context = await browser.newContext({viewport: {width: 390, height: 844}, hasTouch: true, isMobile: true});
+            const page = await context.newPage();
+            await page.route('**/*', route => route.request().url() === 'https://deck.test/'
+                ? route.fulfill({status: 200, contentType: 'text/html', body: pageHtml('current')})
+                : route.fulfill({status: 200, contentType: 'image/png', body: png}));
+            await page.goto('https://deck.test/');
+            await page.addStyleTag({content: css});                       // Sin scripts: solo el marcado y los estilos.
+            await page.waitForTimeout(1300);
+            const visibleCards = await page.evaluate(() => [...document.querySelectorAll('.deck__card')].filter(card => getComputedStyle(card).visibility === 'visible').length);
+            assert(visibleCards <= 8, `Marcado inicial: demasiadas cartas visibles antes del JS (${visibleCards})`);
+            await context.close();
+        }
+
         console.log('Tambor verificado: pantalla completa, disposición cilíndrica simétrica y centrada, interfaz de la baraja (rueda, dedo, teclado, flechas, salidas, filtros), fijación en móvil, vuelta desde la ficha y paleta en 5 dispositivos.');
     } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exit(1); });

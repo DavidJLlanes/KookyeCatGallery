@@ -30,19 +30,19 @@
     .photo-detail__nav--next { right:.25rem; }
 }
 
-/* Cambio de foto sin recargar la página (main.js, initPhotoPage).
-   · En pantalla completa, la foto nueva (.lightbox__img--incoming) se funde SOBRE la anterior, que sigue a opacidad completa: el fondo
-     nunca se ve entre una foto y otra. Tiene el mismo tamaño y posición que la foto base (centrada, con los mismos máximos).
+/* Cambio de foto sin recargar la página (main.js, initPhotoPage y slideImage).
+   · En pantalla completa, la foto nueva (.lightbox__img--incoming) entra deslizando por el lado del que viene mientras la anterior sale por
+     el contrario, a opacidad completa y con la misma geometría (ver .lightbox__img en style.css): el fondo no se ve entre fotos y, al
+     arrastrar con el dedo, la vecina ya asoma. El movimiento lo anima el JS con transform; aquí solo se quitan las transiciones.
    · En la ficha, el navegador (si sabe) funde la página entera con una transición de vista breve. */
 .lightbox__img--incoming {
-    position: absolute;
-    inset: 0;
-    margin: auto;
     z-index: 0;
     pointer-events: none;
-    transition: opacity .42s ease, transform .42s ease;
+    transition: none;
+    will-change: transform;
 }
-.lightbox--immersive .lightbox__img { will-change: opacity; }
+.lightbox--immersive .lightbox__img { will-change: transform; }
+.lightbox--immersive .lightbox__stage { overflow: hidden; }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .24s; }
 
 /* Si se recarga una ficha con el visor abierto (?viewer=1), se oculta lo de detrás hasta que el visor se abre: sin destello de la ficha. */

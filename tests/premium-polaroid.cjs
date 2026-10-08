@@ -136,7 +136,7 @@ const layout = page => page.evaluate(() => {
                 assert(c[pos].visibility === 'visible' && c[pos].opacity === '1', `${label}: la Polaroid ${pos} debe verse`);
                 assert(c[pos].scale < 0.75 * c[0].scale + 0.01 || c[pos].width < c[0].width * 0.8, `${label}: las de alrededor son más pequeñas que la activa`);
                 assert(Math.abs(c[pos].angle) > 2, `${label}: la Polaroid ${pos} está girada (${c[pos].angle.toFixed(1)}°)`);
-                assert(c[pos].filter.includes('blur'), `${label}: la Polaroid ${pos} está algo desenfocada`);
+                assert(device.touch ? c[pos].filter.includes('brightness') : c[pos].filter.includes('blur'), `${label}: la Polaroid ${pos} está algo desenfocada (en pantallas táctiles solo oscurecida: el blur es muy pesado para el móvil)`);
             }
             assert(c[5].visibility === 'hidden' && c[5].opacity === '0', `${label}: la Polaroid ±5 queda oculta`);
             const around = [-2, -1, 1, 2, 3, 4].map(pos => c[pos]);
@@ -255,6 +255,22 @@ const layout = page => page.evaluate(() => {
             await page.waitForTimeout(400);
             await page.keyboard.press('ArrowDown');
             await page.waitForFunction(() => document.querySelector('#deck').dataset.index === '1' && document.querySelector('.deck__card[data-pos="0"]').dataset.slug === 'foto-1', null, {timeout: 400});
+            await context.close();
+        }
+
+        // 10. Marcado inicial (antes de que el JS ordene las cartas): solo unas pocas cartas visibles, no todas. Con las Polaroids visibles a la vez
+        //     (cada una con su foto) el móvil se quedaba sin memoria y cerraba la página al volver de una ficha.
+        {
+            const context = await browser.newContext({viewport: {width: 390, height: 844}, hasTouch: true, isMobile: true});
+            const page = await context.newPage();
+            await page.route('**/*', route => route.request().url() === 'https://deck.test/'
+                ? route.fulfill({status: 200, contentType: 'text/html', body: pageHtml('current')})
+                : route.fulfill({status: 200, contentType: 'image/png', body: png}));
+            await page.goto('https://deck.test/');
+            await page.addStyleTag({content: css});                       // Sin scripts: solo el marcado y los estilos.
+            await page.waitForTimeout(1300);
+            const visibleCards = await page.evaluate(() => [...document.querySelectorAll('.deck__card')].filter(card => getComputedStyle(card).visibility === 'visible').length);
+            assert(visibleCards <= 6, `Marcado inicial: demasiadas cartas visibles antes del JS (${visibleCards})`);
             await context.close();
         }
 

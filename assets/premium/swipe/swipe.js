@@ -135,7 +135,20 @@
        ------------------------------------------------------------------------- */
     // Todas las cartas tienen el mismo marco (lo fija el CSS). Si la proporción de la foto se parece a la del marco
     // la cubre (cover); si difiere más de ~35 % se muestra completa (contain) sobre el fondo de la carta.
+    // El escenario de las cartas es el hueco libre entre las herramientas (arriba) y la barra de abajo, con el mismo margen a cada lado, medido
+    // en la propia pantalla: así la carta queda exactamente centrada entre las dos (el CSS tiene un valor aproximado de reserva).
+    const stage = root.querySelector('.deck__stage');
+    const STAGE_GAP = 26;                 // Margen hasta las herramientas y la barra; deja sitio a las cartas que asoman por debajo.
+    const fitStage = () => {
+        const tools = root.querySelector('.deck__tools'), nav = root.querySelector('.deck__nav');
+        if (!stage || !tools || !nav) return;
+        const deck = rect();
+        stage.style.setProperty('--swipe-top', `${Math.max(0, tools.getBoundingClientRect().bottom - deck.top + STAGE_GAP).toFixed(1)}px`);
+        stage.style.setProperty('--swipe-bottom', `${Math.max(0, deck.bottom - nav.getBoundingClientRect().top + STAGE_GAP).toFixed(1)}px`);
+    };
+
     const fitCards = () => {
+        fitStage();
         const frame = visible[0];
         if (!frame || !frame.clientHeight) return;
         const ratio = frame.clientWidth / frame.clientHeight;
@@ -572,7 +585,10 @@
         window.clearTimeout(resizeTimer);
         resizeTimer = window.setTimeout(() => {
             fitCards();
-            if (pinned) {                                        // Cambió el tamaño: se vuelve a fijar en el sitio exacto.
+            // Fijada, la baraja se adapta sola al nuevo tamaño (el cuerpo es fijo y el alto es 100dvh). Solo si ya no queda en el borde
+            // superior (el contenido de encima cambió de alto) se vuelve a fijar. Volver a fijar siempre provocaba, en iPhone, un bucle
+            // de «soltar y fijar» con cada cambio de la barra del navegador.
+            if (pinned && Math.abs(rect().top) > 2) {
                 unpin();
                 window.requestAnimationFrame(() => pin());
             }

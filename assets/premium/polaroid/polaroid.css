@@ -147,11 +147,25 @@
 .deck[data-layout="polaroid"] .deck__card[data-pos="-3"] { transform: translate(calc((var(--m3x) + (var(--j1, .5) - .5) * 4) * 1cqw), calc((var(--m3y) + (var(--j2, .5) - .5) * 4) * 1cqh)) rotate(calc((var(--m3r) + (var(--j3, .5) - .5) * 6) * 1deg)) scale(var(--scatter)); z-index: 34; }
 .deck[data-layout="polaroid"] .deck__card[data-pos="-4"] { transform: translate(calc((var(--m4x) + (var(--j1, .5) - .5) * 4) * 1cqw), calc((var(--m4y) + (var(--j2, .5) - .5) * 4) * 1cqh)) rotate(calc((var(--m4r) + (var(--j3, .5) - .5) * 6) * 1deg)) scale(var(--scatter)); z-index: 33; }
 
+/* En pantallas táctiles no se desenfoca (blur): con muchas Polaroids a la vez es muy pesado para la GPU del móvil y bastaba un fallo de memoria
+   para que el navegador cerrara la página. Se queda el oscurecimiento. */
+@media (hover: none) and (pointer: coarse) {
+    .deck[data-layout="polaroid"] .deck__card[data-pos="1"],
+    .deck[data-layout="polaroid"] .deck__card[data-pos="2"],
+    .deck[data-layout="polaroid"] .deck__card[data-pos="3"],
+    .deck[data-layout="polaroid"] .deck__card[data-pos="4"],
+    .deck[data-layout="polaroid"] .deck__card[data-pos="-1"],
+    .deck[data-layout="polaroid"] .deck__card[data-pos="-2"],
+    .deck[data-layout="polaroid"] .deck__card[data-pos="-3"],
+    .deck[data-layout="polaroid"] .deck__card[data-pos="-4"] { filter: brightness(.8); }
+}
+
 /* Más allá: ocultas (se aparecen al acercarse). */
 .deck[data-layout="polaroid"] .deck__card[data-pos="5"],
 .deck[data-layout="polaroid"] .deck__card[data-pos="-5"] {
     transform: scale(.4);
-    filter: blur(3px);
+    filter: none;
+    will-change: auto;                               /* Sin capa propia mientras están ocultas: son muchas fotos. */
     opacity: 0;
     z-index: 10;
     visibility: hidden;

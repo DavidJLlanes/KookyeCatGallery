@@ -273,16 +273,19 @@ const open = async (context, html, {liked = [], url = 'https://deck.test/'} = {}
             await context.close();
         }
 
-        // 13. Centrado: la carta activa queda centrada en horizontal y en vertical en cualquier pantalla.
-        for (const [width, height] of [[320, 568], [360, 640], [390, 844], [430, 932], [768, 1024], [820, 1180], [1024, 768], [1280, 720], [1440, 900], [1920, 1080], [2560, 1440], [844, 390], [667, 375]]) {
+        // 13. Centrado: la carta queda centrada en horizontal y, en vertical, justo en el hueco libre entre las herramientas y la barra de abajo
+        //     (la misma distancia hasta unas que hasta la otra), en cualquier pantalla.
+        for (const [width, height] of [[320, 568], [360, 640], [390, 844], [393, 852], [430, 932], [768, 1024], [820, 1180], [1024, 768], [1280, 720], [1440, 900], [1920, 1080], [2560, 1440], [844, 390], [667, 375]]) {
             const touch = width < 800 || height < 500;
             const context = await browser.newContext({viewport: {width, height}, hasTouch: touch, isMobile: touch});
             const {page} = await open(context, pageHtml('current'));
             await page.waitForTimeout(900);
-            const m = await page.evaluate(() => { const deck = document.querySelector('#deck').getBoundingClientRect(), r = document.querySelector('.deck__card[data-pos="0"]').getBoundingClientRect();
-                return {dx: r.left + r.width / 2 - deck.left - deck.width / 2, dy: r.top + r.height / 2 - deck.top - deck.height / 2, left: r.left - deck.left, right: r.right - deck.left, top: r.top - deck.top, bottom: r.bottom - deck.top, w: deck.width, h: deck.height}; });
-            assert(Math.abs(m.dx) <= 2 && Math.abs(m.dy) <= 2, `Centrado ${width}×${height}: la carta debe estar centrada (${m.dx.toFixed(1)}, ${m.dy.toFixed(1)})`);
-            assert(m.left >= 0 && m.right <= m.w && m.top >= 0 && m.bottom <= m.h, `Centrado ${width}×${height}: la carta cabe en la pantalla`);
+            const m = await page.evaluate(() => { const deck = document.querySelector('#deck').getBoundingClientRect(), r = document.querySelector('.deck__card[data-pos="0"]').getBoundingClientRect(),
+                tools = document.querySelector('.deck__tools').getBoundingClientRect(), nav = document.querySelector('.deck__nav').getBoundingClientRect();
+                return {dx: r.left + r.width / 2 - deck.left - deck.width / 2, above: r.top - tools.bottom, below: nav.top - r.bottom, left: r.left - deck.left, right: r.right - deck.left, w: deck.width}; });
+            assert(Math.abs(m.dx) <= 2, `Centrado ${width}×${height}: la carta debe estar centrada en horizontal (${m.dx.toFixed(1)})`);
+            assert(Math.abs(m.above - m.below) <= 6, `Centrado ${width}×${height}: la carta debe estar centrada en vertical entre las herramientas y la barra (arriba ${m.above.toFixed(1)}, abajo ${m.below.toFixed(1)})`);
+            assert(m.above >= 8 && m.below >= 8 && m.left >= 0 && m.right <= m.w, `Centrado ${width}×${height}: la carta no toca los controles ni se sale (${JSON.stringify(m)})`);
             await context.close();
         }
 
