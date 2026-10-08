@@ -7,7 +7,7 @@ Entra en `/admin.php`, inicia sesión y abre **Textos y diseño**. Guarda para a
 - Fotos visibles a la vez: ajuste independiente para móvil y escritorio (6 a 100, o «Todas»). No depende de las columnas; si hay más fotos, se paginan. Por defecto: 12 en móvil y 20 en escritorio.
 - Estructura de la página: en **Diseño → Estructura de la página** se ordenan con flechas los bloques de la portada (categorías, galería, mapa, «El proyecto» y enlaces sociales) y se activan o desactivan los opcionales. La galería siempre se muestra. El orden se guarda en `section_order`.
 - Cabecera: la cabecera de móvil y la de escritorio se pueden ocultar por separado (`show_header_mobile`, `show_header_desktop`).
-- Panel: el área privada usa una barra lateral en escritorio y una barra inferior en móvil, con los estilos en `assets/css/admin.css`.
+- Panel: el área privada usa una barra lateral en escritorio y una barra inferior en móvil; Perfil y Diseño son entradas de menú separadas, con los estilos en `assets/css/admin.css`.
 - Cabeceras: nueve para móvil y nueve para escritorio, con selectores independientes de la cuadrícula y de la paleta. Móvil corresponde a hasta 768 px y escritorio a partir de 769 px.
 - Modos de galería: masonry, cuadrícula, mosaico cromático, editorial asimétrica, filas por categoría, álbum desordenado, sala de exposición, hoja de contactos, secuencia narrativa y trípticos. Disponibles en móvil y escritorio; se eligen independientemente.
 - Efectos: Suave, Acercamiento, Elevación, Revelado, Virado de color, Marco luminoso, Desplazamiento, Perspectiva, Enfoque y Destello.
