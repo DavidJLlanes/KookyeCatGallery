@@ -348,6 +348,35 @@ const devices = [
             await context.close();
         }
 
+        // 6b. Centrado: el conjunto carta + mazo queda centrado en horizontal y en vertical en cualquier pantalla.
+        const sizes = [[320, 568], [360, 640], [375, 667], [390, 844], [412, 915], [430, 932], [768, 1024], [820, 1180], [1024, 768], [1280, 720], [1440, 900], [1920, 1080], [2560, 1440], [844, 390], [667, 375]];
+        for (const [width, height] of sizes) {
+            const touch = width < 800 || height < 500;
+            const centering = await browser.newContext({viewport: {width, height}, hasTouch: touch, isMobile: touch});
+            const cpage = await centering.newPage();
+            await cpage.route('**/*', route => route.request().url() === 'https://deck.test/'
+                ? route.fulfill({status: 200, contentType: 'text/html', body: pageHtml('current')})
+                : route.fulfill({status: 200, contentType: 'image/png', body: png}));
+            await cpage.goto('https://deck.test/');
+            await cpage.addStyleTag({content: css});
+            await cpage.waitForTimeout(1200);
+            const m = await cpage.evaluate(() => {
+                const deck = document.querySelector('#deck').getBoundingClientRect();
+                const boxes = [0, 1, 2, 3].map(pos => document.querySelector(`.deck__card[data-pos="${pos}"]`).getBoundingClientRect());
+                const left = Math.min(...boxes.map(b => b.left)) - deck.left, right = Math.max(...boxes.map(b => b.right)) - deck.left;
+                const top = Math.min(...boxes.map(b => b.top)) - deck.top, bottom = Math.max(...boxes.map(b => b.bottom)) - deck.top;
+                const active = boxes[0];
+                return {dx: (left + right) / 2 - deck.width / 2, dy: (top + bottom) / 2 - deck.height / 2,
+                    activeDx: (active.left + active.right) / 2 - (deck.left + deck.width / 2), activeDy: (active.top + active.bottom) / 2 - (deck.top + deck.height / 2),
+                    left, right, top, bottom, w: deck.width, h: deck.height};
+            });
+            const where = `${width}×${height}`;
+            assert(Math.abs(m.dx) <= 7 && Math.abs(m.dy) <= 6, `Centrado ${where}: el conjunto carta + mazo debe estar centrado (dx=${m.dx.toFixed(1)}, dy=${m.dy.toFixed(1)})`);
+            assert(Math.abs(m.activeDy) <= 14, `Centrado ${where}: la carta activa debe quedar centrada en vertical (dy=${m.activeDy.toFixed(1)})`);
+            assert(m.left >= 4 && m.right <= m.w - 4 && m.top >= 4 && m.bottom <= m.h - 4, `Centrado ${where}: el conjunto debe caber en la pantalla (${JSON.stringify(m)})`);
+            await centering.close();
+        }
+
         // 7b. Volver desde la ficha de una foto: /#baraja=<slug> abre la baraja en esa foto, a pantalla completa.
         for (const viewport of [{width: 1440, height: 900}, {width: 390, height: 844, touch: true}]) {
             const backContext = await browser.newContext({viewport: {width: viewport.width, height: viewport.height}, hasTouch: !!viewport.touch, isMobile: !!viewport.touch});

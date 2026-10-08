@@ -63,7 +63,7 @@ Están en variables CSS al principio de `assets/premium/deck/deck.css` (clase `.
 | `--deck-ease` | `cubic-bezier(.22,.8,.24,1)` | Curva: arranque ágil, final muy suave. |
 | `--deck-radius` | `22px` | Esquinas de las cartas del mazo. |
 
-El mínimo entre dos pasos con la rueda (`STEP_COOLDOWN`, 600 ms) está al principio de `deck.js`. Las posiciones del mazo (`data-pos="1..3"`) están en la sección 2 del CSS: desplazamiento (en múltiplos de `--side`, el margen lateral reservado al mazo), profundidad y giro de cada carta. El marco de las cartas se calcula con unidades de contenedor (`cqw`/`cqh`) a partir de `--pad-top`, `--pad-bottom` y `--side` en `.deck__stage`.
+El mínimo entre dos pasos con la rueda (`STEP_COOLDOWN`, 600 ms) está al principio de `deck.js`. Las posiciones del mazo (`data-pos="1..3"`) están en la sección 2 del CSS: desplazamiento (en múltiplos de `--side`, el margen lateral reservado al mazo), profundidad y giro de cada carta. El marco de las cartas se calcula con unidades de contenedor (`cqw`/`cqh`) a partir de `--pad` (reserva igual arriba y abajo, para el centrado vertical) y `--side` (reserva lateral del mazo) en `.deck__stage`. El conjunto carta + mazo queda centrado en horizontal y en vertical en cualquier pantalla (el test lo mide en 14 tamaños, de 320×568 a 2560×1440).
 
 ### Limitaciones conocidas
 

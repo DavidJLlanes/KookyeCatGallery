@@ -63,11 +63,13 @@
     perspective-origin: 50% 40%;
     container-type: size;                           /* Las cartas se miden con cqw/cqh: mismo marco en todas. */
 
-    /* Reservas alrededor del marco: arriba las herramientas, abajo la barra de navegación y a los lados el mazo. */
-    --pad-top: 4.2rem;
-    --pad-bottom: 5.6rem;
+    /* Reservas alrededor del marco, iguales arriba y abajo (herramientas / barra de navegación) para que el conjunto
+       quede centrado en vertical, y a los lados (el mazo asoma por la derecha). */
+    --pad: 5.6rem;
     --side: clamp(3rem, 10cqw, 6rem);
-    --frame-h: calc(100cqh - var(--pad-top) - var(--pad-bottom));
+    --pile-x: calc(var(--side) * .86);              /* Lo que el mazo asoma por la derecha. */
+    --pile-y: 22px;                                 /* Lo que asoma por abajo. */
+    --frame-h: calc(100cqh - var(--pad) * 2);
     --frame-w: min(calc(100cqw - var(--side) * 2), calc(var(--frame-h) * 1.6));
 }
 
@@ -75,11 +77,12 @@
    `transform` (esta última queda libre para el mazo y la animación). */
 .deck__card {
     position: absolute;
-    top: var(--pad-top);
+    top: 50%;
     left: 50%;
     width: var(--frame-w);
     height: min(var(--frame-h), calc(var(--frame-w) * 1.75));
-    translate: -50% 0;
+    /* Centro de la pantalla; el conjunto carta + mazo (que asoma a la derecha y abajo) queda centrado en ambos ejes. */
+    translate: calc(-50% - var(--pile-x) * .58) calc(-50% - var(--pile-y) * .5);
     margin: 0;
     overflow: hidden;
     background: var(--bg-card);
@@ -91,6 +94,7 @@
     transition:
         transform var(--deck-duration) var(--deck-ease),
         opacity calc(var(--deck-duration) * .8) var(--deck-ease),
+        filter var(--deck-duration) var(--deck-ease),
         visibility 0s linear var(--deck-duration);  /* Se oculta al terminar de moverse. */
 }
 
@@ -99,36 +103,42 @@
 /* Carta activa: encima del mazo. */
 .deck__card[data-pos="0"] {
     transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+    filter: none;
     opacity: 1;
     z-index: 50;
     visibility: visible;
-    transition-delay: 0s, 0s, 0s;
+    transition-delay: 0s, 0s, 0s, 0s;
 }
 
 /* Mazo visible debajo: cada carta asoma por la derecha y por abajo, más al fondo y con un giro distinto,
-   como cartas apiladas a mano. */
+   como cartas apiladas a mano. La perspectiva encogería las cartas del fondo (y descentraría el conjunto según el ancho de la
+   pantalla), así que cada una se compensa con scale(): el tamaño aparente es el mismo y la profundidad se nota con el giro y
+   un tono más oscuro (filter: brightness). Así el conjunto se centra igual en cualquier tamaño. */
 .deck__card[data-pos="1"] {
-    transform: translate3d(calc(var(--side) * .34), 8px, -30px) rotate(1.6deg);
+    transform: translate3d(calc(var(--side) * .34), 8px, -30px) rotate(1.6deg) scale(1.02);
+    filter: brightness(.9);
     opacity: 1;
     z-index: 40;
     visibility: visible;
-    transition-delay: 0s, 0s, 0s;
+    transition-delay: 0s, 0s, 0s, 0s;
 }
 
 .deck__card[data-pos="2"] {
-    transform: translate3d(calc(var(--side) * .62), 15px, -60px) rotate(-1.4deg);
+    transform: translate3d(calc(var(--side) * .62), 15px, -60px) rotate(-1.4deg) scale(1.04);
+    filter: brightness(.8);
     opacity: 1;
     z-index: 30;
     visibility: visible;
-    transition-delay: 0s, 0s, 0s;
+    transition-delay: 0s, 0s, 0s, 0s;
 }
 
 .deck__card[data-pos="3"] {
-    transform: translate3d(calc(var(--side) * .86), 22px, -90px) rotate(2.2deg);
+    transform: translate3d(calc(var(--side) * .86), 22px, -90px) rotate(2.2deg) scale(1.06);
+    filter: brightness(.7);
     opacity: 1;
     z-index: 20;
     visibility: visible;
-    transition-delay: 0s, 0s, 0s;
+    transition-delay: 0s, 0s, 0s, 0s;
 }
 
 .deck__card[data-pos="4"] {
@@ -407,7 +417,7 @@
 
 /* Pantallas bajas (móvil apaisado): menos pie de foto y controles más pequeños para que nada se pise. */
 @media (max-height: 520px) {
-    .deck__stage { --pad-top: 3rem; --pad-bottom: 3.9rem; }
+    .deck__stage { --pad: 3.9rem; }
     .deck__caption { padding-top: 1.2rem; padding-bottom: .7rem; }
     .deck__title { font-size: clamp(1.15rem, 5.5vh, 1.7rem); max-width: 28ch; }
     .deck__category { margin-top: .3rem; font-size: .62rem; }
