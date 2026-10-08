@@ -1,0 +1,113 @@
+/* =============================================================================
+   GALERÍA PREMIUM · ESTILO TAMBOR (clave `drum`)
+   -----------------------------------------------------------------------------
+   Carrusel cilíndrico: las fotos están en un cilindro 3D que gira en horizontal. La foto activa queda de frente y las vecinas
+   se curvan hacia atrás a ambos lados. Se carga DESPUÉS de deck.css y solo cambia la disposición de las cartas: la interfaz
+   (herramientas, contador, flechas, botones de salir, pista) y el comportamiento (deck.js) son los de «Estilo Baraja».
+   Marcado: inc/premium/deck.php (data-layout="drum") · Documentación: docs/galerias-premium.md y README.md.
+
+   Posiciones (data-pos, las asigna deck.js): 0 = de frente · ±1, ±2 = a los lados, cada vez más hacia atrás · ±3 = ocultas.
+   El conjunto es simétrico respecto al centro de la pantalla, así que queda centrado en horizontal y en vertical por construcción.
+   ============================================================================= */
+.deck[data-layout="drum"] .deck__stage {
+    perspective: 1400px;
+    perspective-origin: 50% 50%;
+
+    /* Reserva igual arriba y abajo (herramientas / barra de navegación). */
+    --pad: 5.6rem;
+    --frame-h: calc(100cqh - var(--pad) * 2);
+    /* Tres cartas caben en pantalla: la activa y una a cada lado. En pantallas estrechas la activa es mayor y las vecinas asoman. */
+    --frame-w: min(calc(100cqw * .3), calc(var(--frame-h) * .8));
+    --drum-r: calc(var(--frame-w) * 1.5);           /* Radio del cilindro: deja casi pegadas las cartas contiguas. */
+    --drum-angle: 38deg;                            /* Giro entre cartas contiguas. */
+}
+
+@media (max-width: 768px) {
+    .deck[data-layout="drum"] .deck__stage { --frame-w: min(calc(100cqw * .6), calc(var(--frame-h) * .8)); }
+}
+
+/* Cada carta: se aleja del centro del cilindro, gira sobre su eje (rotateY) y vuelve a acercarse (translateZ). Todas las posiciones
+   usan la misma lista de funciones para que la transición entre ellas sea una rotación continua. */
+.deck[data-layout="drum"] .deck__card {
+    height: min(var(--frame-h), calc(var(--frame-w) * 1.35));
+    translate: -50% -50%;
+    transform-origin: 50% 50%;
+    border-radius: var(--deck-radius);
+    transition:
+        transform var(--deck-duration) var(--deck-ease),
+        opacity calc(var(--deck-duration) * .8) var(--deck-ease),
+        filter var(--deck-duration) var(--deck-ease),
+        visibility 0s linear var(--deck-duration);
+}
+
+.deck[data-layout="drum"] .deck__card[data-pos="0"] {
+    transform: translateZ(calc(var(--drum-r) * -1)) rotateY(0deg) translateZ(var(--drum-r));
+    filter: none;
+    opacity: 1;
+    z-index: 50;
+    visibility: visible;
+}
+
+.deck[data-layout="drum"] .deck__card[data-pos="1"] {
+    transform: translateZ(calc(var(--drum-r) * -1)) rotateY(var(--drum-angle)) translateZ(var(--drum-r));
+    filter: brightness(.72);
+    opacity: 1;
+    z-index: 40;
+    visibility: visible;
+    transition-delay: 0s, 0s, 0s, 0s;
+}
+
+.deck[data-layout="drum"] .deck__card[data-pos="-1"] {
+    transform: translateZ(calc(var(--drum-r) * -1)) rotateY(calc(var(--drum-angle) * -1)) translateZ(var(--drum-r));
+    filter: brightness(.72);
+    opacity: 1;
+    z-index: 40;
+    visibility: visible;
+    pointer-events: none;
+    transition-delay: 0s, 0s, 0s, 0s;
+}
+
+.deck[data-layout="drum"] .deck__card[data-pos="2"] {
+    transform: translateZ(calc(var(--drum-r) * -1)) rotateY(calc(var(--drum-angle) * 2)) translateZ(var(--drum-r));
+    filter: brightness(.48);
+    opacity: 1;
+    z-index: 30;
+    visibility: visible;
+    transition-delay: 0s, 0s, 0s, 0s;
+}
+
+.deck[data-layout="drum"] .deck__card[data-pos="-2"] {
+    transform: translateZ(calc(var(--drum-r) * -1)) rotateY(calc(var(--drum-angle) * -2)) translateZ(var(--drum-r));
+    filter: brightness(.48);
+    opacity: 1;
+    z-index: 30;
+    visibility: visible;
+    pointer-events: none;
+    transition-delay: 0s, 0s, 0s, 0s;
+}
+
+/* Fuera del giro visible: detrás del cilindro, invisibles. */
+.deck[data-layout="drum"] .deck__card[data-pos="3"] {
+    transform: translateZ(calc(var(--drum-r) * -1)) rotateY(calc(var(--drum-angle) * 3)) translateZ(var(--drum-r));
+    filter: brightness(.3);
+    opacity: 0;
+    z-index: 20;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.deck[data-layout="drum"] .deck__card[data-pos="-3"] {
+    transform: translateZ(calc(var(--drum-r) * -1)) rotateY(calc(var(--drum-angle) * -3)) translateZ(var(--drum-r));
+    filter: brightness(.3);
+    opacity: 0;
+    z-index: 20;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* El pie de foto y los corazones solo se ven en la carta activa (como en la baraja). La carta que sale lo oculta enseguida y la
+   que llega lo muestra al final del giro: lo gestiona deck.css con data-pos="0". */
+
+@media (max-height: 520px) {
+    .deck[data-layout="drum"] .deck__stage { --pad: 3.9rem; }
+}

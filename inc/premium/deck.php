@@ -2,13 +2,16 @@
 /**
  * Galería premium «Estilo Baraja» (clave `deck`): marcado.
  *
+ * Sirve a dos galerías premium: «Estilo Baraja» (clave `deck`, disposición `stack`) y «Estilo Tambor» (clave `drum`, disposición
+ * `drum`). Mismo marcado e interfaz; cambia solo el CSS que coloca las cartas (data-layout).
+ *
  * Una sola pantalla completa (100 % de ancho y de alto del dispositivo) con las fotos apiladas como
  * una baraja de cartas. El comportamiento (rueda, deslizar, teclado, botones) está en
  * assets/premium/deck/deck.js y los estilos y la animación en assets/premium/deck/deck.css.
  *
  * Contrato con el JS y el CSS
  * ---------------------------
- *   #deck                      Raíz. data-total = número de fotos.
+ *   #deck                      Raíz. data-total = número de fotos; data-layout = `stack` (baraja) o `drum` (tambor).
  *   .deck__card                Una carta por foto. El JS le pone data-pos (posición respecto a la carta
  *                              activa: 0 = encima, 1..3 = mazo, -1 = ya pasada) y el CSS la coloca en 3D.
  *   .deck__card[data-*]        category, slug, title… (los mismos data-* que las tarjetas estándar).
@@ -22,11 +25,14 @@
  * Se incluye desde inc/blocks/gallery.php cuando hay fotos y esta galería premium está activa.
  */
 $deckTotal = count($galleryItems);
+// «Estilo Baraja» (pila de cartas) y «Estilo Tambor» (cilindro 3D) comparten este marcado y la interfaz: la disposición sale de la
+// galería premium activa (data-layout) y la coloca el CSS.
+$deckKey = site_premium_gallery_active($siteSettings ?? null) === 'drum' ? 'drum' : 'deck';
 ?>
 <!-- GALERÍA PREMIUM · ESTILO BARAJA -->
-<main id="galeria" class="gallery-section gallery-section--premium" data-premium-gallery="deck">
+<main id="galeria" class="gallery-section gallery-section--premium" data-premium-gallery="<?= $deckKey ?>">
     <section class="deck" id="deck" role="region" aria-roledescription="carrusel"
-             aria-label="<?= site_text_html('deck_label') ?>" data-total="<?= $deckTotal ?>" tabindex="0">
+             aria-label="<?= site_text_html($deckKey === 'drum' ? 'drum_label' : 'deck_label') ?>" data-layout="<?= $deckKey === 'drum' ? 'drum' : 'stack' ?>" data-total="<?= $deckTotal ?>" tabindex="0">
 
         <div class="deck__stage">
             <?php foreach ($galleryItems as $i => $item): ?>

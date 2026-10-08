@@ -2,6 +2,7 @@
 // Stable keys: do not regenerate this catalog when defaults change.
 return [
     'deck_label' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Galería de fotografías en baraja'],
+    'drum_label' => ['group' => 'Galería premium · Estilo Tambor', 'default' => 'Galería de fotografías en tambor'],
     'deck_prev' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Foto anterior'],
     'deck_next' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Foto siguiente'],
     'deck_hint_touch' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Desliza hacia arriba'],

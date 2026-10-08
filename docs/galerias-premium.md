@@ -11,6 +11,7 @@ Se elige en el panel: **Textos y diseño → Diseño → Galería premium**.
 | **Estilo Baraja** | `deck` | Pantalla completa sobre el fondo de la web. Las fotos son cartas apiladas: cada una sale hacia la izquierda, se encoge y se desvanece, y el mazo de debajo asoma en 3D. |
 | **Estilo Burbujas** | `bubbles` | Pantalla completa. Las fotos son círculos de distintos tamaños, con un pequeño marco, repartidos al azar por toda la pantalla y flotando lentamente. Se paginan. |
 | **Estilo Cuadrados** | `squares` | Igual que «Estilo Burbujas», pero con cuadrados de distintos tamaños (esquinas suavemente redondeadas). |
+| **Estilo Tambor** | `drum` | Pantalla completa. Las fotos giran como un tambor 3D (carrusel cilíndrico): la activa de frente y las vecinas curvadas hacia atrás a ambos lados. Misma interfaz que «Estilo Baraja». |
 
 ## Qué cambia al activar una galería premium
 
@@ -116,6 +117,16 @@ Es **«Estilo Burbujas» con cuadrados**: comparte el marcado (`inc/premium/bubb
 - El reparto usa la distancia de **Chebyshev** (el mayor desplazamiento en un eje) en lugar de la euclídea para separar los cuadrados y hacerlos crecer hasta casi tocarse. Como un cuadrado ocupa más que un círculo del mismo radio, el tope de burbujas por página según el espacio es algo menor (p. ej. 18 en lugar de 20 en un móvil apaisado).
 - Los textos propios (`squares_label`) están en el catálogo «Galería premium · Estilo Cuadrados»; el resto de textos son los de la galería de burbujas.
 
+## Estilo Tambor (`drum`)
+
+Carrusel cilíndrico: las fotos están en un cilindro 3D que gira en horizontal. Reutiliza **toda la interfaz y el comportamiento de «Estilo Baraja»** (el mismo marcado `inc/premium/deck.php`, `deck.css` y `deck.js`): herramientas «Favoritas» y «Presentación», barra con flechas y contador «3 / 14», botones «Salir» y «Salir hacia arriba», pista inicial, rueda, dedo y teclado, parada del scroll en escritorio, fijación en móvil, filtros, botones flotantes que se apartan y vuelta desde la ficha. Solo cambia la disposición de las cartas.
+
+- **Disposición:** `data-layout="drum"` en el marcado (lo decide el partial según la galería activa) y `assets/premium/drum/drum.css`, que se carga **después** de `deck.css` y solo recoloca las cartas. Cada carta se aleja del centro del cilindro (`translateZ(-R)`), gira sobre su eje (`rotateY(±38°·n)`) y vuelve a acercarse (`translateZ(R)`): todas las posiciones usan la misma lista de funciones, así que el giro entre posiciones es continuo.
+- **Posiciones (`data-pos`):** `0` de frente · `±1`, `±2` a los lados, cada vez más hacia atrás y más oscuras · `±3` ocultas detrás del cilindro. A diferencia de la baraja, las cartas pasadas **no salen**: siguen en el tambor, a la izquierda.
+- **Centrado:** el conjunto es simétrico respecto al centro de la pantalla, así que la carta activa queda centrada en horizontal y en vertical en cualquier pantalla (reserva igual arriba y abajo: `--pad`). En pantallas anchas se ven enteras las tres cartas centrales; en estrechas (≤ 768 px) la activa es mayor y las vecinas asoman por los lados.
+- **Ajustes:** `--drum-angle` (giro entre cartas, 38°) y `--drum-r` (radio) en `.deck__stage` de `drum.css`; el tamaño del marco, en `--frame-w`. Duración y curva del giro: las de la baraja (`--deck-duration`, `--deck-ease`).
+- **Panel:** ignora los mismos ajustes de la galería estándar que la baraja (8 campos desactivados).
+
 ## Arquitectura
 
 ```
@@ -126,6 +137,7 @@ assets/premium/<clave>/<clave>.js  Comportamiento (solo se carga si está activa
 inc/blocks/gallery.php             Si hay una galería premium activa, incluye su marcado en lugar de la galería estándar
 index.php                          «Volver a la galería» de la ficha apunta a /#baraja=<slug> si hay una galería premium activa
 inc/site-settings.php              Ajuste `gallery_premium` (validación, atributos del <body>)
+assets/premium/drum/               Estilo Tambor (drum.css; reutiliza deck.js y el marcado de la baraja)
 assets/premium/bubbles/            Estilo Burbujas (bubbles.css y bubbles.js); marcado en inc/premium/bubbles.php
 inc/site-settings-form.php         Selector «Galería premium» y campos desactivados
 assets/js/admin-ui.js              Desactiva los campos de la galería estándar al elegir una premium
@@ -149,7 +161,7 @@ Flujo: `index.php` → `page_block_render('gallery')` → `inc/blocks/gallery.ph
 
 1. Crea el marcado en `inc/premium/<clave>.php`. Empieza con un comentario que explique el diseño y las variables que recibe (`$galleryItems`, `$author`, `$rootDir`).
 2. Crea `assets/premium/<clave>/<clave>.css` y `<clave>.js`. Usa solo variables de la paleta para los colores y respeta `prefers-reduced-motion`.
-3. Regístrala en `site_premium_gallery_definitions()` (`inc/premium-galleries.php`) con `label`, `description`, `partial`, `css` y `js` (y `honors` si respeta algún ajuste de la galería estándar). Aparecerá sola en el selector del panel y en `data-gallery-premium`.
+3. Regístrala en `site_premium_gallery_definitions()` (`inc/premium-galleries.php`) con `label`, `description`, `partial`, `css` y `js` (y `honors` si respeta algún ajuste de la galería estándar). `css` puede ser una lista, para cargar las hojas de otra galería más las propias (así hace «Estilo Tambor»). Aparecerá sola en el selector del panel y en `data-gallery-premium`.
 4. Si necesita textos, añade claves en `inc/site-texts.php` y usa `site_text_html()`.
 5. Escribe un test con el marcado, el CSS y el JS reales (ver `tests/premium-deck.cjs`) y añádelo a `.github/workflows/validate.yml`.
 6. Documenta el diseño en este archivo (catálogo y sección propia) y en el `README.md`.
@@ -159,6 +171,7 @@ Reglas del contrato: una galería premium debe ocupar su bloque entero, no depen
 ## Pruebas
 
 - `php tests/site-settings.php`: validación del ajuste, campos opcionales con una galería premium y formulario.
+- `node tests/premium-drum.cjs`: Estilo Tambor en 5 dispositivos y 13 tamaños de pantalla: disposición cilíndrica simétrica y centrada (cartas ±1 y ±2, profundidad, oscurecimiento, ±3 ocultas), rueda, dedo, teclado, flechas, contador, botones de salir, filtros, fijación en móvil, vuelta desde la ficha, paleta y movimiento reducido.
 - `node tests/premium-squares.cjs`: la misma batería que las burbujas con la forma cuadrada (`BUBBLES_SHAPE=square`): separación entre cuadrados, tamaños distintos, paginación, rebote, fijación en móvil, etc.
 - `node tests/premium-bubbles.cjs`: Estilo Burbujas en 5 dispositivos: pantalla completa, «Fotos visibles a la vez» (20 / 12), círculos de tamaños distintos sin solaparse, sin salirse y repartidos por toda la pantalla, sin texto, flotación, paginación minimalista, teclado, rueda y dedo, fijación sin vibración en móvil, apertura con rebote, botones de salir, filtros, vuelta desde la ficha, paleta y movimiento reducido.
 - `node tests/premium-deck.cjs`: Estilo Baraja en 5 dispositivos (escritorio, portátil, tablet, móvil y móvil apaisado): pantalla completa, parada del scroll al llegar (escritorio) y galería fijada sin vibración (móvil), rueda, dedo (también gestos lentos), teclado, límites, botones «Salir» y «Salir hacia arriba», botones flotantes, pies de foto sin solaparse, marco uniforme, mazo visible y ajuste de foto, filtros, vuelta desde la ficha, paletas y movimiento reducido.

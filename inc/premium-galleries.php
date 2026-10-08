@@ -26,10 +26,11 @@ declare(strict_types=1);
  *   label        Nombre que se muestra en el panel.
  *   description  Una frase para el panel.
  *   partial      Archivo de marcado dentro de inc/premium/ (sin .php).
- *   css / js     Rutas de los recursos, relativas a la raíz de la web.
+ *   css / js     Rutas de los recursos, relativas a la raíz de la web. `css` puede ser una lista (varias hojas, p. ej. las de otra
+ *                galería más las propias).
  *   honors       Ajustes de la galería estándar que SÍ aplica (el resto se ignora). Opcional.
  *
- * @return array<string, array{label: string, description: string, partial: string, css: string, js: string, honors?: list<string>}>
+ * @return array<string, array{label: string, description: string, partial: string, css: string|list<string>, js: string, honors?: list<string>}>
  */
 function site_premium_gallery_definitions(): array
 {
@@ -61,6 +62,16 @@ function site_premium_gallery_definitions(): array
             'css' => 'assets/premium/bubbles/bubbles.css',
             'js' => 'assets/premium/bubbles/bubbles.js',
             'honors' => ['photos_mobile', 'photos_desktop'],
+        ],
+        // «Estilo Tambor» reutiliza la interfaz y el comportamiento de «Estilo Baraja» (marcado, deck.css y deck.js) y solo cambia
+        // la disposición 3D de las cartas: drum.css las coloca en un cilindro. El marcado lee la galería activa para marcarlo.
+        'drum' => [
+            'label' => 'Estilo Tambor',
+            'description' => 'Pantalla completa. Las fotos giran como un tambor 3D (carrusel cilíndrico): la activa de frente y las '
+                . 'vecinas se curvan hacia atrás a ambos lados. Misma interfaz que «Estilo Baraja».',
+            'partial' => 'deck',
+            'css' => ['assets/premium/deck/deck.css', 'assets/premium/drum/drum.css'],
+            'js' => 'assets/premium/deck/deck.js',
         ],
     ];
 }
@@ -117,16 +128,19 @@ function site_premium_gallery_active(?array $settings = null): ?string
 }
 
 /**
- * Etiqueta <link> con los estilos de la galería premium activa (cadena vacía si no hay ninguna).
- * Se imprime dentro de <head>.
+ * Etiquetas <link> con los estilos de la galería premium activa (cadena vacía si no hay ninguna).
+ * Se imprimen dentro de <head>.
  */
 function premium_gallery_head_tags(): string
 {
     $key = site_premium_gallery_active();
     if ($key === null) return '';
-    $css = site_premium_gallery_definitions()[$key]['css'];
-    return '<link rel="stylesheet" href="/' . htmlspecialchars($css, ENT_QUOTES, 'UTF-8') . '?v='
-        . htmlspecialchars(asset_ver(dirname(__DIR__) . '/' . $css), ENT_QUOTES, 'UTF-8') . '">';
+    $tags = '';
+    foreach ((array) site_premium_gallery_definitions()[$key]['css'] as $css) {
+        $tags .= '<link rel="stylesheet" href="/' . htmlspecialchars($css, ENT_QUOTES, 'UTF-8') . '?v='
+            . htmlspecialchars(asset_ver(dirname(__DIR__) . '/' . $css), ENT_QUOTES, 'UTF-8') . '">';
+    }
+    return $tags;
 }
 
 /**

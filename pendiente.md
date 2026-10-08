@@ -6,8 +6,6 @@ y solo cambian cómo se colocan y se mueven las fotos. Se harán progresivamente
 
 ## Ideas
 
-- [ ] **Carrusel cilíndrico (tambor 3D).** Las fotos están en un cilindro que gira en horizontal: la activa de frente y las
-      vecinas se curvan hacia atrás a ambos lados. Se ven 3 o 5 fotos a la vez.
 - [ ] **Cover Flow.** La foto central de frente y las de los lados giradas unos 60° y apiladas en abanico, con reflejo. En móvil,
       solo dos fotos laterales.
 - [ ] **Pila que se abre en abanico.** Parecida a la baraja, pero la foto pasada sube y se desliza a un lado con un giro
@@ -24,3 +22,4 @@ y solo cambian cómo se colocan y se mueven las fotos. Se harán progresivamente
 
 - [x] **Estilo Burbujas** (`bubbles`): fotos en círculos de distintos tamaños que flotan lentamente, paginadas.
 - [x] **Estilo Cuadrados** (`squares`): lo mismo que las burbujas, con cuadrados.
+- [x] **Estilo Tambor** (`drum`): carrusel cilíndrico 3D con la interfaz de la baraja.

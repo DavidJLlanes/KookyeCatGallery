@@ -6,7 +6,8 @@
 
    Qué hace
      · Mantiene una posición activa (`index`) y le dice a cada carta dónde está respecto a ella
-       (data-pos). El CSS se encarga de colocarla y animarla en 3D.
+       (data-pos). El CSS se encarga de colocarla y animarla en 3D. «Estilo Tambor» (data-layout="drum") usa este mismo
+       archivo: cambia el CSS (drum.css) y que las cartas pasadas no salen, sino que siguen en el cilindro.
      · Avanza con: rueda del ratón hacia abajo, deslizar el dedo hacia arriba (o hacia la izquierda),
        flechas del teclado, RePág/AvPág, Espacio y los botones de la barra inferior.
      · Retrocede con los gestos contrarios.
@@ -49,6 +50,7 @@
     const emptyMessage = root.querySelector('[data-deck-empty]');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const coarse = window.matchMedia('(hover: none) and (pointer: coarse)');   // Pantalla táctil sin ratón.
+    const drum = root.dataset.layout === 'drum';   // «Estilo Tambor»: las cartas pasadas siguen visibles a la izquierda (cilindro).
 
     let visible = cards.slice();   // Cartas que pasan los filtros, en orden.
     let index = 0;                 // Posición de la carta activa dentro de `visible`.
@@ -151,13 +153,14 @@
     const render = () => {
         const total = visible.length;
         visible.forEach((card, i) => {
-            const pos = clamp(i - index, -2, 4);
+            // Baraja: -2/-1 = ya pasadas (salen), 1..3 = mazo, 4 = oculta. Tambor: -3..3 a ambos lados (±3 = ocultas, atrás del cilindro).
+            const pos = drum ? clamp(i - index, -3, 3) : clamp(i - index, -2, 4);
             card.dataset.pos = String(pos);
             const active = pos === 0;
             card.setAttribute('aria-hidden', active ? 'false' : 'true');
             card.toggleAttribute('inert', !active);
             // Las fotos cercanas se cargan ya, para que el mazo nunca enseñe huecos.
-            if (i >= index && i <= index + 3) {
+            if (i >= index - 2 && i <= index + 3) {
                 const image = card.querySelector('.deck__img');
                 if (image && image.loading === 'lazy') image.loading = 'eager';
             }

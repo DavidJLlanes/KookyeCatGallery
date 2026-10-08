@@ -88,7 +88,7 @@ check(str_contains(site_settings_form('t', $defaults, 'design'), 'value="' . htm
 
 // ── Galerías premium ──────────────────────────────────────────────────────────
 check($defaults['gallery_premium'] === 'none', 'No premium gallery by default.');
-check(isset(site_premium_gallery_choices()['none'], site_premium_gallery_choices()['deck'], site_premium_gallery_choices()['bubbles'], site_premium_gallery_choices()['squares']), 'Premium choices must include none, deck, bubbles and squares.');
+check(isset(site_premium_gallery_choices()['none'], site_premium_gallery_choices()['deck'], site_premium_gallery_choices()['bubbles'], site_premium_gallery_choices()['squares'], site_premium_gallery_choices()['drum']), 'Premium choices must include none, deck, bubbles, squares and drum.');
 check(site_premium_gallery_active($defaults) === null, 'No premium gallery must be active by default.');
 $deck = array_replace($defaults, ['gallery_premium' => 'deck']);
 check(site_settings_validate($deck)['gallery_premium'] === 'deck', 'The deck gallery was rejected.');
@@ -117,7 +117,12 @@ foreach (site_premium_ignored_settings('bubbles') as $ignored) unset($bubblesPar
 check(site_settings_validate($bubblesPartial)['photos_desktop'] === $defaults['photos_desktop'], 'Bubbles: ignored fields must be optional.');
 rejects(array_replace($bubbles, ['photos_desktop' => 7]));   // «Fotos visibles a la vez» se sigue validando.
 $formBubbles = site_settings_form('t', $bubbles, 'design');
-check(substr_count($formBubbles, ' disabled') === 6 && str_contains($formBubbles, 'name="photos_desktop" data-premium-off="deck">'), 'Bubbles: six standard fields disabled, photos per view enabled.');
+check(substr_count($formBubbles, ' disabled') === 6 && str_contains($formBubbles, 'name="photos_desktop" data-premium-off="deck,drum">'), 'Bubbles: six standard fields disabled, photos per view enabled.');
+// «Estilo Tambor»: misma interfaz que la baraja; ignora toda la galería estándar y carga dos hojas de estilos (deck.css + drum.css).
+check(site_premium_gallery_active(array_replace($defaults, ['gallery_premium' => 'drum'])) === 'drum', 'The drum gallery must be active.');
+check(site_premium_ignored_settings('drum') === site_premium_ignored_settings('deck'), 'Drum must ignore the same settings as deck.');
+check(site_settings_validate(array_replace($defaults, ['gallery_premium' => 'drum']))['gallery_premium'] === 'drum', 'The drum gallery was rejected.');
+check(is_array(site_premium_gallery_definitions()['drum']['css']) && count(site_premium_gallery_definitions()['drum']['css']) === 2, 'Drum loads two stylesheets.');
 // «Estilo Cuadrados» respeta lo mismo que «Estilo Burbujas».
 check(site_premium_gallery_active(array_replace($defaults, ['gallery_premium' => 'squares'])) === 'squares', 'The squares gallery must be active.');
 check(site_premium_ignored_settings('squares') === site_premium_ignored_settings('bubbles'), 'Squares must honor the same settings as bubbles.');
