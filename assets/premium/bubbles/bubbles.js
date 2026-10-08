@@ -11,7 +11,7 @@
        para que los círculos no se hagan diminutos). Cambia de página con: rueda del ratón, deslizar el dedo hacia arriba (o la
        izquierda), flechas del teclado, RePág/AvPág, Espacio y la paginación minimalista.
      · Filtra por categoría (chips del bloque «Categorías») y por favoritas (botón «Favoritas»).
-     · Al pulsar un círculo rebota y su foto se expande hasta llenar la pantalla; entonces se abre la ficha (/foto/<slug>).
+     · Al pulsar un círculo rebota y se abre siempre su ficha (/foto/<slug>), sin pasos intermedios.
 
    Lo que comparte con «Estilo Baraja» (deck.js): fijación en móvil (body fixed), parada del scroll en escritorio, botones
    de salir (abajo y arriba), vuelta desde la ficha (/#baraja=<slug>) y estado «acoplada» (html.deck-engaged).
@@ -536,14 +536,16 @@
 
     /* -------------------------------------------------------------------------
        8. Abrir una foto (rebote) y volver desde la ficha
-       Al pulsar un círculo rebota y su foto se expande hasta llenar la pantalla (con un pequeño pasarse de tamaño); entonces
-       se abre la ficha. «Volver a la galería» enlaza a /#baraja=<slug>; el botón «Atrás» del navegador usa la última foto abierta
+       Al pulsar un círculo rebota y se abre su ficha. «Volver a la galería» enlaza a /#baraja=<slug>; el botón «Atrás» del navegador usa la última foto abierta
        (sessionStorage). En ambos casos la galería se abre en la página de esa foto, a pantalla completa.
        ------------------------------------------------------------------------- */
     const SLUG_KEY = 'djl-deck-slug';
     let opening = false;
-    let opener = null;
 
+    const BOUNCE_TIME = 420;       // Duración del rebote antes de abrir la ficha (ms).
+
+    // Pulsar un círculo: rebota y, pasado ese tiempo, SIEMPRE se abre la ficha de la foto (/foto/<slug>). La navegación
+    // no depende de que termine la animación (un temporizador la garantiza), y no se muestra la foto a pantalla completa.
     const open = (item, link) => {
         if (opening) return;
         opening = true;
@@ -551,34 +553,22 @@
             try { sessionStorage.setItem(SLUG_KEY, item.dataset.slug); } catch (_) { /* sin almacenamiento: no pasa nada */ }
         }
         const href = link.getAttribute('href');
-        if (reducedMotion.matches || !link.animate) { opening = false; if (href) window.location.href = href; return; }
-        const from = link.getBoundingClientRect();
-        const image = item.querySelector('.bubbles__img');
-        // 1) Rebote del círculo: se encoge, se pasa de tamaño y se asienta.
-        const bounce = link.animate([
-            { transform: 'scale(1)' }, { transform: 'scale(.8)', offset: .22 }, { transform: 'scale(1.18)', offset: .55 },
-            { transform: 'scale(.95)', offset: .78 }, { transform: 'scale(1.04)' }]
-        , { duration: 520, easing: 'ease-out' });
-        bounce.finished.catch(() => {}).then(() => {
-            if (!href) { opening = false; return; }
-            // 2) La foto se expande desde el círculo hasta llenar la pantalla, pasándose un poco antes de asentarse.
-            opener = document.createElement('div');
-            opener.className = 'bubbles-opener';
-            opener.style.backgroundImage = `url("${(image?.currentSrc || image?.src || '').replace(/"/g, '%22')}")`;
-            document.body.append(opener);
-            const vw = window.innerWidth, vh = window.innerHeight;
-            const box = (l, t, w, h, radius) => ({ left: `${l}px`, top: `${t}px`, width: `${w}px`, height: `${h}px`, borderRadius: radius });
-            const expand = opener.animate([
-                box(from.left, from.top, from.width, from.height, '50%'),
-                { ...box(-vw * .03, -vh * .03, vw * 1.06, vh * 1.06, '0%'), offset: .62 },
-                box(0, 0, vw, vh, '0%')],
-            { duration: 560, easing: 'cubic-bezier(.4, 0, .2, 1)', fill: 'forwards' });
-            expand.finished.catch(() => {}).then(() => { window.location.href = href; });
-        });
+        const smooth = !reducedMotion.matches && typeof link.animate === 'function';
+        if (smooth) {
+            // Rebote del círculo: se encoge, se pasa de tamaño y se asienta.
+            link.animate([
+                { transform: 'scale(1)' }, { transform: 'scale(.82)', offset: .24 }, { transform: 'scale(1.16)', offset: .58 },
+                { transform: 'scale(.96)', offset: .8 }, { transform: 'scale(1)' }]
+            , { duration: BOUNCE_TIME, easing: 'ease-out' });
+        }
+        window.setTimeout(() => {
+            if (href) window.location.href = href;
+            else opening = false;                          // Foto sin ficha propia: solo rebota.
+        }, smooth ? BOUNCE_TIME : 0);
     };
 
-    // Si se vuelve con «Atrás» (caché del navegador), se limpia la animación.
-    window.addEventListener('pageshow', () => { opener?.remove(); opener = null; opening = false; });
+    // Si se vuelve con «Atrás» (caché del navegador), se puede volver a pulsar.
+    window.addEventListener('pageshow', () => { opening = false; });
 
     root.addEventListener('click', event => {
         const link = event.target instanceof Element ? event.target.closest('.bubbles__link') : null;

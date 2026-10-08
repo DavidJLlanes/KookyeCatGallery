@@ -8,7 +8,7 @@
    Índice
      1. Variables y raíz (pantalla completa, fondo de la web)
      2. Círculos: marco, flotación y animaciones de entrada / salida
-     3. Apertura con rebote (al pulsar un círculo)
+     3. Apertura con rebote (al pulsar un círculo: rebota y abre la ficha)
      4. Controles superpuestos (herramientas, paginación minimalista, pista)
      5. Accesibilidad y movimiento reducido
 
@@ -180,18 +180,8 @@
 
 /* ---------------------------------------------------------------------------
    3. Apertura con rebote
-   Al pulsar un círculo rebota (bubbles.js, con la Web Animations API) y su foto se expande hasta llenar la pantalla
-   con un pequeño pasarse de tamaño. Este elemento es la foto que se expande; se añade al <body>.
+   Al pulsar un círculo rebota (bubbles.js, con la Web Animations API sobre .bubbles__link) y se abre la ficha de la foto.
    --------------------------------------------------------------------------- */
-.bubbles-opener {
-    position: fixed;
-    z-index: 2147483000;
-    margin: 0;
-    overflow: hidden;
-    border-radius: 50%;
-    background: #000 center / cover no-repeat;
-    pointer-events: none;
-}
 
 /* ---------------------------------------------------------------------------
    4. Controles superpuestos

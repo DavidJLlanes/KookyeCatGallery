@@ -1,5 +1,5 @@
 // Galería premium «Estilo Burbujas»: círculos de distintos tamaños repartidos por toda la pantalla sin solaparse, paginación,
-// «Fotos visibles a la vez», apertura con rebote, fijación en móvil, botones de salir, filtros y vuelta desde la ficha.
+// «Fotos visibles a la vez», apertura con rebote hacia la ficha, fijación en móvil, botones de salir, filtros y vuelta desde la ficha.
 // Renderiza el marcado real (inc/premium/bubbles.php) con el CSS y el JS reales (bubbles.css, bubbles.js, main.js).
 const {chromium} = require('playwright');
 const {execFileSync} = require('child_process');
@@ -202,15 +202,20 @@ const geometry = page => page.evaluate(() => {
                 assert(tops.every(top => top === 0), `${label}: la galería fijada no debe moverse (${tops.join(',')})`);
             }
 
-            // 7. Pulsar una burbuja: rebote y apertura de la ficha (con la foto expandiéndose).
-            await toDeck();
-            const target = await page.evaluate(() => { const link = document.querySelector('.bubbles__item:not([hidden]) .bubbles__link'); const r = link.getBoundingClientRect(); return {x: r.left + r.width / 2, y: r.top + r.height / 2, slug: link.closest('.bubbles__item').dataset.slug}; });
-            await page.mouse.click(target.x, target.y);
-            await page.waitForFunction(() => document.querySelector('.bubbles-opener'), null, {timeout: 3000});
-            const expanding = await page.evaluate(() => { const o = document.querySelector('.bubbles-opener'); return {radius: getComputedStyle(o).borderRadius, hasImage: o.style.backgroundImage.includes('foto-')}; });
-            assert(expanding.hasImage, `${label}: la foto debe expandirse desde la burbuja`);
-            await page.waitForURL(`https://deck.test/foto/${target.slug}`, {timeout: 5000});
-            assert(await page.evaluate(() => document.body.textContent.includes('Ficha de la foto')), `${label}: debe abrirse la ficha de la foto`);
+            // 7. Pulsar una burbuja: rebota y abre SIEMPRE la ficha (nunca la foto a pantalla completa en la propia galería).
+            for (let attempt = 0; attempt < 2; attempt++) {
+                await toDeck();
+                const target = await page.evaluate(() => { const link = document.querySelector('.bubbles__item:not([hidden]) .bubbles__link'); const r = link.getBoundingClientRect(); return {x: r.left + r.width / 2, y: r.top + r.height / 2, slug: link.closest('.bubbles__item').dataset.slug}; });
+                const seenOpener = page.evaluate(() => new Promise(resolve => {
+                    const watch = () => { if (document.querySelector('.bubbles-opener')) resolve(true); else requestAnimationFrame(watch); };
+                    watch(); setTimeout(() => resolve(false), 900);
+                })).catch(() => false);   // La navegación destruye el contexto: no cuenta como «abierta».
+                await page.mouse.click(target.x, target.y);
+                await page.waitForURL(`https://deck.test/foto/${target.slug}`, {timeout: 5000});
+                assert.notEqual(await seenOpener, true, `${label}: no debe mostrarse la foto a pantalla completa antes de la ficha`);
+                assert(await page.evaluate(() => document.body.textContent.includes('Ficha de la foto')), `${label}: debe abrirse la ficha de la foto`);
+                if (attempt === 0) { await page.goBack(); await page.waitForTimeout(1500); }
+            }
             await page.goBack();
             await page.waitForTimeout(500);
             await page.close();
