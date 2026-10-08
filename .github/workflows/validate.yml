@@ -34,6 +34,7 @@ jobs:
           node --check assets/premium/deck/deck.js
           node --check assets/js/site-texts.js
           node --check tests/photo-navigation.cjs
+          node --check tests/photo-transition.cjs
           node --check tests/photo-likes.cjs
       - name: Comprobar los filtros fotográficos
         run: node tests/photo-presets.cjs
@@ -101,6 +102,10 @@ jobs:
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/photo-navigation.cjs
+      - name: Probar el cambio suave de foto
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/photo-transition.cjs
       - name: Comprobar los favoritos y corazones
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules

@@ -29,3 +29,26 @@
     .photo-detail__nav--previous { left:.25rem; }
     .photo-detail__nav--next { right:.25rem; }
 }
+
+/* Cambio de foto sin recargar la página (main.js, initPhotoPage).
+   · En pantalla completa, la foto nueva (.lightbox__img--incoming) se funde SOBRE la anterior, que sigue a opacidad completa: el fondo
+     nunca se ve entre una foto y otra. Tiene el mismo tamaño y posición que la foto base (centrada, con los mismos máximos).
+   · En la ficha, el navegador (si sabe) funde la página entera con una transición de vista breve. */
+.lightbox__img--incoming {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    z-index: 0;
+    pointer-events: none;
+    transition: opacity .42s ease, transform .42s ease;
+}
+.lightbox--immersive .lightbox__img { will-change: opacity; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .24s; }
+
+/* Si se recarga una ficha con el visor abierto (?viewer=1), se oculta lo de detrás hasta que el visor se abre: sin destello de la ficha. */
+html.viewer-pending, html.viewer-pending body { background: #000; }
+html.viewer-pending body > *:not(#lightbox):not(script) { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) {
+    .lightbox__img--incoming { transition: none; }
+    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}

@@ -59,6 +59,53 @@
         surface.addEventListener('dragstart', (event) => event.preventDefault());
     };
 
+    /* ---------- Cambio suave de foto en los visores ---------- */
+    // La foto nueva se carga y se decodifica aparte; después se superpone con un fundido SOBRE la anterior (que sigue a opacidad
+    // completa: el fondo nunca se ve) y solo entonces se retira la vieja. Así pasar de una foto a otra en pantalla completa es
+    // continuo, sin parpadeos ni huecos, con cualquier tamaño de foto. Devuelve false si la foto no se pudo cargar o si otra
+    // navegación más reciente la ha sustituido.
+    const crossfades = new WeakMap();
+    const crossfadeImage = async (img, src, alt) => {
+        const state = crossfades.get(img) || { token: 0, layer: null };
+        crossfades.set(img, state);
+        const token = ++state.token;
+        const loader = new Image();
+        loader.src = src;
+        try { await loader.decode(); }
+        catch (_) { if (!loader.complete) await new Promise(resolve => { loader.onload = resolve; loader.onerror = resolve; }); }
+        if (token !== state.token) return false;
+        if (!loader.naturalWidth) return false;
+        if (state.layer) {                                           // Una foto a medio fundir se da por terminada antes de empezar la siguiente.
+            img.src = state.layer.src; img.alt = state.layer.alt;
+            state.layer.remove(); state.layer = null;
+        }
+        const visible = img.classList.contains('is-shown') && (img.currentSrc || img.src);
+        if (prefersReducedMotion || !visible) {
+            img.src = src; img.alt = alt;
+            img.classList.add('is-shown');
+            return true;
+        }
+        const layer = document.createElement('img');
+        layer.className = 'lightbox__img lightbox__img--incoming';
+        layer.alt = alt;
+        layer.src = src;
+        state.layer = layer;
+        img.insertAdjacentElement('afterend', layer);
+        void layer.offsetWidth;
+        layer.classList.add('is-shown');
+        await new Promise(resolve => {
+            const finish = event => { if (!event || event.propertyName === 'opacity') { layer.removeEventListener('transitionend', finish); resolve(); } };
+            layer.addEventListener('transitionend', finish);
+            setTimeout(finish, 650);
+        });
+        if (state.layer !== layer) return token === state.token;      // La terminó una navegación posterior.
+        img.src = src; img.alt = alt;
+        try { await img.decode(); } catch (_) {}
+        layer.remove();
+        state.layer = null;
+        return true;
+    };
+
     /* ---------- Preloader ---------- */
     const initPreloader = () => {
         const pre = $('#preloader');
@@ -563,8 +610,10 @@
         document.addEventListener('photo:changed', event => {
             const slug = event.detail?.slug;
             if (!slug) return;
+            const known = heartCounts.has(slug);
             paintHeart(slug, heartCounts.get(slug) || 0);
             refreshFavoriteButtons();
+            if (!known) loadHearts();     // Foto nueva (cambio en el sitio): cargar su contador y su estado.
         });
         loadHearts();
         refreshFavoriteButtons();
@@ -854,17 +903,8 @@
             if (slug) history.replaceState({ slug }, '', `/foto/${slug}`);
             else if (location.pathname.startsWith('/foto/')) history.replaceState(null, '', '/');
             document.dispatchEvent(new CustomEvent('photo:changed', { detail: { slug } }));
-            imgEl.classList.remove('is-shown');
-            const full = card.dataset.full;
-            const pre = new Image();
-            const token = ++navigationToken;
-            pre.onload = () => {
-                if (token !== navigationToken) return;
-                imgEl.src = full;
-                imgEl.alt = card.dataset.title || window.siteText("Fotografía de gatos");
-                requestAnimationFrame(() => imgEl.classList.add('is-shown'));
-            };
-            pre.src = full;
+            // Fundido sobre la foto anterior (sin pasar por el fondo): ver crossfadeImage.
+            crossfadeImage(imgEl, card.dataset.full, card.dataset.title || window.siteText("Fotografía de gatos"));
             preloadNeighbors();
         };
 
@@ -935,6 +975,10 @@
 
     /* ---------- Página de foto dedicada (/foto/slug) ---------- */
     // Visor a pantalla completa autónomo: no depende de la galería (que aquí no existe).
+    // Pasar de una foto a otra (flechas de la ficha o del visor, teclado, gestos) NO recarga la página: se pide la ficha de la foto
+    // vecina al servidor (así título, descripción, enlaces y opciones privadas siguen siendo los del servidor), se precarga su imagen
+    // y se cambia todo en el sitio. En pantalla completa la foto nueva se funde sobre la anterior (ver crossfadeImage); en la ficha
+    // se usa un fundido de página si el navegador lo permite. Si algo falla, se navega a la página como siempre.
     const initPhotoPage = () => {
         const detail   = $('.photo-detail');
         const lightbox = $('#lightbox');
@@ -950,39 +994,37 @@
         const closeBtn  = $('.lightbox__close', lightbox);
         const prevBtn   = $('.lightbox__nav--prev', lightbox);
         const nextBtn   = $('.lightbox__nav--next', lightbox);
+        const isOpen    = () => lightbox.classList.contains('is-open');
 
-        const hasNeighbors = Boolean(detail.dataset.photoPrevious || detail.dataset.photoNext);
-        if (prevBtn) { prevBtn.hidden = !hasNeighbors; prevBtn.disabled = !detail.dataset.photoPrevious; }
-        if (nextBtn) { nextBtn.hidden = !hasNeighbors; nextBtn.disabled = !detail.dataset.photoNext; }
-
-        // Each photo is fetched as a fresh server page, keeping metadata and admin actions current.
-        const go = (direction) => {
-            const path = direction < 0 ? detail.dataset.photoPrevious : detail.dataset.photoNext;
-            if (!path) return;
-            const url = new URL(path, location.origin);
-            if (lightbox.classList.contains('is-open')) url.searchParams.set('viewer', '1');
-            window.location.assign(url.href);
+        // Datos de la foto actual, siempre leídos de la ficha en pantalla (cambia al navegar).
+        const current = () => {
+            const img = $('.photo-detail__img', detail);
+            const coords = $('.photo-detail__coords', detail);
+            return {
+                full: img ? img.src : '',
+                title: ($('.photo-detail__title', detail)?.textContent || '').trim(),
+                desc: ($('.photo-detail__desc', detail)?.textContent || '').trim(),
+                coords,
+            };
         };
 
-        const detailImg  = $('.photo-detail__img', detail);
-        const titleNode  = $('.photo-detail__title', detail);
-        const descNode   = $('.photo-detail__desc', detail);
-        const coordsNode = $('.photo-detail__coords', detail);
-        const full = detailImg ? detailImg.src : '';
-        const title = titleNode ? titleNode.textContent.trim() : '';
-        const desc  = descNode ? descNode.textContent.trim() : '';
+        const updateViewerButtons = () => {
+            const hasNeighbors = Boolean(detail.dataset.photoPrevious || detail.dataset.photoNext);
+            if (prevBtn) { prevBtn.hidden = !hasNeighbors; prevBtn.disabled = !detail.dataset.photoPrevious; }
+            if (nextBtn) { nextBtn.hidden = !hasNeighbors; nextBtn.disabled = !detail.dataset.photoNext; }
+        };
+        updateViewerButtons();
 
-        const openFs = (nativeFullscreen = true) => {
-            if (!full) return;
-            imgEl.src = full;
-            imgEl.alt = title;
+        // Texto del visor (título, descripción, coordenadas y enlaces de compartir) de la foto actual.
+        const fillViewerText = () => {
+            const { title, desc, coords } = current();
             if (titleEl)   titleEl.textContent = title;
             if (descEl)    descEl.textContent = desc;
             if (counterEl) counterEl.textContent = '';
             if (coordsEl && coordsTxt) {
-                if (coordsNode) {
-                    coordsTxt.textContent = coordsNode.textContent.trim();
-                    coordsEl.href = coordsNode.href;
+                if (coords) {
+                    coordsTxt.textContent = coords.textContent.trim();
+                    coordsEl.href = coords.href;
                     coordsEl.hidden = false;
                 } else {
                     coordsEl.hidden = true;
@@ -997,6 +1039,124 @@
                     shareEl.hidden = true;
                 }
             }
+        };
+
+        /* ---- Fichas de las fotos vecinas: petición, caché y vista previa ---- */
+        const pageCache = new Map();
+        const fetchPhotoPage = (path) => {
+            if (!pageCache.has(path)) {
+                const request = fetch(path, { credentials: 'same-origin', headers: { Accept: 'text/html' } })
+                    .then(response => { if (!response.ok) throw new Error('HTTP ' + response.status); return response.text(); })
+                    .then(html => new DOMParser().parseFromString(html, 'text/html'));
+                request.catch(() => pageCache.delete(path));
+                pageCache.set(path, request);
+            }
+            return pageCache.get(path);
+        };
+        const preloadImage = (src) => {
+            if (!src) return Promise.resolve();
+            const image = new Image();
+            image.src = src;
+            return image.decode().catch(() => {});
+        };
+        const prefetchNeighbors = () => {
+            setTimeout(() => {
+                [detail.dataset.photoPrevious, detail.dataset.photoNext].filter(Boolean).forEach(path => fetchPhotoPage(path).catch(() => {}));
+                [detail.dataset.photoPreviousImage, detail.dataset.photoNextImage].filter(Boolean).forEach(src => { const image = new Image(); image.decoding = 'async'; image.src = src; });
+            }, 250);
+        };
+
+        // Pone en la página actual el contenido de la ficha `doc` (la de otra foto): datos, flechas, imagen, textos, relacionadas y cabecera.
+        const applyPhoto = (doc) => {
+            const next = $('.photo-detail', doc);
+            if (!next) throw new Error('Sin ficha');
+            const adopt = (node) => document.importNode(node, true);
+            ['data-photo-previous', 'data-photo-next', 'data-photo-previous-image', 'data-photo-next-image', 'aria-label']
+                .forEach(name => detail.setAttribute(name, next.getAttribute(name) || ''));
+            const swapNode = (selector) => {
+                const oldNode = $(selector, detail), newNode = $(selector, next);
+                if (oldNode && newNode) oldNode.replaceWith(adopt(newNode));
+            };
+            swapNode('.photo-detail__back');
+            swapNode('.photo-detail__navigation');
+            swapNode('.photo-detail__info');
+            const button = $('.photo-detail__btn', detail), nextButton = $('.photo-detail__btn', next);
+            if (button && nextButton) {
+                button.dataset.zoomSlug = nextButton.dataset.zoomSlug || '';
+                button.setAttribute('aria-label', nextButton.getAttribute('aria-label') || '');
+            }
+            const img = $('.photo-detail__img', detail), nextImg = $('.photo-detail__img', next);
+            if (img && nextImg) ['src', 'alt', 'width', 'height'].forEach(name => {
+                if (nextImg.hasAttribute(name)) img.setAttribute(name, nextImg.getAttribute(name)); else img.removeAttribute(name);
+            });
+            const related = $('.related'), nextRelated = $('.related', doc);
+            if (related && nextRelated) related.replaceWith(adopt(nextRelated));
+            else if (related) related.remove();
+            else if (nextRelated) detail.insertAdjacentElement('afterend', adopt(nextRelated));
+            // Cabecera: título, descripción, dirección canónica y etiquetas para redes.
+            document.title = doc.title;
+            const link = document.head.querySelector('link[rel="canonical"]'), nextLink = doc.head.querySelector('link[rel="canonical"]');
+            if (link && nextLink) link.setAttribute('href', nextLink.getAttribute('href'));
+            document.head.querySelectorAll('meta[name="description"], meta[property^="og:"], meta[name^="twitter:"]').forEach(meta => {
+                const key = meta.getAttribute('name') ? 'name' : 'property';
+                const other = doc.head.querySelector(`meta[${key}="${meta.getAttribute(key)}"]`);
+                if (other) meta.setAttribute('content', other.getAttribute('content') || '');
+            });
+            if (doc.body.dataset.openSlug) document.body.dataset.openSlug = doc.body.dataset.openSlug;
+            updateViewerButtons();
+        };
+
+        // Muestra la foto de la ficha `doc`. `push` añade una entrada al historial (navegar) o no (Atrás / Adelante).
+        let busy = false;
+        let queued = 0;
+        const showPhoto = async (path, { push = true, viewer = isOpen() } = {}) => {
+            const doc = await fetchPhotoPage(path);
+            const nextImg = $('.photo-detail__img', doc);
+            await preloadImage(nextImg ? new URL(nextImg.getAttribute('src'), location.href).href : '');   // La foto nueva está lista antes de tocar nada.
+            pageCache.delete(path);
+            const commit = () => {
+                applyPhoto(doc);
+                if (push) history.pushState(null, '', path + (viewer ? '?viewer=1' : ''));
+                document.dispatchEvent(new CustomEvent('photo:changed', { detail: { slug: document.body.dataset.openSlug || '' } }));
+            };
+            if (isOpen()) {
+                commit();                                    // La ficha de debajo se actualiza sin que se vea.
+                fillViewerText();
+                const now = current();
+                await crossfadeImage(imgEl, now.full, now.title);
+            } else if (document.startViewTransition && !prefersReducedMotion) {
+                await document.startViewTransition(commit).finished.catch(() => {});
+            } else {
+                commit();
+            }
+            prefetchNeighbors();
+        };
+
+        // Foto anterior (-1) o siguiente (1). Pulsaciones rápidas: se encadenan, sin perder la última.
+        const go = async (direction) => {
+            const path = direction < 0 ? detail.dataset.photoPrevious : detail.dataset.photoNext;
+            if (!path) return;
+            if (busy) { queued = direction; return; }
+            busy = true;
+            try {
+                await showPhoto(path);
+            } catch (_) {
+                const url = new URL(path, location.origin);
+                if (isOpen()) url.searchParams.set('viewer', '1');
+                window.location.assign(url.href);          // Respaldo: la página completa, como siempre.
+                return;
+            } finally {
+                busy = false;
+            }
+            if (queued) { const again = queued; queued = 0; go(again); }
+        };
+
+        const openFs = (nativeFullscreen = true) => {
+            const { full, title } = current();
+            if (!full) return;
+            imgEl.src = full;
+            imgEl.alt = title;
+            fillViewerText();
             lightbox.classList.add('is-open');
             lightbox.classList.add('lightbox--immersive'); // solo foto + X, a pantalla completa
             document.body.classList.add('photo-immersive-open');
@@ -1004,9 +1164,10 @@
             document.body.style.overflow = 'hidden';
             requestAnimationFrame(() => imgEl.classList.add('is-shown'));
             if (nativeFullscreen !== false) requestNativeFs(lightbox);
+            document.documentElement.classList.remove('viewer-pending');
         };
 
-        const closeFs = () => {
+        const closeFs = (syncUrl = true) => {
             exitNativeFs();
             lightbox.classList.remove('is-open');
             lightbox.classList.remove('lightbox--immersive');
@@ -1014,8 +1175,9 @@
             lightbox.setAttribute('aria-hidden', 'true');
             document.body.style.overflow = '';
             imgEl.classList.remove('is-shown');
+            lightbox.querySelectorAll('.lightbox__img--incoming').forEach(layer => layer.remove());
             const url = new URL(location.href);
-            if (url.searchParams.get('viewer') === '1') {
+            if (syncUrl && url.searchParams.get('viewer') === '1') {
                 url.searchParams.delete('viewer');
                 history.replaceState(null, '', url.pathname + url.search + url.hash);
             }
@@ -1036,31 +1198,55 @@
         // Si el usuario sale de pantalla completa (Esc/gesto), cierra el visor
         const onFsChange = () => {
             const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
-            if (!fsEl && lightbox.classList.contains('is-open')) closeFs();
+            if (!fsEl && isOpen()) closeFs();
         };
         document.addEventListener('fullscreenchange', onFsChange);
         document.addEventListener('webkitfullscreenchange', onFsChange);
 
-        $$('[data-zoom-slug]', detail).forEach(btn => btn.addEventListener('click', openFs));
-        if (closeBtn) closeBtn.addEventListener('click', closeFs);
+        // Los botones de ampliar y las flechas de la ficha se sustituyen al cambiar de foto: se gestionan por delegación.
+        detail.addEventListener('click', (event) => {
+            const arrow = event.target.closest('a.photo-detail__nav');
+            if (arrow) {
+                if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                go(arrow.classList.contains('photo-detail__nav--previous') ? -1 : 1);
+                return;
+            }
+            if (event.target.closest('[data-zoom-slug]')) openFs();
+        });
+        if (closeBtn) closeBtn.addEventListener('click', () => closeFs());
         if (prevBtn) prevBtn.addEventListener('click', () => go(-1));
         if (nextBtn) nextBtn.addEventListener('click', () => go(1));
         bindPhotoNavigation($('.photo-detail__btn', detail), go);
         bindPhotoNavigation($('.lightbox__stage', lightbox), (direction) => {
-            if (lightbox.classList.contains('is-open')) go(direction);
+            if (isOpen()) go(direction);
         });
         lightbox.addEventListener('click', (e) => {
             if (e.target === lightbox || e.target.classList.contains('lightbox__stage')) closeFs();
         });
         document.addEventListener('keydown', (e) => {
             if (e.target.closest?.('input, textarea, select, [contenteditable="true"]') || e.ctrlKey || e.metaKey || e.altKey) return;
-            if (e.key === 'Escape' && lightbox.classList.contains('is-open')) closeFs();
+            if (e.key === 'Escape' && isOpen()) closeFs();
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                 e.preventDefault();
                 go(e.key === 'ArrowLeft' ? -1 : 1);
             }
         });
+
+        // Atrás / Adelante del navegador: se muestra la foto de esa dirección (y el visor, si la dirección lo lleva) sin recargar.
+        window.addEventListener('popstate', async () => {
+            if (!/^\/foto\/[^/]+/.test(location.pathname)) { location.reload(); return; }
+            const wantsViewer = new URL(location.href).searchParams.get('viewer') === '1';
+            try {
+                await showPhoto(location.pathname, { push: false, viewer: wantsViewer });
+                if (wantsViewer && !isOpen()) openFs(false);
+                else if (!wantsViewer && isOpen()) closeFs(false);
+            } catch (_) { location.reload(); }
+        });
+
         if (new URL(location.href).searchParams.get('viewer') === '1') openFs(false);
+        else document.documentElement.classList.remove('viewer-pending');
+        prefetchNeighbors();
     };
 
     /* ---------- Botón volver arriba ---------- */

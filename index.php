@@ -199,7 +199,7 @@ if ($fotoItem !== null) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es-ES">
+<html lang="es-ES"<?= $fotoItem !== null && ($_GET['viewer'] ?? '') === '1' ? ' class="viewer-pending"' : '' ?>>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -339,6 +339,7 @@ if ($fotoItem !== null) {
     </script>
     <link rel="stylesheet" href="/assets/css/site-design.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/site-design.css')) ?>">
     <link rel="stylesheet" href="/assets/css/photo-navigation.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/photo-navigation.css')) ?>">
+    <noscript><style>html.viewer-pending body > * { visibility: visible !important; }</style></noscript>
     <link rel="stylesheet" href="/assets/css/interface-worlds.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/interface-worlds.css')) ?>">
     <link rel="stylesheet" href="/assets/css/gallery-layout.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/gallery-layout.css')) ?>">
     <?php if ($fotoItem === null) echo premium_gallery_head_tags(); // Estilos de la galería premium activa (ver inc/premium-galleries.php). ?>
