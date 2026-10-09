@@ -51,6 +51,10 @@ if (strlen($password) < 12 || strlen($password) > 1024) install_page('La contras
 
 $privateDirectory = gallery_private_directory(true);
 if (!is_dir($privateDirectory) || !is_writable($privateDirectory)) install_page('PHP no puede crear o escribir en la carpeta privada. Crea manualmente config fuera de public_html, dale permisos de escritura al usuario PHP y configura GALLERY_PRIVATE_DIR con su ruta completa.', false, 500);
+// Defensa adicional si el proveedor apunta la carpeta privada dentro del document root.
+@file_put_contents($privateDirectory . DIRECTORY_SEPARATOR . '.htaccess', "Require all denied\\n");
+@file_put_contents($privateDirectory . DIRECTORY_SEPARATOR . 'index.php', "<?php\\nhttp_response_code(404);\\nexit;\\n");
+@file_put_contents($privateDirectory . DIRECTORY_SEPARATOR . 'web.config', '<?xml version="1.0" encoding="UTF-8"?><configuration><system.webServer><authorization><deny users="*" /></authorization></system.webServer></configuration>');
 $hash = password_hash($password, PASSWORD_DEFAULT);
 if (!is_string($hash) || $hash === '') install_page('No se pudo generar el hash de la contraseña.', false, 500);
 $auth = "<?php\nreturn " . var_export(['username' => $username, 'password_hash' => $hash], true) . ";\n";
@@ -59,8 +63,8 @@ $tmpAuth = tempnam($privateDirectory, '.install-auth-');
 $tmpUrl = tempnam($privateDirectory, '.install-url-');
 if ($tmpAuth === false || $tmpUrl === false) install_page('No se pudieron preparar los archivos privados. Comprueba permisos y espacio.', false, 500);
 try {
-    if (file_put_contents($tmpAuth, $auth, LOCK_EX) === false || !@chmod($tmpAuth, 0640) || !@rename($tmpAuth, $authPath)
-        || file_put_contents($tmpUrl, $url . "\n", LOCK_EX) === false || !@chmod($tmpUrl, 0640) || !@rename($tmpUrl, $urlPath)) {
+    if (file_put_contents($tmpUrl, $url . "\n", LOCK_EX) === false || !@chmod($tmpUrl, 0640) || !@rename($tmpUrl, $urlPath)
+        || file_put_contents($tmpAuth, $auth, LOCK_EX) === false || !@chmod($tmpAuth, 0640) || !@rename($tmpAuth, $authPath)) {
         throw new RuntimeException('No se pudo guardar la configuración. Comprueba permisos y espacio.');
     }
 } catch (RuntimeException $error) {
