@@ -1334,23 +1334,8 @@
             });
         };
 
-        // En la ficha, la foto también sigue al dedo (sin salirse de su sitio) y vuelve si el gesto se queda corto.
-        const detailFollow = (dx) => {
-            const img = detailImage();
-            if (!img || busy) return;
-            const edge = !(dx < 0 ? detail.dataset.photoNext : detail.dataset.photoPrevious);
-            const shift = edge ? dx / 3 : dx * 0.6;
-            img.style.transition = 'none';
-            img.style.transform = `translate3d(${shift}px, 0, 0)`;
-            img.style.opacity = String(Math.max(0.45, 1 - Math.abs(shift) / 500));
-        };
-        const detailRelease = () => {
-            const img = detailImage();
-            if (!img) return;
-            const from = img.style.transform, opacity = img.style.opacity || '1';
-            img.style.transition = ''; img.style.transform = ''; img.style.opacity = '';
-            if (from && img.animate) img.animate([{ transform: from, opacity }, { transform: 'translate3d(0, 0, 0)', opacity: 1 }], { duration: 320, easing: 'cubic-bezier(.16, 1, .3, 1)' });
-        };
+        // On the detail page, keep image, arrows and text together while swiping.
+        // The gesture chooses the next photo; the complete detail then fades as one.
 
         const openFs = (nativeFullscreen = true) => {
             const { full, title } = current();
@@ -1425,7 +1410,7 @@
         if (closeBtn) closeBtn.addEventListener('click', () => closeFs());
         if (prevBtn) prevBtn.addEventListener('click', () => go(-1));
         if (nextBtn) nextBtn.addEventListener('click', () => go(1));
-        bindPhotoNavigation($('.photo-detail__btn', detail), (direction) => go(direction), { follow: detailFollow, release: detailRelease });
+        bindPhotoNavigation($('.photo-detail__btn', detail), (direction) => go(direction));
         bindPhotoNavigation(stage, swipe, { follow, release, pull, drop });
         lightbox.addEventListener('click', (e) => {
             if (e.target === lightbox || e.target.classList.contains('lightbox__stage')) closeFs();
