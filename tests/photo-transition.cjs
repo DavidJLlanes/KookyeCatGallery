@@ -153,26 +153,12 @@ function testImage() {
 
         // 5. Flechas de la ficha (sin visor): también cambian en el sitio y siguen siendo enlaces normales (abrir en otra pestaña).
         assert.equal(await desktop.page.locator('a.photo-detail__nav--previous').getAttribute('href'), '/foto/first');
-        // La ficha usa una transición de vista con piezas con nombre (foto, flechas, texto) y dirección; al terminar se quitan las clases.
-        await desktop.page.evaluate(() => {
-            window.__vt = [];
-            const original = document.startViewTransition.bind(document);
-            document.startViewTransition = (callback) => {
-                const html = document.documentElement;
-                window.__vt.push({classes: html.className, photo: getComputedStyle(document.querySelector('.photo-detail__btn')).viewTransitionName,
-                    info: getComputedStyle(document.querySelector('.photo-detail__info')).viewTransitionName, nav: getComputedStyle(document.querySelector('.photo-detail__navigation')).viewTransitionName});
-                return original(callback);
-            };
-        });
+        // The old detail fades completely before the new image and text are laid out.
         await desktop.page.locator('a.photo-detail__nav--previous').click();
         await waitSlug(desktop.page, 'first');
         assert.equal(await desktop.page.evaluate(() => window.__marker), 'mismo-documento', 'Las flechas de la ficha tampoco recargan');
-        const vt = await desktop.page.evaluate(() => window.__vt);
-        assert.equal(vt.length, 1, 'La ficha cambia con una transición de vista');
-        assert(vt[0].classes.includes('photo-vt') && vt[0].classes.includes('photo-vt-prev'), `Transición con dirección (${vt[0].classes})`);
-        assert.deepEqual([vt[0].photo, vt[0].info, vt[0].nav], ['detail-photo', 'detail-info', 'detail-nav'], 'La foto, el texto y las flechas tienen su propia transición');
-        await desktop.page.waitForFunction(() => !document.documentElement.classList.contains('photo-vt'));
-        assert.equal(await desktop.page.evaluate(() => getComputedStyle(document.querySelector('.photo-detail__btn')).viewTransitionName), 'none', 'Fuera del cambio la foto no lleva nombre de transición');
+        await desktop.page.waitForFunction(() => getComputedStyle(document.querySelector('.photo-detail')).opacity === '1');
+        assert.equal(await desktop.page.evaluate(() => getComputedStyle(document.querySelector('.photo-detail__btn')).viewTransitionName), 'none', 'La foto no se separa del texto durante el cambio');
         assert.equal(await desktop.page.locator('#lightbox').getAttribute('aria-hidden'), 'true');
         assert.equal(await desktop.page.locator('.photo-detail__img').getAttribute('src').then(src => /first/.test(src)), true);
 
@@ -198,6 +184,7 @@ function testImage() {
         await mobile.page.waitForTimeout(100);
         const dragging = await mobile.page.evaluate(() => { const imgs = [...document.querySelectorAll('#lightbox .lightbox__img')].map(i => ({left: i.getBoundingClientRect().left, src: i.getAttribute('src'), cls: i.className})); return imgs; });
         assert(dragging.length === 2, `Al arrastrar debe verse la foto vecina (${JSON.stringify(dragging)})`);
+        assert.equal(await mobile.page.evaluate(() => document.querySelector('.lightbox__stage').classList.contains('photo-sliding')), true, 'Ambas fotos usan superficies del tamaño del visor');
         assert(Math.abs(dragging[0].left - (first.x - 90)) <= 4, `La foto sigue al dedo (${dragging[0].left} frente a ${first.x - 90})`);
         assert(dragging[1].left > 250 && dragging[1].left < 390 && /last/.test(dragging[1].src), `La foto siguiente asoma por la derecha (${JSON.stringify(dragging[1])})`);
         // 7b. Un gesto que se queda corto (el dedo vuelve atrás antes de soltar): todo vuelve a su sitio, sin cambiar de foto.
