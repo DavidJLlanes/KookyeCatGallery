@@ -346,11 +346,15 @@ class AiTextGenerator
         $existingSlug        = '';
         $existingCategoria   = '';
         $existingCoordenadas = '';
+        $existingFeatured    = '';
+        $existingDraft       = '';
         if (is_file($path)) {
             $prev = file_get_contents($path) ?: '';
             if (preg_match('/^# Slug:\s*([a-z0-9-]+)$/m', $prev, $m))         $existingSlug        = trim($m[1]);
             if (preg_match('/^# Categoría:\s*(.+?)$/m', $prev, $m))            $existingCategoria   = trim($m[1]);
             if (preg_match('/^# Coordenadas:\s*[\d\.\-]+,[\d\.\-]+$/m', $prev, $m)) $existingCoordenadas = trim($m[0]);
+            if (preg_match('/^# Destacada:\s*1$/m', $prev, $m)) $existingFeatured = trim($m[0]);
+            if (preg_match('/^# Borrador:\s*1$/m', $prev, $m)) $existingDraft = trim($m[0]);
         }
 
         $content = $title;
@@ -367,6 +371,8 @@ class AiTextGenerator
 
         if ($existingCategoria   !== '') $content .= "# Categoría: {$existingCategoria}\n";
         if ($existingCoordenadas !== '') $content .= "{$existingCoordenadas}\n";
+        if ($existingFeatured !== '') $content .= "{$existingFeatured}\n";
+        if ($existingDraft !== '') $content .= "{$existingDraft}\n";
 
         @file_put_contents($path, $content);
     }

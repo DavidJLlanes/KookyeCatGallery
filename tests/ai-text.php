@@ -55,4 +55,21 @@ $legacy = ai_text_config([
 check_ai($legacy['ai_enabled'] === true, 'La configuración existente debe seguir funcionando');
 check_ai($legacy['gemini_api_key'] === 'clave-de-prueba', 'La clave externa debe conservarse');
 
+if (!function_exists('generate_slug')) {
+    function generate_slug(string $title): string { return 'titulo-generado'; }
+}
+$temp = sys_get_temp_dir() . '/gallery-ai-meta-' . bin2hex(random_bytes(4));
+mkdir($temp);
+$sidecar = $temp . '/photo.txt';
+file_put_contents($sidecar, "Título manual\n\n# auto-description-pending\n# Categoría: Naturaleza\n# Destacada: 1\n# Borrador: 1\n");
+(new ReflectionMethod(AiTextGenerator::class, 'writeSidecar'))->invoke(
+    $generator, $sidecar, 'Título manual', 'Descripción generada', 'gemini/test'
+);
+$updated = (string) file_get_contents($sidecar);
+check_ai(str_contains($updated, '# Destacada: 1'), 'Debe conservarse la foto destacada');
+check_ai(str_contains($updated, '# Borrador: 1'), 'Debe conservarse el borrador');
+check_ai(str_contains($updated, '# Categoría: Naturaleza'), 'Debe conservarse la categoría');
+unlink($sidecar);
+rmdir($temp);
+
 echo "Configuración y prompt de IA verificados.\n";
