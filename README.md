@@ -120,6 +120,8 @@ Node.js y Playwright solo son necesarios para ejecutar las comprobaciones de int
 
 ## Instalación
 
+> **⛔ ADVERTENCIA SOBRE install.php:** mientras el instalador esté publicado y todavía no exista una cuenta, cualquier visitante que conozca la dirección puede intentar crear el acceso de administrador. Ábrelo solo cuando estés listo para completar el formulario de inmediato. Al terminar, comprueba que se ha borrado del hosting; si no, elimínalo manualmente enseguida.
+
 La instalación inicial se hace desde el navegador:
 
 1. Añade el dominio o subdominio en el hosting y activa HTTPS.
@@ -161,7 +163,7 @@ El panel tiene **un solo usuario**. Para configurarlo por primera vez o reemplaz
 3. Abre `https://tu-dominio/reset-admin-access.php`, escribe el nuevo usuario y una contraseña única de al menos 12 caracteres y guarda.
 4. Verifica inmediatamente que `reset-admin-access.php` ya no existe en el servidor. El script intenta borrarse al guardar; si no lo consigue, bórralo manualmente en ese momento.
 
-Al guardar, reemplaza `upload-auth.php` dentro de `GALLERY_PRIVATE_DIR` (o de `var/` si no has configurado esa variable). La contraseña se guarda con un hash seguro. El archivo `.example` del repositorio no es el recuperador activo; solo se vuelve ejecutable después de copiarlo y subirlo con el nombre `reset-admin-access.php`. **Nunca guardes la copia PHP activa ni credenciales en GitHub y nunca mantengas el recuperador online para usarlo “más tarde”.**
+Al guardar, reemplaza `upload-auth.php` dentro de la carpeta privada detectada (`GALLERY_PRIVATE_DIR` si la configuraste, normalmente `../config` o, como alternativa, `var/`). La contraseña se guarda con un hash seguro. El archivo `.example` del repositorio no es el recuperador activo; solo se vuelve ejecutable después de copiarlo y subirlo con el nombre `reset-admin-access.php`. **Nunca guardes la copia PHP activa ni credenciales en GitHub y nunca mantengas el recuperador online para usarlo “más tarde”.**
 
 ## Textos con IA
 
