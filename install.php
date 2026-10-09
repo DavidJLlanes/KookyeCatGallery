@@ -36,7 +36,12 @@ function install_page(string $message = '', bool $success = false, int $status =
     echo '</main></html>';
 }
 
-if (is_file($authPath)) install_page('Ya hay un acceso configurado. El instalador no modificará usuarios existentes. Para recuperar el acceso, sigue la guía de recuperación y elimina este archivo del servidor.', false, 409);
+if (is_file($authPath)) {
+    $removed = @unlink(__FILE__);
+    install_page($removed
+        ? 'Esta web ya tenía un acceso configurado. El instalador se ha eliminado; usa la recuperación documentada solo si necesitas restablecer la contraseña.'
+        : 'Esta web ya tiene un acceso configurado. Elimina install.php ahora desde el hosting. Para restablecer la contraseña, sigue la guía de recuperación.', true, 409);
+}
 if (empty($_SESSION['install_csrf'])) $_SESSION['install_csrf'] = bin2hex(random_bytes(32));
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') install_page();
 $csrf = $_POST['csrf'] ?? null;
