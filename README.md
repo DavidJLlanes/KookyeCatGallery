@@ -147,6 +147,18 @@ Como alternativa, la aplicación puede usar `var/` dentro del proyecto. El `.hta
 
 No guardes credenciales, claves API, datos de acceso ni fotos privadas en el repositorio. Las imágenes pueden contener coordenadas GPS u otros datos EXIF: revísalas antes de subirlas. El mapa está desactivado inicialmente.
 
+## Recuperar o cambiar el acceso de administración
+
+El panel admite **un solo usuario**. El repositorio incluye `reset-admin-access.php.example`, una herramienta que puedes subir temporalmente para crear el primer acceso o reemplazar el usuario y la contraseña si los pierdes. La herramienta modifica el mismo archivo privado que usa el panel y se borra automáticamente tras una operación correcta. Una clave temporal solo se puede usar una vez.
+
+1. Desde tu ordenador, genera una clave aleatoria nueva de 64 caracteres hexadecimales: `php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"`.
+2. Haz una copia local de `reset-admin-access.php.example`, llámala `reset-admin-access.php` y sustituye `REPLACE_WITH_A_NEW_RANDOM_64_CHARACTER_SECRET` por la clave que acabas de generar. No guardes ni subas esa copia modificada a GitHub.
+3. Sube `reset-admin-access.php` a la raíz pública de la web usando el panel de archivos o SFTP. Accede por HTTPS a `https://tu-dominio/reset-admin-access.php`.
+4. Introduce la clave temporal, el nombre de usuario nuevo y una contraseña única de al menos 12 caracteres. Al guardar, el servidor reemplaza la única cuenta de administración y elimina el archivo temporal.
+5. Confirma desde el gestor de archivos que `reset-admin-access.php` ya no está en la raíz pública. Si el borrado automático no pudo completarse, elimínalo manualmente antes de salir.
+
+La clave queda bloqueada para usos posteriores en la carpeta privada de configuración. Para otra recuperación, genera una clave nueva, prepara otra copia local de la plantilla y vuelve a subirla temporalmente. No reutilices una clave ni dejes la herramienta en el servidor: mientras exista, cualquiera puede abrir su formulario, aunque solo quien conozca la clave aleatoria podrá cambiar el acceso.
+
 ## Textos con IA
 
 La generación opcional de títulos y descripciones está disponible con Gemini u OpenRouter. Viene desactivada y sin claves. Consulta [configuración de IA](docs/ia-textos.md) para activarla mediante variables de entorno fuera del repositorio.
