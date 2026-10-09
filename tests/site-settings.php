@@ -29,6 +29,13 @@ foreach (['gallery_mobile', 'gallery_desktop'] as $field) {
     rejects(array_replace($defaults, [$field => 'art-walk']));
 }
 check(site_settings_validate($defaults) === $defaults, 'Defaults should round-trip.');
+$gridLayouts = site_grid_setting_layouts();
+check($gridLayouts === ['standard', 'grid', 'contact-sheet', 'triptych'], 'Grid aspect compatibility list changed.');
+check(site_grid_setting_is_used(array_replace($defaults, ['gallery_mobile' => 'mosaic', 'gallery_desktop' => 'asymmetric'])) === false, 'Grid setting should be unused when both layouts ignore it.');
+check(site_grid_setting_is_used(array_replace($defaults, ['gallery_mobile' => 'grid', 'gallery_desktop' => 'mosaic'])) === true, 'Mobile grid should keep proportions editable.');
+check(site_grid_setting_is_used(array_replace($defaults, ['gallery_mobile' => 'mosaic', 'gallery_desktop' => 'contact-sheet'])) === true, 'Desktop contact sheet should keep proportions editable.');
+check(site_grid_setting_is_used(array_replace($defaults, ['gallery_mobile' => 'narrative', 'gallery_desktop' => 'triptych'])) === true, 'Triptych should use proportions.');
+
 $unsafePage = array_replace($defaults, ['pages' => ['project' => '<h2 onclick="alert(1)">Texto</h2><script>alert(2)</script><a href="javascript:alert(3)">enlace</a>']]);
 $safePage = site_settings_validate($unsafePage)['pages']['project'];
 check(str_contains($safePage, '<h2>Texto</h2>') && !str_contains($safePage, 'onclick') && !str_contains($safePage, '<script'), 'Page editor did not remove unsafe markup.');
