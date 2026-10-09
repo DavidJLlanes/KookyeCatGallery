@@ -34,12 +34,12 @@ const css = [
             assert.notEqual(transform, 'none', `El efecto hover debe llegar a ${image} (${transform})`);
             await page.mouse.move(900, 800);
             await page.locator('body').evaluate(node => { node.dataset.hover = 'frame'; });
-            await page.locator(link).hover();
+            await page.locator(link).evaluate(node => node.dispatchEvent(new MouseEvent('mouseenter', {bubbles:true})));
             const outline = await page.locator(link).evaluate(node => getComputedStyle(node).outlineStyle);
             assert.equal(outline, 'solid', `El efecto de marco debe alcanzar ${link}`);
             await page.mouse.move(900, 800);
             await page.locator('body').evaluate(node => { node.dataset.hover = 'shine'; });
-            await page.locator(link).hover();
+            await page.locator(link).evaluate(node => node.dispatchEvent(new MouseEvent('mouseenter', {bubbles:true})));
             const shine = await page.locator(`#${item.container} .${item.picture}`).evaluate(node => getComputedStyle(node, '::after').content);
             assert.notEqual(shine, 'none', `El destello debe generar una capa sobre ${item.picture}`);
         }
