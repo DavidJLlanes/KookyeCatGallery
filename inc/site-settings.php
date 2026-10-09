@@ -61,6 +61,23 @@ function site_design_choices(): array
  * Fotos visibles a la vez por pantalla (0 = todas). Es independiente del número de columnas; main.js
  * pagina con este valor.
  */
+/**
+ * Diseños estándar que aplican la proporción elegida en «Tipo de cuadrícula».
+ * Las dos galerías (móvil y escritorio) comparten el mismo ajuste, por eso basta
+ * con que una de ellas sea compatible para mantenerlo disponible.
+ */
+function site_grid_setting_layouts(): array
+{
+    return ['standard', 'grid', 'contact-sheet', 'triptych'];
+}
+
+function site_grid_setting_is_used(array $settings): bool
+{
+    $supported = site_grid_setting_layouts();
+    return in_array($settings['gallery_mobile'] ?? 'standard', $supported, true)
+        || in_array($settings['gallery_desktop'] ?? 'standard', $supported, true);
+}
+
 function site_photos_per_view_choices(): array
 {
     return [6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 36, 40, 50, 60, 100, 0];
