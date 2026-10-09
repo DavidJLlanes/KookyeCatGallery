@@ -265,15 +265,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             site_settings_save($settingsInput);
             $section = (string) ($_POST['section'] ?? 'profile');
-            if (!in_array($section, ['profile', 'design'], true)) $section = 'profile';
+            if (!in_array($section, ['profile', 'design', 'texts'], true)) $section = 'profile';
             header('Location: /admin.php?settings=1&section=' . rawurlencode($section) . '&saved=1', true, 303);
             exit;
         } catch (InvalidArgumentException | RuntimeException $error) {
             $values = site_settings_load();
             try { $values = site_settings_validate($_POST); } catch (InvalidArgumentException $ignored) {}
             $section = (string) ($_POST['section'] ?? 'profile');
-            if (!in_array($section, ['profile', 'design'], true)) $section = 'profile';
-            uploadPage($section === 'profile' ? 'Perfil' : 'Diseño', adminNavigation((string) $_SESSION['csrf'])
+            if (!in_array($section, ['profile', 'design', 'texts'], true)) $section = 'profile';
+            uploadPage($section === 'profile' ? 'Perfil' : ($section === 'texts' ? 'Textos' : 'Diseño'), adminNavigation((string) $_SESSION['csrf'])
                 . '<p class="upload-message upload-message--error" role="alert">' . uploadEscape($error->getMessage()) . '</p>'
                 . site_settings_form((string) $_SESSION['csrf'], $values, $section), 422, true);
         }
@@ -518,16 +518,16 @@ if (!empty($_SESSION['upload_authenticated'])) {
     if (isset($_GET['settings'])) {
         $status = isset($_GET['saved']) ? '<p class="upload-message" role="status">Configuración guardada.</p>' : '';
         $section = (string) ($_GET['section'] ?? 'profile');
-        if (!in_array($section, ['profile', 'design', 'page'], true)) $section = 'profile';
+        if (!in_array($section, ['profile', 'design', 'texts', 'page'], true)) $section = 'profile';
         if ($section === 'page') {
             $page = (string) ($_GET['doc'] ?? '');
             if (!in_array($page, site_editable_page_keys(), true)) $page = 'legal_notice';
             $status = isset($_GET['saved']) ? '<p class="upload-message" role="status">Página guardada.</p>' : '';
             uploadPage(site_page_labels()[$page], adminNavigation((string) $_SESSION['csrf']) . $status
-                . '<nav class="admin-subnav admin-subnav--back" aria-label="Secciones de configuración"><a href="/admin.php?settings=1&amp;section=design">← Textos y diseño</a></nav>'
+                . '<nav class="admin-subnav admin-subnav--back" aria-label="Secciones de configuración"><a href="/admin.php?settings=1&amp;section=texts">← Textos</a></nav>'
                 . site_page_editor_form((string) $_SESSION['csrf'], $page), 200, true);
         }
-        uploadPage($section === 'profile' ? 'Perfil' : 'Diseño', adminNavigation((string) $_SESSION['csrf']) . $status
+        uploadPage($section === 'profile' ? 'Perfil' : ($section === 'texts' ? 'Textos' : 'Diseño'), adminNavigation((string) $_SESSION['csrf']) . $status
             . site_settings_form((string) $_SESSION['csrf'], null, $section), 200, true);
     }
     // Gestión de categorías.
