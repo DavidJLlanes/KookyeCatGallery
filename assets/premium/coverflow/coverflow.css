@@ -7,7 +7,9 @@
     --frame-w: min(calc(100cqw * .52), calc(var(--frame-h) * 1.45));
 }
 .deck[data-layout="coverflow"] .deck__card {
-    height: min(var(--frame-h), calc(var(--frame-w) * .68));
+    --coverflow-slot-h: min(var(--frame-h), calc(var(--frame-w) * .68));
+    width: min(var(--frame-w), calc(var(--coverflow-slot-h) * var(--coverflow-aspect, 1.5)));
+    height: min(var(--coverflow-slot-h), calc(var(--frame-w) / var(--coverflow-aspect, 1.5)));
     translate: -50% -50%;
     overflow: visible;
     border-radius: 0;
