@@ -125,6 +125,8 @@
             peek?.remove();
             return true;
         }
+        const stage = img.parentElement;
+        stage?.classList.add('photo-sliding');
         const layer = peek || document.createElement('img');
         layer.className = 'lightbox__img lightbox__img--incoming is-shown';
         layer.alt = alt;
@@ -154,6 +156,7 @@
         leaving.cancel(); entering.cancel();                          // Todo en el mismo fotograma: la base pasa a ser la foto nueva y la capa desaparece.
         layer.remove();
         state.layer = null;
+        stage?.classList.remove('photo-sliding');
         return true;
     };
 
@@ -1157,34 +1160,27 @@
             updateViewerButtons();
         };
 
-        /* ---- Transición en la ficha (sin visor) ----
-           Con View Transitions (Chrome, Edge, Safari 18+) la foto pasa a la nueva con un fundido direccional y su marco cambia de tamaño
-           de forma continua; el texto de debajo sale hacia arriba y el nuevo entra con un pequeño retraso; las flechas no se mueven.
-           Los nombres de transición solo se ponen durante el cambio (clase photo-vt en <html>): ver photo-navigation.css. Sin View
-           Transitions, la foto y el texto nuevos aparecen con un fundido corto. */
+        /* The photo and its text form one layout. Fade the entire detail out before
+           changing its image and measurements, then reveal the new layout. This avoids
+           overlapping snapshots when consecutive photos have different aspect ratios. */
         const detailImage = () => $('.photo-detail__img', detail);
-        const transitionDetail = async (commit, direction) => {
-            const html = document.documentElement;
-            if (prefersReducedMotion) { commit(); return; }
-            if (document.startViewTransition) {
-                html.classList.add('photo-vt', direction < 0 ? 'photo-vt-prev' : 'photo-vt-next');
-                try {
-                    const transition = document.startViewTransition(() => { commit(); const img = detailImage(); if (img) { img.style.transform = ''; img.style.opacity = ''; } });
-                    await transition.finished.catch(() => {});
-                } finally {
-                    html.classList.remove('photo-vt', 'photo-vt-prev', 'photo-vt-next');
-                }
-                return;
-            }
+        const transitionDetail = async (commit) => {
+            if (prefersReducedMotion || !detail.animate) { commit(); return; }
+            const out = detail.animate([{ opacity: 1 }, { opacity: 0 }],
+                { duration: 150, easing: 'ease-in', fill: 'forwards' });
+            await out.finished.catch(() => {});
+            detail.style.opacity = '0';
+            out.cancel();
             commit();
             const img = detailImage();
             if (img) { img.style.transform = ''; img.style.opacity = ''; }
-            const timing = { duration: 420, easing: 'cubic-bezier(.22, .8, .24, 1)' };
-            img?.animate?.([{ opacity: 0, transform: `translate3d(${direction * 24}px, 0, 0)` }, { opacity: 1, transform: 'translate3d(0, 0, 0)' }], timing);
-            $('.photo-detail__info', detail)?.animate?.([{ opacity: 0, transform: 'translate3d(0, 10px, 0)' }, { opacity: 1, transform: 'translate3d(0, 0, 0)' }], { ...timing, delay: 80, fill: 'backwards' });
+            const incoming = detail.animate([{ opacity: 0 }, { opacity: 1 }],
+                { duration: 280, easing: 'cubic-bezier(.22, .8, .24, 1)' });
+            detail.style.opacity = '';
+            await incoming.finished.catch(() => {});
         };
 
-        // Muestra la foto de `path`. `push` añade una entrada al historial (navegar) o no (Atrás / Adelante). Con el visor abierto, la foto
+                // Muestra la foto de `path`. `push` añade una entrada al historial (navegar) o no (Atrás / Adelante). Con el visor abierto, la foto
         // desliza de inmediato con la imagen vecina que ya está precargada (sin esperar a la ficha), desde donde el dedo la dejó (`from`) y
         // con su velocidad (`velocity`), y mientras tanto se pide la ficha para actualizar los textos y los datos.
         let busy = false;
@@ -1259,6 +1255,7 @@
             imgEl.getAnimations?.().forEach(animation => animation.cancel());
             imgEl.style.transition = 'none';
             const next = peekFor(direction);
+            if (next) stage?.classList.add('photo-sliding');
             if (!next) { imgEl.style.transform = `translate3d(${dx / 3}px, 0, 0)`; imgEl.style.filter = ''; return; }    // Sin foto hacia ese lado: la foto se resiste.
             const progress = Math.min(1, Math.abs(dx) / stageWidth());
             imgEl.style.transform = `translate3d(${dx}px, 0, 0)`;
@@ -1279,8 +1276,9 @@
             if (taken) {
                 const rest = taken.direction * stageWidth();
                 const back = taken.el.animate?.([{ transform: `translate3d(${dx + rest}px, 0, 0)` }, { transform: `translate3d(${rest}px, 0, 0)` }], timing);
-                if (back) back.finished.catch(() => {}).finally(() => taken.el.remove()); else taken.el.remove();
-            }
+                if (back) back.finished.catch(() => {}).finally(() => { taken.el.remove(); stage?.classList.remove('photo-sliding'); });
+                else { taken.el.remove(); stage?.classList.remove('photo-sliding'); }
+            } else stage?.classList.remove('photo-sliding');
         };
         const swipe = (direction, dx, velocity = 0) => {
             if (!isOpen()) { go(direction); return; }
@@ -1382,6 +1380,7 @@
             document.body.style.overflow = '';
             imgEl.classList.remove('is-shown');
             lightbox.querySelectorAll('.lightbox__img--incoming').forEach(layer => layer.remove());
+            stage?.classList.remove('photo-sliding');
             peek = null;
             imgEl.getAnimations?.().forEach(animation => animation.cancel());
             imgEl.style.transform = ''; imgEl.style.transition = '';
