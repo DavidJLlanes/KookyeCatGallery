@@ -3,7 +3,8 @@
    -----------------------------------------------------------------------------
    Índice
      1. Galería premium: desactiva los ajustes de la galería estándar que ignora.
-     2. Orden de los bloques de la portada (flechas ↑ ↓).
+     2. Textos de la plantilla activa.
+     3. Orden de los bloques de la portada (flechas ↑ ↓).
    ============================================================================= */
 (() => {
     'use strict';
@@ -33,7 +34,26 @@
     }
 
     /* -------------------------------------------------------------------------
-       2. Orden de los bloques de la portada
+       2. Textos editables del diseño seleccionado. Los campos ocultos permanecen
+       habilitados para que un cambio de plantilla no borre sus textos guardados.
+       ------------------------------------------------------------------------- */
+    const templateGroups = [...document.querySelectorAll('[data-template-text-group]')];
+    if (templateGroups.length) {
+        const updateTemplateGroups = () => {
+            templateGroups.forEach(group => {
+                const selected = document.getElementById('setting-' + group.dataset.templateSetting)?.value;
+                const options = (group.dataset.templateOptions || '').split(',');
+                group.hidden = !options.includes('*') && !options.includes(selected);
+            });
+        };
+        [...new Set(templateGroups.map(group => group.dataset.templateSetting))].forEach(setting => {
+            document.getElementById('setting-' + setting)?.addEventListener('change', updateTemplateGroups);
+        });
+        updateTemplateGroups();
+    }
+
+    /* -------------------------------------------------------------------------
+       3. Orden de los bloques de la portada
        El orden del DOM es el orden enviado (cada fila lleva su input oculto section_order[]).
        ------------------------------------------------------------------------- */
     const list = document.querySelector('[data-section-order]');

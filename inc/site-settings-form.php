@@ -97,6 +97,30 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . $range('photos_desktop', 'Fotos visibles a la vez en escritorio', site_photos_per_view_choices(), $settings['photos_desktop'], 'Todas', true) . '</div>'
         . '<p class="upload-help">Las fotos visibles a la vez no dependen de las columnas: si hay más fotos, se paginan. Elige «Todas» para mostrarlas juntas. Masonry conserva las proporciones originales; para fotos cuadradas, horizontales o verticales, elige la galería «Cuadrícula» y su tipo de cuadrícula.</p>');
 
+    // Muestra los textos que corresponden a las cabeceras y galerías elegidas.
+    // Los grupos ocultos siguen en el formulario para conservar sus valores al cambiar de diseño.
+    $templateTextGroups = '';
+    foreach (site_template_text_groups() as $group) {
+        $setting = $group['setting'];
+        $options = $group['options'];
+        $visible = in_array('*', $options, true) || in_array((string) ($settings[$setting] ?? ''), $options, true);
+        $templateTextGroups .= '<section class="template-text-group" data-template-text-group data-template-setting="' . $escape($setting)
+            . '" data-template-options="' . $escape(implode(',', $options)) . '"' . ($visible ? '' : ' hidden') . '>'
+            . '<h3>' . $escape($group['title']) . '</h3><div class="admin-fields">';
+        foreach ($group['fields'] as $key => $label) {
+            $entry = site_text_catalog()[$key];
+            $value = $settings['texts'][$key] ?? $entry['default'];
+            $templateTextGroups .= '<div class="upload-field"><label for="template-text-' . $escape($key) . '">' . $escape($label) . '</label>'
+                . '<textarea id="template-text-' . $escape($key) . '" name="texts[' . $escape($key) . ']" rows="2" maxlength="20000">'
+                . $escape((string) $value) . '</textarea></div>';
+        }
+        $templateTextGroups .= '</div></section>';
+    }
+    $html .= $card('Textos de las plantillas',
+        'Al cambiar una cabecera o galería aparecen sus textos con nombres descriptivos.',
+        '<p class="upload-help">El usuario, la biografía y la web del perfil se editan en Perfil. Los textos de las fotografías se editan en Gestionar fotos.</p>'
+        . '<div class="template-text-editor" data-template-text-editor>' . $templateTextGroups . '</div>');
+
     $order = site_section_order_normalize($settings['section_order'] ?? null);
     // Tarjeta «Estructura de la página»: orden (flechas, ver assets/js/admin-ui.js) y visibilidad de cada bloque.
     // El orden del DOM es el que se envía en section_order[].

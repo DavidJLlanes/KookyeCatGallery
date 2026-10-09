@@ -9,7 +9,11 @@
  */
 ?>
 <!-- Cabecera de perfil móvil -->
-<section class="mobile-profile" aria-label="<?= site_text_html('text_1d997c72b89b5e1f') ?>">
+<section class="mobile-profile" aria-label="<?= site_text_html('text_1d997c72b89b5e1f') ?>"
+    data-template-reel-label="<?= site_text_html('template_reel_label') ?>"
+    data-template-atlas-label="<?= site_text_html('template_atlas_label') ?>"
+    data-template-orbit-label="<?= site_text_html('template_orbit_label') ?>"
+    data-template-scrapbook-label="<?= site_text_html('template_scrapbook_label') ?>">
     <div class="mobile-profile__masthead">
         <a class="mobile-profile__brand" href="/" aria-label="<?= site_text_html('text_84f085942c2a2aa1') ?>"><?= site_text_html('text_52179dc42df7efe5') ?></a>
         <span class="mobile-profile__edition"><?= site_text_html('text_8aa8595771f39463') ?></span>

@@ -17,6 +17,7 @@ declare(strict_types=1);
  */
 
 require_once __DIR__ . '/premium-galleries.php';
+require_once __DIR__ . '/template-texts.php';
 
 // =============================================================================
 // 1. ALMACENAMIENTO Y OPCIONES DE DISEÑO
@@ -143,7 +144,7 @@ function site_settings_defaults(): array
  */
 function site_editable_text_keys(): array
 {
-    return [
+    $keys = [
         'text_4577bab0d9627af1',
         'text_2e2b80d871481edc',
         'text_54b7645201863e32',
@@ -152,6 +153,10 @@ function site_editable_text_keys(): array
         'text_3b20084d3d94b4ee',
         'social_threads_user',
     ];
+    foreach (site_template_text_groups() as $group) {
+        array_push($keys, ...array_keys($group['fields']));
+    }
+    return array_values(array_unique($keys));
 }
 
 /**

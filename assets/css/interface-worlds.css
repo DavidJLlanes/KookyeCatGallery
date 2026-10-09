@@ -7,7 +7,7 @@
 /* 01 · Reel / photographic cinema */
 body[data-header-mobile="reel"][data-palette="current"]{--bg:#090909;--bg-soft:#151313;--bg-card:#241e1c;--fg:#f8f0e6;--fg-soft:#d6c6b8;--accent:#ec5b45;--line:#e9cabd30;background:var(--bg);color:var(--fg)}
 body[data-header-mobile="reel"] .mobile-profile{position:relative;overflow:hidden;padding:1.4rem 1rem 2rem;background:linear-gradient(128deg,var(--bg-soft),var(--bg) 65%);border-bottom:6px solid var(--accent)}
-body[data-header-mobile="reel"] .mobile-profile:before{content:"01 / KOOKYE EN MOVIMIENTO";display:block;color:var(--accent);font:700 .64rem var(--sans);letter-spacing:.32em;margin-bottom:1.4rem}
+body[data-header-mobile="reel"] .mobile-profile:before{content:attr(data-template-reel-label);display:block;color:var(--accent);font:700 .64rem var(--sans);letter-spacing:.32em;margin-bottom:1.4rem}
 body[data-header-mobile="reel"] .mobile-profile__masthead{border:0;align-items:center}
 body[data-header-mobile="reel"] .mobile-profile__brand{font:700 clamp(2.4rem,11vw,4rem)/.9 var(--sans);text-transform:uppercase;letter-spacing:-.085em;max-width:8ch}
 body[data-header-mobile="reel"] .mobile-profile__edition{writing-mode:vertical-rl;letter-spacing:.3em;color:var(--fg)}
@@ -28,7 +28,7 @@ body[data-header-mobile="reel"] .upload-fab{background:var(--accent);color:var(-
 /* 02 · Atlas / illustrated field journal */
 body[data-header-mobile="atlas"][data-palette="current"]{--bg:#e9dfc8;--bg-soft:#f6edd9;--bg-card:#d8c9a8;--fg:#253a36;--fg-soft:#4e625a;--accent:#a34830;--line:#253a3640;background:var(--bg);color:var(--fg)}
 body[data-header-mobile="atlas"] .mobile-profile{position:relative;overflow:hidden;background:repeating-radial-gradient(ellipse at 90% 8%,transparent 0 14px,#31564a18 15px 16px),var(--bg);padding:1.2rem 1.2rem 2.4rem;border:0}
-body[data-header-mobile="atlas"] .mobile-profile:before{content:"ATLAS  /  PROVINCIA DE KOOKYE";display:block;border-block:1px solid var(--fg);padding:.45rem 0;margin-bottom:1rem;font:600 .6rem var(--sans);letter-spacing:.22em}
+body[data-header-mobile="atlas"] .mobile-profile:before{content:attr(data-template-atlas-label);display:block;border-block:1px solid var(--fg);padding:.45rem 0;margin-bottom:1rem;font:600 .6rem var(--sans);letter-spacing:.22em}
 body[data-header-mobile="atlas"] .mobile-profile__masthead{border:0}
 body[data-header-mobile="atlas"] .mobile-profile__brand{font:italic 400 clamp(2.8rem,12vw,5rem)/.85 Georgia,serif;letter-spacing:-.08em;color:var(--fg)}
 body[data-header-mobile="atlas"] .mobile-profile__edition{color:var(--accent)}
@@ -39,7 +39,7 @@ body[data-header-mobile="atlas"] .mobile-profile__bio p{color:var(--fg-soft)}
 body[data-header-mobile="atlas"] .gallery-section{padding:1.2rem .8rem 2rem;background:var(--bg)}
 body[data-header-mobile="atlas"] #masonry{--col-gap:.8rem}
 body[data-header-mobile="atlas"] #masonry .card{overflow:visible;padding:.38rem!important;background:var(--bg-soft);box-shadow:2px 5px 11px #253a3622}
-body[data-header-mobile="atlas"] #masonry .card:after{content:"PLACA  ·  KOOKYE";display:block;margin:.45rem .2rem .2rem;color:var(--fg-soft);font:600 .48rem var(--sans);letter-spacing:.17em}
+body[data-header-mobile="atlas"] #masonry .card:after{content:attr(data-template-atlas-photo-label);display:block;margin:.45rem .2rem .2rem;color:var(--fg-soft);font:600 .48rem var(--sans);letter-spacing:.17em}
 body[data-header-mobile="atlas"] .project{background:var(--bg-soft);color:var(--fg)}
 body[data-header-mobile="atlas"] .project__title{color:var(--fg)}
 body[data-header-mobile="atlas"] .upload-fab{background:var(--accent);color:var(--bg)}
@@ -67,7 +67,7 @@ body[data-header-mobile="studio"] .upload-fab{background:var(--accent);color:var
 /* 04 · Orbit / celestial glass */
 body[data-header-mobile="orbit"][data-palette="current"]{--bg:#070d25;--bg-soft:#121d44;--bg-card:#162a53;--fg:#f1f5ff;--fg-soft:#c5d2f0;--accent:#77e6ff;--line:#a3d8ff44;background:var(--bg);color:var(--fg)}
 body[data-header-mobile="orbit"] .mobile-profile{position:relative;isolation:isolate;overflow:hidden;min-height:380px;padding:1.5rem 1.2rem 2.5rem;background:radial-gradient(circle at 80% 35%,var(--bg-card),var(--bg-soft) 58%,var(--bg));border:0;border-radius:0 0 38px 38px}
-body[data-header-mobile="orbit"] .mobile-profile:before{content:"✦    ARCHIVO CELESTE    ✦";position:relative;z-index:1;display:block;color:var(--accent);letter-spacing:.3em;font-size:.55rem;margin-bottom:1.4rem}
+body[data-header-mobile="orbit"] .mobile-profile:before{content:attr(data-template-orbit-label);position:relative;z-index:1;display:block;color:var(--accent);letter-spacing:.3em;font-size:.55rem;margin-bottom:1.4rem}
 body[data-header-mobile="orbit"] .mobile-profile__masthead,body[data-header-mobile="orbit"] .mobile-profile__identity,body[data-header-mobile="orbit"] .mobile-profile__bio{position:relative;z-index:1}
 body[data-header-mobile="orbit"] .mobile-profile__masthead{border:0}
 body[data-header-mobile="orbit"] .mobile-profile__brand{font:400 clamp(2.7rem,11vw,4rem)/.9 Georgia,serif;color:var(--fg);text-shadow:0 0 30px #77e6ff6b}
@@ -85,7 +85,7 @@ body[data-header-mobile="orbit"] .upload-fab{background:var(--accent);color:var(
 /* 05 · Scrapbook / tactile paper and tape */
 body[data-header-mobile="scrapbook"][data-palette="current"]{--bg:#e8d6c8;--bg-soft:#f7ece0;--bg-card:#fffaf0;--fg:#48373e;--fg-soft:#695b60;--accent:#b44672;--line:#48373e38;background:var(--bg);color:var(--fg)}
 body[data-header-mobile="scrapbook"] .mobile-profile{background:radial-gradient(#a77b8b30 1px,transparent 1px) 0 0/16px 16px,var(--bg);padding:1.6rem 1.3rem 2rem;border:0}
-body[data-header-mobile="scrapbook"] .mobile-profile:before{content:"✿  postales desde Kookye";display:inline-block;background:#ffd7b5;padding:.35rem .7rem;transform:rotate(-3deg);font:italic 1rem Georgia,serif}
+body[data-header-mobile="scrapbook"] .mobile-profile:before{content:attr(data-template-scrapbook-label);display:inline-block;background:#ffd7b5;padding:.35rem .7rem;transform:rotate(-3deg);font:italic 1rem Georgia,serif}
 body[data-header-mobile="scrapbook"] .mobile-profile__masthead{border:0;margin:1.2rem 0}
 body[data-header-mobile="scrapbook"] .mobile-profile__brand{font:italic 400 clamp(3rem,13vw,5rem)/.8 Georgia,serif;color:var(--fg);letter-spacing:-.07em}
 body[data-header-mobile="scrapbook"] .mobile-profile__edition{color:var(--accent);transform:rotate(5deg)}
