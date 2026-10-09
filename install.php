@@ -54,7 +54,14 @@ if (!is_string($csrf) || !hash_equals((string) $_SESSION['install_csrf'], $csrf)
 $url = rtrim(trim((string) ($_POST['url'] ?? '')), '/');
 $username = trim((string) ($_POST['username'] ?? ''));
 $password = (string) ($_POST['password'] ?? '');
-if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('~^https://~i', $url) || !preg_match('~^https://[a-z0-9.-]+(?::[0-9]{1,5})?$~i', $url)) install_page('Escribe una URL HTTPS válida, sin ruta ni parámetros.', false, 422);
+$urlParts = parse_url($url);
+if (!filter_var($url, FILTER_VALIDATE_URL) || !is_array($urlParts)
+    || strtolower((string) ($urlParts['scheme'] ?? '')) !== 'https'
+    || empty($urlParts['host']) || isset($urlParts['user']) || isset($urlParts['pass'])
+    || isset($urlParts['query']) || isset($urlParts['fragment'])
+    || !in_array($urlParts['path'] ?? '', ['', '/'], true)) {
+    install_page('Escribe una URL HTTPS válida, sin ruta ni parámetros.', false, 422);
+}
 if (!preg_match('/^[a-zA-Z0-9._-]{3,64}$/D', $username)) install_page('El usuario debe tener entre 3 y 64 caracteres: letras, números, punto, guion o guion bajo.', false, 422);
 if (strlen($password) < 12 || strlen($password) > 1024) install_page('La contraseña debe tener entre 12 y 1024 caracteres.', false, 422);
 
