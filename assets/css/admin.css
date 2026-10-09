@@ -87,7 +87,7 @@
 
 .admin-tabbar {
     position: fixed; z-index: 50; left: 0; right: 0; bottom: 0;
-    display: grid; grid-template-columns: repeat(5, 1fr);
+    display: grid; grid-template-columns: repeat(6, 1fr);
     min-height: var(--adm-tabbar); padding: .25rem .5rem calc(.25rem + env(safe-area-inset-bottom));
     background: color-mix(in srgb, var(--adm-surface) 94%, transparent);
     backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
@@ -264,8 +264,9 @@
 @media (min-width: 960px) { .admin-savebar { bottom: 1rem; } }
 
 /* ---------- Ajustes: pestañas Perfil / Diseño ---------- */
-.site-settings[data-settings-section="profile"] .settings-design { display: none; }
-.site-settings[data-settings-section="design"] .settings-profile { display: none; }
+.site-settings[data-settings-section="profile"] .settings-design, .site-settings[data-settings-section="profile"] .settings-texts { display: none; }
+.site-settings[data-settings-section="design"] .settings-profile, .site-settings[data-settings-section="design"] .settings-texts { display: none; }
+.site-settings[data-settings-section="texts"] .settings-profile, .site-settings[data-settings-section="texts"] .settings-design { display: none; }
 .site-settings textarea { width: 100%; min-height: 4rem; resize: vertical; }
 .site-settings label { white-space: normal; overflow-wrap: anywhere; }
 .page-editor-options__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
