@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/premium-galleries.php';
 require_once __DIR__ . '/template-texts.php';
+require_once __DIR__ . '/site-brand-assets.php';
 
 // =============================================================================
 // 1. ALMACENAMIENTO Y OPCIONES DE DISEÑO
