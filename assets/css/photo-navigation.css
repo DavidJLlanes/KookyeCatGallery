@@ -30,6 +30,9 @@
     .photo-detail__nav--next { right:.25rem; }
 }
 
+.lightbox--immersive { padding: 0; gap: 0; }
+.lightbox--immersive .lightbox__stage { width: 100%; height: 100%; max-width: none; }
+
 /* While sliding, both photos occupy an opaque viewport-sized surface. The image
    keeps its natural scale inside that surface, so changing aspect ratios cannot
    reveal a strip of the previous photo or leave a moving gap. */
