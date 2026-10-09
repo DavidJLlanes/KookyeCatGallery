@@ -16,7 +16,7 @@
 }
 
 /* Tinder reserva el gesto horizontal para decidir una foto y deja el vertical al desplazamiento de la página. */
-html.deck-engaged .deck[data-layout="swipe"] { touch-action: pan-y; }
+html.deck-engaged .deck[data-layout="swipe"] { touch-action: none; }
 
 /* El escenario ocupa SOLO el hueco libre entre las herramientas de arriba y la barra de abajo (con sus márgenes y el área segura de los
    móviles con muesca), así la carta queda centrada en vertical en ese hueco: la misma distancia hasta las herramientas que hasta la barra. */
@@ -35,7 +35,7 @@ html.deck-engaged .deck[data-layout="swipe"] { touch-action: pan-y; }
     height: min(var(--frame-h), calc(var(--frame-w) * 1.4));
     translate: -50% -50%;
     transform-origin: 50% 90%;
-    touch-action: pan-y;
+    touch-action: none;
     cursor: grab;
     border-radius: 22px;
     box-shadow: 0 22px 50px rgba(0, 0, 0, .4), 0 0 0 1px var(--line);
