@@ -88,12 +88,12 @@ $heroItem = $featuredItems[0] ?? ($items[0] ?? null);
 
 // Detecta categorías automáticamente del título + descripción
 $categoryKeywords = [
-    'Gatos' => ['gato', 'gata', 'felino', 'cat'],
-    'Gatitos' => ['gatito', 'cachorro', 'kitten'],
+    'Paisajes' => ['paisaje', 'montaña', 'valle', 'horizonte'],
     'Retratos' => ['retrato', 'mirada', 'primer plano'],
-    'Juego' => ['juego', 'juguete', 'correr', 'saltar'],
-    'Descanso' => ['dormido', 'durmiendo', 'siesta', 'descanso'],
-    'Exterior' => ['jardín', 'parque', 'exterior', 'ventana'],
+    'Naturaleza' => ['naturaleza', 'bosque', 'flora', 'fauna'],
+    'Arquitectura' => ['arquitectura', 'edificio', 'fachada', 'monumento'],
+    'Calle' => ['calle', 'ciudad', 'urbano', 'plaza'],
+    'Viajes' => ['viaje', 'destino', 'ruta', 'escapada'],
     'Blanco y negro' => ['blanco y negro', 'monocromo'],
 ];
 

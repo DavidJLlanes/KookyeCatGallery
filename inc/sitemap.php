@@ -29,8 +29,8 @@ function generate_sitemap(string $baseDir, string $siteUrl, array $items): void
     $esc = fn($s) => htmlspecialchars((string) $s, ENT_QUOTES);
     $imgXml = function (array $it) use ($siteUrl, $esc): string {
         $loc     = $esc($siteUrl . '/' . url_path($it['desktop']));
-        $title   = $esc($it['title']       ?: 'Fotografía de gatos');
-        $caption = $esc($it['description'] ?: 'Fotografía de gatos por Kookye Cat Gallery');
+        $title   = $esc($it['title']       ?: 'Fotografía');
+        $caption = $esc($it['description'] ?: 'Fotografía de Kookye Cat Gallery');
         return "      <image:image>\n"
              . "        <image:loc>{$loc}</image:loc>\n"
              . "        <image:title>{$title}</image:title>\n"

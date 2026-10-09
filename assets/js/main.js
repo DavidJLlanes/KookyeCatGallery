@@ -332,7 +332,7 @@
     const updateShare = (container, url, title) => {
         if (!container) return;
         const u = encodeURIComponent(url);
-        const t = encodeURIComponent((title || window.siteText("Fotografía de gatos")) + window.siteText(" · Kookye Cat Gallery"));
+        const t = encodeURIComponent((title || window.siteText("Fotografía")) + window.siteText(" · Kookye Cat Gallery"));
         const map = {
             wa: `https://wa.me/?text=${t}%20${u}`,
             x:  `https://twitter.com/intent/tweet?text=${t}&url=${u}`,
@@ -855,7 +855,7 @@
 
             onFlyerEnd(() => {
                 imgEl.src = full;
-                imgEl.alt = card.dataset.title || window.siteText("Fotografía de gatos");
+                imgEl.alt = card.dataset.title || window.siteText("Fotografía");
                 const reveal = () => {
                     requestAnimationFrame(() => imgEl.classList.add('is-shown'));
                     setTimeout(() => flyer.classList.remove('is-active'), 60);
@@ -873,7 +873,7 @@
             const pre = new Image();
             pre.onload = () => {
                 imgEl.src = full;
-                imgEl.alt = card.dataset.title || window.siteText("Fotografía de gatos");
+                imgEl.alt = card.dataset.title || window.siteText("Fotografía");
                 requestAnimationFrame(() => imgEl.classList.add('is-shown'));
             };
             pre.src = full;
@@ -963,7 +963,7 @@
             else if (location.pathname.startsWith('/foto/')) history.replaceState(null, '', '/');
             document.dispatchEvent(new CustomEvent('photo:changed', { detail: { slug } }));
             // Deslizamiento continuo entre las dos fotos (sin pasar por el fondo): ver slideImage.
-            slideImage(imgEl, card.dataset.full, card.dataset.title || window.siteText("Fotografía de gatos"), dir);
+            slideImage(imgEl, card.dataset.full, card.dataset.title || window.siteText("Fotografía"), dir);
             preloadNeighbors();
         };
 

@@ -21,7 +21,6 @@
   <a href="#requisitos"><img alt="PHP 8.1 o posterior" src="https://img.shields.io/badge/PHP-8.1%2B-777bb4?logo=php&logoColor=white"></a>
   <a href="#tecnología"><img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-f7df1e?logo=javascript&logoColor=black"></a>
   <a href="#tecnología"><img alt="Sin compilación" src="https://img.shields.io/badge/build-sin_compilación-52796f"></a>
-  <a href="https://github.com/DavidJLlanes/KookyeCatGallery/actions/workflows/validate.yml"><img alt="Validación automática" src="https://github.com/DavidJLlanes/KookyeCatGallery/actions/workflows/validate.yml/badge.svg?branch=main"></a>
 </p>
 
 <h3 align="center"><a href="#instalación">📷 Crear tu web con KookyeCatGallery</a></h3>
@@ -31,8 +30,7 @@
   <a href="#instalación">Instalación</a> ·
   <a href="docs/subida-fotografias.md">Subir fotografías</a> ·
   <a href="docs/filtros-fotograficos.md">Editor y filtros</a> ·
-  <a href="CONTRIBUTING.md">Contribuir</a> ·
-  <a href="https://github.com/DavidJLlanes/KookyeCatGallery/issues">Incidencias</a>
+  <a href="CONTRIBUTING.md">Contribuir</a>
 </p>
 
 ---
@@ -167,7 +165,7 @@ Para las comprobaciones de interfaz se necesitan Playwright y Chromium. Consulta
 
 ## Contribuir y seguridad
 
-Lee la guía para [contribuir](CONTRIBUTING.md) y las instrucciones de [seguridad](SECURITY.md). Puedes abrir una [incidencia](https://github.com/DavidJLlanes/KookyeCatGallery/issues) para informar de errores o proponer mejoras.
+Lee la guía para [contribuir](CONTRIBUTING.md) y las instrucciones de [seguridad](SECURITY.md).
 
 ## Licencia
 

@@ -70,7 +70,7 @@ return [
     'text_e5d843682b4f2596' => ['group' => 'Inicio y galería · accesibilidad', 'default' => 'Visitar example.com, se abre en una pestaña nueva'],
     'text_7e6debbd1dab03b1' => ['group' => 'Inicio y galería', 'default' => 'example.com'],
     'text_aff4d19d6ee43b20' => ['group' => 'Inicio y galería', 'default' => 'Todas'],
-    'text_7d367bc92702d135' => ['group' => 'Inicio y galería', 'default' => 'Gatos, momentos y pequeños detalles'],
+    'text_7d367bc92702d135' => ['group' => 'Inicio y galería', 'default' => 'Fotografías, momentos y pequeños detalles'],
     'text_c15e876671f50d92' => ['group' => 'Inicio y galería', 'default' => 'Fotografías de'],
     'text_a9157ae01488ec67' => ['group' => 'Inicio y galería', 'default' => ' y sus miradas curiosas, juegos y aventuras cotidianas. Explora la colección y abre cualquier imagen para verla a pantalla completa.'],
     'text_5935e29992445803' => ['group' => 'Inicio y galería · accesibilidad', 'default' => 'Navegación de páginas'],

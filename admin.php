@@ -117,7 +117,7 @@ function safeUploadStem(string $title): string
     $transliterated = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $title);
     $stem = strtolower((string) ($transliterated !== false ? $transliterated : $title));
     $stem = trim(preg_replace('/[^a-z0-9]+/', '-', $stem) ?? '', '-');
-    if ($stem === '') $stem = 'cat-photo';
+    if ($stem === '') $stem = 'fotografia';
     return substr($stem, 0, 70);
 }
 
