@@ -43,6 +43,14 @@ function site_premium_gallery_definitions(): array
             'css' => 'assets/premium/deck/deck.css',
             'js' => 'assets/premium/deck/deck.js',
         ],
+        // Cover Flow comparte la interfaz de Baraja y solo sustituye la disposición visual de sus fotos.
+        'coverflow' => [
+            'label' => 'Cover Flow',
+            'description' => 'Pantalla completa. La foto activa queda de frente y las anteriores y siguientes se abren en abanico a ambos lados, giradas en perspectiva y con reflejo. En móvil solo se muestra una foto lateral por lado.',
+            'partial' => 'deck',
+            'css' => ['assets/premium/deck/deck.css', 'assets/premium/coverflow/coverflow.css'],
+            'js' => 'assets/premium/deck/deck.js',
+        ],
         'bubbles' => [
             'label' => 'Estilo Burbujas',
             'description' => 'Pantalla completa. Las fotos son círculos de distintos tamaños con un pequeño marco, repartidos al azar por toda '

@@ -8,6 +8,7 @@ return [
     'template_orbit_label' => ['group' => 'Plantillas · Órbita · rótulo superior', 'default' => '✦    ARCHIVO CELESTE    ✦'],
     'template_scrapbook_label' => ['group' => 'Plantillas · Álbum · etiqueta de postales', 'default' => '✿  postales desde Kookye'],
     'deck_label' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Galería de fotografías en baraja'],
+    'coverflow_label' => ['group' => 'Galería premium · Cover Flow', 'default' => 'Galería de fotografías en Cover Flow'],
     'drum_label' => ['group' => 'Galería premium · Estilo Tambor', 'default' => 'Galería de fotografías en tambor'],
     'cylinder_label' => ['group' => 'Galería premium · Estilo Cilindro', 'default' => 'Galería de fotografías en cilindro'],
     'polaroid_label' => ['group' => 'Galería premium · Estilo Polaroids', 'default' => 'Galería de fotografías en polaroids'],

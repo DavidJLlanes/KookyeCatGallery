@@ -88,8 +88,12 @@ check(str_contains(site_settings_form('t', $defaults, 'design'), 'value="' . htm
 
 // ── Galerías premium ──────────────────────────────────────────────────────────
 check($defaults['gallery_premium'] === 'none', 'No premium gallery by default.');
-check(isset(site_premium_gallery_choices()['none'], site_premium_gallery_choices()['deck'], site_premium_gallery_choices()['bubbles'], site_premium_gallery_choices()['squares'], site_premium_gallery_choices()['drum'], site_premium_gallery_choices()['cylinder'], site_premium_gallery_choices()['polaroid'], site_premium_gallery_choices()['swipe']), 'Premium choices must include none, deck, bubbles, squares, drum, cylinder, polaroid and swipe.');
+check(isset(site_premium_gallery_choices()['none'], site_premium_gallery_choices()['deck'], site_premium_gallery_choices()['bubbles'], site_premium_gallery_choices()['squares'], site_premium_gallery_choices()['drum'], site_premium_gallery_choices()['cylinder'], site_premium_gallery_choices()['polaroid'], site_premium_gallery_choices()['swipe'], site_premium_gallery_choices()['coverflow']), 'Premium choices must include none, deck, bubbles, squares, drum, cylinder, polaroid and swipe.');
 check(site_premium_gallery_active($defaults) === null, 'No premium gallery must be active by default.');
+$coverflow = array_replace($defaults, ['gallery_premium' => 'coverflow']);
+check(site_settings_validate($coverflow)['gallery_premium'] === 'coverflow', 'Cover Flow must be a valid premium gallery.');
+check(site_premium_gallery_active($coverflow) === 'coverflow', 'Cover Flow must be active when selected.');
+check(site_premium_ignored_settings('coverflow') === site_standard_gallery_settings(), 'Cover Flow must disable standard-only layout controls.');
 $deck = array_replace($defaults, ['gallery_premium' => 'deck']);
 check(site_settings_validate($deck)['gallery_premium'] === 'deck', 'The deck gallery was rejected.');
 check(site_premium_gallery_active($deck) === 'deck', 'The deck gallery must be active.');

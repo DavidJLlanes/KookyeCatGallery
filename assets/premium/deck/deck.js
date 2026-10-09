@@ -51,7 +51,9 @@
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const coarse = window.matchMedia('(hover: none) and (pointer: coarse)');   // Pantalla táctil sin ratón.
     // Disposiciones que dejan visibles las cartas pasadas: «Estilo Tambor» (3 a cada lado) y «Estilo Polaroids» (5, esparcidas).
-    const reach = { drum: 3, polaroid: 5 }[root.dataset.layout] || 0;
+    const getReach = () => root.dataset.layout === 'coverflow'
+        ? (window.matchMedia('(max-width: 700px)').matches ? 2 : 3)
+        : ({ drum: 3, polaroid: 5 }[root.dataset.layout] || 0);
 
     let visible = cards.slice();   // Cartas que pasan los filtros, en orden.
     let index = 0;                 // Posición de la carta activa dentro de `visible`.
@@ -153,6 +155,7 @@
 
     const render = () => {
         const total = visible.length;
+        const reach = getReach();
         visible.forEach((card, i) => {
             // Baraja: -2/-1 = ya pasadas (salen), 1..3 = mazo, 4 = oculta. Tambor y Polaroids: -reach..reach a ambos lados (los extremos = ocultas).
             const pos = reach ? clamp(i - index, -reach, reach) : clamp(i - index, -2, 4);
@@ -507,6 +510,7 @@
         window.clearTimeout(resizeTimer);
         resizeTimer = window.setTimeout(() => {
             fitCards();
+            render();
             // Fijada, la baraja se adapta sola al nuevo tamaño (el cuerpo es fijo y el alto es 100dvh). Solo si ya no queda en el borde
             // superior (el contenido de encima cambió de alto) se vuelve a fijar. Volver a fijar siempre provocaba, en iPhone, un bucle
             // de «soltar y fijar» con cada cambio de la barra del navegador.

@@ -29,14 +29,14 @@ $deckTotal = count($galleryItems);
 // «Estilo Baraja» (pila de cartas) y «Estilo Tambor» (cilindro 3D) comparten este marcado y la interfaz: la disposición sale de la
 // galería premium activa (data-layout) y la coloca el CSS.
 $deckActive = site_premium_gallery_active($siteSettings ?? null);
-$deckKey = in_array($deckActive, ['drum', 'polaroid'], true) ? $deckActive : 'deck';
+$deckKey = in_array($deckActive, ['drum', 'polaroid', 'coverflow'], true) ? $deckActive : 'deck';
 // Valores «aleatorios» pero estables de cada foto (0-1), para el desorden de las Polaroids.
 // Posición «oculta» de cada disposición (la que tienen las cartas lejanas): baraja 4, tambor 3, Polaroids 5. Si el marcado inicial pusiera
 // a todas en una posición visible (antes de que el JS ordene las cartas), se verían decenas de fotos a la vez y se cargarían todas.
-$deckHidden = ['deck' => 4, 'drum' => 3, 'polaroid' => 5][$deckKey];
+$deckHidden = ['deck' => 4, 'drum' => 3, 'polaroid' => 5, 'coverflow' => 3][$deckKey];
 $deckJitter = static fn(int $i, int $salt): float => fmod(abs(sin(($i + 1) * 12.9898 + $salt * 78.233) * 43758.5453), 1.0);
 ?>
-<!-- GALERÍA PREMIUM · ESTILO BARAJA -->
+<!-- GALERÍA PREMIUM · <?= safe(site_premium_gallery_definitions()[$deckActive]['label'] ?? 'Estilo Baraja') ?> -->
 <main id="galeria" class="gallery-section gallery-section--premium" data-premium-gallery="<?= $deckKey ?>">
     <section class="deck" id="deck" role="region" aria-roledescription="carrusel"
              aria-label="<?= site_text_html($deckKey === 'deck' ? 'deck_label' : $deckKey . '_label') ?>" data-layout="<?= $deckKey === 'deck' ? 'stack' : $deckKey ?>" data-total="<?= $deckTotal ?>" tabindex="0">

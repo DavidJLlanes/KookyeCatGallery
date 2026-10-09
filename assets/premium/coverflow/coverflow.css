@@ -1,0 +1,73 @@
+/* GALERÍA PREMIUM · COVER FLOW: disposición 3D para la interfaz compartida con Baraja. */
+.deck[data-layout="coverflow"] .deck__stage {
+    perspective: 1500px;
+    perspective-origin: 50% 46%;
+    --pad: 5.6rem;
+    --frame-h: calc(100cqh - var(--pad) * 2);
+    --frame-w: min(calc(100cqw * .52), calc(var(--frame-h) * 1.45));
+}
+.deck[data-layout="coverflow"] .deck__card {
+    height: min(var(--frame-h), calc(var(--frame-w) * .68));
+    translate: -50% -50%;
+    overflow: visible;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transform-origin: 50% 50%;
+    transition: transform var(--deck-duration) var(--deck-ease), opacity calc(var(--deck-duration) * .8) var(--deck-ease), filter var(--deck-duration) var(--deck-ease), visibility 0s linear var(--deck-duration);
+}
+.deck[data-layout="coverflow"] .deck__link,
+.deck[data-layout="coverflow"] .deck__picture { overflow: visible; }
+.deck[data-layout="coverflow"] .deck__picture {
+    -webkit-box-reflect: below 8px linear-gradient(transparent 18%, rgba(0, 0, 0, .28));
+}
+.deck[data-layout="coverflow"] .deck__img {
+    border-radius: var(--deck-radius);
+    box-shadow: 0 24px 54px rgba(0, 0, 0, .42);
+}
+/* Centro y dos pares laterales: la profundidad mantiene la foto activa al frente. */
+.deck[data-layout="coverflow"] .deck__card[data-pos="0"] {
+    transform: translate3d(0, 0, 100px) rotateY(0deg) scale(1);
+    opacity: 1; z-index: 70; visibility: visible; transition-delay: 0s, 0s, 0s, 0s;
+}
+.deck[data-layout="coverflow"] .deck__card[data-pos="1"],
+.deck[data-layout="coverflow"] .deck__card[data-pos="-1"] {
+    opacity: 1; z-index: 50; visibility: visible; transition-delay: 0s, 0s, 0s, 0s;
+}
+.deck[data-layout="coverflow"] .deck__card[data-pos="1"] {
+    transform: translate3d(calc(var(--frame-w) * .68), 0, -100px) rotateY(-60deg) scale(.88);
+    filter: brightness(.82);
+}
+.deck[data-layout="coverflow"] .deck__card[data-pos="-1"] {
+    transform: translate3d(calc(var(--frame-w) * -.68), 0, -100px) rotateY(60deg) scale(.88);
+    filter: brightness(.82);
+}
+.deck[data-layout="coverflow"] .deck__card[data-pos="2"],
+.deck[data-layout="coverflow"] .deck__card[data-pos="-2"] {
+    opacity: .86; z-index: 30; visibility: visible; transition-delay: 0s, 0s, 0s, 0s;
+}
+.deck[data-layout="coverflow"] .deck__card[data-pos="2"] {
+    transform: translate3d(calc(var(--frame-w) * .99), 0, -240px) rotateY(-68deg) scale(.76);
+    filter: brightness(.62);
+}
+.deck[data-layout="coverflow"] .deck__card[data-pos="-2"] {
+    transform: translate3d(calc(var(--frame-w) * -.99), 0, -240px) rotateY(68deg) scale(.76);
+    filter: brightness(.62);
+}
+/* La tercera posición es el límite oculto; no muestra ni carga más fotos lejanas. */
+.deck[data-layout="coverflow"] .deck__card[data-pos="3"],
+.deck[data-layout="coverflow"] .deck__card[data-pos="-3"] {
+    transform: translate3d(0, 0, -420px) scale(.52);
+    opacity: 0; z-index: 10; visibility: hidden; pointer-events: none;
+}
+@media (max-width: 700px) {
+    .deck[data-layout="coverflow"] .deck__stage { --frame-w: min(calc(100cqw * .68), calc(var(--frame-h) * 1.1)); }
+    /* En móvil solo queda una carta visible a cada lado de la activa. */
+    .deck[data-layout="coverflow"] .deck__card[data-pos="2"],
+    .deck[data-layout="coverflow"] .deck__card[data-pos="-2"] {
+        transform: translate3d(0, 0, -420px) scale(.52);
+        opacity: 0; z-index: 10; visibility: hidden; pointer-events: none;
+    }
+}
+@media (max-height: 520px) { .deck[data-layout="coverflow"] .deck__stage { --pad: 3.9rem; } }
+@media (prefers-reduced-motion: reduce) { .deck[data-layout="coverflow"] { --deck-duration: 1ms; } }
