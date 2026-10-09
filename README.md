@@ -46,7 +46,7 @@
 - **PWA instalable:** diseño adaptable, soporte básico sin conexión y generación de imágenes WebP.
 - **Mapa opcional:** desactivado inicialmente; actívalo si quieres mostrar las ubicaciones de tus fotografías.
 
-Guías: [textos y diseño](docs/textos-y-diseno.md) · [filtros fotográficos](docs/filtros-fotograficos.md) · [navegación entre fotos](docs/navegacion-fotografias.md) · [subida de fotografías](docs/subida-fotografias.md).
+Guías: [instalación en hosting](docs/instalacion.md) · [textos y diseño](docs/textos-y-diseno.md) · [filtros fotográficos](docs/filtros-fotograficos.md) · [navegación entre fotos](docs/navegacion-fotografias.md) · [subida de fotografías](docs/subida-fotografias.md).
 
 ## Plantillas y modos de presentación
 
