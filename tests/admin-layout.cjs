@@ -95,6 +95,36 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
           assert.deepEqual(templates,{initial:{reel:true,atlas:true,standard:false},reelShown:true,atlasShown:true,
             swipeShown:true,squaresShown:true,atlasEditable:true},'Template text fields must follow the selected designs');
         }
+        if(section==='design' && width===375) {
+          const gridAvailability=await page.evaluate(()=>{
+            const grid=document.querySelector('#setting-grid');
+            const mobile=document.querySelector('#setting-gallery_mobile');
+            const desktop=document.querySelector('#setting-gallery_desktop');
+            const premium=document.querySelector('#setting-gallery_premium');
+            const help=document.querySelector('[data-grid-help]');
+            const change=(select,value)=>{select.value=value;select.dispatchEvent(new Event('change',{bubbles:true}));};
+            const result={initialDisabled:grid.disabled,initialHelp:help.hidden};
+            change(mobile,'mosaic');
+            change(desktop,'asymmetric');
+            result.unusedDisabled=grid.disabled;
+            result.helpShown=!help.hidden;
+            change(mobile,'grid');
+            result.mobileUsesEnabled=!grid.disabled;
+            change(mobile,'mosaic');
+            change(desktop,'contact-sheet');
+            result.desktopUsesEnabled=!grid.disabled;
+            change(desktop,'triptych');
+            result.triptychEnabled=!grid.disabled;
+            change(desktop,'narrative');
+            result.unusedAgain=grid.disabled;
+            change(premium,'coverflow');
+            result.premiumDisabled=grid.disabled;
+            change(premium,'none');
+            result.restored=grid.disabled;
+            return result;
+          });
+          assert.deepEqual(gridAvailability,{initialDisabled:false,initialHelp:true,unusedDisabled:true,helpShown:true,mobileUsesEnabled:true,desktopUsesEnabled:true,triptychEnabled:true,unusedAgain:true,premiumDisabled:true,restored:true},'Grid proportions must only be editable when a selected standard layout uses them');
+        }
         if(section==='design') {
           // Reordering moves the DOM rows (which is what gets submitted) and disables the edge buttons.
           await page.click('.section-order__item[data-section-key="gallery"] [data-move="up"]');
