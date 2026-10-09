@@ -40,6 +40,8 @@ jobs:
         run: node tests/photo-presets.cjs
       - name: Comprobar la configuración del sitio
         run: php tests/site-settings.php
+      - name: Comprobar la configuración de IA
+        run: php tests/ai-text.php
       - name: Comprobar la navegación entre fotos
         run: php tests/photo-navigation.php
       - name: Instalar herramientas de prueba del navegador

@@ -10,6 +10,7 @@ require __DIR__ . '/inc/processor.php';
 require __DIR__ . '/inc/helpers.php';
 require_once __DIR__ . '/inc/site-settings.php';
 require __DIR__ . '/inc/sitemap.php';
+require __DIR__ . '/inc/ai-text.php';
 require __DIR__ . '/inc/photo-navigation.php';
 require __DIR__ . '/inc/page-blocks.php';
 
@@ -23,6 +24,12 @@ $siteSettings = site_settings_load();
 
 $processor = new ImageProcessor(__DIR__);
 $items     = $processor->processAll();
+
+$aiConfig = ai_text_config([], $siteName, $siteUrl);
+if ($aiConfig['ai_enabled']) {
+    $ai = new AiTextGenerator(__DIR__, $aiConfig);
+    $ai->processMissing($items, $aiConfig['ai_max_per_request']);
+}
 
 $items = enrich_with_sidecar($items);
 $items = array_values(array_filter($items, static fn(array $item): bool => empty($item['draft'])));

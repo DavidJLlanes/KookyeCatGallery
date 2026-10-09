@@ -36,6 +36,7 @@ session_start();
 require __DIR__ . '/inc/helpers.php';
 require_once __DIR__ . '/inc/site-settings.php';
 require __DIR__ . '/inc/processor.php';
+require __DIR__ . '/inc/ai-text.php';
 require __DIR__ . '/inc/admin-photos.php';
 require __DIR__ . '/inc/admin-shell.php';
 
@@ -463,6 +464,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         @chmod($editedTarget, 0644);
         @chmod($sidecar, 0644);
         unset($_SESSION['pending_upload']);
+
+        if ($description === '') {
+            $aiConfig = ai_text_config(
+                [],
+                site_text('text_52179dc42df7efe5'),
+                rtrim(getenv('GALLERY_PUBLIC_URL') ?: '', '/')
+            );
+            if ($aiConfig['ai_enabled']) {
+                $generator = new AiTextGenerator(__DIR__, $aiConfig);
+                $generator->processMissing([[
+                    'original' => $basename,
+                    'sidecar' => $sidecar,
+                    'filename_clean' => $title,
+                ]], 1);
+            }
+        }
 
         $publishedMeta = read_sidecar($sidecar);
         $publishedSlug = (string) ($publishedMeta['slug'] ?? '');
