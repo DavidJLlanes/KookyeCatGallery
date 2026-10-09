@@ -11,8 +11,9 @@
 <?php
 // Retrato opcional del fotógrafo: sube uno de estos por FTP a la raíz si lo deseas
 $portrait = null;
-$profilePath = site_media_url('profile_image');
-if (is_file($rootDir . $profilePath)) $portrait = ltrim($profilePath, '/');
+foreach (['retrato.webp', 'david.webp', 'david.jpg', 'retrato.jpg'] as $p) {
+    if (is_file($rootDir . '/' . $p)) { $portrait = $p; break; }
+}
 ?>
 <!-- SECCIÓN: EL PROYECTO -->
 <?php if ($siteSettings['show_project']): ?>

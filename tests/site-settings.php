@@ -15,7 +15,7 @@ function rejects(array $input): void
 }
 
 $defaults = site_settings_defaults();
-check(site_text_catalog()['social_threads_user']['default'] === '@kookyecatgallery', 'Threads display name must have a catalog default.');
+check(site_text_catalog()['social_threads_user']['default'] === '@davidjllanes', 'Threads display name must have a catalog default.');
 check(site_text('social_threads_user') !== '', 'Threads profile must not render an empty label.');
 $blankThreads = array_replace($defaults, ['texts' => ['social_threads_user' => '']]);
 check(site_settings_validate($blankThreads)['texts'] === [], 'A blank Threads user must use the default.');
@@ -150,7 +150,7 @@ $custom = array_replace($defaults, [
     'header_mobile' => 'compact', 'header_desktop' => 'editorial',
     'gallery_mobile' => 'category-rails', 'gallery_desktop' => 'mosaic',
     'show_categories' => false, 'show_map' => true, 'show_project' => false, 'show_social' => true,
-    'texts' => [$key => '<script>alert("test")</script> 日本語 Kookye'],
+    'texts' => [$key => '<script>alert("test")</script> 日本語 León'],
 ]);
 check(site_settings_validate($custom)['show_categories'] === false, 'Section visibility toggle did not persist.');
 check(site_settings_validate($custom)['gallery_desktop'] === 'mosaic', 'Desktop gallery template was not preserved.');

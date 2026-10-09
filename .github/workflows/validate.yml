@@ -1,4 +1,4 @@
-name: Validar sitio web
+name: Validate website
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - name: Validar PHP y JavaScript
+      - name: Validate PHP and JavaScript
         run: |
           set -eu
           find . -type f -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
@@ -28,7 +28,6 @@ jobs:
           node --check tests/photo-editor.cjs
           node --check assets/js/photo-manager.js
           node --check assets/js/main.js
-          node --check assets/js/admin-settings.js
           node --check assets/js/pwa.js
           node --check assets/js/admin-ui.js
           node --check assets/premium/deck/deck.js
@@ -36,81 +35,81 @@ jobs:
           node --check tests/photo-navigation.cjs
           node --check tests/photo-transition.cjs
           node --check tests/photo-likes.cjs
-      - name: Comprobar los filtros fotográficos
+      - name: Test photo presets
         run: node tests/photo-presets.cjs
-      - name: Comprobar la configuración del sitio
+      - name: Test site settings
         run: php tests/site-settings.php
-      - name: Comprobar la navegación entre fotos
+      - name: Test photo neighbors
         run: php tests/photo-navigation.php
-      - name: Instalar herramientas de prueba del navegador
+      - name: Install browser test tools
         run: |
           npm install --prefix /tmp/site-browser-tools --no-save playwright@1.58.2
           /tmp/site-browser-tools/node_modules/.bin/playwright install --with-deps chromium
-      - name: Comprobar el diseño adaptable
+      - name: Test responsive design
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/site-design.cjs
-      - name: Comprobar las cuadrículas y la paginación
+      - name: Test live gallery layouts and pagination
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/gallery-layout.cjs
-      - name: Comprobar la forma de la paginación
+      - name: Test pagination shape
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/pagination-shape.cjs
-      - name: Comprobar la presentación de fotos
+      - name: Test slideshow
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/slideshow.cjs
-      - name: Comprobar la galería premium Estilo Baraja
+      - name: Test premium deck gallery
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/premium-deck.cjs
-      - name: Probar la galería premium de burbujas
+      - name: Test premium bubbles gallery
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/premium-bubbles.cjs
-      - name: Probar la galería premium de cuadrados
+      - name: Test premium squares gallery
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/premium-squares.cjs
-      - name: Probar la galería premium de tambor
+      - name: Test premium drum gallery
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/premium-drum.cjs
-      - name: Probar la galería premium de cilindro
+      - name: Test premium cylinder gallery
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/premium-cylinder.cjs
-      - name: Probar la galería premium de polaroids
+      - name: Test premium polaroid gallery
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/premium-polaroid.cjs
-      - name: Probar la galería premium estilo Tinder
+      - name: Test premium swipe gallery
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/premium-swipe.cjs
-      - name: Comprobar la visibilidad de las categorías
+      - name: Test categories visibility
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/categories-visibility.cjs
-      - name: Comprobar el panel de administración
+      - name: Test rendered admin settings layout
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/admin-layout.cjs
-      - name: Comprobar la navegación de fotos
-        env:
-          NODE_PATH: /tmp/site-browser-tools/node_modules
-        run: node tests/photo-navigation.cjs
-      - name: Probar el cambio suave de foto
+      - name: Test smooth photo transition
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/photo-transition.cjs
-      - name: Comprobar los favoritos y corazones
+      - name: Test photo navigation
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/photo-navigation.cjs
+      - name: Test photo likes
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/photo-likes.cjs
-      - name: Comprobar el editor fotográfico
+      - name: Test photo editor
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/photo-editor.cjs

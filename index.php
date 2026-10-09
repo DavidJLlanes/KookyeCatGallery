@@ -10,19 +10,30 @@ require __DIR__ . '/inc/processor.php';
 require __DIR__ . '/inc/helpers.php';
 require_once __DIR__ . '/inc/site-settings.php';
 require __DIR__ . '/inc/sitemap.php';
+require __DIR__ . '/inc/ai-text.php';
 require __DIR__ . '/inc/photo-navigation.php';
 require __DIR__ . '/inc/page-blocks.php';
 
 $appVersion = app_version();
 
-$siteUrl  = rtrim(getenv('GALLERY_PUBLIC_URL') ?: 'https://example.com', '/');
+$siteUrl  = 'https://davidjimenezllanes.es';
 $siteName = site_text('text_52179dc42df7efe5');
 $author   = site_text('text_30170303c506cf6c');
 $siteSettings = site_settings_load();
 
+// Cargar configuración sensible desde fuera del document root.
+// En producción: /davidjimenezllanes.es/config.php
+$externalConfigPath = '/davidjimenezllanes.es/config.php';
+$config = is_file($externalConfigPath) ? require $externalConfigPath : [];
 
 $processor = new ImageProcessor(__DIR__);
 $items     = $processor->processAll();
+
+// Generar textos con IA (cascada de proveedores) para fotos sin sidecar .txt
+if (!empty($config['ai_enabled'])) {
+    $ai = new AiTextGenerator(__DIR__, $config);
+    $ai->processMissing($items, (int) ($config['ai_max_per_request'] ?? 5));
+}
 
 $items = enrich_with_sidecar($items);
 $items = array_values(array_filter($items, static fn(array $item): bool => empty($item['draft'])));
@@ -88,13 +99,36 @@ $heroItem = $featuredItems[0] ?? ($items[0] ?? null);
 
 // Detecta categorías automáticamente del título + descripción
 $categoryKeywords = [
-    'Gatos' => ['gato', 'gata', 'felino', 'cat'],
-    'Gatitos' => ['gatito', 'cachorro', 'kitten'],
-    'Retratos' => ['retrato', 'mirada', 'primer plano'],
-    'Juego' => ['juego', 'juguete', 'correr', 'saltar'],
-    'Descanso' => ['dormido', 'durmiendo', 'siesta', 'descanso'],
-    'Exterior' => ['jardín', 'parque', 'exterior', 'ventana'],
-    'Blanco y negro' => ['blanco y negro', 'monocromo'],
+    'Blanco y Negro' => ['blanco y negro', 'bn', 'monocromo'],
+    'Nocturna' => ['noche', 'nocturna', 'anocheciendo', 'atardecer', 'iluminad', 'luna', 'estrella'],
+    'Animales' => ['animal', 'pájaro', 'pajaro', 'ave', 'gato', 'perro', 'palomar'],
+    'Agua' => ['embalse', 'lago', 'rio', 'río', 'reflejo', 'agua', 'cascada'],
+    'Catedral' => ['catedral', 'obispo', 'colegiata', 'vidrieras', 'nave', 'techo', 'absice'],
+    'Arquitectura' => ['palacio', 'castillo', 'botines', 'gaudi', 'parador', 'iglesia', 'diputacion', 'san marcos'],
+    'Paisajes' => ['montaña', 'picos', 'europa', 'sajambre', 'arbas', 'mampodre', 'valle', 'sierra'],
+    'Naturaleza' => ['bosque', 'otoñal', 'cascada', 'pinos', 'árbol', 'flora', 'verde'],
+    'Calles' => ['calle', 'plaza', 'avenida', 'paseo', 'parque', 'rincón'],
+];
+
+$locationCoords = [
+    'catedral' => [40.6270, -5.5898],
+    'plaza mayor' => [40.6265, -5.5895],
+    'plaza santo domingo' => [40.6298, -5.5917],
+    'parque' => [40.6238, -5.5855],
+    'calle' => [40.6280, -5.5900],
+    'botines' => [40.6265, -5.5892],
+    'astorga' => [42.4549, -6.0635],
+    'parador' => [40.5947, -5.5727],
+    'picos' => [43.1994, -4.8664],
+    'sajambre' => [43.1850, -4.9200],
+    'arbas' => [42.8500, -5.6500],
+    'mampodre' => [43.0200, -5.1500],
+    'embalse' => [42.7500, -5.5000],
+    'porma' => [42.7080, -5.4450],
+    'villameca' => [42.8500, -5.5500],
+    'luna' => [42.8700, -5.3200],
+    'oteros' => [42.5900, -5.2700],
+    'caín' => [43.1600, -4.8500],
 ];
 
 foreach ($items as &$item) {
@@ -113,6 +147,17 @@ foreach ($items as &$item) {
         }
     }
 
+    // Si NO hay coordenadas manuales (en el .txt o nombre), detecta automáticamente
+    if (empty($item['latitude']) && empty($item['longitude'])) {
+        $item['latitude'] = 42.5985;
+        $item['longitude'] = -5.5672;
+        foreach ($locationCoords as $place => $coords) {
+            if (strpos($combined, strtolower($place)) !== false) {
+                [$item['latitude'], $item['longitude']] = $coords;
+                break;
+            }
+        }
+    }
 }
 unset($item);
 
@@ -123,7 +168,8 @@ sort($categories);
 $galleryItems = $heroItem ? $items : [];
 
 // Genera slug para fotos con título pero sin # Slug: en el .txt
-// Conserva los títulos editados manualmente.
+// Incluye: IA real (# auto-gemini/...) y editados a mano (sin marca # auto-)
+// Excluye solo el fallback de nombre de archivo (# auto-filename)
 foreach ($items as &$item) {
     if ($item['slug'] === '' && $item['title'] !== '' && !empty($item['sidecar']) && is_file($item['sidecar'])) {
         $raw = file_get_contents($item['sidecar']) ?: '';
@@ -156,12 +202,12 @@ if (preg_match('~^/foto/([a-z0-9-]+)~', $requestUri, $m)) {
 $photoNeighbors = $fotoItem !== null ? photo_neighbors($items, (string) $fotoItem['slug']) : ['previous' => null, 'next' => null];
 
 $isPhotoAdmin = false;
-if ($fotoItem !== null && !empty($_COOKIE['kookye_gallery_admin']) && is_string($_COOKIE['kookye_gallery_admin'])) {
+if ($fotoItem !== null && !empty($_COOKIE['djl_upload_session']) && is_string($_COOKIE['djl_upload_session'])) {
     ini_set('session.use_strict_mode', '1');
     ini_set('session.cookie_httponly', '1');
     ini_set('session.cookie_secure', '1');
     ini_set('session.cookie_samesite', 'Strict');
-    session_name('kookye_gallery_admin');
+    session_name('djl_upload_session');
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',
@@ -185,17 +231,13 @@ $pageTitle    = site_text('text_1a0ef9e63d20942b');
 $pageDesc     = str_replace('{count}', (string) $totalFotos, site_text('text_506b817f8bd1888e'));
 $pageKeywords = str_replace('{count}', (string) $totalFotos, site_text('text_570bd4204e3d077b'));
 $pageCanonical = $siteUrl . '/';
-$pageOgImage   = $siteUrl . '/assets/img/kookyecatgallery-photographers-cover.png';
-$pageOgWidth   = 1730;
-$pageOgHeight  = 909;
+$pageOgImage   = $heroItem ? $siteUrl . photo_asset_url($heroItem['desktop'], __DIR__) : '';
 
 if ($fotoItem !== null) {
     $pageTitle    = safe($fotoItem['title']) . site_text('text_0ad82954c86eec7c');
     $pageDesc     = $fotoItem['description'] ?: $fotoItem['title'] . site_text('text_5f894de21770ce4f') . $author;
     $pageCanonical = $siteUrl . '/foto/' . $fotoItem['slug'];
     $pageOgImage   = $siteUrl . photo_asset_url($fotoItem['desktop'], __DIR__);
-    $pageOgWidth   = (int) ($fotoItem['desktop_w'] ?? 1200);
-    $pageOgHeight  = (int) ($fotoItem['desktop_h'] ?? 630);
 }
 ?>
 <!DOCTYPE html>
@@ -218,6 +260,12 @@ if ($fotoItem !== null) {
     <link rel="canonical" href="<?= safe($pageCanonical) ?>">
     <meta name="robots" content="index, follow, max-image-preview:large">
 
+    <!-- Geo tags para León, España -->
+    <meta name="geo.region" content="ES-LE">
+    <meta name="geo.placename" content="León, España">
+    <meta name="geo.position" content="42.5987;-5.5671">
+    <meta name="ICBM" content="42.5987, -5.5671">
+
     <!-- Open Graph -->
     <meta property="og:type" content="<?= $fotoItem ? 'article' : 'website' ?>">
     <meta property="og:locale" content="es_ES">
@@ -227,9 +275,8 @@ if ($fotoItem !== null) {
     <meta property="og:url" content="<?= safe($pageCanonical) ?>">
     <?php if ($pageOgImage): ?>
     <meta property="og:image" content="<?= safe($pageOgImage) ?>">
-    <meta property="og:image:width" content="<?= $pageOgWidth ?>">
-    <meta property="og:image:height" content="<?= $pageOgHeight ?>">
-    <meta property="og:image:alt" content="<?= $fotoItem ? safe($fotoItem['title']) : 'KookyeCatGallery — portfolio web para fotógrafos' ?>">
+    <meta property="og:image:alt" content="<?= $fotoItem ? safe($fotoItem['title']) : site_text('text_c7ea52a379d46ca5') . safe($author) ?>">
+    <meta property="og:image:width" content="1600">
     <?php endif; ?>
 
     <!-- Twitter / X Card -->
@@ -241,9 +288,9 @@ if ($fotoItem !== null) {
     <?php endif; ?>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.svg">
-    <link rel="icon" type="image/webp" sizes="192x192" href="/favicon.svg">
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png">
+    <link rel="icon" type="image/webp" sizes="192x192" href="/assets/icons/pwa-icon-192.webp">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -285,12 +332,27 @@ if ($fotoItem !== null) {
             '@type' => 'ImageGallery',
             '@id'   => $siteUrl . '/#gallery',
             'name'  => $siteName,
-            'description' => 'Galería fotográfica y portfolio de autor.',
+            'description' => 'Colección de fotografías de León: Catedral de León, monumentos, paisajes y rincones de la ciudad y provincia.',
             'url'   => $siteUrl . '/',
             'inLanguage' => 'es-ES',
             'isPartOf' => ['@id' => $siteUrl . '/#website'],
             'creator' => ['@id' => $siteUrl . '/#person'],
             'numberOfItems' => $totalFotos,
+            'contentLocation' => [
+                '@type' => 'Place',
+                'name'  => 'León, España',
+                'address' => [
+                    '@type' => 'PostalAddress',
+                    'addressLocality' => 'León',
+                    'addressRegion' => 'Castilla y León',
+                    'addressCountry' => 'ES',
+                ],
+                'geo' => [
+                    '@type' => 'GeoCoordinates',
+                    'latitude' => 42.5987,
+                    'longitude' => -5.5671,
+                ],
+            ],
             'associatedMedia' => array_map(function($item) use ($siteUrl, $author) {
                 return [
                     '@type' => 'ImageObject',
@@ -301,6 +363,7 @@ if ($fotoItem !== null) {
                     'creator' => ['@id' => $siteUrl . '/#person'],
                     'copyrightHolder' => ['@id' => $siteUrl . '/#person'],
                     'datePublished' => isset($item['mtime']) ? date('c', $item['mtime']) : null,
+                    'contentLocation' => 'León, España',
                 ];
             }, array_slice($galleryItems, 0, 50)),
         ];
@@ -324,6 +387,15 @@ if ($fotoItem !== null) {
             'width'  => !empty($fotoItem['desktop_w']) ? (int) $fotoItem['desktop_w'] : null,
             'height' => !empty($fotoItem['desktop_h']) ? (int) $fotoItem['desktop_h'] : null,
             'isPartOf' => ['@id' => $siteUrl . '/#gallery'],
+            'contentLocation' => [
+                '@type' => 'Place',
+                'name'  => 'León, España',
+                'geo'   => [
+                    '@type' => 'GeoCoordinates',
+                    'latitude'  => (float) $fotoItem['latitude'],
+                    'longitude' => (float) $fotoItem['longitude'],
+                ],
+            ],
         ];
         $schemaGraph[] = [
             '@type' => 'BreadcrumbList',

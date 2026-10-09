@@ -2,8 +2,8 @@
 
 // GitHub Actions sustituye este marcador por el SHA exacto de cada despliegue.
 const BUILD_VERSION = '__BUILD_VERSION__';
-const CACHE_NAME = 'kookye-cat-gallery-static-' + BUILD_VERSION;
-const RUNTIME_CACHE = 'kookye-cat-gallery-runtime-' + BUILD_VERSION;
+const CACHE_NAME = 'fotos-leon-static-' + BUILD_VERSION;
+const RUNTIME_CACHE = 'fotos-leon-runtime-' + BUILD_VERSION;
 const OFFLINE_URL = '/offline.html';
 const PUBLIC_STATIC = [
     '/assets/css/style.css',
@@ -13,13 +13,13 @@ const PUBLIC_STATIC = [
     '/assets/js/photo-filter-engine.js',
     '/assets/js/photo-editor-presets.js',
     '/assets/css/photo-editor.css',
-    '/favicon.svg',
-    '/favicon.svg',
-    '/favicon.svg',
-    '/favicon.svg',
-    '/favicon.svg',
-    '/favicon.svg',
-    '/favicon.svg',
+    '/assets/icons/favicon-32.png',
+    '/assets/icons/apple-touch-icon.png',
+    '/assets/icons/pwa-icon-192.webp',
+    '/assets/icons/pwa-icon-512.webp',
+    '/assets/icons/pwa-icon-maskable-192.webp',
+    '/assets/icons/pwa-icon-maskable-512.webp',
+    '/assets/icons/pwa-icon-monochrome-512.png',
     '/manifest.json',
     OFFLINE_URL
 ];
@@ -32,8 +32,8 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys()
-            .then((keys) => Promise.all(keys.filter((key) => (key.startsWith('kookye-cat-gallery-static-') && key !== CACHE_NAME)
-                || (key.startsWith('kookye-cat-gallery-runtime-') && key !== RUNTIME_CACHE)).map((key) => caches.delete(key))))
+            .then((keys) => Promise.all(keys.filter((key) => (key.startsWith('fotos-leon-static-') && key !== CACHE_NAME)
+                || (key.startsWith('fotos-leon-runtime-') && key !== RUNTIME_CACHE)).map((key) => caches.delete(key))))
             .then(() => self.clients.claim())
     );
 });
@@ -61,7 +61,7 @@ self.addEventListener('fetch', (event) => {
     }
 
     const isPhoto = /\.(?:jpe?g|png|webp|avif)$/i.test(url.pathname)
-        && url.pathname !== '/favicon.svg';
+        && !url.pathname.startsWith('/assets/icons/');
     if (isPhoto) {
         event.respondWith((async () => {
             const cache = await caches.open(RUNTIME_CACHE);

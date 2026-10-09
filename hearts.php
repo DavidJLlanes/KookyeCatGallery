@@ -6,9 +6,8 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');
 
-$privateDir = getenv('GALLERY_PRIVATE_DIR') ?: __DIR__ . '/var';
-define('HEARTS_FILE', rtrim($privateDir, '/\\') . '/hearts.json');
-const HEARTS_COOKIE = 'kookye_gallery_hearts';
+const HEARTS_FILE = '/davidjimenezllanes.es/hearts/counts.json';
+const HEARTS_COOKIE = 'djl_hearts_v1';
 
 function hearts_reply(int $status, array $payload): never
 {

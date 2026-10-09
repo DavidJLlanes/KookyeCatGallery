@@ -1,6 +1,6 @@
 {
-  "name": "Kookye Cat Gallery",
-  "short_name": "Kookye Gallery",
+  "name": "Fotos de León · David Jiménez Llanes",
+  "short_name": "Fotos de León",
   "id": "/",
   "start_url": "/?source=pwa",
   "scope": "/",
@@ -11,14 +11,38 @@
   ],
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
-  "description": "A responsive photography portfolio with an easy photo upload and private management panel.",
-  "lang": "en",
+  "description": "Fotografías de León y acceso privado para gestionar la galería.",
+  "lang": "es-ES",
   "icons": [
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "/assets/icons/pwa-icon-192.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/pwa-icon-512.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/pwa-icon-maskable-192.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/icons/pwa-icon-maskable-512.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/icons/pwa-icon-monochrome-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "monochrome"
     }
   ],
   "categories": [
@@ -29,28 +53,28 @@
   "prefer_related_applications": false,
   "shortcuts": [
     {
-      "name": "Gallery",
-      "short_name": "Gallery",
-      "description": "Browse the photo gallery",
+      "name": "Galería",
+      "short_name": "Galería",
+      "description": "Abrir la galería de fotografías",
       "url": "/#galeria",
       "icons": [
         {
-          "src": "/favicon.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
+          "src": "/assets/icons/pwa-icon-192.webp",
+          "sizes": "192x192",
+          "type": "image/webp"
         }
       ]
     },
     {
-      "name": "Manage photos",
-      "short_name": "Manage",
-      "description": "Upload and manage photos",
+      "name": "Administrar fotos",
+      "short_name": "Administrar",
+      "description": "Subir y gestionar fotografías",
       "url": "/admin.php",
       "icons": [
         {
-          "src": "/favicon.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
+          "src": "/assets/icons/pwa-icon-192.webp",
+          "sizes": "192x192",
+          "type": "image/webp"
         }
       ]
     }

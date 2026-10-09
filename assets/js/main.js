@@ -1,5 +1,5 @@
 /* =========================================================
-   Kookye Cat Gallery — Kookye Cat Gallery
+   Fotos de León — David Jiménez Llanes
    Preloader · scroll suave · parallax · FLIP lightbox ·
    tilt 3D · blur-up · reveal · cursor · barra de scroll
    ========================================================= */
@@ -332,7 +332,7 @@
     const updateShare = (container, url, title) => {
         if (!container) return;
         const u = encodeURIComponent(url);
-        const t = encodeURIComponent((title || window.siteText("Fotografía de gatos")) + window.siteText(" · Kookye Cat Gallery"));
+        const t = encodeURIComponent((title || window.siteText("Fotografía de León")) + window.siteText(" · Fotos de León"));
         const map = {
             wa: `https://wa.me/?text=${t}%20${u}`,
             x:  `https://twitter.com/intent/tweet?text=${t}&url=${u}`,
@@ -711,7 +711,6 @@
         let animating = false;
         let openedFromMap = false;
         let returningToPhoto = false;
-        let navigationToken = 0;
 
         const fitRect = (natW, natH, area) => {
             const ar = (natW && natH) ? natW / natH : 1.5;
@@ -855,7 +854,7 @@
 
             onFlyerEnd(() => {
                 imgEl.src = full;
-                imgEl.alt = card.dataset.title || window.siteText("Fotografía de gatos");
+                imgEl.alt = card.dataset.title || window.siteText("Fotografía de León");
                 const reveal = () => {
                     requestAnimationFrame(() => imgEl.classList.add('is-shown'));
                     setTimeout(() => flyer.classList.remove('is-active'), 60);
@@ -873,7 +872,7 @@
             const pre = new Image();
             pre.onload = () => {
                 imgEl.src = full;
-                imgEl.alt = card.dataset.title || window.siteText("Fotografía de gatos");
+                imgEl.alt = card.dataset.title || window.siteText("Fotografía de León");
                 requestAnimationFrame(() => imgEl.classList.add('is-shown'));
             };
             pre.src = full;
@@ -963,7 +962,7 @@
             else if (location.pathname.startsWith('/foto/')) history.replaceState(null, '', '/');
             document.dispatchEvent(new CustomEvent('photo:changed', { detail: { slug } }));
             // Deslizamiento continuo entre las dos fotos (sin pasar por el fondo): ver slideImage.
-            slideImage(imgEl, card.dataset.full, card.dataset.title || window.siteText("Fotografía de gatos"), dir);
+            slideImage(imgEl, card.dataset.full, card.dataset.title || window.siteText("Fotografía de León"), dir);
             preloadNeighbors();
         };
 
@@ -1848,9 +1847,8 @@
         if (Object.keys(locations).length === 0) return; // Sin ubicaciones válidas
 
         try {
-            // Crea el mapa centrado en la primera foto con coordenadas
-            const firstLocation = Object.values(locations)[0];
-            photoMap = L.map(mapEl).setView([firstLocation.lat, firstLocation.lng], 9);
+            // Crea mapa centrado en León
+            photoMap = L.map(mapEl).setView([42.5985, -5.5672], 9);
 
             // Tile layer oscuro
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

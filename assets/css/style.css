@@ -1,5 +1,5 @@
 /* =========================================================
-   Kookye Cat Gallery — Kookye Cat Gallery
+   Fotos de León — David Jiménez Llanes
    Diseño masonry oscuro cinematográfico
    ========================================================= */
 
@@ -234,7 +234,7 @@ button {
     z-index: 2;
 }
 
-/* Escudo de Kookye: emblema heráldico que corona el hero */
+/* Escudo de León: emblema heráldico que corona el hero */
 .hero__crest {
     display: block;
     width: clamp(62px, 9.5vw, 116px);
@@ -2587,15 +2587,27 @@ html.js .project__link[data-reveal]   { transition-delay: 0.24s; }
 .contact__logo {
     width: 26px;
     height: 26px;
-    display: grid;
-    place-items: center;
-    color: var(--accent);
-    font: 700 0.62rem/1 var(--sans);
-    transition: color 0.4s var(--ease-out);
+    background-color: var(--accent);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    transition: background-color 0.4s var(--ease-out);
 }
-.contact__logo--ig::before { content: "IG"; }
-.contact__logo--threads::before { content: "@"; }
-.contact__link:hover .contact__logo { color: var(--fg); }
+.contact__logo--ig {
+    -webkit-mask-image: url(/instagram.png);
+    mask-image: url(/instagram.png);
+}
+.contact__logo--threads {
+    -webkit-mask-image: url(/threads.png);
+    mask-image: url(/threads.png);
+}
+/* Al pasar el ratón, el círculo se vuelve dorado y el logo oscuro */
+.contact__link:hover .contact__logo {
+    background-color: var(--bg);
+}
 .contact__net {
     font-family: var(--sans);
     font-size: 0.68rem;
@@ -2618,7 +2630,7 @@ html.js .project__link[data-reveal]   { transition-delay: 0.24s; }
 }
 
 
-/* Cabecera de perfil y galería móvil: lenguaje visual editorial de Kookye Cat Gallery */
+/* Cabecera de perfil y galería móvil: lenguaje visual editorial de Fotos de León */
 .mobile-profile { display: none; }
 .map-section { padding: 4rem 5vw 4.5rem; background: linear-gradient(180deg, var(--bg), #11100e); border-top: 1px solid var(--line); }
 .map-section__head { max-width: 1200px; margin: 0 auto 1.25rem; }

@@ -29,6 +29,6 @@
         <strong class="mobile-profile__name"><?= site_text_html('text_4577bab0d9627af1') ?> <span class="mobile-profile__verified" role="img" aria-label="<?= site_text_html('text_6ba397681d3ee9c1') ?>" title="<?= site_text_html('text_30170303c506cf6c') ?>">✓</span></strong>
         <p><?= site_text_html('text_2e2b80d871481edc') ?></p>
         <p><?= site_text_html('text_54b7645201863e32') ?></p>
-        <a class="mobile-profile__website" href="https://example.com" target="_blank" rel="noopener noreferrer" aria-label="<?= site_text_html('text_e5d843682b4f2596') ?>"><?= site_text_html('text_7e6debbd1dab03b1') ?></a>
+        <a class="mobile-profile__website" href="https://djl.com.es" target="_blank" rel="noopener noreferrer" aria-label="<?= site_text_html('text_e5d843682b4f2596') ?>"><?= site_text_html('text_7e6debbd1dab03b1') ?></a>
     </div>
 </section>

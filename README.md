@@ -1,91 +1,16 @@
-<p align="center">
-  <img src="assets/img/kookyecatgallery-photographers-cover.png" alt="KookyeCatGallery — Tu fotografía. Tu web. Plantillas y galerías para fotógrafos." width="100%">
-</p>
+# Fotos de León
 
-<h1 align="center">KookyeCatGallery</h1>
+Galería fotográfica y portfolio de autor, autoalojada en PHP y JavaScript (sin framework ni proceso de compilación). Las fotos se suben desde un panel privado y la web se personaliza desde el navegador.
 
-<p align="center">
-  <strong>Tu fotografía. Tu web.</strong><br>
-  Una galería autoalojada para fotógrafos que quieren crear su web,<br>
-  subir imágenes fácilmente y elegir cómo presentar su trabajo.<br>
-  Personaliza tu portfolio y gestiona tus fotografías desde el navegador.
-</p>
+## Qué incluye
 
-<p align="center">
-  <a href="LICENSE"><img alt="Licencia PolyForm Noncommercial 1.0.0" src="https://img.shields.io/badge/LICENCIA-PolyForm_Noncommercial-d4a574?style=for-the-badge"></a>
-  <a href="manifest.json"><img alt="PWA instalable" src="https://img.shields.io/badge/PWA-INSTALABLE-6366f1?style=for-the-badge&logo=pwa&logoColor=white"></a>
-  <a href="#plantillas-y-modos-de-presentación"><img alt="10 modos de galería" src="https://img.shields.io/badge/GALERÍA-10_MODOS-52796f?style=for-the-badge"></a>
-</p>
+- **Panel de administración** (`/admin.php`): subir y editar fotos con editor integrado, gestionar fotos y categorías, perfil, diseño y textos de las páginas.
+- **Diseño configurable:** título de la web, 7 paletas, cabeceras de móvil y de escritorio (ocultables), 10 modos de galería estándar, columnas, fotos visibles a la vez, paginación circular o cuadrada y 10 efectos hover.
+- **Bloques de la portada ordenables:** categorías, galería, mapa, «El proyecto» y enlaces sociales. Ver [docs/estructura-de-bloques.md](docs/estructura-de-bloques.md).
+- **Galerías premium:** diseños completos que sustituyen a la galería estándar. Ver más abajo.
+- PWA instalable, favoritos, corazones, presentación de fotos y mapa de ubicaciones.
 
-<p align="center">
-  <a href="#requisitos"><img alt="PHP 8.1 o posterior" src="https://img.shields.io/badge/PHP-8.1%2B-777bb4?logo=php&logoColor=white"></a>
-  <a href="#tecnología"><img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-f7df1e?logo=javascript&logoColor=black"></a>
-  <a href="#tecnología"><img alt="Sin compilación" src="https://img.shields.io/badge/build-sin_compilación-52796f"></a>
-  <a href="https://github.com/DavidJLlanes/KookyeCatGallery/actions/workflows/validate.yml"><img alt="Validación automática" src="https://github.com/DavidJLlanes/KookyeCatGallery/actions/workflows/validate.yml/badge.svg?branch=main"></a>
-</p>
-
-<h3 align="center"><a href="#instalación">📷 Crear tu web con KookyeCatGallery</a></h3>
-
-<p align="center">
-  <a href="#plantillas-y-modos-de-presentación">Plantillas y presentación</a> ·
-  <a href="#instalación">Instalación</a> ·
-  <a href="docs/subida-fotografias.md">Subir fotografías</a> ·
-  <a href="docs/filtros-fotograficos.md">Editor y filtros</a> ·
-  <a href="CONTRIBUTING.md">Contribuir</a> ·
-  <a href="https://github.com/DavidJLlanes/KookyeCatGallery/issues">Incidencias</a>
-</p>
-
----
-
-## Características
-
-- **Tu portfolio en tu servidor:** presenta paisajes, retratos, arquitectura, fotografía de calle o cualquier otra especialidad con tu identidad y tus textos.
-- **Subida desde el navegador:** incorpora imágenes desde el panel de administración y organiza categorías, títulos, metadatos, borradores, orden y favoritos.
-- **Diseño configurable:** combina cabeceras, paletas y modos de galería, con ajustes independientes para móvil y escritorio.
-- **Editor integrado:** aplica filtros y ajustes fotográficos desde el navegador antes de publicar.
-- **Visor de fotografías:** navegación táctil, fotografía completa y modo de pantalla completa.
-- **Personalización del sitio:** edita perfil, logo, enlaces sociales, textos, proyecto y páginas legales desde el panel.
-- **PWA instalable:** diseño adaptable, soporte básico sin conexión y generación de imágenes WebP.
-- **Mapa opcional:** desactivado inicialmente; actívalo si quieres mostrar las ubicaciones de tus fotografías.
-
-Guías: [textos y diseño](docs/textos-y-diseno.md) · [filtros fotográficos](docs/filtros-fotograficos.md) · [navegación entre fotos](docs/navegacion-fotografias.md) · [subida de fotografías](docs/subida-fotografias.md).
-
-## Plantillas y modos de presentación
-
-Desde **Textos y diseño** puedes combinar las opciones del sitio sin editar código. La cabecera, el modo de galería y el número de columnas se eligen por separado para móvil y escritorio.
-
-### Cabeceras para dar personalidad a tu web
-
-| Móvil · 9 diseños | Escritorio · 9 diseños |
-| --- | --- |
-| Perfil social | Tipográfica |
-| Retrato centrado | Retrato centrado |
-| Compacta | Compacta |
-| Editorial | Editorial |
-| Cine · tira de película | Museo · galería blanca |
-| Atlas · cuaderno cartográfico | Observatorio · constelación 3D |
-| Estudio · retícula suiza | Periódico · portada de autor |
-| Órbita · cielo 3D | Noir · estreno de cine |
-| Álbum · recortes y postales | Plano · archivo técnico |
-
-### Diez formas de mostrar tus fotografías
-
-Todos los modos están disponibles tanto en móvil como en escritorio.
-
-| Modo | Presentación |
-| --- | --- |
-| **Masonry** | Columnas con alturas naturales que conservan las proporciones de cada fotografía. |
-| **Cuadrícula** | Miniaturas uniformes con proporción cuadrada, horizontal 4:3 o vertical 3:4. |
-| **Mosaico cromático** | Filas ajustadas que mantienen las proporciones originales y comparten sus bordes. |
-| **Editorial asimétrica** | Filas de distinta densidad para una composición editorial. |
-| **Filas por categoría** | Fotografías agrupadas en tiras por categoría. |
-| **Álbum desordenado** | Composición de imágenes cuadradas de distintos tamaños, con una ligera inclinación. |
-| **Sala de exposición** | Fotografías grandes y centradas, con espacio entre ellas. |
-| **Hoja de contactos** | Una vista compacta para recorrer una colección de imágenes. |
-| **Secuencia narrativa** | Una imagen protagonista seguida de una secuencia de fotografías. |
-| **Trípticos** | Composiciones de tres imágenes: una grande junto a dos más pequeñas. |
-
-### Galerías premium
+## Galerías premium
 
 Diseños completos que **sustituyen** a la galería estándar. Se eligen en **Textos y diseño → Diseño → Galería premium**; al activar una se ignoran (y se desactivan en el panel) los ajustes de la galería estándar que ella no use: el tipo de cuadrícula, las galerías de móvil y de escritorio, la forma de la paginación, las columnas y, salvo en «Estilo Burbujas» y «Estilo Cuadrados», las fotos visibles a la vez. Se integran con la paleta de colores y con las cabeceras.
 
@@ -101,74 +26,23 @@ Diseños completos que **sustituyen** a la galería estándar. Se eligen en **Te
 
 Todos los detalles (comportamiento, ajustes de la animación, arquitectura y cómo crear una galería premium nueva) están en [docs/galerias-premium.md](docs/galerias-premium.md).
 
-### Color, proporciones y efectos
+## Estructura del código
 
-- **7 paletas:** Elegante, Noche, Luz, Cyberpunk, Japón, Bosque y Océano.
-- **5 opciones de proporción:** adaptativa, masonry, cuadrada, horizontal 4:3 y vertical 3:4. La cuadrícula usa las proporciones fijas; masonry conserva las originales. El visor abre la fotografía completa.
-- **Columnas:** de 1 a 4 en móvil y de 1 a 10 en escritorio, respetando la composición de cada modo.
-- **10 efectos:** Suave, Acercamiento, Elevación, Revelado, Virado de color, Marco luminoso, Desplazamiento, Perspectiva, Enfoque y Destello.
+| Ruta | Contenido |
+| --- | --- |
+| `index.php` | Portada y páginas de foto: calcula los datos y pinta los bloques. |
+| `inc/blocks/` | Un archivo por bloque de la portada (cabeceras, categorías, galería, mapa, proyecto, social). |
+| `inc/premium/`, `assets/premium/` | Galerías premium (marcado, estilos y comportamiento). |
+| `inc/site-settings.php`, `inc/site-settings-form.php` | Ajustes del sitio, validación y formularios del panel. |
+| `inc/admin-shell.php`, `admin.php` | Armazón del panel y sus acciones. |
+| `docs/` | Documentación: [textos y diseño](docs/textos-y-diseno.md), [bloques](docs/estructura-de-bloques.md), [galerías premium](docs/galerias-premium.md) y [subida de fotografías](docs/subida-fotografias.md). |
 
-Las opciones documentadas corresponden al catálogo de [diseños del sitio](inc/site-settings.php) y al motor de [composición de galerías](assets/js/gallery-layout.js).
-
-## Tecnología
-
-PHP 8.1+, JavaScript, HTML y CSS. No necesita framework ni proceso de compilación. La galería se ejecuta en tu propio servidor; las fotografías y la configuración pertenecen a tu instalación y no forman parte de este repositorio.
-
-## Requisitos
-
-- PHP 8.1 o posterior con las extensiones GD y Fileinfo.
-- Apache con `.htaccess` habilitado para aplicar las reglas que protegen archivos y directorios privados.
-- Node.js y Playwright solo para ejecutar todas las comprobaciones de interfaz.
-
-## Instalación
-
-1. Descarga este repositorio en la raíz pública de tu servidor web.
-2. Asegúrate de que PHP puede escribir en `img/` para guardar fotografías y versiones procesadas.
-3. Configura `GALLERY_PUBLIC_URL` con la URL pública de la galería.
-4. Define `GALLERY_PRIVATE_DIR` para guardar los datos privados fuera de la raíz pública (consulta la sección siguiente).
-5. Abre `/admin.php`, configura el acceso de administración y personaliza los textos. No hay una contraseña predeterminada.
-6. Sube tus fotografías y revisa sus títulos, categorías y metadatos antes de publicar.
-
-Las páginas legales son plantillas: complétalas con información correcta para tu instalación antes de hacerlas públicas.
-
-Para una prueba local:
+## Comprobaciones
 
 ```sh
-php -S 127.0.0.1:8000
-```
-
-Abre `http://127.0.0.1:8000`. El servidor PHP integrado es solo para desarrollo; no aplica las reglas de `.htaccess`.
-
-## Configuración privada
-
-Guarda los archivos de configuración **fuera de la raíz pública del sitio web**. Crea un directorio que PHP pueda leer y escribir, y configura `GALLERY_PRIVATE_DIR` para que apunte a él. Por ejemplo, si la raíz pública es `/srv/www/galeria/public`, puedes guardar los datos privados en `/srv/www/galeria/privado`.
-
-En ese directorio la aplicación crea `site-settings.json`, `upload-auth.php` y `hearts.json`. No subas estos archivos a GitHub ni los coloques en una carpeta que el servidor pueda servir públicamente.
-
-Como alternativa, la aplicación puede usar `var/` dentro del proyecto. El `.htaccess` incluido bloquea el acceso web directo a esa carpeta; aun así, se recomienda configurar un directorio privado fuera de la raíz pública.
-
-No guardes credenciales, claves API, datos de acceso ni fotos privadas en el repositorio. Las imágenes pueden contener coordenadas GPS u otros datos EXIF: revísalas antes de subirlas. El mapa está desactivado inicialmente.
-
-## Desarrollo y comprobaciones
-
-GitHub Actions valida PHP y JavaScript y comprueba filtros, diseño adaptable, cuadrículas, administración, navegación, favoritos y editor fotográfico.
-
-Comprobaciones básicas locales:
-
-```sh
-node tests/photo-presets.cjs
 php tests/site-settings.php
 php tests/photo-navigation.php
+node tests/photo-presets.cjs
 ```
 
-Con Playwright y Chromium: `node tests/premium-deck.cjs` (galería premium Estilo Baraja), `node tests/admin-layout.cjs` (panel), `node tests/gallery-layout.cjs` (galerías estándar) y el resto de `tests/*.cjs`.
-
-Para las comprobaciones de interfaz se necesitan Playwright y Chromium. Consulta el flujo de [validación automática](.github/workflows/validate.yml).
-
-## Contribuir y seguridad
-
-Lee la guía para [contribuir](CONTRIBUTING.md) y las instrucciones de [seguridad](SECURITY.md). Puedes abrir una [incidencia](https://github.com/DavidJLlanes/KookyeCatGallery/issues) para informar de errores o proponer mejoras.
-
-## Licencia
-
-El proyecto se distribuye bajo la **[PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0)**. El texto oficial completo está en [LICENSE](LICENSE). Esta licencia oficial para software establece los usos no comerciales permitidos; consulta sus términos completos antes de reutilizar o redistribuir el proyecto.
+Con Playwright y Chromium: `node tests/premium-deck.cjs`, `node tests/premium-bubbles.cjs`, `node tests/premium-squares.cjs`, `node tests/premium-drum.cjs`, `node tests/premium-cylinder.cjs`, `node tests/premium-polaroid.cjs`, `node tests/premium-swipe.cjs`, `node tests/admin-layout.cjs`, `node tests/gallery-layout.cjs` y el resto de `tests/*.cjs`. Ver el flujo de [validación automática](.github/workflows/validate.yml).

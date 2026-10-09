@@ -28,8 +28,7 @@ require_once __DIR__ . '/premium-galleries.php';
  */
 function site_settings_path(): string
 {
-    $privateDir = getenv('GALLERY_PRIVATE_DIR') ?: dirname(__DIR__) . '/var';
-    return rtrim($privateDir, '/\\') . '/site-settings.json';
+    return '/davidjimenezllanes.es/config/site-settings.json';
 }
 
 /**
@@ -131,10 +130,10 @@ function site_settings_defaults(): array
         'columns_desktop' => 3, 'photos_mobile' => 12, 'photos_desktop' => 20, 'header_mobile' => 'current', 'header_desktop' => 'current',
         'gallery_mobile' => 'standard', 'gallery_desktop' => 'standard', 'hover' => 'soft', 'pagination_shape' => 'circle', 'gallery_premium' => 'none', 'site_title' => '',
         'section_order' => array_keys(site_section_labels()), 'show_header_mobile' => true, 'show_header_desktop' => true,
-        'show_categories' => true, 'show_map' => false, 'show_project' => true, 'show_social' => false,
-        'texts' => [], 'pages' => [], 'profile_image' => '/profile-placeholder.svg', 'logo_image' => '/favicon.svg',
-        'instagram_url' => 'https://example.com',
-        'threads_url' => 'https://example.com',
+        'show_categories' => true, 'show_map' => true, 'show_project' => true, 'show_social' => true,
+        'texts' => [], 'pages' => [], 'profile_image' => '/david.webp', 'logo_image' => '/escudoleon.webp',
+        'instagram_url' => 'https://www.instagram.com/davidjllanes',
+        'threads_url' => 'https://www.threads.net/@davidjllanes',
         'social_links' => []];
 }
 
@@ -175,7 +174,7 @@ function site_admin_text_labels(): array
 function site_media_url(string $key): string
 {
     $settings = site_settings_load();
-    $default = $key === 'logo_image' ? '/favicon.svg' : '/profile-placeholder.svg';
+    $default = $key === 'logo_image' ? '/escudoleon.webp' : '/david.webp';
     $value = (string) ($settings[$key] ?? $default);
     return preg_match('~^/[a-zA-Z0-9._/-]+$~', $value) ? $value : $default;
 }
@@ -241,7 +240,7 @@ function site_settings_validate(array $input): array
     }
     foreach (site_editable_text_keys() as $key) {
         $entry = $key === 'social_threads_user'
-            ? ['default' => '@kookyecatgallery']
+            ? ['default' => '@davidjllanes']
             : site_text_catalog()[$key];
         $value = $input['texts'][$key] ?? $entry['default'];
         if (!is_string($value) || strlen($value) > 20000 || !preg_match('//u', $value)) {
@@ -257,14 +256,14 @@ function site_settings_validate(array $input): array
         if (!is_string($pages[$key])) throw new InvalidArgumentException('El contenido de una página no es válido.');
         $out['pages'][$key] = site_sanitize_page_html($pages[$key]);
     }
-    foreach (['profile_image' => '/profile-placeholder.svg', 'logo_image' => '/favicon.svg'] as $key => $default) {
+    foreach (['profile_image' => '/david.webp', 'logo_image' => '/escudoleon.webp'] as $key => $default) {
         $value = (string) ($input[$key] ?? $default);
         if (!preg_match('~^/[a-zA-Z0-9._/-]+$~', $value)) {
             throw new InvalidArgumentException('La ruta de imagen no es válida.');
         }
         $out[$key] = $value;
     }
-    foreach (['instagram_url' => 'https://example.com', 'threads_url' => 'https://example.com'] as $key => $default) {
+    foreach (['instagram_url' => 'https://www.instagram.com/davidjllanes', 'threads_url' => 'https://www.threads.net/@davidjllanes'] as $key => $default) {
         $value = trim((string) ($input[$key] ?? $default));
         if (!filter_var($value, FILTER_VALIDATE_URL) || !preg_match('~^https://~i', $value)) {
             throw new InvalidArgumentException('La URL del perfil social no es válida.');
@@ -406,11 +405,34 @@ function site_page_labels(): array
  */
 function site_page_default_html(string $page): string
 {
+    $t = static fn(string $key): string => site_text_html($key);
     $content = [
-        'legal_notice' => '<h2>Información legal</h2><p>Configura aquí la identidad y los datos de contacto del responsable antes de publicar el sitio. Este texto es una plantilla de ejemplo y no constituye asesoramiento legal.</p>',
-        'privacy_policy' => '<h2>Privacidad</h2><p>Completa esta política con el responsable del tratamiento, los datos que recopila el sitio, sus finalidades, bases legales, conservación y derechos de las personas usuarias antes de publicarla.</p>',
-        'cookies_policy' => '<h2>Cookies y almacenamiento</h2><p>Describe aquí las cookies y tecnologías de almacenamiento que utiliza tu instalación, su finalidad, duración y cómo gestionar el consentimiento. Revisa este contenido antes de publicar.</p>',
-        'project' => '<p>Presenta aquí la galería, sus fotografías y las personas que la crean.</p>',
+        'legal_notice' => '<h2>' . $t('text_062798b6730bc603') . '</h2><p>' . $t('text_3ab8939d4e00a5af') . ' <strong>' . $t('text_27e9006e3ef330f5') . '</strong> ' . $t('text_3efdbafd42b5d980') . ' <strong>' . $t('text_a6b54c20a7b96eea') . '</strong>' . $t('text_a18558f9e518a164') . ' <strong>' . $t('text_8d33d070d6c4b081') . '</strong>.</p>'
+            . '<h2>' . $t('text_2187148fa660c266') . '</h2><p>' . $t('text_f2ee3e3d50ad633a') . '</p>'
+            . '<h2>' . $t('text_f8f93bd27ed1978b') . '</h2><p>' . $t('text_6f2df8fcd7adb09a') . '</p><p>' . $t('text_e569619cdbd969d7') . '</p>'
+            . '<h2>' . $t('text_700391b16151dc07') . '</h2><p>' . $t('text_dfb5ef92b4e378f2') . '</p><p>' . $t('text_f246188b9c948197') . '</p>'
+            . '<h2>' . $t('text_a281cb39d20c3b93') . '</h2><p>' . $t('text_afa8e64bd135ce59') . '</p>'
+            . '<h2>' . $t('text_c1034cc37bc846be') . '</h2><p>' . $t('text_381a9a6057d20dd5') . '</p>'
+            . '<h2>' . $t('text_7e9d4894ce5d22db') . '</h2><p>' . $t('text_e008dedd60aef2cc') . '</p>',
+        'privacy_policy' => '<h2>' . $t('text_f40a08d55695b46c') . '</h2><p>' . $t('text_cf1af996c0acd526') . ' <strong>' . $t('text_a6b54c20a7b96eea') . '</strong>' . $t('text_a18558f9e518a164') . ' <strong>' . $t('text_8d33d070d6c4b081') . '</strong>' . $t('text_676a588f80001416') . ' <strong>' . $t('text_27e9006e3ef330f5') . '</strong>.</p>'
+            . '<h2>' . $t('text_3641805d702325c1') . '</h2><p>' . $t('text_bf0616b7f3cfa510') . '</p><p>' . $t('text_de7d8a234348e034') . '</p>'
+            . '<h2>' . $t('text_aa852d396fdca6d6') . '</h2><p>' . $t('text_398edb1b02bac0a3') . '</p>'
+            . '<h2>' . $t('text_b019d2968c534e4f') . '</h2><p>' . $t('text_eeb19871b1ee90fc') . '</p>'
+            . '<h2>' . $t('text_be4f5ac046acadcf') . '</h2><p>' . $t('text_d6022e000436fc77') . '</p>'
+            . '<h2>' . $t('text_1bd56bd31b85e92d') . '</h2><p>' . $t('text_a442ae75bed6e1cd') . '</p><p>' . $t('text_4aa4c90345d1cc65') . ' <strong>' . $t('text_ee696e219150d48a') . '</strong> (<a href="https://www.aepd.es">' . $t('text_8ae1d917d6c1ea9c') . '</a>' . $t('text_49e605c7193abea0') . '</p>'
+            . '<h2>' . $t('text_d9a7b28cdf8785d9') . '</h2><p>' . $t('text_baf3aa11631bd30d') . '</p>'
+            . '<h2>' . $t('text_bd0dfe901546d901') . '</h2><p>' . $t('text_e1529cd46482e38e') . '</p>',
+        'cookies_policy' => '<h2>' . $t('text_49c19ea97b0ee7fb') . '</h2><p>' . $t('text_a56503b90b90430c') . '</p>'
+            . '<h2>' . $t('text_d9f1508e39856918') . '</h2><p>' . $t('text_2872662c369b5663') . ' <strong>' . $t('text_fdbc92936867cf4c') . '</strong>' . $t('text_d421435680d9ae41') . '</p><p>' . $t('text_8278cef56c5845b5') . '</p>'
+            . '<h2>' . $t('text_080a45aeb99066c1') . '</h2><p>' . $t('text_a4e74f4dc4ac1362') . ' <strong>' . $t('text_44738161b597e017') . '</strong>' . $t('text_3688e598c791f6db') . '</p>'
+            . '<h2>' . $t('text_ae27b5d8b9079084') . '</h2><p>' . $t('text_3e1b6617765084b4') . '</p><ul>'
+            . '<li><a href="https://support.google.com/chrome/answer/95647">' . $t('text_0e99a87ff0da91ab') . '</a></li>'
+            . '<li><a href="https://support.mozilla.org/es/kb/habilitar-y-deshabilitar-cookies-sitios-web-rastrear-preferencias">' . $t('text_acc08972fddf56f3') . '</a></li>'
+            . '<li><a href="https://support.apple.com/es-es/guide/safari/sfri11471/mac">' . $t('text_3035ab6550db87a0') . '</a></li>'
+            . '<li><a href="https://support.microsoft.com/es-es/microsoft-edge">' . $t('text_951e7f89043186ca') . '</a></li></ul>'
+            . '<h2>' . $t('text_c14529e76b4842fd') . '</h2><p>' . $t('text_a4c979481ee6a8bf') . '</p>',
+        'project' => '<p><em>' . $t('text_52179dc42df7efe5') . '</em> ' . $t('text_9b9e0ce956198ed6') . '</p><p>'
+            . $t('text_ded2b00dd9f9aee9') . ' <strong>' . $t('text_30170303c506cf6c') . '</strong>' . $t('text_5b20d476495c8ab2') . '</p>',
     ];
     return $content[$page] ?? '';
 }

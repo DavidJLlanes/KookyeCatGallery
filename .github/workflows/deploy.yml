@@ -1,0 +1,178 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: davidjimenezllanes-production
+  # Never interrupt an active production publish; keep the latest queued run.
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Validate PHP and JavaScript
+        run: |
+          set -eu
+          find . -type f -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
+          node --check assets/js/photo-editor.js
+          node --check assets/js/photo-manager.js
+          node --check assets/js/main.js
+
+      - name: Stamp deployment release
+        env:
+          RELEASE_VERSION: ${{ github.sha }}
+        run: |
+          set -eu
+          printf '{"version":"%s"}\n' "$RELEASE_VERSION" > version.json
+          sed -i "s/__BUILD_VERSION__/$RELEASE_VERSION/g" service-worker.js
+          if grep -q '__BUILD_VERSION__' service-worker.js; then
+            echo "Service worker build version was not stamped" >&2
+            exit 1
+          fi
+
+      - name: Configure SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          set -eu
+          test -n "$VPS_HOST"
+          test -n "$VPS_SSH_KEY"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$VPS_SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+          if [ -n "${VPS_KNOWN_HOSTS:-}" ]; then
+            printf '%s\n' "$VPS_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          else
+            attempt=1
+            while [ "$attempt" -le 3 ]; do
+              if ssh-keyscan -T 10 -H "$VPS_HOST" > "$RUNNER_TEMP/vps-known-hosts" && [ -s "$RUNNER_TEMP/vps-known-hosts" ]; then
+                install -m 644 "$RUNNER_TEMP/vps-known-hosts" "$HOME/.ssh/known_hosts"
+                break
+              fi
+              echo "SSH host-key lookup failed (attempt $attempt/3)." >&2
+              if [ "$attempt" -eq 3 ]; then exit 1; fi
+              sleep $((attempt * 5))
+              attempt=$((attempt + 1))
+            done
+          fi
+          chmod 644 "$HOME/.ssh/known_hosts"
+
+      - name: Verify VPS SSH connection
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          set -eu
+          attempt=1
+          while [ "$attempt" -le 3 ]; do
+            if ssh -o BatchMode=yes -o IdentitiesOnly=yes -i "$HOME/.ssh/id_ed25519" \
+              -o ConnectTimeout=20 -o ConnectionAttempts=2 \
+              -o ServerAliveInterval=15 -o ServerAliveCountMax=3 \
+              "$VPS_USER@$VPS_HOST" 'true'; then
+              echo "VPS SSH connection verified."
+              exit 0
+            fi
+            echo "VPS SSH check failed (attempt $attempt/3)." >&2
+            if [ "$attempt" -lt 3 ]; then
+              sleep $((attempt * 5))
+            fi
+            attempt=$((attempt + 1))
+          done
+          echo "::error::SSH failed after three attempts. Verbose diagnostics follow; private key contents are never printed."
+          ssh -vv -o BatchMode=yes -o IdentitiesOnly=yes -i "$HOME/.ssh/id_ed25519" \
+            -o ConnectTimeout=20 -o ConnectionAttempts=1 \
+            "$VPS_USER@$VPS_HOST" 'true' || true
+          exit 1
+
+      - name: Upload release to VPS staging
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          set -eu
+          retry_command() {
+            attempt=1
+            while [ "$attempt" -le 3 ]; do
+              if "$@"; then return 0; fi
+              echo "SSH transfer failed (attempt $attempt/3)." >&2
+              if [ "$attempt" -lt 3 ]; then sleep $((attempt * 5)); fi
+              attempt=$((attempt + 1))
+            done
+            return 1
+          }
+          SSH_OPTIONS="ssh -o BatchMode=yes -o IdentitiesOnly=yes -i $HOME/.ssh/id_ed25519 -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=3"
+          retry_command ssh -o BatchMode=yes -o IdentitiesOnly=yes -i "$HOME/.ssh/id_ed25519" \
+            -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 \
+            "$VPS_USER@$VPS_HOST" 'mkdir -p /tmp/davidjimenezllanes-deploy'
+          retry_command rsync -az -e "$SSH_OPTIONS" \
+            --exclude='.git/' \
+            --exclude='img/' \
+            --exclude='imagenes/' \
+            --exclude='data/config.php' \
+            --exclude='data/cache.json' \
+            --exclude='data/sitemap.sig' \
+            --exclude='data/hearts.json' \
+            --exclude='log/' \
+            ./ "$VPS_USER@$VPS_HOST:/tmp/davidjimenezllanes-deploy/"
+
+      - name: Publish release
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          set -eu
+          retry_command() {
+            attempt=1
+            while [ "$attempt" -le 3 ]; do
+              if "$@"; then return 0; fi
+              echo "VPS publish command failed (attempt $attempt/3)." >&2
+              if [ "$attempt" -lt 3 ]; then sleep $((attempt * 5)); fi
+              attempt=$((attempt + 1))
+            done
+            return 1
+          }
+          retry_command ssh -o BatchMode=yes -o IdentitiesOnly=yes -i "$HOME/.ssh/id_ed25519" \
+            -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 \
+            "$VPS_USER@$VPS_HOST" '
+            sudo rsync -az \
+              --exclude="img/" \
+              --exclude="imagenes/" \
+              --exclude="data/config.php" \
+              --exclude="data/cache.json" \
+              --exclude="data/sitemap.sig" \
+              --exclude="data/hearts.json" \
+              --exclude="version.json" \
+              --exclude="log/" \
+              /tmp/davidjimenezllanes-deploy/ \
+              /var/www/davidjimenezllanes.es/
+            sudo install -d -m 775 -o www-data -g www-data /var/www/davidjimenezllanes.es/data
+            sudo install -d -m 750 -o www-data -g www-data /davidjimenezllanes.es/hearts
+            if [ -f /var/www/davidjimenezllanes.es/data/hearts.json ] && [ ! -e /davidjimenezllanes.es/hearts/counts.json ]; then
+              sudo install -m 640 -o www-data -g www-data /var/www/davidjimenezllanes.es/data/hearts.json /davidjimenezllanes.es/hearts/counts.json
+            fi
+            sudo nginx -t
+            sudo systemctl reload nginx
+            sudo install -m 644 /tmp/davidjimenezllanes-deploy/version.json /var/www/davidjimenezllanes.es/version.json.new
+            sudo mv -f /var/www/davidjimenezllanes.es/version.json.new /var/www/davidjimenezllanes.es/version.json
+          '
+
+      - name: Verify hearts API
+        run: |
+          set -eu
+          curl --fail --silent --show-error --retry 3 --retry-delay 2 --max-time 20 \
+            'https://davidjimenezllanes.es/hearts.php?slugs=deployment-check' \
+            | php -r '$result = json_decode(stream_get_contents(STDIN), true); if (!is_array($result) || ($result["ok"] ?? false) !== true || !isset($result["counts"]["deployment-check"])) exit(1);'

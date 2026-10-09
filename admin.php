@@ -15,15 +15,15 @@ declare(strict_types=1);
  * inc/site-settings-form.php.
  */
 
-define('UPLOAD_AUTH_CONFIG', rtrim(getenv('GALLERY_PRIVATE_DIR') ?: __DIR__ . '/var', '/\\') . '/upload-auth.php');
-define('UPLOAD_DIRECTORY', __DIR__ . '/img');
+const UPLOAD_AUTH_CONFIG = '/davidjimenezllanes.es/config/upload-auth.php';
+const UPLOAD_DIRECTORY = '/davidjimenezllanes.es/img';
 const MAX_IMAGE_BYTES = 15728640; // 15 MiB
 
 ini_set('session.use_strict_mode', '1');
 ini_set('session.cookie_httponly', '1');
 ini_set('session.cookie_secure', '1');
 ini_set('session.cookie_samesite', 'Strict');
-session_name('kookye_gallery_admin');
+session_name('djl_upload_session');
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
@@ -36,6 +36,7 @@ session_start();
 require __DIR__ . '/inc/helpers.php';
 require_once __DIR__ . '/inc/site-settings.php';
 require __DIR__ . '/inc/processor.php';
+require __DIR__ . '/inc/ai-text.php';
 require __DIR__ . '/inc/admin-photos.php';
 require __DIR__ . '/inc/admin-shell.php';
 
@@ -117,7 +118,7 @@ function safeUploadStem(string $title): string
     $transliterated = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $title);
     $stem = strtolower((string) ($transliterated !== false ? $transliterated : $title));
     $stem = trim(preg_replace('/[^a-z0-9]+/', '-', $stem) ?? '', '-');
-    if ($stem === '') $stem = 'cat-photo';
+    if ($stem === '') $stem = 'fotografia-leon';
     return substr($stem, 0, 70);
 }
 
@@ -235,7 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             foreach (['profile_image_file' => 'profile_image', 'logo_image_file' => 'logo_image'] as $fileKey => $settingKey) {
-                $settingsInput[$settingKey] = $currentSettings[$settingKey] ?? ($settingKey === 'logo_image' ? '/favicon.svg' : '/profile-placeholder.svg');
+                $settingsInput[$settingKey] = $currentSettings[$settingKey] ?? ($settingKey === 'logo_image' ? '/escudoleon.webp' : '/david.webp');
                 $file = $_FILES[$fileKey] ?? null;
                 if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) continue;
                 $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
@@ -417,8 +418,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $lngRaw = trim((string) ($_POST['longitude'] ?? ''));
         $gps = null;
         if ($latRaw !== '' || $lngRaw !== '') {
-            if (!is_numeric($latRaw) || !is_numeric($lngRaw)) {
-                uploadJson(422, ['ok' => false, 'error' => 'Completa ambas coordenadas o deja los dos campos vacíos.']);
+            if ($latRaw === '' || $lngRaw === '' || !is_numeric($latRaw) || !is_numeric($lngRaw)) {
+                uploadJson(422, ['ok' => false, 'error' => 'Indica ambas coordenadas o deja los dos campos vacíos.']);
             }
             $lat = (float) $latRaw;
             $lng = (float) $lngRaw;
@@ -463,6 +464,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         @chmod($editedTarget, 0644);
         @chmod($sidecar, 0644);
         unset($_SESSION['pending_upload']);
+
+        if ($description === '') {
+            $siteConfigPath = '/davidjimenezllanes.es/config.php';
+            $siteConfig = is_file($siteConfigPath) ? require $siteConfigPath : [];
+            if (!empty($siteConfig['ai_enabled'])) {
+                $generator = new AiTextGenerator(__DIR__, $siteConfig);
+                $generator->processMissing([[
+                    'original' => $basename,
+                    'sidecar' => $sidecar,
+                    'filename_clean' => $title,
+                ]], 1);
+            }
+        }
 
         $publishedMeta = read_sidecar($sidecar);
         $publishedSlug = (string) ($publishedMeta['slug'] ?? '');
@@ -652,7 +666,6 @@ if (!empty($_SESSION['upload_authenticated'])) {
     );
     $formTemplate = <<<'HTML'
 __STATUS__
-__UPLOAD_GUIDE__
 <form class="upload-form" id="photoUploadForm" data-edit-file="__EDIT_FILE__" data-has-edited="__HAS_EDITED__" method="post" action="/admin.php">
     <input type="hidden" name="action" value="__ACTION__">
     <input type="hidden" name="csrf" value="__CSRF__">
@@ -664,7 +677,7 @@ __UPLOAD_GUIDE__
         <header class="photo-editor__topbar">
             <button type="button" class="photo-editor__cancel" id="editorCancel" aria-label="Cancelar edición y volver al inicio" title="Cancelar y volver al inicio"><span aria-hidden="true">×</span><span class="photo-editor__cancel-label">Cancelar</span></button>
             <button type="button" class="photo-editor__top-action" id="editorChangePhoto">__CHANGE_LABEL__</button>
-            <span class="photo-editor__step">1 / 2 · Ajustes</span>
+            <span class="photo-editor__step">__EDITOR_STEP__</span>
             <button type="button" class="photo-editor__next" id="editorContinue" aria-label="Continuar a las opciones de publicación" title="Continuar a las opciones de publicación">Continuar</button>
         </header>
         <div class="photo-editor__stage" id="editorStage">
@@ -719,7 +732,7 @@ __UPLOAD_GUIDE__
         <label class="upload-featured"><input type="checkbox" name="featured" value="1" __FEATURED_CHECKED__> <span>Marcar como fotografía destacada</span></label>
         <label class="upload-featured"><input type="checkbox" name="draft" value="1" __DRAFT_CHECKED__> <span>Guardar como borrador (no aparecerá públicamente)</span></label>
         __SLUG_FIELD__
-        <fieldset class="upload-gps" id="gpsFields" hidden><legend>Ubicación GPS (opcional)</legend><p class="upload-help">Puedes añadir coordenadas para mostrar la foto en el mapa. Deja ambos campos vacíos si no quieres compartir su ubicación.</p><div class="upload-form"><div class="upload-field"><label for="photoLatitude">Latitud</label><input id="photoLatitude" name="latitude" type="number" min="-90" max="90" step="any" value="__LATITUDE__"></div><div class="upload-field"><label for="photoLongitude">Longitud</label><input id="photoLongitude" name="longitude" type="number" min="-180" max="180" step="any" value="__LONGITUDE__"></div></div></fieldset>
+        <fieldset class="upload-gps" id="gpsFields"><legend>Ubicación GPS (opcional)</legend><p class="upload-help">Puedes dejar ambas coordenadas vacías para no compartir la ubicación. Si la foto incluye GPS, puedes borrar los valores.</p><div class="upload-form"><div class="upload-field"><label for="photoLatitude">Latitud</label><input id="photoLatitude" name="latitude" type="number" min="-90" max="90" step="any" value="__LATITUDE__"></div><div class="upload-field"><label for="photoLongitude">Longitud</label><input id="photoLongitude" name="longitude" type="number" min="-180" max="180" step="any" value="__LONGITUDE__"></div></div></fieldset>
         <div class="upload-actions"><button class="upload-submit" id="uploadSubmit" type="submit" disabled>__SUBMIT_LABEL__</button></div>
     </section>
     </form>
@@ -735,7 +748,6 @@ HTML;
         : '';
     $form = strtr($formTemplate, [
         '__STATUS__' => $status,
-        '__UPLOAD_GUIDE__' => '',
         '__CSRF__' => $csrf,
         '__OPTIONS__' => $options,
         '__CATEGORY_HELP__' => $editMode ? '<small class="upload-help">Aquí puedes cambiar la categoría de esta foto. Para cambiar varias a la vez, usa «Gestionar categorías».</small>' : '',
@@ -746,8 +758,9 @@ HTML;
         '__FILE_REQUIRED__' => $editMode ? '' : 'required',
         '__GPS_STATUS_HIDDEN__' => $editMode ? 'hidden' : '',
         '__CHANGE_LABEL__' => $editMode ? 'Usar original' : 'Cambiar foto',
+        '__STEP_LABEL__' => $editMode ? '2 / 2 · Actualizar fotografía' : '2 / 2 · Detalles de publicación',
+        '__EDITOR_STEP__' => $editMode ? 'Editar fotografía' : '1 / 2 · Ajustes',
         '__START_BUTTON_HIDDEN__' => $editMode ? 'hidden' : '',
-        '__STEP_LABEL__' => $editMode ? '2 / 2 · Actualizar fotografía' : '2 / 2 · Nueva publicación',
         '__TITLE__' => $editMode ? uploadEscape($edit['title']) : '',
         '__DESCRIPTION__' => $editMode ? uploadEscape($edit['description']) : '',
         '__DESCRIPTION_HELP__' => $editMode ? '(opcional; puedes dejarla vacía)' : '(opcional; se generará automáticamente si queda vacía)',

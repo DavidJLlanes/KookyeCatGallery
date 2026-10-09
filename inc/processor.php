@@ -11,7 +11,8 @@ declare(strict_types=1);
 
 /**
  * Parsea el nombre del archivo para extraer (Categoría) y (lat,lng)
- * Example: "curious-cat(Cats)(lat,lng).jpg" can carry optional location data.
+ * Ejemplo: "catedral-leon(Catedral)(40.6270,-5.5898).jpg" →
+ *   ['clean' => 'catedral-leon', 'category' => 'Catedral', 'lat' => 40.6270, 'lng' => -5.5898]
  */
 function parseFilenameMetadata(string $filename): array
 {

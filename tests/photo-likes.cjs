@@ -26,7 +26,7 @@ const assert = require('node:assert/strict');
             await route.fulfill({ status: 200, contentType: 'application/json',
                 body: JSON.stringify({ ok: true, counts: { 'test-photo': count }, liked: { 'test-photo': liked } }) });
         });
-        await page.route('https://example.com/foto/test-photo', route => route.fulfill({
+        await page.route('https://davidjimenezllanes.es/foto/test-photo', route => route.fulfill({
             status: 200, contentType: 'text/html',
             body: '<!doctype html><html lang="es"><head><meta charset="utf-8"></head><body>' +
                 '<section class="photo-detail"><div class="photo-detail__info"><div class="photo-app-actions">' +
@@ -36,7 +36,7 @@ const assert = require('node:assert/strict');
                 '<span class="card__heart-count" data-heart-display="test-photo">♡ <span data-heart-count>0</span></span>' +
                 '</body></html>'
         }));
-        await page.goto('https://example.com/foto/test-photo');
+        await page.goto('https://davidjimenezllanes.es/foto/test-photo');
         await page.addStyleTag({ content: fs.readFileSync(path.join(root, 'assets/css/style.css'), 'utf8') });
         const initialCounts = page.waitForResponse(response => response.url().includes('/hearts.php?slugs='));
         await page.addScriptTag({ content: fs.readFileSync(path.join(root, 'assets/js/main.js'), 'utf8') });

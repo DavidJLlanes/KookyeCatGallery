@@ -128,7 +128,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     $html .= '<div class="settings-profile"><section class="admin-card"><header class="admin-card__head"><h2>Perfil</h2><p>Nombre, descripciones y enlaces que aparecen en la cabecera y en los contactos.</p></header><div class="admin-card__body">';
     foreach (site_editable_text_keys() as $key) {
         $entry = $key === 'social_threads_user'
-            ? ['default' => '@kookyecatgallery']
+            ? ['default' => '@davidjllanes']
             : site_text_catalog()[$key];
         $value = $settings['texts'][$key] ?? $entry['default'];
         $label = site_admin_text_labels()[$key] ?? $entry['default'];

@@ -1,5 +1,7 @@
 User-agent: *
-Disallow: /admin.php
-Disallow: /var/
-Disallow: /data/
+Allow: /
 Disallow: /img/
+Disallow: /data/
+Disallow: /inc/
+
+Sitemap: https://davidjimenezllanes.es/sitemap.xml

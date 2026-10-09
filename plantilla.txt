@@ -1,0 +1,28 @@
+Categorías disponibles:
+Blanco y Negro
+Nocturna
+Animales
+Agua
+Catedral
+Arquitectura
+Paisajes
+Naturaleza
+Calles
+Otras
+
+
+catedral-leon-amanecer(Catedral)(40.6270,-5.5898).jpg
+palacio-botines-noche(Arquitectura)(40.6265,-5.5892).jpg
+picos-europa(Paisajes)(43.1994,-4.8664).jpg
+perro pastor aleman en coladilla foto en blanco y negro(Animales)(42.8845,-5.5572)
+
+fotografía hdr de la calle Ordoño II de León(Calles)(42.5971,-5.5742).jpg
+
+Mirada curiosa desde el hogar
+---
+Pequeños ojos inquisitivos asoman desde el umbral, observando el mundo que se despliega al otro lado del cristal. Un instante de inocencia capturado en la quietud de un hogar leonés.
+
+# Categoría: Catedral
+# Coordenadas: 42.5995,-5.5667
+
+42.89663847474154, -5.106059284637082
