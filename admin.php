@@ -229,6 +229,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $settingsInput = $_POST;
             $currentSettings = site_settings_load();
+            // Si los layouts elegidos no usan el tipo de cuadrícula, el control del panel llega desactivado y no se envía.
+            // Conservamos su valor para cuando se seleccione más adelante un diseño compatible.
+            if (!isset($settingsInput['grid'])) $settingsInput['grid'] = $currentSettings['grid'] ?? 'adaptive';
             // Con una galería premium activa, sus campos ignorados llegan desactivados (el navegador no los envía):
             // se conservan los valores guardados para cuando se vuelva a la galería estándar.
             if (($settingsInput['gallery_premium'] ?? 'none') !== 'none') {
