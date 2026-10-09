@@ -34,7 +34,28 @@
     }
 
     /* -------------------------------------------------------------------------
-       2. Textos editables del diseño seleccionado. Los campos ocultos permanecen
+       2. Tipo de cuadrícula
+       Solo tiene efecto en Masonry, Cuadrícula, Hoja de contactos y Trípticos.
+       El valor elegido se conserva cuando ambos layouts ignoran proporciones.
+       ------------------------------------------------------------------------- */
+    const gridSelect = document.getElementById('setting-grid');
+    const galleryLayoutSelects = [
+        document.getElementById('setting-gallery_mobile'),
+        document.getElementById('setting-gallery_desktop'),
+    ].filter(Boolean);
+    if (gridSelect && galleryLayoutSelects.length) {
+        const gridField = gridSelect.closest('.upload-field');
+        const updateGridAvailability = () => {
+            const active = galleryLayoutSelects.some(select => ['standard', 'grid', 'contact-sheet', 'triptych'].includes(select.value));
+            gridSelect.disabled = !active;
+            gridField?.classList.toggle('is-disabled', !active);
+        };
+        galleryLayoutSelects.forEach(select => select.addEventListener('change', updateGridAvailability));
+        updateGridAvailability();
+    }
+
+    /* -------------------------------------------------------------------------
+       3. Textos editables del diseño seleccionado. Los campos ocultos permanecen
        habilitados para que un cambio de plantilla no borre sus textos guardados.
        ------------------------------------------------------------------------- */
     const templateGroups = [...document.querySelectorAll('[data-template-text-group]')];
@@ -53,7 +74,7 @@
     }
 
     /* -------------------------------------------------------------------------
-       3. Orden de los bloques de la portada
+       4. Orden de los bloques de la portada
        El orden del DOM es el orden enviado (cada fila lleva su input oculto section_order[]).
        ------------------------------------------------------------------------- */
     const list = document.querySelector('[data-section-order]');
