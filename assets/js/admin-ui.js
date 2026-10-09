@@ -34,30 +34,31 @@
     }
 
     /* -------------------------------------------------------------------------
-       2. Tipo de cuadrícula
-       Solo tiene efecto en Masonry, Cuadrícula, Hoja de contactos y Trípticos.
-       El valor elegido se conserva cuando ambos layouts ignoran proporciones.
+       3. Textos editables del diseño seleccionado. Los campos ocultos permanecen
+       habilitados para que un cambio de plantilla no borre sus textos guardados.
        ------------------------------------------------------------------------- */
     const gridSelect = document.getElementById('setting-grid');
+    const gridField = gridSelect?.closest('[data-grid-setting]');
+    const gridHelp = document.querySelector('[data-grid-help]');
     const galleryLayoutSelects = [
         document.getElementById('setting-gallery_mobile'),
         document.getElementById('setting-gallery_desktop'),
     ].filter(Boolean);
+    const premiumForGrid = document.getElementById('setting-gallery_premium');
     if (gridSelect && galleryLayoutSelects.length) {
-        const gridField = gridSelect.closest('.upload-field');
         const updateGridAvailability = () => {
-            const active = galleryLayoutSelects.some(select => ['standard', 'grid', 'contact-sheet', 'triptych'].includes(select.value));
-            gridSelect.disabled = !active;
-            gridField?.classList.toggle('is-disabled', !active);
+            const premium = premiumForGrid && premiumForGrid.value !== 'none';
+            const used = galleryLayoutSelects.some(select => ['standard', 'grid', 'contact-sheet', 'triptych'].includes(select.value));
+            const disabled = Boolean(premium || !used);
+            gridSelect.disabled = disabled;
+            gridField?.classList.toggle('is-disabled', disabled);
+            if (gridHelp) gridHelp.hidden = Boolean(premium || used);
         };
         galleryLayoutSelects.forEach(select => select.addEventListener('change', updateGridAvailability));
+        premiumForGrid?.addEventListener('change', updateGridAvailability);
         updateGridAvailability();
     }
 
-    /* -------------------------------------------------------------------------
-       3. Textos editables del diseño seleccionado. Los campos ocultos permanecen
-       habilitados para que un cambio de plantilla no borre sus textos guardados.
-       ------------------------------------------------------------------------- */
     const templateGroups = [...document.querySelectorAll('[data-template-text-group]')];
     if (templateGroups.length) {
         const updateTemplateGroups = () => {
