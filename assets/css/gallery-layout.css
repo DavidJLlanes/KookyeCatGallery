@@ -142,3 +142,51 @@ body[data-gallery-active][data-hover="shine"][data-grid] #masonry[data-layout] .
 body[data-gallery-active="scattered"][data-grid] #masonry[data-layout] {
     overflow-x: clip !important;
 }
+
+/* Efectos hover también para las imágenes de las galerías premium. Se anima el contenido de la foto,
+   no la carta, para conservar las transformaciones 3D y el posicionamiento de cada diseño. */
+body[data-gallery-premium]:not([data-gallery-premium="none"])[data-hover="soft"] { --premium-hover-transform:scale(1.045); --premium-hover-filter:brightness(1.1) saturate(1.2); }
+body[data-gallery-premium]:not([data-gallery-premium="none"])[data-hover="zoom"] { --premium-hover-transform:scale(1.16); }
+body[data-gallery-premium]:not([data-gallery-premium="none"])[data-hover="lift"] { --premium-hover-transform:translateY(-6px) scale(1.06); --premium-hover-filter:brightness(1.15); }
+body[data-gallery-premium]:not([data-gallery-premium="none"])[data-hover="reveal"] { --premium-hover-transform:scale(1.08); --premium-hover-filter:contrast(1.28) saturate(1.4); }
+body[data-gallery-premium]:not([data-gallery-premium="none"])[data-hover="tint"] { --premium-hover-transform:scale(1.06); --premium-hover-filter:sepia(.62) saturate(1.45); }
+body[data-gallery-premium]:not([data-gallery-premium="none"])[data-hover="slide"] { --premium-hover-transform:translateX(8px) scale(1.06); }
+body[data-gallery-premium]:not([data-gallery-premium="none"])[data-hover="tilt"] { --premium-hover-transform:perspective(700px) rotateY(-7deg) scale(1.06); }
+body[data-gallery-premium]:not([data-gallery-premium="none"])[data-hover="focus"] { --premium-hover-transform:scale(1.05); --premium-hover-filter:grayscale(0) contrast(1.12) brightness(1.08); }
+body[data-gallery-premium]:not([data-gallery-premium="none"]) :is(#deck .deck__img, #deck .cyl__img, #bubbles .bubbles__img) {
+    transition:transform .55s cubic-bezier(.2,.7,.2,1),filter .55s ease!important;
+}
+body[data-gallery-premium]:not([data-gallery-premium="none"])[data-hover="focus"] :is(#deck .deck__img, #deck .cyl__img, #bubbles .bubbles__img) {
+    filter:grayscale(.82)!important;
+}
+body[data-gallery-premium]:not([data-gallery-premium="none"]) :is(#deck .deck__link, #deck .cyl__link, #bubbles .bubbles__link):is(:hover,:focus-visible,:active) :is(.deck__img,.cyl__img,.bubbles__img) {
+    transform:var(--premium-hover-transform,none)!important;
+    filter:var(--premium-hover-filter,none)!important;
+}
+body[data-gallery-premium]:not([data-gallery-premium="none"])[data-hover="frame"] :is(#deck .deck__link, #deck .cyl__link, #bubbles .bubbles__link):is(:hover,:focus-visible,:active) {
+    outline:3px solid var(--accent)!important;
+    outline-offset:-4px!important;
+}
+body[data-gallery-premium]:not([data-gallery-premium="none"])[data-hover="shine"] :is(#deck .deck__picture, #deck .cyl__picture, #bubbles .bubbles__picture)::after {
+    content:""!important;
+    position:absolute!important;
+    inset:0!important;
+    display:block!important;
+    z-index:4!important;
+    pointer-events:none!important;
+    background:linear-gradient(110deg,transparent 30%,#ffffff99 48%,transparent 65%)!important;
+    transform:translateX(-130%)!important;
+    transition:transform .75s ease!important;
+}
+body[data-gallery-premium]:not([data-gallery-premium="none"])[data-hover="shine"] :is(#deck .deck__link, #deck .cyl__link, #bubbles .bubbles__link):is(:hover,:focus-visible,:active) :is(.deck__picture,.cyl__picture,.bubbles__picture)::after {
+    transform:translateX(130%)!important;
+}
+body[data-gallery-premium]:not([data-gallery-premium="none"])[data-hover="shine"] #bubbles .bubbles__picture::after {
+    border-radius:50%;
+}
+@media(prefers-reduced-motion:reduce) {
+    body[data-gallery-premium]:not([data-gallery-premium="none"]) :is(#deck .deck__img, #deck .cyl__img, #bubbles .bubbles__img),
+    body[data-gallery-premium]:not([data-gallery-premium="none"])[data-hover="shine"] :is(#deck .deck__picture, #deck .cyl__picture, #bubbles .bubbles__picture)::after {
+        transition:none!important;
+    }
+}

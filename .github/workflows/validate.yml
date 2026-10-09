@@ -69,6 +69,10 @@ jobs:
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/slideshow.cjs
+      - name: Comprobar los efectos hover premium
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/premium-hover.cjs
       - name: Comprobar la galería premium Estilo Baraja
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
