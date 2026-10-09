@@ -175,6 +175,9 @@ function testImage(width = 640, height = 400) {
         await mobile.page.evaluate(() => { window.__marker = 'mismo-documento'; });
         await mobile.page.waitForFunction(() => document.querySelector('#lightbox.is-open .lightbox__img.is-shown'));
         await mobile.page.waitForTimeout(700);
+        const stageBounds = await mobile.page.locator('.lightbox__stage').boundingBox();
+        assert.equal(stageBounds.x, 0, 'El visor inmersivo empieza en el borde izquierdo');
+        assert.equal(stageBounds.width, 390, 'El visor inmersivo ocupa todo el ancho en móvil');
         const center = async () => { const box = await mobile.page.locator('.lightbox__img').first().boundingBox(); return { x: box.x + box.width / 2, y: box.y + box.height / 2 }; };
         const finger = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
         const first = await mobile.page.locator('.lightbox__img').first().boundingBox();
