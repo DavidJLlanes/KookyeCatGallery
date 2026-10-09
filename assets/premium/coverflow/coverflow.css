@@ -96,6 +96,7 @@
     -webkit-line-clamp: 2;
     overflow: hidden;
 }
-.deck[data-layout="coverflow"] .deck__category { display: none; }
+.deck[data-layout="coverflow"] .deck__category,
+.deck[data-layout="coverflow"] .deck__caption { display: none; }
 
 @media (prefers-reduced-motion: reduce) { .deck[data-layout="coverflow"] { --deck-duration: 1ms; } }
