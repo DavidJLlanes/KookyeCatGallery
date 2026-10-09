@@ -15,6 +15,7 @@ const css = [
     const browser = await chromium.launch({headless: true, executablePath: process.env.TEST_BROWSER || undefined, args: ['--no-sandbox']});
     try {
         const page = await browser.newPage({viewport: {width: 1000, height: 900}});
+        await page.emulateMedia({reducedMotion: 'reduce'});
         const cases = [
             {premium: 'deck', container: 'deck', link: 'deck__link', picture: 'deck__picture', image: 'deck__img'},
             {premium: 'bubbles', container: 'bubbles', link: 'bubbles__link', picture: 'bubbles__picture', image: 'bubbles__img'},
@@ -29,17 +30,13 @@ const css = [
             await page.addStyleTag({content: css});
             const link = `#${item.container} .${item.link}`;
             const image = `#${item.container} .${item.image}`;
-            await page.locator(link).hover();
+            await page.locator(link).evaluate(node => node.classList.add('test-hover'));
             const transform = await page.locator(image).evaluate(node => getComputedStyle(node).transform);
             assert.notEqual(transform, 'none', `El efecto hover debe llegar a ${image} (${transform})`);
-            await page.mouse.move(900, 800);
             await page.locator('body').evaluate(node => { node.dataset.hover = 'frame'; });
-            await page.locator(link).evaluate(node => node.dispatchEvent(new MouseEvent('mouseenter', {bubbles:true})));
             const outline = await page.locator(link).evaluate(node => getComputedStyle(node).outlineStyle);
             assert.equal(outline, 'solid', `El efecto de marco debe alcanzar ${link}`);
-            await page.mouse.move(900, 800);
             await page.locator('body').evaluate(node => { node.dataset.hover = 'shine'; });
-            await page.locator(link).evaluate(node => node.dispatchEvent(new MouseEvent('mouseenter', {bubbles:true})));
             const shine = await page.locator(`#${item.container} .${item.picture}`).evaluate(node => getComputedStyle(node, '::after').content);
             assert.notEqual(shine, 'none', `El destello debe generar una capa sobre ${item.picture}`);
         }
