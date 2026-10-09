@@ -184,7 +184,13 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . '<small class="upload-help">JPG, PNG o WebP. Máximo 15 MB.</small></div>'
         . '<div class="upload-field"><label for="logo-image">Logo</label>'
         . '<input id="logo-image" name="logo_image_file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
-        . '<small class="upload-help">JPG, PNG o WebP. Máximo 15 MB.</small></div></div></section></div>';
+        . '<small class="upload-help">JPG, PNG o WebP. Máximo 15 MB.</small></div>'
+        . '<div class="upload-field"><label for="app-icon-file">Icono de la aplicación y favicon</label>'
+        . '<input id="app-icon-file" name="app_icon_file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
+        . '<small class="upload-help">PNG, JPG o WebP. Cuadrado, 512 × 512 px recomendado (mínimo). Se adapta automáticamente a 32, 180, 192 y 512 px para favicon, Apple Touch y la app instalable. Máximo 15 MB.</small></div>'
+        . '<div class="upload-field"><label for="og-image-file">Imagen para compartir en redes sociales (Open Graph)</label>'
+        . '<input id="og-image-file" name="og_image_file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
+        . '<small class="upload-help">JPG, PNG o WebP. Recomendado 1200 × 630 px (relación 1,91:1; mínimo 600 × 315). Se recorta y adapta a 1200 × 630 px. Máximo 15 MB.</small></div></div></section></div>';
     return $html . '<div class="admin-savebar"><span class="admin-savebar__hint">Los cambios se aplican a la web al guardar.</span><a class="upload-logout" href="/" target="_blank" rel="noopener">Ver la web</a><button class="upload-submit" type="submit">Guardar configuración</button></div></form>';
 }
 
