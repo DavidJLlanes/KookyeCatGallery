@@ -7,18 +7,17 @@ declare(strict_types=1);
  * Se carga desde inc/site-settings.php. Aquí solo se genera HTML; la validación y el
  * guardado viven en site_settings_validate() y site_settings_save().
  *
- *   site_settings_form()      Pestañas «Perfil» y «Diseño» (una sola <form>; el CSS oculta la que no
- * toca).
+ *   site_settings_form()      Secciones «Perfil», «Diseño» y «Textos» (una sola <form>; el CSS muestra la elegida).
  *   site_page_editor_form()   Editor de las páginas de texto (aviso legal, privacidad, cookies,
  * proyecto).
  */
 
 /**
- * Formulario de ajustes. `$section` decide qué parte se ve: 'profile' o 'design'.
+ * Formulario de ajustes. `$section` decide qué parte se ve: 'profile', 'design' o 'texts'.
  *
  * Estructura de la parte «Diseño» (una tarjeta por apartado):
- *   Apariencia · Cabecera · Galería · Estructura de la página · Textos de páginas
- * y de la parte «Perfil»: Perfil · Más redes sociales · Imágenes.
+ *   Apariencia · Cabecera · Galería · Estructura de la página.
+ * «Textos» contiene marca, textos de plantilla y páginas; «Perfil», redes e imágenes.
  *
  * @param array|null $values Valores a mostrar (p. ej. tras un error); null = los guardados.
  */
@@ -30,7 +29,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . '<input type="hidden" name="action" value="save_site_settings">'
         . '<input type="hidden" name="csrf" value="' . $escape($csrf) . '">'
         . '<input type="hidden" name="section" value="' . $escape($section) . '">'
-        . '<p>Personaliza la web. Los textos de fotografías y categorías se editan en Gestionar fotos. Los campos admiten texto plano.</p>';
+        . '<p>Personaliza la web. Los títulos, descripciones y categorías de cada fotografía se editan en Gestionar fotos.</p>';
     $labels = ['palette' => 'Paleta de colores', 'grid' => 'Tipo de cuadrícula', 'header_mobile' => 'Cabecera móvil', 'header_desktop' => 'Cabecera de escritorio', 'gallery_mobile' => 'Galería móvil', 'gallery_desktop' => 'Galería de escritorio', 'hover' => 'Efecto Hover', 'pagination_shape' => 'Forma de la paginación', 'gallery_premium' => 'Galería premium'];
     $choices = site_design_choices();
     // ¿Hay una galería premium activa? Entonces se desactivan los campos de la galería estándar (los marcados con $premiumOff).
@@ -61,12 +60,6 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
 
     // ── Diseño ────────────────────────────────────────────────────────────
     $html .= '<div class="settings-design">';
-    // Tarjeta «Identidad»: título de la web. Vacío = el título original (site_title_default()).
-    $titleValue = (string) ($settings['site_title'] ?? '') !== '' ? (string) $settings['site_title'] : site_title_default();
-    $html .= $card('Identidad', 'El título aparece en la pestaña del navegador, en las cabeceras, en el pie y en los textos que mencionan la web.',
-        '<div class="upload-field"><label for="setting-site_title">Título de la web</label>'
-        . '<input id="setting-site_title" name="site_title" type="text" maxlength="80" autocomplete="off" value="' . $escape($titleValue) . '" placeholder="' . $escape(site_title_default()) . '">'
-        . '<small class="upload-help">Máximo 80 caracteres. Si lo dejas vacío se usa «' . $escape(site_title_default()) . '». El nombre de la app instalada (manifest.json) no cambia con este ajuste.</small></div>');
     // Tarjeta «Apariencia»: paleta y efecto hover.
     $html .= $card('Apariencia', 'Colores y efecto al pasar el ratón por las fotos.',
         '<div class="admin-fields">' . $select('palette', $labels['palette'], $choices['palette'], $settings['palette']) . $select('hover', $labels['hover'], $choices['hover'], $settings['hover']) . '</div>');
@@ -97,30 +90,6 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . $range('photos_desktop', 'Fotos visibles a la vez en escritorio', site_photos_per_view_choices(), $settings['photos_desktop'], 'Todas', true) . '</div>'
         . '<p class="upload-help">Las fotos visibles a la vez no dependen de las columnas: si hay más fotos, se paginan. Elige «Todas» para mostrarlas juntas. Masonry conserva las proporciones originales; para fotos cuadradas, horizontales o verticales, elige la galería «Cuadrícula» y su tipo de cuadrícula.</p>');
 
-    // Muestra los textos que corresponden a las cabeceras y galerías elegidas.
-    // Los grupos ocultos siguen en el formulario para conservar sus valores al cambiar de diseño.
-    $templateTextGroups = '';
-    foreach (site_template_text_groups() as $group) {
-        $setting = $group['setting'];
-        $options = $group['options'];
-        $visible = in_array('*', $options, true) || in_array((string) ($settings[$setting] ?? ''), $options, true);
-        $templateTextGroups .= '<section class="template-text-group" data-template-text-group data-template-setting="' . $escape($setting)
-            . '" data-template-options="' . $escape(implode(',', $options)) . '"' . ($visible ? '' : ' hidden') . '>'
-            . '<h3>' . $escape($group['title']) . '</h3><div class="admin-fields">';
-        foreach ($group['fields'] as $key => $label) {
-            $entry = site_text_catalog()[$key];
-            $value = $settings['texts'][$key] ?? $entry['default'];
-            $templateTextGroups .= '<div class="upload-field"><label for="template-text-' . $escape($key) . '">' . $escape($label) . '</label>'
-                . '<textarea id="template-text-' . $escape($key) . '" name="texts[' . $escape($key) . ']" rows="2" maxlength="20000">'
-                . $escape((string) $value) . '</textarea></div>';
-        }
-        $templateTextGroups .= '</div></section>';
-    }
-    $html .= $card('Textos de las plantillas',
-        'Al cambiar una cabecera o galería aparecen sus textos con nombres descriptivos.',
-        '<p class="upload-help">El usuario, la biografía y la web del perfil se editan en Perfil. Los textos de las fotografías se editan en Gestionar fotos.</p>'
-        . '<div class="template-text-editor" data-template-text-editor>' . $templateTextGroups . '</div>');
-
     $order = site_section_order_normalize($settings['section_order'] ?? null);
     // Tarjeta «Estructura de la página»: orden (flechas, ver assets/js/admin-ui.js) y visibilidad de cada bloque.
     // El orden del DOM es el que se envía en section_order[].
@@ -140,25 +109,61 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     }
     $list .= '</ol>';
     $html .= $card('Estructura de la página', 'Ordena los bloques de la portada con las flechas y oculta los que no quieras mostrar.', $list);
+    $html .= '</div><div class="settings-texts">';
+    $titleValue = (string) ($settings['site_title'] ?? '') !== '' ? (string) $settings['site_title'] : site_title_default();
+    $identity = '<div class="upload-field"><label for="setting-site_title">Nombre de la web</label>'
+        . '<input id="setting-site_title" name="site_title" type="text" maxlength="80" autocomplete="off" value="' . $escape($titleValue) . '" placeholder="' . $escape(site_title_default()) . '">'
+        . '<small class="upload-help">Se usa en la pestaña del navegador, las cabeceras y otros lugares que identifican la web. Déjalo vacío para volver al nombre inicial.</small></div>';
+    $identityLabels = [
+        'text_30170303c506cf6c' => 'Nombre del fotógrafo o estudio',
+        'text_4577bab0d9627af1' => 'Nombre de usuario que aparece en el perfil',
+        'text_2e2b80d871481edc' => 'Descripción breve del perfil',
+        'text_54b7645201863e32' => 'Segunda frase del perfil',
+        'text_7e6debbd1dab03b1' => 'Texto que se muestra para tu web',
+        'text_318bb1fc64a6e036' => 'Crédito del pie de página (después del año)',
+        'text_3b20084d3d94b4ee' => 'Nombre de usuario de Instagram',
+        'social_threads_user' => 'Nombre de usuario de Threads',
+    ];
+    foreach ($identityLabels as $key => $label) {
+        $entry = site_text_catalog()[$key];
+        $value = $settings['texts'][$key] ?? $entry['default'];
+        $identity .= '<div class="upload-field"><label for="identity-' . $escape($key) . '">' . $escape($label) . '</label>'
+            . '<textarea id="identity-' . $escape($key) . '" name="texts[' . $escape($key) . ']" rows="2" maxlength="20000">' . $escape((string) $value) . '</textarea></div>';
+    }
+    $identity .= '<div class="upload-field"><label for="profile-website-url">Dirección de tu web personal</label>'
+        . '<input id="profile-website-url" name="profile_website_url" type="url" maxlength="500" placeholder="https://…" value="' . $escape((string) ($settings['profile_website_url'] ?? '')) . '">'
+        . '<small class="upload-help">Déjala vacía si no quieres mostrar un enlace.</small></div>';
+    $html .= $card('Nombre y marca', 'Personaliza el nombre de la web, tu presentación y el crédito que aparece en el pie.', $identity);
 
-    // Tarjeta «Textos de páginas»: enlaces al editor de cada página.
+    // Los campos de plantilla se agrupan por el diseño guardado y los grupos ocultos conservan su contenido.
+    $templateTextGroups = '';
+    foreach (site_template_text_groups() as $group) {
+        $setting = $group['setting'];
+        $options = $group['options'];
+        $visible = in_array('*', $options, true) || in_array((string) ($settings[$setting] ?? ''), $options, true);
+        $templateTextGroups .= '<section class="template-text-group" data-template-text-group data-template-setting="' . $escape($setting)
+            . '" data-template-options="' . $escape(implode(',', $options)) . '"' . ($visible ? '' : ' hidden') . '>'
+            . '<h3>' . $escape($group['title']) . '</h3><div class="admin-fields">';
+        foreach ($group['fields'] as $key => $label) {
+            $entry = site_text_catalog()[$key];
+            $value = $settings['texts'][$key] ?? $entry['default'];
+            $templateTextGroups .= '<div class="upload-field"><label for="template-text-' . $escape($key) . '">' . $escape($label) . '</label>'
+                . '<textarea id="template-text-' . $escape($key) . '" name="texts[' . $escape($key) . ']" rows="2" maxlength="20000">'
+                . $escape((string) $value) . '</textarea></div>';
+        }
+        $templateTextGroups .= '</div></section>';
+    }
+    $html .= $card('Textos de las plantillas', 'Los campos corresponden al diseño guardado en Diseño. Si cambias allí una cabecera o galería, vuelve aquí para adaptar sus textos.',
+        '<div class="template-text-editor" data-template-text-editor>' . $templateTextGroups . '</div>');
+
     $pages = '<div class="page-editor-options__grid">';
     foreach (site_page_labels() as $key => $label) {
         $pages .= '<a class="page-editor-option" href="/admin.php?settings=1&amp;section=page&amp;doc=' . $key . '"><span>' . $escape($label) . '</span><span aria-hidden="true">Editar →</span></a>';
     }
-    $html .= $card('Textos de páginas', 'Abre una página para editar su contenido y formato.', $pages . '</div>') . '</div>';
+    $html .= $card('Páginas de texto', 'Edita el contenido de «El proyecto», aviso legal, privacidad y cookies.', $pages . '</div>') . '</div>';
     $html = str_replace('<form method="post"', '<form method="post" enctype="multipart/form-data"', $html);
     // ── Perfil ────────────────────────────────────────────────────────────
-    $html .= '<div class="settings-profile"><section class="admin-card"><header class="admin-card__head"><h2>Perfil</h2><p>Nombre, descripciones y enlaces que aparecen en la cabecera y en los contactos.</p></header><div class="admin-card__body">';
-    foreach (site_editable_text_keys() as $key) {
-        $entry = $key === 'social_threads_user'
-            ? ['default' => '@kookyecatgallery']
-            : site_text_catalog()[$key];
-        $value = $settings['texts'][$key] ?? $entry['default'];
-        $label = site_admin_text_labels()[$key] ?? $entry['default'];
-        $html .= '<div class="upload-field"><label for="text-' . $key . '">' . $escape($label) . '</label>'
-            . '<textarea id="text-' . $key . '" name="texts[' . $key . ']" rows="2" maxlength="20000">' . $escape($value) . '</textarea></div>';
-    }
+    $html .= '<div class="settings-profile"><section class="admin-card"><header class="admin-card__head"><h2>Perfil y redes</h2><p>Configura los enlaces de Instagram, Threads y otras redes, y las imágenes de perfil y logotipo.</p></header><div class="admin-card__body">';
     $html .= '<div class="upload-field"><label for="instagram-url">Enlace de Instagram</label><input id="instagram-url" name="instagram_url" type="url" maxlength="500" value="' . $escape((string) $settings['instagram_url']) . '"></div>'
         . '<div class="upload-field"><label for="threads-url">Enlace de Threads</label><input id="threads-url" name="threads_url" type="url" maxlength="500" value="' . $escape((string) $settings['threads_url']) . '"></div>';
     $socialNames = ['facebook'=>'Facebook','x'=>'X','youtube'=>'YouTube','tiktok'=>'TikTok','flickr'=>'Flickr','linkedin'=>'LinkedIn','pinterest'=>'Pinterest','500px'=>'500px','bluesky'=>'Bluesky','mastodon'=>'Mastodon'];
@@ -221,7 +226,7 @@ function site_page_editor_form(string $csrf, string $page): string
         . '<div class="page-editor-surface" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-label="Contenido editable" data-page-editor>'
         . site_page_content($page) . '</div><div class="page-editor-status"><span data-editor-count aria-live="polite"></span><span>Los enlaces y el formato se revisan al guardar.</span></div>'
         . '<textarea name="content" data-page-content hidden>' . $escape(site_page_content($page)) . '</textarea>'
-        . '<div class="upload-actions"><button class="upload-submit" type="submit">Guardar página</button><a class="upload-logout" href="/admin.php?settings=1&amp;section=design">Volver a Textos y diseño</a></div>'
+        . '<div class="upload-actions"><button class="upload-submit" type="submit">Guardar página</button><a class="upload-logout" href="/admin.php?settings=1&amp;section=texts">Volver a Textos</a></div>'
         . '</form><link rel="stylesheet" href="/assets/css/admin-page-editor.css?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/css/admin-page-editor.css'), 0, 12) . '"><script src="/assets/js/admin-settings.js?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/js/admin-settings.js'), 0, 12) . '" defer></script>';
     return $html;
 }
