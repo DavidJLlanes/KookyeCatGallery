@@ -70,4 +70,30 @@
     }
 }
 @media (max-height: 520px) { .deck[data-layout="coverflow"] .deck__stage { --pad: 3.9rem; } }
+
+/* Cover Flow: los controles y el pie permanecen dentro del marco visible de cada foto. */
+.deck[data-layout="coverflow"] .deck__hearts {
+    top: .7rem;
+    right: auto;
+    bottom: auto;
+    left: .7rem;
+    z-index: 5;
+}
+.deck[data-layout="coverflow"] .deck__caption {
+    box-sizing: border-box;
+    padding: clamp(.75rem, 2vw, 1.1rem) clamp(.8rem, 2.4vw, 1.25rem) .85rem;
+    background: linear-gradient(0deg, rgba(0, 0, 0, .76), rgba(0, 0, 0, 0));
+}
+.deck[data-layout="coverflow"] .deck__title {
+    max-width: 100%;
+    font-size: clamp(.95rem, 1.8vw, 1.35rem);
+    line-height: 1.12;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+}
+.deck[data-layout="coverflow"] .deck__category { display: none; }
+
 @media (prefers-reduced-motion: reduce) { .deck[data-layout="coverflow"] { --deck-duration: 1ms; } }
