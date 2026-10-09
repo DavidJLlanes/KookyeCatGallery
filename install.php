@@ -52,9 +52,9 @@ if (strlen($password) < 12 || strlen($password) > 1024) install_page('La contras
 $privateDirectory = gallery_private_directory(true);
 if (!is_dir($privateDirectory) || !is_writable($privateDirectory)) install_page('PHP no puede crear o escribir en la carpeta privada. Crea manualmente config fuera de public_html, dale permisos de escritura al usuario PHP y configura GALLERY_PRIVATE_DIR con su ruta completa.', false, 500);
 // Defensa adicional si el proveedor apunta la carpeta privada dentro del document root.
-@file_put_contents($privateDirectory . DIRECTORY_SEPARATOR . '.htaccess', "Require all denied\\n");
-@file_put_contents($privateDirectory . DIRECTORY_SEPARATOR . 'index.php', "<?php\\nhttp_response_code(404);\\nexit;\\n");
-@file_put_contents($privateDirectory . DIRECTORY_SEPARATOR . 'web.config', '<?xml version="1.0" encoding="UTF-8"?><configuration><system.webServer><authorization><deny users="*" /></authorization></system.webServer></configuration>');
+if (!is_file($privateDirectory . DIRECTORY_SEPARATOR . '.htaccess')) @file_put_contents($privateDirectory . DIRECTORY_SEPARATOR . '.htaccess', "Require all denied\\n");
+if (!is_file($privateDirectory . DIRECTORY_SEPARATOR . 'index.php')) @file_put_contents($privateDirectory . DIRECTORY_SEPARATOR . 'index.php', "<?php\\nhttp_response_code(404);\\nexit;\\n");
+if (!is_file($privateDirectory . DIRECTORY_SEPARATOR . 'web.config')) @file_put_contents($privateDirectory . DIRECTORY_SEPARATOR . 'web.config', '<?xml version="1.0" encoding="UTF-8"?><configuration><system.webServer><authorization><deny users="*" /></authorization></system.webServer></configuration>');
 $hash = password_hash($password, PASSWORD_DEFAULT);
 if (!is_string($hash) || $hash === '') install_page('No se pudo generar el hash de la contraseña.', false, 500);
 $auth = "<?php\nreturn " . var_export(['username' => $username, 'password_hash' => $hash], true) . ";\n";
