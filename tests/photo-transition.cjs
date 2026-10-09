@@ -7,7 +7,7 @@ const zlib = require('zlib');
 const assert = require('assert/strict');
 
 // Local fixtures and route interception exercise the actual PHP and JS without external services.
-function testImage() {
+function testImage(width = 640, height = 400) {
     const crc = (bytes) => {
         let value = 0xffffffff;
         for (const byte of bytes) {
@@ -23,9 +23,9 @@ function testImage() {
         return Buffer.concat([size, bytes, checksum]);
     };
     const header = Buffer.alloc(13);
-    header.writeUInt32BE(640, 0); header.writeUInt32BE(400, 4); header[8] = 8; header[9] = 2;
-    const pixels = Buffer.alloc((640 * 3 + 1) * 400, 150);
-    for (let i = 0; i < 400; i++) pixels[i * (640 * 3 + 1)] = 0;
+    header.writeUInt32BE(width, 0); header.writeUInt32BE(height, 4); header[8] = 8; header[9] = 2;
+    const pixels = Buffer.alloc((width * 3 + 1) * height, 150);
+    for (let i = 0; i < height; i++) pixels[i * (width * 3 + 1)] = 0;
     return Buffer.concat([Buffer.from('89504e470d0a1a0a', 'hex'), chunk('IHDR', header), chunk('IDAT', zlib.deflateSync(pixels)), chunk('IEND', Buffer.alloc(0))]);
 }
 
@@ -36,9 +36,10 @@ function testImage() {
     try {
         fs.cpSync(root, snapshot, { recursive: true, filter: (source) => !/(?:^|\/)(?:\.git|node_modules)(?:\/|$)/.test(source) });
         for (const directory of ['img', 'imagenes/desktop', 'imagenes/mobile', 'data']) fs.mkdirSync(path.join(snapshot, directory), { recursive: true });
-        const image = testImage();
         const cache = {};
         for (const [i, slug] of ['first', 'middle', 'last'].entries()) {
+            const [width, height] = slug === 'last' ? [400, 640] : [640, 400];
+            const image = testImage(width, height);
             const filename = `${slug}.png`;
             const original = path.join(snapshot, 'img', filename);
             fs.writeFileSync(original, image);
@@ -46,7 +47,7 @@ function testImage() {
             fs.utimesSync(original, mtime, mtime);
             for (const size of ['desktop', 'mobile']) fs.writeFileSync(path.join(snapshot, 'imagenes', size, `${slug}.webp`), image);
             fs.writeFileSync(path.join(snapshot, 'img', `${slug}.txt`), `${slug}\n---\nDescription ${slug}\n# Slug: ${slug}\n# Categoría: Test\n`);
-            cache[filename] = { mtime, edit_mtime: 0, edit_size: 0, desktop_w: 640, desktop_h: 400, mobile_w: 640, mobile_h: 400, aspect: 1.6 };
+            cache[filename] = { mtime, edit_mtime: 0, edit_size: 0, desktop_w: width, desktop_h: height, mobile_w: width, mobile_h: height, aspect: width / height };
         }
         fs.writeFileSync(path.join(snapshot, 'data/cache.json'), JSON.stringify(cache));
         const render = (url) => execFileSync('php', ['-r', '$_SERVER["REQUEST_URI"]=$argv[1]; require "index.php";', url], { cwd: snapshot, encoding: 'utf8' });
