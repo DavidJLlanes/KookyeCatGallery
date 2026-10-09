@@ -32,11 +32,12 @@ const css = [
             await page.locator(link).hover();
             const transform = await page.locator(image).evaluate(node => getComputedStyle(node).transform);
             assert.notEqual(transform, 'none', `El efecto hover debe llegar a ${image} (${transform})`);
-            await page.locator(link).evaluate(node => node.matches(':hover') ? node.blur?.() : undefined);
+            await page.mouse.move(900, 800);
             await page.locator('body').evaluate(node => { node.dataset.hover = 'frame'; });
             await page.locator(link).hover();
             const outline = await page.locator(link).evaluate(node => getComputedStyle(node).outlineStyle);
             assert.equal(outline, 'solid', `El efecto de marco debe alcanzar ${link}`);
+            await page.mouse.move(900, 800);
             await page.locator('body').evaluate(node => { node.dataset.hover = 'shine'; });
             await page.locator(link).hover();
             const shine = await page.locator(`#${item.container} .${item.picture}`).evaluate(node => getComputedStyle(node, '::after').content);
