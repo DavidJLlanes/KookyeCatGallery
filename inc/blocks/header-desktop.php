@@ -36,7 +36,7 @@
             <span><?= safe($yearLabel) ?></span>
         </div>
         <?php else: ?>
-        <p class="hero__empty-note" data-reveal><?= site_text_html('text_eefccddb211b22ea') ?> <code><?= site_text_html('text_7fe0e410821a1ee4') ?></code> <?= site_text_html('text_cc0ecea94d78a73f') ?></p>
+        <p class="hero__empty-note" data-reveal><?= site_text_html('template_empty_gallery_message') ?></p>
         <?php endif; ?>
     </div>
 

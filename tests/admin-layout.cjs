@@ -14,12 +14,12 @@ $section = getenv('ADMIN_TEST_SECTION') ?: 'design';
 $_GET['section'] = $section;
 $settings = site_settings_defaults();
 $settings['section_order'] = ['social', 'gallery', 'categories', 'map', 'project'];
-uploadPage($section === 'design' ? 'Diseño' : 'Perfil', adminNavigation('test-token') . site_settings_form('test-token', $settings, $section), 200, true);
+uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' : 'Perfil'), adminNavigation('test-token') . site_settings_form('test-token', $settings, $section), 200, true);
 `;
 (async()=>{
   const browser=await chromium.launch({headless:true,executablePath:process.env.TEST_BROWSER||undefined,args:['--no-sandbox']});
   try {
-    for(const section of ['design','profile']) {
+    for(const section of ['design','texts','profile']) {
       const html=execFileSync('php',['-r',fixture],{cwd:root,encoding:'utf8',env:{...process.env,ADMIN_TEST_SECTION:section}});
       for(const width of [320,375,768,959,960,1280,1920]) {
         const page=await browser.newPage({viewport:{width,height:900}});
@@ -44,9 +44,9 @@ uploadPage($section === 'design' ? 'Diseño' : 'Perfil', adminNavigation('test-t
               h1:document.querySelectorAll('h1').length,
               order:[...document.querySelectorAll('input[name="section_order[]"]')].map(i=>i.value)};
           },installed);
-          assert(!result.subnav,'Perfil and Diseño are separate menu entries, not sub-tabs');
-          assert.deepEqual(result.navLabels,['Subir foto','Gestionar fotos','Categorías','Perfil','Diseño y textos'],'Menu entries');
-          assert.deepEqual(result.active,[section==='design'?'Diseño y textos':'Perfil'],'Active menu entry');
+          assert(!result.subnav,'Perfil, Diseño and Textos are separate menu entries, not sub-tabs');
+          assert.deepEqual(result.navLabels,['Subir foto','Gestionar fotos','Categorías','Perfil','Diseño','Textos'],'Menu entries');
+          assert.deepEqual(result.active,[section==='design'?'Diseño':(section==='texts'?'Textos':'Perfil')],'Active menu entry');
           assert(!result.overflow,`Admin overflow ${width}`);
           assert(result.installInTopbar,'Install belongs in the top bar');
           assert.equal(result.h1,1,'One h1 per page');
@@ -87,7 +87,7 @@ uploadPage($section === 'design' ? 'Diseño' : 'Perfil', adminNavigation('test-t
             change(premium,'swipe');
             const swipeShown=!group('swipe').hidden&&group('none').hidden;
             change(premium,'squares');
-            const squaresShown=!group('squares').hidden&&!group('bubbles,squares').hidden&&group('bubbles').hidden;
+            const squaresShown=!group('bubbles,squares').hidden&&group('none').hidden&&group('swipe').hidden;
             const atlasField=document.querySelector('textarea[name="texts[template_atlas_label]"]');
             return {initial,reelShown,atlasShown,swipeShown,squaresShown,atlasEditable:!!atlasField&&!atlasField.disabled};
           });

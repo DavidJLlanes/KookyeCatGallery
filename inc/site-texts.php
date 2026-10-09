@@ -1,6 +1,7 @@
 <?php
 // Stable keys: do not regenerate this catalog when defaults change.
 return [
+    'template_empty_gallery_message' => ['group' => 'Inicio · galería vacía', 'default' => 'Todavía no hay fotografías. Añade imágenes desde el panel de administración.'],
     'template_reel_label' => ['group' => 'Plantillas · Cine · rótulo superior', 'default' => '01 / KOOKYE EN MOVIMIENTO'],
     'template_atlas_label' => ['group' => 'Plantillas · Atlas · título superior', 'default' => 'ATLAS  /  PROVINCIA DE KOOKYE'],
     'template_atlas_photo_label' => ['group' => 'Plantillas · Atlas · rótulo de fotografía', 'default' => 'PLACA  ·  KOOKYE'],
@@ -66,7 +67,7 @@ return [
     'text_7f9488ff977b7f67' => ['group' => 'Inicio y galería · accesibilidad', 'default' => 'Estadísticas de la galería'],
     'text_577e559428a23438' => ['group' => 'Inicio y galería', 'default' => 'fotografías'],
     'text_bb6db5ced87f3dfa' => ['group' => 'Inicio y galería', 'default' => 'miradas'],
-    'text_b5c772cf5b14f84e' => ['group' => 'Inicio y galería', 'default' => 'Fotografías'],
+    'text_b5c772cf5b14f84e' => ['group' => 'Inicio y galería', 'default' => 'tu región'],
     'text_ff1de97302308752' => ['group' => 'Inicio y galería', 'default' => 'mi tierra'],
     'text_4577bab0d9627af1' => ['group' => 'Inicio y galería', 'default' => '@KookyeCatGallery'],
     'text_6ba397681d3ee9c1' => ['group' => 'Inicio y galería · accesibilidad', 'default' => 'Perfil verificado'],
