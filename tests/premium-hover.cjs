@@ -9,38 +9,36 @@ const css = [
     'assets/premium/deck/deck.css',
     'assets/premium/bubbles/bubbles.css',
     'assets/premium/cylinder/cylinder.css',
-].map(file => fs.readFileSync(path.join(root, file), 'utf8')).join('\n');
-const html = `<!doctype html><html><head><meta charset="utf-8"></head>
-<body data-gallery-premium="deck" data-hover="zoom">
-    <div id="deck">
-        <a class="deck__link" href="#"><picture class="deck__picture"><img class="deck__img" alt=""></picture></a>
-        <a class="cyl__link" href="#"><picture class="cyl__picture"><img class="cyl__img" alt=""></picture></a>
-    </div>
-    <div id="bubbles"><article class="bubbles__item"><a class="bubbles__link" href="#"><picture class="bubbles__picture"><img class="bubbles__img" alt=""></picture></a></article></div>
-</body></html>`;
+].map(file => fs.readFileSync(path.join(root, file), 'utf8')).join('\\n');
+
 (async () => {
     const browser = await chromium.launch({headless: true, executablePath: process.env.TEST_BROWSER || undefined, args: ['--no-sandbox']});
     try {
         const page = await browser.newPage({viewport: {width: 1000, height: 900}});
-        await page.setContent(html);
-        await page.addStyleTag({content: 'body{margin:0}#deck,#bubbles{position:relative;width:220px;height:220px;margin:20px}#deck a,#bubbles a{display:block;width:100%;height:100%}img{display:block;width:100%;height:100%}'});
-        await page.addStyleTag({content: css});
-        for (const [link, image] of [
-            ['#deck .deck__link', '#deck .deck__img'],
-            ['#bubbles .bubbles__link', '#bubbles .bubbles__img'],
-            ['#deck .cyl__link', '#deck .cyl__img'],
-        ]) {
+        const cases = [
+            {premium: 'deck', container: 'deck', link: 'deck__link', picture: 'deck__picture', image: 'deck__img'},
+            {premium: 'bubbles', container: 'bubbles', link: 'bubbles__link', picture: 'bubbles__picture', image: 'bubbles__img'},
+            {premium: 'cylinder', container: 'deck', link: 'cyl__link', picture: 'cyl__picture', image: 'cyl__img'},
+        ];
+        for (const item of cases) {
+            await page.setContent(`<!doctype html><html><head><meta charset="utf-8"></head>
+                <body data-gallery-premium="${item.premium}" data-hover="zoom">
+                    <div id="${item.container}"><a class="${item.link}" href="#"><picture class="${item.picture}"><img class="${item.image}" alt=""></picture></a></div>
+                </body></html>`);
+            await page.addStyleTag({content: 'body{margin:0}#deck,#bubbles{position:relative;width:220px;height:220px;margin:20px}a{display:block;width:100%;height:100%}img{display:block;width:100%;height:100%}'});
+            await page.addStyleTag({content: css});
+            const link = `#${item.container} .${item.link}`;
+            const image = `#${item.container} .${item.image}`;
             await page.locator(link).hover();
             const transform = await page.locator(image).evaluate(node => getComputedStyle(node).transform);
             assert.notEqual(transform, 'none', `El efecto hover debe llegar a ${image} (${transform})`);
+            await page.locator('body').evaluate(node => { node.dataset.hover = 'frame'; });
+            const outline = await page.locator(link).evaluate(node => getComputedStyle(node).outlineStyle);
+            assert.equal(outline, 'solid', `El efecto de marco debe alcanzar ${link}`);
+            await page.locator('body').evaluate(node => { node.dataset.hover = 'shine'; });
+            const shine = await page.locator(`#${item.container} .${item.picture}`).evaluate(node => getComputedStyle(node, '::after').content);
+            assert.notEqual(shine, 'none', `El destello debe generar una capa sobre ${item.picture}`);
         }
-        await page.locator('body').evaluate(node => { node.dataset.hover = 'frame'; });
-        await page.locator('#deck .deck__link').hover();
-        const outline = await page.locator('#deck .deck__link').evaluate(node => getComputedStyle(node).outlineStyle);
-        assert.equal(outline, 'solid', 'El efecto de marco debe alcanzar la carta premium');
-        await page.locator('body').evaluate(node => { node.dataset.hover = 'shine'; });
-        const shine = await page.locator('#deck .deck__picture').evaluate(node => getComputedStyle(node, '::after').content);
-        assert.notEqual(shine, 'none', 'El efecto destello debe generar su capa sobre la foto premium');
         console.log('OK: efectos hover aplicados a Baraja, Burbujas y Cilindro.');
     } finally {
         await browser.close();
