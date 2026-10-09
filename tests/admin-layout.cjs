@@ -59,15 +59,20 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
           if(section==='design') {
             const socialSettings=await page.evaluate(()=>{
               const structure=[...document.querySelectorAll('.settings-design .admin-card')].find(card=>card.querySelector('h2')?.textContent.trim()==='Estructura de la página');
-              const networks=[...document.querySelectorAll('.social-settings-row select:first-child option')].map(option=>option.value);
+              const networks=[...document.querySelectorAll('.social-settings-row select option')].map(option=>option.value);
               const labels=[...document.querySelectorAll('.settings-texts label')].map(label=>label.textContent.trim());
+              const rows=[...document.querySelectorAll('[data-social-row]')];
+              const configured=rows.filter(row=>row.querySelector('select').value!=='').length;
+              const visible=rows.filter(row=>getComputedStyle(row).display!=='none').length;
               return {editorInStructure:!!structure?.querySelector('.social-settings-list'),
                 instagram:networks.includes('instagram'),threads:networks.includes('threads'),
                 oldUsernameFields:labels.some(label=>/Nombre de usuario de (Instagram|Threads)/i.test(label)),
-                oldLinks:!!document.querySelector('[name="instagram_url"], [name="threads_url"]')};
+                oldLinks:!!document.querySelector('[name="instagram_url"], [name="threads_url"]'),
+                configuredRows:configured,visibleRows:visible,addButton:!!document.querySelector('[data-social-add]')};
             });
-            assert.deepEqual(socialSettings,{editorInStructure:true,instagram:true,threads:true,oldUsernameFields:false,oldLinks:false},
-              'Instagram and Threads must share the Redes Sociales editor inside page structure');
+            assert.deepEqual(socialSettings,{editorInStructure:true,instagram:true,threads:true,oldUsernameFields:false,oldLinks:false,
+              configuredRows:socialSettings.configuredRows,visibleRows:socialSettings.configuredRows,addButton:true},
+              'Configured social profiles stay visible and empty rows stay collapsed');
           }
         }
         if(section==='design') {
@@ -86,6 +91,24 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
             return result;
           });
           assert.deepEqual(premium,{total:8,initial:0,titleField:true,options:['none','deck','coverflow','bubbles','squares','drum','cylinder','polaroid','swipe'],afterDeck:8,afterCoverflow:8,noteShown:true,dimmed:8,afterBubbles:6,photosEnabled:true,afterNone:0,noteHidden:true},'Premium gallery must toggle the standard gallery fields');
+        }
+        if(section==='design' && width===375) {
+          const socialEditor=await page.evaluate(()=>{
+            const add=document.querySelector('[data-social-add]');
+            const rows=[...document.querySelectorAll('[data-social-row]')];
+            const before=rows.filter(row=>getComputedStyle(row).display!=='none').length;
+            add.click();
+            const openRow=rows.find(row=>row.dataset.socialOpen==='true');
+            const opened=!!openRow&&getComputedStyle(openRow).display!=='none';
+            openRow.querySelector('select').value='facebook';
+            openRow.querySelector('select').dispatchEvent(new Event('change',{bubbles:true}));
+            const selected=openRow.dataset.socialEmpty==='false';
+            openRow.querySelector('[data-social-remove]').click();
+            const removed=rows.filter(row=>getComputedStyle(row).display!=='none').length===before;
+            return {before,opened,selected,removed,addStillAvailable:!add.disabled};
+          });
+          assert(socialEditor.opened&&socialEditor.selected&&socialEditor.removed&&socialEditor.addStillAvailable,
+            'Social editor should add, select, and remove a profile row');
         }
         if(section==='design' && width===375) {
           const templates=await page.evaluate(()=>{

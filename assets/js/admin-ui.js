@@ -75,7 +75,48 @@
     }
 
     /* -------------------------------------------------------------------------
-       4. Orden de los bloques de la portada
+       4. Editor de Redes Sociales: oculta las filas vacías y permite añadirlas
+       progresivamente, sin perder enlaces o campos parciales ya guardados.
+       ------------------------------------------------------------------------- */
+    const socialEditor = document.querySelector('[data-social-editor]');
+    if (socialEditor) {
+        const rows = [...socialEditor.querySelectorAll('[data-social-row]')];
+        const addSocial = socialEditor.querySelector('[data-social-add]');
+        const empty = row => [...row.querySelectorAll('select, input')].every(field => !field.value.trim());
+        const syncSocialRows = () => {
+            rows.forEach(row => {
+                const isEmpty = empty(row);
+                row.dataset.socialEmpty = String(isEmpty);
+                if (!isEmpty) delete row.dataset.socialOpen;
+            });
+            const available = rows.some(row => empty(row) && row.dataset.socialOpen !== 'true');
+            if (addSocial) addSocial.disabled = !available;
+        };
+        socialEditor.classList.add('is-enhanced');
+        addSocial?.addEventListener('click', () => {
+            const row = rows.find(candidate => empty(candidate) && candidate.dataset.socialOpen !== 'true');
+            if (!row) return;
+            row.dataset.socialOpen = 'true';
+            syncSocialRows();
+            row.querySelector('select')?.focus();
+        });
+        rows.forEach(row => {
+            row.addEventListener('input', syncSocialRows);
+            row.addEventListener('change', syncSocialRows);
+            row.querySelector('[data-social-remove]')?.addEventListener('click', () => {
+                row.querySelectorAll('select, input').forEach(field => {
+                    field.value = '';
+                    field.dispatchEvent(new Event('change', {bubbles: true}));
+                });
+                delete row.dataset.socialOpen;
+                syncSocialRows();
+            });
+        });
+        syncSocialRows();
+    }
+
+    /* -------------------------------------------------------------------------
+       5. Orden de los bloques de la portada
        El orden del DOM es el orden enviado (cada fila lleva su input oculto section_order[]).
        ------------------------------------------------------------------------- */
     const list = document.querySelector('[data-section-order]');

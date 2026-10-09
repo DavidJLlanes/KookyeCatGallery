@@ -111,14 +111,27 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     }
     $list .= '</ol>';
     $socialNames = site_social_networks();
-    $socialEditor = '<section class="admin-social-settings"><h3>Redes Sociales</h3><p>Rellena solo las redes que quieras mostrar en esta sección.</p><div class="social-settings-list">';
+    $socialEditor = '<section class="admin-social-settings" data-social-editor><h3>Redes Sociales</h3>'
+        . '<p>Elige qué perfiles aparecerán en esta sección.</p><div class="social-settings-list" data-social-list>';
     for ($i = 0; $i < 12; $i++) {
         $row = $settings['social_links'][$i] ?? ['network'=>'','url'=>'','handle'=>''];
-        $socialEditor .= '<div class="social-settings-row"><select name="social_links['.$i.'][network]"><option value="">Añadir red…</option>';
-        foreach ($socialNames as $value => $label) $socialEditor .= '<option value="'.$escape($value).'"'.(($row['network'] ?? '') === $value ? ' selected' : '').'>'.$escape($label).'</option>';
-        $socialEditor .= '</select><input type="url" name="social_links['.$i.'][url]" maxlength="500" placeholder="https://…" value="'.$escape((string)($row['url'] ?? '')).'"><input type="text" name="social_links['.$i.'][handle]" maxlength="120" placeholder="@usuario o nombre" value="'.$escape((string)($row['handle'] ?? '')).'"></div>';
+        $network = (string) ($row['network'] ?? '');
+        $url = (string) ($row['url'] ?? '');
+        $handle = (string) ($row['handle'] ?? '');
+        $filled = trim($network . $url . $handle) !== '';
+        $networkLabel = $socialNames[$network] ?? 'red social';
+        $socialEditor .= '<div class="social-settings-row" data-social-row data-social-empty="' . ($filled ? 'false' : 'true') . '">'
+            . '<div class="social-settings-row__head"><label class="sr-only" for="social-network-' . $i . '">Red social ' . ($i + 1) . '</label>'
+            . '<select id="social-network-' . $i . '" name="social_links['.$i.'][network]" aria-label="Red social ' . ($i + 1) . '"><option value="">Seleccionar red social…</option>';
+        foreach ($socialNames as $value => $label) $socialEditor .= '<option value="'.$escape($value).'"'.($network === $value ? ' selected' : '').'>'.$escape($label).'</option>';
+        $socialEditor .= '</select><button type="button" class="social-settings-row__remove" data-social-remove aria-label="Quitar ' . $escape($networkLabel) . '">Quitar</button></div>'
+            . '<div class="social-settings-row__fields"><label class="social-settings-field"><span>Enlace del perfil</span>'
+            . '<input type="url" name="social_links['.$i.'][url]" maxlength="500" aria-label="Enlace del perfil de la red social ' . ($i + 1) . '" placeholder="https://…" value="'.$escape($url).'"></label>'
+            . '<label class="social-settings-field"><span>Nombre visible</span>'
+            . '<input type="text" name="social_links['.$i.'][handle]" maxlength="120" aria-label="Nombre visible del perfil ' . ($i + 1) . '" placeholder="@usuario o nombre" value="'.$escape($handle).'"></label></div></div>';
     }
-    $socialEditor .= '<small class="upload-help">Puedes añadir hasta 12 redes sociales.</small></div></section>';
+    $socialEditor .= '</div><div class="social-settings-actions"><button type="button" class="social-settings-add" data-social-add>＋ Añadir red social</button>'
+        . '<small class="upload-help">Hasta 12 perfiles. Las filas vacías se muestran al añadirlas.</small></div></section>';
     $html .= $card('Estructura de la página', 'Ordena los bloques de la portada, decide cuáles mostrar y configura las Redes Sociales.', $list . $socialEditor);
     $html .= '</div><div class="settings-texts">';
     $titleValue = (string) ($settings['site_title'] ?? '') !== '' ? (string) $settings['site_title'] : site_title_default();
