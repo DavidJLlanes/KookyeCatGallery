@@ -30,7 +30,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . '<input type="hidden" name="csrf" value="' . $escape($csrf) . '">'
         . '<input type="hidden" name="section" value="' . $escape($section) . '">'
         . '<p>Personaliza la web. Los títulos, descripciones y categorías de cada fotografía se editan en Gestionar fotos.</p>';
-    $labels = ['palette' => 'Paleta de colores', 'grid' => 'Tipo de cuadrícula', 'header_mobile' => 'Cabecera móvil', 'header_desktop' => 'Cabecera de escritorio', 'gallery_mobile' => 'Galería móvil', 'gallery_desktop' => 'Galería de escritorio', 'hover' => 'Efecto Hover', 'pagination_shape' => 'Forma de la paginación', 'gallery_premium' => 'Galería premium'];
+    $labels = ['palette' => 'Paleta de colores', 'grid' => 'Proporción de las fotos', 'header_mobile' => 'Cabecera móvil', 'header_desktop' => 'Cabecera de escritorio', 'gallery_mobile' => 'Galería móvil', 'gallery_desktop' => 'Galería de escritorio', 'hover' => 'Efecto Hover', 'pagination_shape' => 'Forma de la paginación', 'gallery_premium' => 'Galería premium'];
     $choices = site_design_choices();
     // ¿Hay una galería premium activa? Entonces se desactivan los campos de la galería estándar (los marcados con $premiumOff).
     $premiumOn = site_premium_gallery_active($settings) !== null;
@@ -42,8 +42,9 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         $list = $ignoredBy($key);
         return $list === '' ? '' : ' data-premium-off="' . $list . '"' . ($premiumActive !== null && in_array($key, site_premium_ignored_settings($premiumActive), true) ? ' disabled' : '');
     };
-    $select = static function (string $key, string $label, array $options, $current, bool $premiumOff = false) use ($escape, $offAttr, $premiumActive): string {
-        $out = '<div class="upload-field' . ($premiumOff && str_contains($offAttr($key), ' disabled') ? ' is-disabled' : '') . '"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '"'
+    $select = static function (string $key, string $label, array $options, $current, bool $premiumOff = false) use ($escape, $offAttr, $premiumActive, $settings): string {
+        $gridUnused = $key === 'grid' && !site_grid_setting_is_used($settings);
+        $out = '<div class="upload-field' . (($premiumOff && str_contains($offAttr($key), ' disabled')) || $gridUnused ? ' is-disabled' : '') . '"' . ($key === 'grid' ? ' data-grid-setting' : '') . '><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '"' . ($gridUnused ? ' disabled' : '')
             . ($premiumOff ? $offAttr($key) : '') . '>';
         foreach ($options as $value => $text) $out .= '<option value="' . $escape((string) $value) . '"' . ((string) $current === (string) $value ? ' selected' : '') . '>' . $escape((string) $text) . '</option>';
         return $out . '</select></div>';
@@ -88,6 +89,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . $range('columns_desktop', 'Columnas en escritorio', $columnsDesktop, $settings['columns_desktop'], '', true)
         . $range('photos_mobile', 'Fotos visibles a la vez en móvil', site_photos_per_view_choices(), $settings['photos_mobile'], 'Todas', true)
         . $range('photos_desktop', 'Fotos visibles a la vez en escritorio', site_photos_per_view_choices(), $settings['photos_desktop'], 'Todas', true) . '</div>'
+        . '<p class="upload-help" data-grid-help' . (site_grid_setting_is_used($settings) ? ' hidden' : '') . '>Este ajuste solo se aplica a Masonry, Cuadrícula, Hoja de contactos y Trípticos.</p>'
         . '<p class="upload-help">Las fotos visibles a la vez no dependen de las columnas: si hay más fotos, se paginan. Elige «Todas» para mostrarlas juntas. Masonry conserva las proporciones originales; para fotos cuadradas, horizontales o verticales, elige la galería «Cuadrícula» y su tipo de cuadrícula.</p>');
 
     $order = site_section_order_normalize($settings['section_order'] ?? null);
