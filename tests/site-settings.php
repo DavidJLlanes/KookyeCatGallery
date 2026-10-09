@@ -15,10 +15,21 @@ function rejects(array $input): void
 }
 
 $defaults = site_settings_defaults();
-check(site_text_catalog()['social_threads_user']['default'] === '@kookyecatgallery', 'Threads display name must have a catalog default.');
-check(site_text('social_threads_user') !== '', 'Threads profile must not render an empty label.');
-$blankThreads = array_replace($defaults, ['texts' => ['social_threads_user' => '']]);
-check(site_settings_validate($blankThreads)['texts'] === [], 'A blank Threads user must use the default.');
+check(isset(site_social_networks()['instagram'], site_social_networks()['threads']), 'Instagram and Threads must be available networks.');
+check(!in_array('social_threads_user', site_editable_text_keys(), true) && !in_array('text_3b20084d3d94b4ee', site_editable_text_keys(), true), 'Network handles must not be editable text fields.');
+$profileLinks = array_replace($defaults, ['social_links' => [
+    ['network'=>'instagram', 'url'=>'https://instagram.com/example', 'handle'=>'@example'],
+    ['network'=>'threads', 'url'=>'https://threads.net/@example', 'handle'=>'@example'],
+]]);
+check(count(site_settings_validate($profileLinks)['social_links']) === 2, 'Instagram and Threads must validate in the shared network list.');
+$legacyProfiles = array_replace($defaults, [
+    'instagram_url'=>'https://instagram.com/legacy',
+    'threads_url'=>'https://threads.net/@legacy',
+    'texts'=>['text_3b20084d3d94b4ee'=>'@legacy_ig', 'social_threads_user'=>'@legacy_threads'],
+]);
+$migratedProfiles = site_settings_validate($legacyProfiles)['social_links'];
+check(array_column($migratedProfiles, 'network') === ['instagram', 'threads'], 'Legacy Instagram and Threads profiles must migrate.');
+check($migratedProfiles[0]['handle'] === '@legacy_ig' && $migratedProfiles[1]['handle'] === '@legacy_threads', 'Legacy network handles must be preserved.');
 check(!array_key_exists('premium', $defaults), 'Premium designs must not be part of settings.');
 check(count(site_editable_page_keys()) === 4, 'Expected four editable text pages.');
 check(count(site_design_choices()['gallery_mobile']) === 10, 'Expected ten mobile gallery designs.');
@@ -74,6 +85,10 @@ foreach (['show_header_mobile', 'show_header_desktop'] as $field) {
 }
 check(str_contains(site_design_attributes(), 'data-show-header-mobile='), 'Header visibility must reach the page.');
 check(str_contains(site_settings_form('t', array_replace($defaults, ['section_order' => ['map', 'gallery', 'categories', 'project', 'social']]), 'design'), 'data-section-key="map"'), 'Section order list missing from the design form.');
+$designForm = site_settings_form('t', $defaults, 'design');
+check(str_contains($designForm, '<h3>Redes Sociales</h3>') && str_contains($designForm, '<option value="instagram">Instagram</option>') && str_contains($designForm, '<option value="threads">Threads</option>'), 'The page structure social section must include Instagram and Threads.');
+check(!str_contains($designForm, 'name="instagram_url"') && !str_contains($designForm, 'name="threads_url"') && !str_contains($designForm, 'Nombre de usuario de Instagram') && !str_contains($designForm, 'Nombre de usuario de Threads'), 'Legacy profile fields must be removed.');
+check(str_contains($designForm, '<strong>Redes Sociales</strong>'), 'Page structure must label the social block Redes Sociales.');
 
 check($defaults['pagination_shape'] === 'circle', 'Pagination must be circular by default.');
 check(site_settings_validate(array_replace($defaults, ['pagination_shape' => 'square']))['pagination_shape'] === 'square', 'Square pagination was rejected.');

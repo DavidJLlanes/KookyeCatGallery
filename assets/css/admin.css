@@ -278,6 +278,9 @@
 .page-editor-option span:last-child { color: var(--accent); white-space: nowrap; }
 .page-editor-option:hover, .page-editor-option:focus-visible { border-color: var(--accent); }
 @media (max-width: 520px) { .page-editor-options__grid { grid-template-columns: 1fr; } }
+.admin-social-settings { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--adm-line); }
+.admin-social-settings h3 { margin: 0 0 .35rem; font: 600 1rem var(--sans); }
+.admin-social-settings > p { margin: 0 0 .9rem; color: var(--fg-soft); font-size: .8rem; }
 .social-settings-list { display: grid; gap: .65rem; }
 .social-settings-row { display: grid; grid-template-columns: 160px minmax(0, 1fr) minmax(0, .6fr); gap: .55rem; }
 @media (max-width: 720px) {

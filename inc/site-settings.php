@@ -99,7 +99,7 @@ function site_section_definitions(): array
         'gallery' => ['label' => 'Bloque de galería', 'hint' => 'Fotos, buscador y presentación', 'toggle' => null],
         'map' => ['label' => 'Mapa', 'hint' => 'Mapa de ubicaciones', 'toggle' => 'show_map'],
         'project' => ['label' => '«El proyecto»', 'hint' => 'Texto y retrato del proyecto', 'toggle' => 'show_project'],
-        'social' => ['label' => 'Enlaces sociales', 'hint' => 'Contacto y redes', 'toggle' => 'show_social'],
+        'social' => ['label' => 'Redes Sociales', 'hint' => 'Perfiles y enlaces sociales', 'toggle' => 'show_social'],
     ];
 }
 
@@ -141,6 +141,16 @@ function site_section_order_normalize(mixed $order): array
 // =============================================================================
 
 /**
+ * Redes disponibles en el editor y en la portada. Instagram y Threads conservan sus marcas CSS actuales.
+ */
+function site_social_networks(): array
+{
+    return ['instagram'=>'Instagram', 'threads'=>'Threads', 'facebook'=>'Facebook', 'x'=>'X', 'youtube'=>'YouTube',
+        'tiktok'=>'TikTok', 'flickr'=>'Flickr', 'linkedin'=>'LinkedIn', 'pinterest'=>'Pinterest', '500px'=>'500px',
+        'bluesky'=>'Bluesky', 'mastodon'=>'Mastodon'];
+}
+
+/**
  * Valores iniciales de todos los ajustes. Un archivo antiguo al que le falte una clave hereda estos
  * valores.
  */
@@ -152,8 +162,6 @@ function site_settings_defaults(): array
         'section_order' => array_keys(site_section_labels()), 'show_header_mobile' => true, 'show_header_desktop' => true,
         'show_categories' => true, 'show_map' => false, 'show_project' => true, 'show_social' => false,
         'texts' => [], 'pages' => [], 'profile_image' => '/profile-placeholder.svg', 'logo_image' => '/favicon.svg',
-        'instagram_url' => 'https://example.com',
-        'threads_url' => 'https://example.com',
         'profile_website_url' => 'https://example.com',
         'social_links' => []];
 }
@@ -170,8 +178,6 @@ function site_editable_text_keys(): array
         'text_2e2b80d871481edc',
         'text_54b7645201863e32',
         'text_7e6debbd1dab03b1',
-        'text_3b20084d3d94b4ee',
-        'social_threads_user',
     ];
     foreach (site_template_text_groups() as $group) {
         array_push($keys, ...array_keys($group['fields']));
@@ -191,8 +197,6 @@ function site_admin_text_labels(): array
         'text_2e2b80d871481edc' => 'Descripción principal',
         'text_54b7645201863e32' => 'Descripción secundaria',
         'text_7e6debbd1dab03b1' => 'Web de usuario',
-        'text_3b20084d3d94b4ee' => 'Usuario de Instagram',
-        'social_threads_user' => 'Usuario de Threads',
     ];
 }
 
@@ -277,14 +281,11 @@ function site_settings_validate(array $input): array
         throw new InvalidArgumentException('Los textos no tienen un formato válido.');
     }
     foreach (site_editable_text_keys() as $key) {
-        $entry = $key === 'social_threads_user'
-            ? ['default' => '@kookyecatgallery']
-            : site_text_catalog()[$key];
+        $entry = site_text_catalog()[$key];
         $value = $input['texts'][$key] ?? $entry['default'];
         if (!is_string($value) || strlen($value) > 20000 || !preg_match('//u', $value)) {
             throw new InvalidArgumentException('Hay un texto inválido o demasiado largo.');
         }
-        if ($key === 'social_threads_user' && trim($value) === '') $value = $entry['default'];
         if ($value !== $entry['default']) $out['texts'][$key] = $value;
     }
     $pages = $input['pages'] ?? [];
@@ -301,21 +302,23 @@ function site_settings_validate(array $input): array
         }
         $out[$key] = $value;
     }
-    foreach (['instagram_url' => 'https://example.com', 'threads_url' => 'https://example.com'] as $key => $default) {
-        $value = trim((string) ($input[$key] ?? $default));
-        if (!filter_var($value, FILTER_VALIDATE_URL) || !preg_match('~^https://~i', $value)) {
-            throw new InvalidArgumentException('La URL del perfil social no es válida.');
-        }
-        $out[$key] = $value;
-    }
     $website = trim((string) ($input['profile_website_url'] ?? $out['profile_website_url']));
     if ($website !== '' && (!filter_var($website, FILTER_VALIDATE_URL) || !preg_match('~^https://~i', $website))) {
         throw new InvalidArgumentException('La dirección de la web personal debe empezar por https://.');
     }
     $out['profile_website_url'] = $website;
-    $allowedSocials = ['facebook', 'x', 'youtube', 'tiktok', 'flickr', 'linkedin', 'pinterest', '500px', 'bluesky', 'mastodon'];
+    $allowedSocials = array_keys(site_social_networks());
     $socialLinks = $input['social_links'] ?? [];
     if (!is_array($socialLinks)) throw new InvalidArgumentException('Las redes sociales no tienen un formato válido.');
+    // Migra perfiles guardados antes del editor unificado. Las URLs de ejemplo no son perfiles reales.
+    $legacyProfiles = [
+        ['network'=>'instagram', 'url'=>(string) ($input['instagram_url'] ?? ''), 'handle'=>trim((string) ($input['texts']['text_3b20084d3d94b4ee'] ?? '')) ?: site_text_catalog()['text_3b20084d3d94b4ee']['default']],
+        ['network'=>'threads', 'url'=>(string) ($input['threads_url'] ?? ''), 'handle'=>trim((string) ($input['texts']['social_threads_user'] ?? '')) ?: site_text_catalog()['social_threads_user']['default']],
+    ];
+    $existingNetworks = array_map(static fn($row) => is_array($row) ? strtolower((string) ($row['network'] ?? '')) : '', $socialLinks);
+    $legacyProfiles = array_values(array_filter($legacyProfiles, static fn($row) =>
+        trim($row['url']) !== '' && trim($row['url']) !== 'https://example.com' && !in_array($row['network'], $existingNetworks, true)));
+    $socialLinks = array_merge($legacyProfiles, $socialLinks);
     $out['social_links'] = [];
     foreach ($socialLinks as $row) {
         if (!is_array($row)) continue;

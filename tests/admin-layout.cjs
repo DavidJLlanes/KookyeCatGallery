@@ -56,6 +56,19 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
           assert(result.savebar.height>0,'Save bar missing');
           for(const f of result.fields) assert(f.right<=width+1&&f.left>=-1,`Control clipped at ${width}`);
           if(section==='design') assert.deepEqual(result.order,['social','gallery','categories','map','project'],'Saved order must reach the form');
+          if(section==='design') {
+            const socialSettings=await page.evaluate(()=>{
+              const structure=[...document.querySelectorAll('.settings-design .admin-card')].find(card=>card.querySelector('h2')?.textContent.trim()==='Estructura de la página');
+              const networks=[...document.querySelectorAll('.social-settings-row select:first-child option')].map(option=>option.value);
+              const labels=[...document.querySelectorAll('.settings-texts label')].map(label=>label.textContent.trim());
+              return {editorInStructure:!!structure?.querySelector('.social-settings-list'),
+                instagram:networks.includes('instagram'),threads:networks.includes('threads'),
+                oldUsernameFields:labels.some(label=>/Nombre de usuario de (Instagram|Threads)/i.test(label)),
+                oldLinks:!!document.querySelector('[name="instagram_url"], [name="threads_url"]')};
+            });
+            assert.deepEqual(socialSettings,{editorInStructure:true,instagram:true,threads:true,oldUsernameFields:false,oldLinks:false},
+              'Instagram and Threads must share the Redes Sociales editor inside page structure');
+          }
         }
         if(section==='design') {
           // Galería premium: al elegir una se desactivan los ajustes de la galería estándar que no use (8 con la baraja; 6 con las burbujas, que respetan «Fotos visibles a la vez»); al quitarla se reactivan.

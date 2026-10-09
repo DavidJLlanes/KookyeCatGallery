@@ -17,7 +17,7 @@ declare(strict_types=1);
  *
  * Estructura de la parte «Diseño» (una tarjeta por apartado):
  *   Apariencia · Cabecera · Galería · Estructura de la página.
- * «Textos» contiene marca, textos de plantilla y páginas; «Perfil», redes e imágenes.
+ * «Textos» contiene marca, textos de plantilla y páginas; «Diseño» incluye estructura de página y redes sociales; «Perfil» contiene imágenes.
  *
  * @param array|null $values Valores a mostrar (p. ej. tras un error); null = los guardados.
  */
@@ -110,7 +110,16 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
             . '<span class="section-order__move"><button type="button" data-move="up" aria-label="Subir ' . $escape($name) . '">↑</button><button type="button" data-move="down" aria-label="Bajar ' . $escape($name) . '">↓</button></span></li>';
     }
     $list .= '</ol>';
-    $html .= $card('Estructura de la página', 'Ordena los bloques de la portada con las flechas y oculta los que no quieras mostrar.', $list);
+    $socialNames = site_social_networks();
+    $socialEditor = '<section class="admin-social-settings"><h3>Redes Sociales</h3><p>Rellena solo las redes que quieras mostrar en esta sección.</p><div class="social-settings-list">';
+    for ($i = 0; $i < 12; $i++) {
+        $row = $settings['social_links'][$i] ?? ['network'=>'','url'=>'','handle'=>''];
+        $socialEditor .= '<div class="social-settings-row"><select name="social_links['.$i.'][network]"><option value="">Añadir red…</option>';
+        foreach ($socialNames as $value => $label) $socialEditor .= '<option value="'.$escape($value).'"'.(($row['network'] ?? '') === $value ? ' selected' : '').'>'.$escape($label).'</option>';
+        $socialEditor .= '</select><input type="url" name="social_links['.$i.'][url]" maxlength="500" placeholder="https://…" value="'.$escape((string)($row['url'] ?? '')).'"><input type="text" name="social_links['.$i.'][handle]" maxlength="120" placeholder="@usuario o nombre" value="'.$escape((string)($row['handle'] ?? '')).'"></div>';
+    }
+    $socialEditor .= '<small class="upload-help">Puedes añadir hasta 12 redes sociales.</small></div></section>';
+    $html .= $card('Estructura de la página', 'Ordena los bloques de la portada, decide cuáles mostrar y configura las Redes Sociales.', $list . $socialEditor);
     $html .= '</div><div class="settings-texts">';
     $titleValue = (string) ($settings['site_title'] ?? '') !== '' ? (string) $settings['site_title'] : site_title_default();
     $identity = '<div class="upload-field"><label for="setting-site_title">Nombre de la web</label>'
@@ -123,8 +132,6 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         'text_54b7645201863e32' => 'Segunda frase del perfil',
         'text_7e6debbd1dab03b1' => 'Texto que se muestra para tu web',
         'text_318bb1fc64a6e036' => 'Crédito del pie de página (después del año)',
-        'text_3b20084d3d94b4ee' => 'Nombre de usuario de Instagram',
-        'social_threads_user' => 'Nombre de usuario de Threads',
     ];
     foreach ($identityLabels as $key => $label) {
         $entry = site_text_catalog()[$key];
@@ -164,21 +171,8 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     }
     $html .= $card('Páginas de texto', 'Edita el contenido de «El proyecto», aviso legal, privacidad y cookies.', $pages . '</div>') . '</div>';
     $html = str_replace('<form method="post"', '<form method="post" enctype="multipart/form-data"', $html);
-    // ── Perfil ────────────────────────────────────────────────────────────
-    $html .= '<div class="settings-profile"><section class="admin-card"><header class="admin-card__head"><h2>Perfil y redes</h2><p>Configura los enlaces de Instagram, Threads y otras redes, y las imágenes de perfil y logotipo.</p></header><div class="admin-card__body">';
-    $html .= '<div class="upload-field"><label for="instagram-url">Enlace de Instagram</label><input id="instagram-url" name="instagram_url" type="url" maxlength="500" value="' . $escape((string) $settings['instagram_url']) . '"></div>'
-        . '<div class="upload-field"><label for="threads-url">Enlace de Threads</label><input id="threads-url" name="threads_url" type="url" maxlength="500" value="' . $escape((string) $settings['threads_url']) . '"></div>';
-    $socialNames = ['facebook'=>'Facebook','x'=>'X','youtube'=>'YouTube','tiktok'=>'TikTok','flickr'=>'Flickr','linkedin'=>'LinkedIn','pinterest'=>'Pinterest','500px'=>'500px','bluesky'=>'Bluesky','mastodon'=>'Mastodon'];
-    $html .= '</div></section><section class="admin-card"><header class="admin-card__head"><h2>Más redes sociales</h2><p>Rellena solo las redes que quieras mostrar.</p></header><div class="admin-card__body">';
-    $html .= '<div class="upload-field"><label>Redes</label><div class="social-settings-list">';
-    for ($i = 0; $i < 12; $i++) {
-        $row = $settings['social_links'][$i] ?? ['network'=>'','url'=>'','handle'=>''];
-        $html .= '<div class="social-settings-row"><select name="social_links['.$i.'][network]"><option value="">Añadir red…</option>';
-        foreach ($socialNames as $value => $label) $html .= '<option value="'.$value.'"'.(($row['network'] ?? '') === $value ? ' selected' : '').'>'.$label.'</option>';
-        $html .= '</select><input type="url" name="social_links['.$i.'][url]" maxlength="500" placeholder="https://…" value="'.$escape((string)($row['url'] ?? '')).'"><input type="text" name="social_links['.$i.'][handle]" maxlength="120" placeholder="@usuario o nombre" value="'.$escape((string)($row['handle'] ?? '')).'"></div>';
-    }
-    $html .= '<small class="upload-help">Rellena solo las redes que quieras mostrar. Puedes añadir hasta 12.</small></div></div>';
-    $html .= '</div></section><section class="admin-card"><header class="admin-card__head"><h2>Imágenes</h2><p>Foto de perfil y logo de la web.</p></header><div class="admin-card__body">';
+    // ── Perfil: imágenes ───────────────────────────────────────────────────
+    $html .= '<div class="settings-profile"><section class="admin-card"><header class="admin-card__head"><h2>Imágenes</h2><p>Foto de perfil y logo de la web.</p></header><div class="admin-card__body">';
     $html .= '<input type="hidden" name="profile_image" value="' . $escape((string) $settings['profile_image']) . '">'
         . '<input type="hidden" name="logo_image" value="' . $escape((string) $settings['logo_image']) . '">'
         . '<div class="upload-field"><label for="profile-image">Foto de perfil</label>'
