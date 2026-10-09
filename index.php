@@ -16,7 +16,7 @@ require __DIR__ . '/inc/page-blocks.php';
 
 $appVersion = app_version();
 
-$siteUrl  = rtrim(getenv('GALLERY_PUBLIC_URL') ?: 'https://example.com', '/');
+$siteUrl  = gallery_public_url();
 $siteName = site_text('text_52179dc42df7efe5');
 $author   = site_text('text_30170303c506cf6c');
 $siteSettings = site_settings_load();
