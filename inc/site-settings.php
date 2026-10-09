@@ -207,6 +207,16 @@ function site_text_catalog(): array
  * Valida y normaliza los ajustes recibidos (formulario o JSON). Lanza InvalidArgumentException si
  * algo no es válido; devuelve siempre un conjunto completo de ajustes.
  */
+/**
+ * Cuenta caracteres UTF-8 sin exigir que mbstring esté instalado en el hosting.
+ */
+function site_utf8_length(string $value): int
+{
+    if (function_exists('mb_strlen')) return mb_strlen($value, 'UTF-8');
+    $length = preg_match_all('/./us', $value, $matches);
+    return $length === false ? PHP_INT_MAX : $length;
+}
+
 function site_settings_validate(array $input): array
 {
     $out = site_settings_defaults();
@@ -242,7 +252,7 @@ function site_settings_validate(array $input): array
     }
     // Título de la web: vacío = el de por defecto del catálogo de textos.
     $title = trim((string) ($input['site_title'] ?? ''));
-    if (!preg_match('//u', $title) || preg_match('/[\x00-\x1F\x7F]/', $title) || mb_strlen($title) > 80) {
+    if (!preg_match('//u', $title) || preg_match('/[\x00-\x1F\x7F]/', $title) || site_utf8_length($title) > 80) {
         throw new InvalidArgumentException('El título de la web no es válido (máximo 80 caracteres y sin saltos de línea).');
     }
     $out['site_title'] = $title === site_title_default() ? '' : $title;
