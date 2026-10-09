@@ -86,7 +86,8 @@ self.addEventListener('fetch', (event) => {
 
     const isPublicStatic = PUBLIC_STATIC.some((path) => url.pathname === path)
         || url.pathname.startsWith('/assets/css/')
-        || url.pathname.startsWith('/assets/js/');
+        || url.pathname.startsWith('/assets/js/')
+        || url.pathname.startsWith('/assets/icons/');
     if (!isPublicStatic) return;
 
     event.respondWith((async () => {
