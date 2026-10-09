@@ -30,50 +30,17 @@
     .photo-detail__nav--next { right:.25rem; }
 }
 
-/* Cambio de foto sin recargar la página (main.js, initPhotoPage y slideImage).
-   · En pantalla completa, la foto nueva (.lightbox__img--incoming) entra deslizando por el lado del que viene mientras la anterior sale por
-     el contrario, a opacidad completa y con la misma geometría (ver .lightbox__img en style.css): el fondo no se ve entre fotos y, al
-     arrastrar con el dedo, la vecina ya asoma. El movimiento lo anima el JS con transform; aquí solo se quitan las transiciones.
-   · En la ficha, el navegador (si sabe) funde la página entera con una transición de vista breve. */
-.lightbox__img--incoming {
-    z-index: 0;
-    pointer-events: none;
-    transition: none;
-    will-change: transform;
+/* While sliding, both photos occupy an opaque viewport-sized surface. The image
+   keeps its natural scale inside that surface, so changing aspect ratios cannot
+   reveal a strip of the previous photo or leave a moving gap. */
+.lightbox--immersive .lightbox__stage.photo-sliding { overflow: hidden; }
+.lightbox--immersive .lightbox__stage.photo-sliding > .lightbox__img {
+    width: 100%; height: 100%; max-width: none; max-height: none;
+    object-fit: scale-down; background: #000; border-radius: 0;
+    box-shadow: none; transition: none; will-change: transform;
+    z-index: 1;
 }
-.lightbox--immersive .lightbox__img { will-change: transform; }
-.lightbox--immersive .lightbox__stage { overflow: hidden; }
-
-/* ---- Transición entre fichas (main.js, transitionDetail) ----
-   Solo durante el cambio (<html class="photo-vt photo-vt-next|prev">) se nombran las piezas: la foto (con su marco), las flechas, el texto
-   y las relacionadas. El resto de la página no se anima (raíz sin animación): nada parpadea.
-   · Foto: el marco cambia de tamaño de forma continua (grupo) y la foto sale hacia el lado contrario mientras la nueva entra desde el lado
-     del que viene, con un leve desenfoque y escala: un fundido direccional.
-   · Texto y relacionadas: el anterior sube y se desvanece rápido; el nuevo entra desde abajo con un pequeño retraso.
-   · Flechas: se quedan quietas encima de la foto. */
-html.photo-vt .photo-detail__btn { view-transition-name: detail-photo; }
-html.photo-vt .photo-detail__navigation { view-transition-name: detail-nav; }
-html.photo-vt .photo-detail__info { view-transition-name: detail-info; }
-html.photo-vt .related { view-transition-name: detail-related; }
-html.photo-vt::view-transition-old(root),
-html.photo-vt::view-transition-new(root) { animation: none; }
-html.photo-vt::view-transition-group(*) { animation-duration: .56s; animation-timing-function: cubic-bezier(.22, .8, .24, 1); }
-html.photo-vt::view-transition-old(detail-nav) { display: none; }
-html.photo-vt::view-transition-new(detail-nav) { animation: none; }
-html.photo-vt::view-transition-old(detail-photo),
-html.photo-vt::view-transition-new(detail-photo) { height: 100%; object-fit: cover; mix-blend-mode: normal; }
-html.photo-vt-next::view-transition-old(detail-photo) { animation: photo-vt-out .5s cubic-bezier(.4, 0, .2, 1) both; --vt-shift: -7%; }
-html.photo-vt-next::view-transition-new(detail-photo) { animation: photo-vt-in .56s cubic-bezier(.22, .8, .24, 1) both; --vt-shift: 7%; }
-html.photo-vt-prev::view-transition-old(detail-photo) { animation: photo-vt-out .5s cubic-bezier(.4, 0, .2, 1) both; --vt-shift: 7%; }
-html.photo-vt-prev::view-transition-new(detail-photo) { animation: photo-vt-in .56s cubic-bezier(.22, .8, .24, 1) both; --vt-shift: -7%; }
-html.photo-vt::view-transition-old(detail-info),
-html.photo-vt::view-transition-old(detail-related) { animation: photo-vt-text-out .22s cubic-bezier(.4, 0, 1, 1) both; }
-html.photo-vt::view-transition-new(detail-info),
-html.photo-vt::view-transition-new(detail-related) { animation: photo-vt-text-in .46s cubic-bezier(.22, .8, .24, 1) .12s both; }
-@keyframes photo-vt-out { to { opacity: 0; transform: translateX(var(--vt-shift)) scale(.97); filter: blur(6px); } }
-@keyframes photo-vt-in { from { opacity: 0; transform: translateX(var(--vt-shift)) scale(1.03); filter: blur(6px); } }
-@keyframes photo-vt-text-out { to { opacity: 0; transform: translateY(-10px); } }
-@keyframes photo-vt-text-in { from { opacity: 0; transform: translateY(14px); } }
+.lightbox--immersive .lightbox__stage.photo-sliding > .lightbox__img--incoming { z-index: 2; pointer-events: none; }
 
 /* En pantalla completa solo la foto: se apartan la barra de progreso y los botones flotantes de la web. */
 body.photo-immersive-open .scroll-progress,
