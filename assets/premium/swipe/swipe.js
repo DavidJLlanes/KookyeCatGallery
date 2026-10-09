@@ -302,7 +302,7 @@
     root.addEventListener('touchstart', event => {
         if (event.touches.length !== 1 || !isEngaged()) { verticalTouch = null; return; }
         const point = event.touches[0];
-        verticalTouch = { x: point.clientX, y: point.clientY, lastY: point.clientY, vertical: false };
+        verticalTouch = { x: point.clientX, y: point.clientY, lastY: point.clientY, lastTime: event.timeStamp, velocity: 0, vertical: false };
     }, { passive: true });
 
     root.addEventListener('touchmove', event => {
@@ -315,11 +315,33 @@
             if (Math.abs(dy) <= Math.abs(dx)) { verticalTouch = null; return; }
             verticalTouch.vertical = true;
         }
-        root.dispatchEvent(new CustomEvent('deck:release-for-scroll', { detail: { deltaY: point.clientY - verticalTouch.lastY } }));
+        const deltaY = point.clientY - verticalTouch.lastY;
+        const elapsed = Math.max(1, event.timeStamp - verticalTouch.lastTime);
+        verticalTouch.velocity = verticalTouch.velocity * 0.65 - deltaY / elapsed * 0.35;
+        root.dispatchEvent(new CustomEvent('deck:release-for-scroll', { detail: { deltaY } }));
         verticalTouch.lastY = point.clientY;
+        verticalTouch.lastTime = event.timeStamp;
     }, { passive: true });
 
-    const clearVerticalTouch = () => { verticalTouch = null; };
+    let momentumFrame = 0;
+    const clearVerticalTouch = event => {
+        if (event.type === 'touchend' && verticalTouch?.vertical) {
+            let velocity = verticalTouch.velocity;
+            let previous = performance.now();
+            window.cancelAnimationFrame(momentumFrame);
+            const coast = now => {
+                const elapsed = Math.min(32, now - previous);
+                previous = now;
+                velocity *= Math.pow(0.94, elapsed / 16);
+                if (Math.abs(velocity) < 0.025) return;
+                window.scrollBy({ top: velocity * elapsed, behavior: 'instant' });
+                skipCatchUntil = Math.max(skipCatchUntil, now + 100);
+                momentumFrame = window.requestAnimationFrame(coast);
+            };
+            momentumFrame = window.requestAnimationFrame(coast);
+        }
+        verticalTouch = null;
+    };
     root.addEventListener('touchend', clearVerticalTouch, { passive: true });
     root.addEventListener('touchcancel', clearVerticalTouch, { passive: true });
 
