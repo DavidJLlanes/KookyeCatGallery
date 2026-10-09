@@ -6,7 +6,7 @@ y solo cambian cómo se colocan y se mueven las fotos. Se harán progresivamente
 
 ## Ideas
 
-- [ ] **Cover Flow.** La foto central de frente y las de los lados giradas unos 60° y apiladas en abanico, con reflejo. En móvil,
+- [x] **Cover Flow.** La foto central de frente y las de los lados giradas unos 60° y apiladas en abanico, con reflejo. En móvil,
       solo dos fotos laterales.
 - [ ] **Pila que se abre en abanico.** Parecida a la baraja, pero la foto pasada sube y se desliza a un lado con un giro
       aleatorio, quedando esparcida sobre la mesa en vez de desaparecer.
