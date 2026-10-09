@@ -42,6 +42,7 @@ const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
             await page.evaluate(() => window.scrollTo({ top: document.querySelector('#deck').offsetTop + 500, behavior: 'instant' }));
             await page.waitForTimeout(150);
             await page.click('[data-deck-next]');
+            await page.click('[data-deck-next]');
             await page.waitForTimeout(950);
             const s = await page.evaluate(() => {
                 const cards = [...document.querySelectorAll('.deck__card')];
