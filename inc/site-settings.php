@@ -178,6 +178,9 @@ function site_editable_text_keys(): array
         'text_2e2b80d871481edc',
         'text_54b7645201863e32',
         'text_7e6debbd1dab03b1',
+        'text_bdd8f61b94c52379',
+        'text_49a006d539216e16',
+        'text_ab3ceef210237f9d',
     ];
     foreach (site_template_text_groups() as $group) {
         array_push($keys, ...array_keys($group['fields']));
@@ -197,6 +200,9 @@ function site_admin_text_labels(): array
         'text_2e2b80d871481edc' => 'Descripción principal',
         'text_54b7645201863e32' => 'Descripción secundaria',
         'text_7e6debbd1dab03b1' => 'Web de usuario',
+        'text_bdd8f61b94c52379' => 'Título de Redes Sociales',
+        'text_49a006d539216e16' => 'Subtítulo de Redes Sociales',
+        'text_ab3ceef210237f9d' => 'Texto de Redes Sociales',
     ];
 }
 

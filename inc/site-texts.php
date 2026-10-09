@@ -104,7 +104,7 @@ return [
     'text_8bed218e5d1a26ca' => ['group' => 'Inicio y galería · accesibilidad', 'default' => 'Foto siguiente'],
     'text_e06e2e6400797b86' => ['group' => 'Inicio y galería · accesibilidad', 'default' => 'Volver arriba'],
     'text_bdd8f61b94c52379' => ['group' => 'Inicio y galería', 'default' => 'Hablemos'],
-    'text_49a006d539216e16' => ['group' => 'Inicio y galería', 'default' => '¿Una copia, un encargo'],
+    'text_49a006d539216e16' => ['group' => 'Inicio y galería', 'default' => '¿Una copia, un encargo\no simplemente saludar?'],
     'text_f366ccf006a44b3f' => ['group' => 'Inicio y galería', 'default' => 'o simplemente saludar?'],
     'text_ab3ceef210237f9d' => ['group' => 'Inicio y galería', 'default' => 'Sígueme y escríbeme por mensaje directo. Estoy en:'],
     'text_bad57ef7837c8e6b' => ['group' => 'Inicio y galería', 'default' => 'Instagram'],

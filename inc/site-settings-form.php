@@ -132,6 +132,19 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     }
     $socialEditor .= '</div><div class="social-settings-actions"><button type="button" class="social-settings-add" data-social-add>＋ Añadir red social</button>'
         . '<small class="upload-help">Hasta 12 perfiles. Las filas vacías se muestran al añadirlas.</small></div></section>';
+    $socialCopyFields = '<div class="social-settings-copy"><h4>Textos de la sección</h4><div class="social-settings-copy__fields">';
+    foreach ([
+        'text_bdd8f61b94c52379' => ['Título', 1],
+        'text_49a006d539216e16' => ['Subtítulo', 2],
+        'text_ab3ceef210237f9d' => ['Texto', 2],
+    ] as $key => [$label, $rows]) {
+        $entry = site_text_catalog()[$key];
+        $value = $settings['texts'][$key] ?? $entry['default'];
+        $socialCopyFields .= '<div class="upload-field"><label for="social-copy-' . $escape($key) . '">' . $escape($label) . '</label>'
+            . '<textarea id="social-copy-' . $escape($key) . '" name="texts[' . $escape($key) . ']" rows="' . $rows . '" maxlength="20000">'
+            . $escape((string) $value) . '</textarea></div>';
+    }
+    $socialEditor .= $socialCopyFields . '</div></div></section>';
     $html .= $card('Estructura de la página', 'Ordena los bloques de la portada, decide cuáles mostrar y configura las Redes Sociales.', $list . $socialEditor);
     $html .= '</div><div class="settings-texts">';
     $titleValue = (string) ($settings['site_title'] ?? '') !== '' ? (string) $settings['site_title'] : site_title_default();
