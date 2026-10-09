@@ -149,18 +149,20 @@ No guardes credenciales, claves API, datos de acceso ni fotos privadas en el rep
 
 ## Recuperar o cambiar el acceso de administración
 
-> ## ⚠️ ADVERTENCIA CRÍTICA: BORRA EL ARCHIVO DESPUÉS DE USARLO
+> ## ⛔ ADVERTENCIA DE SEGURIDAD: ESTE ARCHIVO ABRE EL PANEL A CUALQUIERA
 >
-> Mientras `reset-admin-access.php` esté en el servidor, **cualquier persona que conozca su dirección puede crear o cambiar el usuario y la contraseña del panel**. Súbelo únicamente cuando vayas a usarlo y bórralo inmediatamente después. El script intenta borrarse al guardar; comprueba que haya desaparecido y elimínalo manualmente si sigue allí.
+> **No subas ni dejes `reset-admin-access.php` en el servidor salvo durante el instante en que vayas a configurar o recuperar el acceso.** Mientras el archivo esté publicado, el formulario es público: **cualquier visitante puede elegir un usuario y una contraseña y tomar el control del panel**. No pide la contraseña anterior ni una clave adicional. El nombre del archivo es conocido porque esta guía y el repositorio son públicos.
+>
+> **El borrado automático no evita que otra persona lo use primero.** Sube el archivo solo cuando estés preparado para completar el formulario inmediatamente. Al terminar, confirma desde el gestor de archivos que ha desaparecido de la raíz pública. Si aún está allí, **elimínalo manualmente antes de abandonar la sesión de alojamiento**.
 
-El panel tiene **un solo usuario**. Para configurar el acceso por primera vez o reemplazar las credenciales perdidas:
+El panel tiene **un solo usuario**. Para configurarlo por primera vez o reemplazar credenciales perdidas:
 
 1. Copia `reset-admin-access.php.example` y llámalo `reset-admin-access.php`.
-2. Sube ese archivo a la raíz pública del sitio desde el gestor de archivos o SFTP.
+2. Cuando estés listo para usarlo, súbelo a la raíz pública del sitio desde el gestor de archivos o SFTP.
 3. Abre `https://tu-dominio/reset-admin-access.php`, escribe el nuevo usuario y una contraseña única de al menos 12 caracteres y guarda.
-4. El archivo se elimina automáticamente al guardar. Confirma desde el gestor de archivos que ya no esté en la raíz; si permanece, bórralo de inmediato.
+4. Verifica inmediatamente que `reset-admin-access.php` ya no existe en el servidor. El script intenta borrarse al guardar; si no lo consigue, bórralo manualmente en ese momento.
 
-Al guardar, se reemplaza `upload-auth.php` en `GALLERY_PRIVATE_DIR` (o en `var/` si no has configurado esa variable). La contraseña se guarda con un hash seguro. La plantilla `.example` no configura el acceso hasta que la copies y la subas con el nombre PHP indicado. No guardes las credenciales en el repositorio.
+Al guardar, reemplaza `upload-auth.php` dentro de `GALLERY_PRIVATE_DIR` (o de `var/` si no has configurado esa variable). La contraseña se guarda con un hash seguro. El archivo `.example` del repositorio no es el recuperador activo; solo se vuelve ejecutable después de copiarlo y subirlo con el nombre `reset-admin-access.php`. **Nunca guardes la copia PHP activa ni credenciales en GitHub y nunca mantengas el recuperador online para usarlo “más tarde”.**
 
 ## Textos con IA
 
