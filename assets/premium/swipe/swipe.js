@@ -296,6 +296,31 @@
         card.style.removeProperty('--pass');
     };
 
+    // Gesto vertical: Tinder solo interpreta el eje horizontal. Libera el body fijado para que el navegador
+    // pueda continuar el desplazamiento normal de la página desde el mismo punto.
+    let verticalTouch = null;
+    root.addEventListener('touchstart', event => {
+        if (event.touches.length !== 1 || !isEngaged()) { verticalTouch = null; return; }
+        const point = event.touches[0];
+        verticalTouch = { x: point.clientX, y: point.clientY, decided: false };
+    }, { passive: true });
+
+    root.addEventListener('touchmove', event => {
+        if (!verticalTouch || verticalTouch.decided || event.touches.length !== 1) return;
+        const point = event.touches[0];
+        const dx = point.clientX - verticalTouch.x;
+        const dy = point.clientY - verticalTouch.y;
+        if (Math.hypot(dx, dy) < 8) return;
+        verticalTouch.decided = true;
+        if (Math.abs(dy) > Math.abs(dx) && html.classList.contains('deck-pinned')) {
+            root.dispatchEvent(new CustomEvent('deck:release-for-scroll'));
+        }
+    }, { passive: true });
+
+    const clearVerticalTouch = () => { verticalTouch = null; };
+    root.addEventListener('touchend', clearVerticalTouch, { passive: true });
+    root.addEventListener('touchcancel', clearVerticalTouch, { passive: true });
+
     root.addEventListener('pointerdown', event => {
         if (event.pointerType === 'mouse' && event.button !== 0) return;
         if (!isEngaged() || exiting()) return;
