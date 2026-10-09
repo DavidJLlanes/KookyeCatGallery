@@ -15,7 +15,8 @@ declare(strict_types=1);
  * inc/site-settings-form.php.
  */
 
-define('UPLOAD_AUTH_CONFIG', rtrim(getenv('GALLERY_PRIVATE_DIR') ?: __DIR__ . '/var', '/\\') . '/upload-auth.php');
+require_once __DIR__ . '/inc/private-storage.php';
+define('UPLOAD_AUTH_CONFIG', rtrim(gallery_private_directory(), '/\\') . DIRECTORY_SEPARATOR . 'upload-auth.php');
 define('UPLOAD_DIRECTORY', __DIR__ . '/img');
 const MAX_IMAGE_BYTES = 15728640; // 15 MiB
 
