@@ -365,9 +365,13 @@
         updateExitUp();
     };
 
+    // Tinder usa el eje vertical para salir del modo a pantalla completa y volver a desplazar la página.
+    root.addEventListener('deck:release-for-scroll', unpin);
+
     // Mientras está fijada no hay gesto nativo que valga: se cancela todo (también el «tirar para recargar»).
     document.addEventListener('touchmove', event => {
-        if (pinned && event.cancelable) event.preventDefault();
+        // Tinder deja pasar el gesto vertical; sus touchmove detectan el eje y liberan el body antes del desplazamiento nativo.
+        if (pinned && root.dataset.layout !== 'swipe' && event.cancelable) event.preventDefault();
     }, { passive: false });
 
     // Táctil: vigilancia de llegada (solo mientras la baraja está a menos de una pantalla de distancia).
