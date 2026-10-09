@@ -105,11 +105,16 @@
         const state = slides.get(img) || { token: 0, layer: null };
         slides.set(img, state);
         const token = ++state.token;
+        const stage = img.parentElement;
         const loader = new Image();
         loader.src = src;
         try { await loader.decode(); }
         catch (_) { if (!loader.complete) await new Promise(resolve => { loader.onload = resolve; loader.onerror = resolve; }); }
-        if (token !== state.token || !loader.naturalWidth) { if (peek && peek !== state.layer) peek.remove(); return false; }
+        if (token !== state.token || !loader.naturalWidth) {
+            if (peek && peek !== state.layer) peek.remove();
+            if (token === state.token) stage?.classList.remove('photo-sliding');
+            return false;
+        }
         if (state.layer && state.layer !== peek) {                   // Un cambio a medias se da por terminado antes de empezar el siguiente.
             img.src = state.layer.src; img.alt = state.layer.alt;
             state.layer.remove(); state.layer = null;
@@ -123,9 +128,9 @@
             img.src = src; img.alt = alt;
             img.classList.add('is-shown');
             peek?.remove();
+            stage?.classList.remove('photo-sliding');
             return true;
         }
-        const stage = img.parentElement;
         stage?.classList.add('photo-sliding');
         const layer = peek || document.createElement('img');
         layer.className = 'lightbox__img lightbox__img--incoming is-shown';
