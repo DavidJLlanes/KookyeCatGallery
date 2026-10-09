@@ -242,21 +242,21 @@ function testImage(width = 640, height = 400) {
         assert.equal(new URL(mobile.page.url()).searchParams.has('viewer'), false, 'Al cerrar deslizando se quita ?viewer=1');
         await mobile.page.waitForTimeout(400);
         assert.equal(await mobile.page.evaluate(() => document.getElementById('lightbox').style.backgroundColor), '', 'El visor queda limpio para la próxima vez');
-        // 10. En la ficha la foto también sigue al dedo; un gesto corto vuelve y no abre el visor.
+        // 10. En la ficha un gesto corto mantiene imagen y texto alineados y no abre el visor.
         await mobile.page.evaluate(() => window.scrollTo(0, 0));
         const detailBox = await mobile.page.locator('.photo-detail__img').boundingBox();
         const dx0 = detailBox.x + detailBox.width / 2, dy0 = detailBox.y + detailBox.height / 2;
         await finger('touchStart', dx0, dy0);
         for (let i = 1; i <= 4; i++) await finger('touchMove', dx0 + 10 * i, dy0 + 1);
         await mobile.page.waitForTimeout(80);
-        assert(/translate3d\(24px/.test(await mobile.page.evaluate(() => document.querySelector('.photo-detail__img').style.transform)), 'La foto de la ficha sigue al dedo');
+        assert.equal(await mobile.page.evaluate(() => document.querySelector('.photo-detail__img').style.transform), '', 'La imagen permanece alineada con el texto durante el gesto');
         await finger('touchEnd');
         await mobile.page.waitForTimeout(500);
-        assert.equal(await mobile.page.evaluate(() => document.querySelector('.photo-detail__img').style.transform), '', 'La foto de la ficha vuelve a su sitio');
+        assert.equal(await mobile.page.evaluate(() => document.querySelector('.photo-detail__img').style.transform), '', 'La ficha permanece estable si el gesto se queda corto');
         assert.equal(await mobile.page.locator('#lightbox').getAttribute('aria-hidden'), 'true', 'Arrastrar la foto de la ficha no abre el visor');
         assert.deepEqual(desktop.errors, []);
         assert.deepEqual(mobile.errors, []);
-        console.log('Photo transition passed: detail view transition with named parts, pull to close, detail finger follow, in-place sliding without reload, finger following with the neighbour visible, no gaps or strips, resistance at the ends, rapid presses, browser back, closing, detail arrows, ?viewer=1 reload and touch.');
+        console.log('Photo transition passed: unified detail fade, pull to close, stable detail gesture, in-place sliding without reload, finger following with the neighbour visible, no gaps or strips, resistance at the ends, rapid presses, browser back, closing, detail arrows, ?viewer=1 reload and touch.');
     } finally {
         if (browser) await browser.close();
         fs.rmSync(snapshot, { recursive: true, force: true });
