@@ -114,20 +114,51 @@ PHP 8.1+, JavaScript, HTML y CSS. No necesita framework ni proceso de compilaci�
 
 ## Requisitos
 
-- PHP 8.1 o posterior con las extensiones GD y Fileinfo.
-- Apache con `.htaccess` habilitado para aplicar las reglas que protegen archivos y directorios privados.
-- Node.js y Playwright solo para ejecutar todas las comprobaciones de interfaz.
+KookyeCatGallery necesita ejecutar PHP y escribir archivos en el servidor; **no funciona en un hosting estático** (por ejemplo, solo HTML/CSS/JS).
+
+- PHP 8.1 o posterior, con **GD** compilado con soporte para JPEG, PNG y WebP, y la extensión **Fileinfo**.
+- HTTPS habilitado para el dominio. El acceso de administración usa cookies seguras.
+- Una raíz web para el dominio o subdominio y permisos para que PHP escriba en las carpetas de fotos y datos.
+- Apache con `.htaccess` permitido, o Nginx configurado con las reglas equivalentes que se muestran más abajo.
+- Posibilidad de definir variables de entorno para PHP. Si el hosting no ofrece esa opción, puedes editar los valores predeterminados de la configuración en el código; no subas contraseñas ni claves al repositorio.
+- Node.js y Playwright solo son necesarios para ejecutar las comprobaciones de interfaz; no hacen falta para publicar la web.
+
+Antes de contratar o elegir un plan, confirma con el proveedor que ofrece PHP 8.1+, GD con WebP, Fileinfo, HTTPS y permisos de escritura. No todos los hostings, incluso los que anuncian soporte PHP, incluyen estas funciones o permiten ajustar las reglas del servidor.
 
 ## Instalación
 
-1. Descarga este repositorio en la raíz pública de tu servidor web.
-2. Asegúrate de que PHP puede escribir en `img/` para guardar fotografías y versiones procesadas.
-3. Configura `GALLERY_PUBLIC_URL` con la URL pública de la galería.
-4. Define `GALLERY_PRIVATE_DIR` para guardar los datos privados fuera de la raíz pública (consulta la sección siguiente).
-5. Abre `/admin.php`, configura el acceso de administración y personaliza los textos. No hay una contraseña predeterminada.
-6. Sube tus fotografías y revisa sus títulos, categorías y metadatos antes de publicar.
+La aplicación no requiere base de datos, framework, Composer, npm ni compilación. Instálala en la raíz pública de un **dominio o subdominio** (por ejemplo, `https://fotos.ejemplo.com/`). Las rutas de la web parten de la raíz, por lo que no está preparada para instalarse en una subcarpeta como `ejemplo.com/galeria/` sin adaptar el código.
 
-Las páginas legales son plantillas: complétalas con información correcta para tu instalación antes de hacerlas públicas.
+1. **Prepara el hosting.** Crea el dominio o subdominio, activa HTTPS y selecciona PHP 8.1 o posterior. Comprueba que GD tiene soporte JPEG, PNG y WebP y que Fileinfo está activa.
+2. **Sube el proyecto.** Descarga el repositorio y coloca su contenido en la raíz pública asignada al dominio (a menudo llamada `public_html`, `htdocs` o `www`). No publiques el proyecto dentro de otra carpeta salvo que adaptes sus rutas.
+3. **Configura el servidor web.**
+   - En Apache, conserva el archivo `.htaccess` incluido y asegúrate de que el hosting permite sus reglas y el fallback a `index.php` (por ejemplo, `AllowOverride All`).
+   - En Nginx no se lee `.htaccess`. Configura el bloque de servidor para usar el controlador frontal y bloquear los directorios protegidos. Como punto de partida para integrar en la configuración existente:
+   
+     ```nginx
+     location / {
+         try_files $uri $uri/ /index.php?$query_string;
+     }
+
+     location ~ ^/(var|data|img)(/|$) {
+         deny all;
+     }
+
+     location ~ /.(?!well-known) {
+         deny all;
+     }
+     ```
+   
+     Mantén también la configuración PHP-FPM que ya usa tu servidor. Si no tienes acceso a la configuración de Nginx, pide al proveedor que aplique estas reglas; subir `.htaccess` no las sustituye.
+4. **Configura la URL pública.** Define `GALLERY_PUBLIC_URL` con la URL HTTPS completa, por ejemplo `https://fotos.ejemplo.com`. Usa el panel de variables de entorno del hosting o la configuración del pool PHP-FPM. Algunos hostings Apache permiten `SetEnv` en `.htaccess`, pero solo si el proveedor lo admite. La aplicación no lee archivos `.env` automáticamente.
+5. **Elige dónde guardar los datos privados.** Recomendado: crea un directorio fuera de la raíz pública (por ejemplo, si el sitio vive en `/home/usuario/public_html`, usa `/home/usuario/galeria-privada`) y define `GALLERY_PRIVATE_DIR` con esa ruta absoluta. PHP debe poder leer y escribir allí. La aplicación crea los archivos de ajustes y acceso dentro de esa carpeta. Si el hosting no permite configurar esta variable, puede usar `var/` dentro del proyecto; Apache la protege con `.htaccess`, pero en Nginx debes bloquearla como en el ejemplo anterior.
+6. **Da permiso de escritura a PHP** para `img/`, `imagenes/`, `data/` y al directorio privado configurado. Usa el gestor de archivos o la ayuda del hosting para asignar el propietario y permisos mínimos necesarios. No hagas escribible por todo el mundo el sitio completo.
+7. **Ajusta el límite de subida de PHP.** Para admitir las imágenes previstas, configura `upload_max_filesize` en al menos `16M` y `post_max_size` en al menos `20M` (además de un límite de petición/tiempo adecuado si el proveedor lo impone).
+8. **Configura el único usuario administrador.** No existe una cuenta ni contraseña predeterminadas. En el primer despliegue, utiliza el procedimiento de [recuperación o configuración del acceso](#recuperar-o-cambiar-el-acceso-de-administración), siguiendo su advertencia de seguridad: el archivo recuperador debe estar publicado solo mientras lo usas y debes confirmar que se ha borrado del servidor al terminar. Luego inicia sesión en `/admin.php` y personaliza el sitio.
+9. **Completa el contenido antes de abrir la web.** Sube fotos desde el panel, revisa títulos y metadatos (incluidas coordenadas EXIF), y completa las páginas legales con información correcta para tu instalación.
+10. **Comprueba el despliegue** abriendo la portada, una foto, el panel y una imagen WebP procesada. Si la web devuelve errores 500, revisa los registros PHP del hosting; si las fotos no se procesan, confirma las extensiones y permisos indicados.
+
+Haz copias de seguridad de las fotografías y de los datos privados. La aplicación no usa base de datos: para migrarla, copia el código, las carpetas de imágenes y los archivos del directorio privado, y actualiza `GALLERY_PUBLIC_URL` si cambia el dominio.
 
 Para una prueba local:
 
@@ -135,7 +166,7 @@ Para una prueba local:
 php -S 127.0.0.1:8000
 ```
 
-Abre `http://127.0.0.1:8000`. El servidor PHP integrado es solo para desarrollo; no aplica las reglas de `.htaccess`.
+Abre `http://127.0.0.1:8000`. El servidor PHP integrado es solo para desarrollo; no aplica las reglas de `.htaccess` ni equivale a una instalación de producción segura.
 
 ## Configuración privada
 
