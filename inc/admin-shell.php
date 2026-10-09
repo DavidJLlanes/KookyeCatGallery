@@ -69,7 +69,7 @@ function adminShellHtml(string $title, string $content, bool $wide): string
     $items = [
         'upload' => ['/admin.php', 'Subir foto', 'Subir'],
         'library' => ['/admin.php?library=1', 'Gestionar fotos', 'Fotos'],
-        'categories' => ['/admin.php?categories=1', 'Categorías', 'Categorías'],
+        'categories' => ['/admin.php?categories=1', 'Categorías', 'Temas'],
         'profile' => ['/admin.php?settings=1&amp;section=profile', 'Perfil', 'Perfil'],
         'design' => ['/admin.php?settings=1&amp;section=design', 'Diseño', 'Diseño'],
         'texts' => ['/admin.php?settings=1&amp;section=texts', 'Textos', 'Textos'],
