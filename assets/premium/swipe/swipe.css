@@ -15,9 +15,6 @@
     --swipe-like: var(--accent);                     /* Color del corazón (lado derecho). */
 }
 
-/* Tinder reserva el gesto horizontal para decidir una foto y deja el vertical al desplazamiento de la página. */
-html.deck-engaged .deck[data-layout="swipe"] { touch-action: none; }
-
 /* El escenario ocupa SOLO el hueco libre entre las herramientas de arriba y la barra de abajo (con sus márgenes y el área segura de los
    móviles con muesca), así la carta queda centrada en vertical en ese hueco: la misma distancia hasta las herramientas que hasta la barra. */
 .deck[data-layout="swipe"] .deck__stage {
