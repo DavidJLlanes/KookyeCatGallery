@@ -263,6 +263,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 @chmod($destination, 0644);
                 $settingsInput[$settingKey] = '/' . $filename;
             }
+            site_brand_assets_process($_FILES);
             site_settings_save($settingsInput);
             $section = (string) ($_POST['section'] ?? 'profile');
             if (!in_array($section, ['profile', 'design', 'texts'], true)) $section = 'profile';
