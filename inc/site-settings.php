@@ -136,20 +136,22 @@ function site_settings_defaults(): array
         'texts' => [], 'pages' => [], 'profile_image' => '/profile-placeholder.svg', 'logo_image' => '/favicon.svg',
         'instagram_url' => 'https://example.com',
         'threads_url' => 'https://example.com',
+        'profile_website_url' => 'https://example.com',
         'social_links' => []];
 }
 
 /**
- * Claves de texto que se editan en la pestaña «Perfil» (el resto de textos se editan en las páginas).
+ * Claves de texto que se editan en «Textos» o pertenecen a las plantillas elegidas.
  */
 function site_editable_text_keys(): array
 {
     $keys = [
+        'text_30170303c506cf6c',
+        'text_318bb1fc64a6e036',
         'text_4577bab0d9627af1',
         'text_2e2b80d871481edc',
         'text_54b7645201863e32',
         'text_7e6debbd1dab03b1',
-        // Usuarios visibles de los perfiles sociales (Instagram y Threads).
         'text_3b20084d3d94b4ee',
         'social_threads_user',
     ];
@@ -165,7 +167,9 @@ function site_editable_text_keys(): array
 function site_admin_text_labels(): array
 {
     return [
-        'text_4577bab0d9627af1' => 'Usuario',
+        'text_30170303c506cf6c' => 'Nombre del fotógrafo o estudio',
+        'text_318bb1fc64a6e036' => 'Crédito del pie de página (después del año)',
+        'text_4577bab0d9627af1' => 'Nombre de usuario del perfil',
         'text_2e2b80d871481edc' => 'Descripción principal',
         'text_54b7645201863e32' => 'Descripción secundaria',
         'text_7e6debbd1dab03b1' => 'Web de usuario',
@@ -276,6 +280,11 @@ function site_settings_validate(array $input): array
         }
         $out[$key] = $value;
     }
+    $website = trim((string) ($input['profile_website_url'] ?? $out['profile_website_url']));
+    if ($website !== '' && (!filter_var($website, FILTER_VALIDATE_URL) || !preg_match('~^https://~i', $website))) {
+        throw new InvalidArgumentException('La dirección de la web personal debe empezar por https://.');
+    }
+    $out['profile_website_url'] = $website;
     $allowedSocials = ['facebook', 'x', 'youtube', 'tiktok', 'flickr', 'linkedin', 'pinterest', '500px', 'bluesky', 'mastodon'];
     $socialLinks = $input['social_links'] ?? [];
     if (!is_array($socialLinks)) throw new InvalidArgumentException('Las redes sociales no tienen un formato válido.');
