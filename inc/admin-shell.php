@@ -34,6 +34,7 @@ function adminIcon(string $name): string
         'categories' => '<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.3"/>',
         'profile' => '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>',
         'design' => '<path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="17" cy="18" r="2.2"/>',
+        'texts' => '<path d="M5 6h14M5 12h14M5 18h9"/>',
         'external' => '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
         'logout' => '<path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/>',
     ];
@@ -41,16 +42,17 @@ function adminIcon(string $name): string
 }
 
 /**
- * Entrada del menú que se resalta: upload, library, categories, profile o design.
+ * Entrada del menú que se resalta: upload, library, categories, profile, design o texts.
  * Se deduce de la URL (GET) o de la acción enviada (POST), para que también sea correcta tras un error de formulario.
  */
 function adminActiveSection(): string
 {
     $action = (string) ($_POST['action'] ?? '');
-    if ($action === 'save_site_page') return 'design';
+    if ($action === 'save_site_page') return 'texts';
     if (isset($_GET['settings']) || $action === 'save_site_settings') {
         $section = (string) ($_POST['section'] ?? $_GET['section'] ?? 'profile');
-        return $section === 'profile' ? 'profile' : 'design';
+        if ($section === 'page') return 'texts';
+        return in_array($section, ['profile', 'design', 'texts'], true) ? $section : 'profile';
     }
     if (isset($_GET['categories']) || $action === 'manage_category') return 'categories';
     if (isset($_GET['library']) || isset($_GET['edit']) || $action === 'delete_existing') return 'library';
@@ -69,7 +71,8 @@ function adminShellHtml(string $title, string $content, bool $wide): string
         'library' => ['/admin.php?library=1', 'Gestionar fotos', 'Fotos'],
         'categories' => ['/admin.php?categories=1', 'Categorías', 'Categorías'],
         'profile' => ['/admin.php?settings=1&amp;section=profile', 'Perfil', 'Perfil'],
-        'design' => ['/admin.php?settings=1&amp;section=design', 'Diseño y textos', 'Diseño'],
+        'design' => ['/admin.php?settings=1&amp;section=design', 'Diseño', 'Diseño'],
+        'texts' => ['/admin.php?settings=1&amp;section=texts', 'Textos', 'Textos'],
     ];
     $links = static function (bool $short) use ($items, $active): string {
         $html = '';
