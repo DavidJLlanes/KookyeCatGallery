@@ -296,55 +296,6 @@
         card.style.removeProperty('--pass');
     };
 
-    // Gesto vertical: Tinder solo interpreta el eje horizontal. Libera el body fijado para que el navegador
-    // pueda continuar el desplazamiento normal de la página desde el mismo punto.
-    let verticalTouch = null;
-    root.addEventListener('touchstart', event => {
-        if (event.touches.length !== 1 || !isEngaged()) { verticalTouch = null; return; }
-        const point = event.touches[0];
-        verticalTouch = { x: point.clientX, y: point.clientY, lastY: point.clientY, lastTime: event.timeStamp, velocity: 0, vertical: false };
-    }, { passive: true });
-
-    root.addEventListener('touchmove', event => {
-        if (!verticalTouch || event.touches.length !== 1) return;
-        const point = event.touches[0];
-        const dx = point.clientX - verticalTouch.x;
-        const dy = point.clientY - verticalTouch.y;
-        if (!verticalTouch.vertical) {
-            if (Math.hypot(dx, dy) < 8) return;
-            if (Math.abs(dy) <= Math.abs(dx)) { verticalTouch = null; return; }
-            verticalTouch.vertical = true;
-        }
-        const deltaY = point.clientY - verticalTouch.lastY;
-        const elapsed = Math.max(1, event.timeStamp - verticalTouch.lastTime);
-        verticalTouch.velocity = verticalTouch.velocity * 0.65 - deltaY / elapsed * 0.35;
-        root.dispatchEvent(new CustomEvent('deck:release-for-scroll', { detail: { deltaY } }));
-        verticalTouch.lastY = point.clientY;
-        verticalTouch.lastTime = event.timeStamp;
-    }, { passive: true });
-
-    let momentumFrame = 0;
-    const clearVerticalTouch = event => {
-        if (event.type === 'touchend' && verticalTouch?.vertical) {
-            let velocity = verticalTouch.velocity;
-            let previous = performance.now();
-            window.cancelAnimationFrame(momentumFrame);
-            const coast = now => {
-                const elapsed = Math.min(32, now - previous);
-                previous = now;
-                velocity *= Math.pow(0.94, elapsed / 16);
-                if (Math.abs(velocity) < 0.025) return;
-                window.scrollBy({ top: velocity * elapsed, behavior: 'instant' });
-                skipCatchUntil = Math.max(skipCatchUntil, now + 100);
-                momentumFrame = window.requestAnimationFrame(coast);
-            };
-            momentumFrame = window.requestAnimationFrame(coast);
-        }
-        verticalTouch = null;
-    };
-    root.addEventListener('touchend', clearVerticalTouch, { passive: true });
-    root.addEventListener('touchcancel', clearVerticalTouch, { passive: true });
-
     root.addEventListener('pointerdown', event => {
         if (event.pointerType === 'mouse' && event.button !== 0) return;
         if (!isEngaged() || exiting()) return;
@@ -489,19 +440,9 @@
         updateExitUp();
     };
 
-    root.addEventListener('deck:release-for-scroll', event => {
-        if (pinned) {
-            unpin();
-            skipCatchUntil = performance.now() + 900;
-        }
-        const deltaY = Number(event.detail?.deltaY) || 0;
-        if (deltaY) window.scrollBy({ top: -deltaY, behavior: 'instant' });
-    });
-
     // Mientras está fijada no hay gesto nativo que valga: se cancela todo (también el «tirar para recargar»).
     document.addEventListener('touchmove', event => {
-        // El gesto vertical libera la fijación en Tinder para que el navegador pueda desplazar la página.
-        if (pinned && event.cancelable && root.dataset.layout !== 'swipe') event.preventDefault();
+        if (pinned && event.cancelable) event.preventDefault();
     }, { passive: false });
 
     // Táctil: vigilancia de llegada (solo mientras la baraja está a menos de una pantalla de distancia).
