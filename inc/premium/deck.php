@@ -51,7 +51,7 @@ $deckJitter = static fn(int $i, int $salt): float => fmod(abs(sin(($i + 1) * 12.
                 $linkTag  = $hasSlug ? 'a' : 'button';
                 ?>
                 <article class="deck__card"
-                         <?php if ($deckKey === 'polaroid'): ?>style="--j1:<?= number_format($deckJitter($i, 1), 3, '.', '') ?>;--j2:<?= number_format($deckJitter($i, 2), 3, '.', '') ?>;--j3:<?= number_format($deckJitter($i, 3), 3, '.', '') ?>"<?php endif; ?>
+                         <?php if ($deckKey === 'coverflow'): ?>style="--coverflow-aspect:<?= number_format($aspect, 4, '.', '') ?>"<?php elseif ($deckKey === 'polaroid'): ?>style="--j1:<?= number_format($deckJitter($i, 1), 3, '.', '') ?>;--j2:<?= number_format($deckJitter($i, 2), 3, '.', '') ?>;--j3:<?= number_format($deckJitter($i, 3), 3, '.', '') ?>"<?php endif; ?>
                          data-pos="<?= min($i, $deckHidden) ?>"
                          data-index="<?= $i ?>"
                          data-aspect="<?= number_format($aspect, 4, '.', '') ?>"
