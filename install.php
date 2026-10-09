@@ -36,6 +36,10 @@ function install_page(string $message = '', bool $success = false, int $status =
     echo '</main></html>';
 }
 
+if (PHP_VERSION_ID < 80100) install_page('Este sitio requiere PHP 8.1 o posterior. Cambia la versión PHP desde el panel del hosting.', false, 500);
+if (!extension_loaded('gd') || !function_exists('imagewebp')) install_page('Falta GD con soporte para WebP. Pide al hosting que active GD con JPEG, PNG y WebP.', false, 500);
+if (!extension_loaded('fileinfo') || !class_exists('finfo')) install_page('Falta la extensión PHP Fileinfo. Pide al hosting que la active.', false, 500);
+
 if (is_file($authPath)) {
     $removed = @unlink(__FILE__);
     install_page($removed
@@ -60,6 +64,13 @@ if (!is_dir($privateDirectory) || !is_writable($privateDirectory)) install_page(
 if (!is_file($privateDirectory . DIRECTORY_SEPARATOR . '.htaccess')) @file_put_contents($privateDirectory . DIRECTORY_SEPARATOR . '.htaccess', "Require all denied" . PHP_EOL);
 if (!is_file($privateDirectory . DIRECTORY_SEPARATOR . 'index.php')) @file_put_contents($privateDirectory . DIRECTORY_SEPARATOR . 'index.php', "<?php" . PHP_EOL . "http_response_code(404);" . PHP_EOL . "exit;" . PHP_EOL);
 if (!is_file($privateDirectory . DIRECTORY_SEPARATOR . 'web.config')) @file_put_contents($privateDirectory . DIRECTORY_SEPARATOR . 'web.config', '<?xml version="1.0" encoding="UTF-8"?><configuration><system.webServer><authorization><deny users="*" /></authorization></system.webServer></configuration>');
+foreach (['img', 'data', 'imagenes/desktop', 'imagenes/mobile'] as $relativeDirectory) {
+    $directory = __DIR__ . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativeDirectory);
+    if (!is_dir($directory) && !@mkdir($directory, 0755, true) && !is_dir($directory)) {
+        install_page('PHP no puede crear ' . $relativeDirectory . '/. Comprueba los permisos del hosting.', false, 500);
+    }
+    if (!is_writable($directory)) install_page('PHP no puede escribir en ' . $relativeDirectory . '/. Pide al hosting que asigne esa carpeta al usuario PHP.', false, 500);
+}
 $hash = password_hash($password, PASSWORD_DEFAULT);
 if (!is_string($hash) || $hash === '') install_page('No se pudo generar el hash de la contraseña.', false, 500);
 $auth = "<?php\nreturn " . var_export(['username' => $username, 'password_hash' => $hash], true) . ";\n";
