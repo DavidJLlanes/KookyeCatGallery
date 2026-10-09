@@ -66,12 +66,13 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
             const count=()=>fields.filter(field=>field.disabled).length;
             const result={total:fields.length,initial:count(),titleField:!!document.querySelector('#setting-site_title'),options:[...select.options].map(o=>o.value)};
             change('deck');result.afterDeck=count();result.noteShown=!document.querySelector('[data-premium-note]').hidden;
+            change('coverflow');result.afterCoverflow=count();
             result.dimmed=document.querySelectorAll('.upload-field.is-disabled').length;
             change('bubbles');result.afterBubbles=count();result.photosEnabled=!document.querySelector('#setting-photos_desktop').disabled&&!document.querySelector('#setting-photos_mobile').disabled;
             change('none');result.afterNone=count();result.noteHidden=document.querySelector('[data-premium-note]').hidden;
             return result;
           });
-          assert.deepEqual(premium,{total:8,initial:0,titleField:true,options:['none','deck','bubbles','squares','drum','cylinder','polaroid','swipe'],afterDeck:8,noteShown:true,dimmed:8,afterBubbles:6,photosEnabled:true,afterNone:0,noteHidden:true},'Premium gallery must toggle the standard gallery fields');
+          assert.deepEqual(premium,{total:8,initial:0,titleField:true,options:['none','deck','coverflow','bubbles','squares','drum','cylinder','polaroid','swipe'],afterDeck:8,afterCoverflow:8,noteShown:true,dimmed:8,afterBubbles:6,photosEnabled:true,afterNone:0,noteHidden:true},'Premium gallery must toggle the standard gallery fields');
         }
         if(section==='design' && width===375) {
           const templates=await page.evaluate(()=>{

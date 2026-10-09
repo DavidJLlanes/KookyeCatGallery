@@ -26,6 +26,7 @@ foreach ($groups as $group) {
     }
 }
 assert_template_text(count($seen) >= 20, 'Faltan textos de las plantillas');
+assert_template_text(in_array('coverflow', $groups['deck']['options'], true), 'Cover Flow debe mostrar los textos de ayuda y salida de su interfaz.');
 assert_template_text(count(site_design_choices()['header_mobile']) === 9, 'No se revisaron las nueve cabeceras móviles');
 assert_template_text(count(site_design_choices()['header_desktop']) === 9, 'No se revisaron las nueve cabeceras de escritorio');
 assert_template_text(count(site_design_choices()['gallery_mobile']) === 10, 'No se revisaron los diez modos de galería');

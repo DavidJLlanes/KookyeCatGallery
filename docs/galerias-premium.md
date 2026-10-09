@@ -9,6 +9,7 @@ Se elige en el panel: **Textos y diseño → Diseño → Galería premium**.
 | Nombre | Clave | Resumen |
 | --- | --- | --- |
 | **Estilo Baraja** | `deck` | Pantalla completa sobre el fondo de la web. Las fotos son cartas apiladas: cada una sale hacia la izquierda, se encoge y se desvanece, y el mazo de debajo asoma en 3D. |
+| **Cover Flow** | `coverflow` | La foto activa queda de frente; las fotos laterales se inclinan en perspectiva, se apilan en abanico y se reflejan. En móvil se muestra una a cada lado. |
 | **Estilo Burbujas** | `bubbles` | Pantalla completa. Las fotos son círculos de distintos tamaños, con un pequeño marco, repartidos al azar por toda la pantalla y flotando lentamente. Se paginan. |
 | **Estilo Cuadrados** | `squares` | Igual que «Estilo Burbujas», pero con cuadrados de distintos tamaños (esquinas suavemente redondeadas). |
 | **Estilo Tambor** | `drum` | Pantalla completa. Las fotos giran como un tambor 3D (carrusel cilíndrico): la activa de frente y las vecinas curvadas hacia atrás a ambos lados. Misma interfaz que «Estilo Baraja». |
@@ -75,6 +76,10 @@ El mínimo entre dos pasos con la rueda (`STEP_COOLDOWN`, 600 ms) está al princ
 
 - Las fotos sin `slug` (sin ficha propia) se ven, pero no se pueden abrir con un clic.
 - El nombre de la app instalada (`manifest.json`) no cambia con el título de la web.
+
+## Cover Flow (`coverflow`)
+
+Presenta la foto activa de frente y distribuye las anteriores y siguientes a ambos lados, en perspectiva. Las más cercanas giran unos 60 grados y las siguientes se hacen más pequeñas y oscuras; la imagen principal proyecta un reflejo suave. Conserva la navegación, filtros, contador, botones de salida, fijación en móvil y regreso a la misma foto de la interfaz Baraja. En móvil solo se muestra una foto lateral por lado. Los ajustes estándar de cuadrícula, paginación y número de fotos visibles quedan desactivados porque este modo calcula su propia composición. Los textos de ayuda y salida se editan desde Textos cuando está seleccionado este modo.
 
 ## Estilo Burbujas (`bubbles`)
 
@@ -187,6 +192,7 @@ index.php                          «Volver a la galería» de la ficha apunta a
 inc/site-settings.php              Ajuste `gallery_premium` (validación, atributos del <body>)
 assets/premium/swipe/              Estilo Tinder (swipe.css y swipe.js; marcado en inc/premium/swipe.php; interfaz de deck.css)
 assets/premium/polaroid/           Estilo Polaroids (polaroid.css; reutiliza deck.js y el marcado de la baraja)
+assets/premium/coverflow/          Cover Flow (coverflow.css; reutiliza deck.js y el marcado de la baraja)
 assets/premium/cylinder/           Estilo Cilindro (cylinder.css y cylinder.js; marcado en inc/premium/cylinder.php; interfaz de deck.css)
 assets/premium/drum/               Estilo Tambor (drum.css; reutiliza deck.js y el marcado de la baraja)
 assets/premium/bubbles/            Estilo Burbujas (bubbles.css y bubbles.js); marcado en inc/premium/bubbles.php
@@ -228,5 +234,6 @@ Reglas del contrato: una galería premium debe ocupar su bloque entero, no depen
 - `node tests/premium-drum.cjs`: Estilo Tambor en 5 dispositivos y 13 tamaños de pantalla: disposición cilíndrica simétrica y centrada (cartas ±1 y ±2, profundidad, oscurecimiento, ±3 ocultas), rueda, dedo, teclado, flechas, contador, botones de salir, filtros, fijación en móvil, vuelta desde la ficha, paleta y movimiento reducido.
 - `node tests/premium-squares.cjs`: la misma batería que las burbujas con la forma cuadrada (`BUBBLES_SHAPE=square`): separación entre cuadrados, tamaños distintos, paginación, rebote, fijación en móvil, etc.
 - `node tests/premium-bubbles.cjs`: Estilo Burbujas en 5 dispositivos: pantalla completa, «Fotos visibles a la vez» (20 / 12), círculos de tamaños distintos sin solaparse, sin salirse y repartidos por toda la pantalla, sin texto, flotación, paginación minimalista, teclado, rueda y dedo, fijación sin vibración en móvil, apertura con rebote, botones de salir, filtros, vuelta desde la ficha, paleta y movimiento reducido.
+- `node tests/premium-coverflow.cjs`: Cover Flow en escritorio y móvil: posiciones laterales, inclinación, reflejo progresivo, dos fotos laterales en móvil, sin desbordamiento ni errores de JS.
 - `node tests/premium-deck.cjs`: Estilo Baraja en 5 dispositivos (escritorio, portátil, tablet, móvil y móvil apaisado): pantalla completa, parada del scroll al llegar (escritorio) y galería fijada sin vibración (móvil), rueda, dedo (también gestos lentos), teclado, límites, botones «Salir» y «Salir hacia arriba», botones flotantes, pies de foto sin solaparse, marco uniforme, mazo visible y ajuste de foto, filtros, vuelta desde la ficha, paletas y movimiento reducido.
 - `node tests/admin-layout.cjs`: el panel desactiva y reactiva los campos de la galería estándar.

@@ -32,6 +32,7 @@ jobs:
           node --check assets/js/pwa.js
           node --check assets/js/admin-ui.js
           node --check assets/premium/deck/deck.js
+          node --check tests/premium-coverflow.cjs
           node --check assets/js/site-texts.js
           node --check tests/photo-navigation.cjs
           node --check tests/photo-transition.cjs
@@ -78,6 +79,10 @@ jobs:
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/premium-squares.cjs
+      - name: Test premium Cover Flow gallery
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: node tests/premium-coverflow.cjs
       - name: Probar la galería premium de tambor
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
