@@ -16,6 +16,7 @@ declare(strict_types=1);
  *   (galerías premium: inc/premium-galleries.php)
  */
 
+require_once __DIR__ . '/private-storage.php';
 require_once __DIR__ . '/premium-galleries.php';
 require_once __DIR__ . '/template-texts.php';
 require_once __DIR__ . '/site-brand-assets.php';
@@ -30,8 +31,7 @@ require_once __DIR__ . '/site-brand-assets.php';
  */
 function site_settings_path(): string
 {
-    $privateDir = getenv('GALLERY_PRIVATE_DIR') ?: dirname(__DIR__) . '/var';
-    return rtrim($privateDir, '/\\') . '/site-settings.json';
+    return rtrim(gallery_private_directory(), '/\\') . DIRECTORY_SEPARATOR . 'site-settings.json';
 }
 
 /**
