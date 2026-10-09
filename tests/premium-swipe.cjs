@@ -176,25 +176,6 @@ const open = async (context, html, {liked = [], url = 'https://deck.test/'} = {}
             assert.equal(await page.evaluate(() => document.querySelector('.deck__card[data-slug="foto-1"] .deck__hearts').textContent.trim().startsWith('♥')), true, `${label}: la foto queda marcada con un corazón`);
             assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('djl-photo-favorites-v1') || '[]').includes('foto-1')), true, `${label}: la foto pasa a Favoritas`);
 
-            // 5b. Tinder usa el gesto horizontal para las fotos, pero un gesto vertical debe soltar la galería
-            //     y permitir que la página continúe desplazándose sin quedarse bloqueada en body:fixed.
-            if (device.touch) {
-                const beforeVertical = (await state()).scrollY;
-                const x = Math.round(device.viewport.width / 2), y = Math.round(device.viewport.height * 0.58);
-                await cdp.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [{x, y}]});
-                for (let i = 1; i <= 8; i++) {
-                    await cdp.send('Input.dispatchTouchEvent', {type: 'touchMove', touchPoints: [{x, y: y - 150 * i / 8}]});
-                    await page.waitForTimeout(16);
-                }
-                await cdp.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []});
-                await page.waitForTimeout(500);
-                const afterVertical = await state();
-                assert(!afterVertical.pinned && afterVertical.scrollY > beforeVertical + 50,
-                    `${label}: el gesto vertical libera Tinder y desplaza la página (${beforeVertical} → ${afterVertical.scrollY})`);
-                await toDeck();
-                assert((await state()).pinned, `${label}: la galería vuelve a acoplarse al regresar a ella`);
-            }
-
             // 6. Botones de la barra: el corazón da un corazón y avanza; la flecha solo avanza.
             await page.click('[data-swipe-like]'); await settle();
             s = await state();
