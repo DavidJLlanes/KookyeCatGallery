@@ -8,7 +8,8 @@ declare(strict_types=1);
  * inmediatamente después de guardar. No lo dejes publicado.
  */
 
-$privateDirectory = rtrim(getenv('GALLERY_PRIVATE_DIR') ?: __DIR__ . '/var', '/\\');
+require_once __DIR__ . '/inc/private-storage.php';
+$privateDirectory = gallery_private_directory(true);
 $authPath = $privateDirectory . '/upload-auth.php';
 
 ini_set('session.use_strict_mode', '1');
