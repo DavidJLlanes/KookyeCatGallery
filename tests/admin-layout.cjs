@@ -39,7 +39,7 @@ uploadPage($section === 'design' ? 'Diseño' : 'Perfil', adminNavigation('test-t
             return {subnav:!!document.querySelector('.admin-subnav'),active,navLabels,form:box(form),install:box(install),installInTopbar:topbar.contains(install),
               sidebar:visible(sidebar),tabbar:visible(tabbar),tabbarBox:box(tabbar),
               savebar:box(document.querySelector('.admin-savebar')),
-              fields:[...document.querySelectorAll('.admin-card select, .admin-card input:not([type=hidden]):not([type=checkbox]), .section-order__move button')].filter(visible).map(box).filter(b=>b.width>0),
+              fields:[...document.querySelectorAll('.admin-card select, .admin-card input:not([type=hidden]):not([type=checkbox]), .admin-card textarea, .section-order__move button')].filter(visible).map(box).filter(b=>b.width>0),
               overflow:document.documentElement.scrollWidth>innerWidth+1,
               h1:document.querySelectorAll('h1').length,
               order:[...document.querySelectorAll('input[name="section_order[]"]')].map(i=>i.value)};
@@ -72,6 +72,27 @@ uploadPage($section === 'design' ? 'Diseño' : 'Perfil', adminNavigation('test-t
             return result;
           });
           assert.deepEqual(premium,{total:8,initial:0,titleField:true,options:['none','deck','bubbles','squares','drum','cylinder','polaroid','swipe'],afterDeck:8,noteShown:true,dimmed:8,afterBubbles:6,photosEnabled:true,afterNone:0,noteHidden:true},'Premium gallery must toggle the standard gallery fields');
+        }
+        if(section==='design' && width===375) {
+          const templates=await page.evaluate(()=>{
+            const mobile=document.querySelector('#setting-header_mobile');
+            const premium=document.querySelector('#setting-gallery_premium');
+            const group=name=>document.querySelector('[data-template-text-group][data-template-options="'+name+'"]');
+            const change=(select,value)=>{select.value=value;select.dispatchEvent(new Event('change',{bubbles:true}));};
+            const initial={reel:group('reel').hidden,atlas:group('atlas').hidden,standard:group('none').hidden};
+            change(mobile,'reel');
+            const reelShown=!group('reel').hidden&&group('atlas').hidden;
+            change(mobile,'atlas');
+            const atlasShown=!group('atlas').hidden&&group('reel').hidden;
+            change(premium,'swipe');
+            const swipeShown=!group('swipe').hidden&&group('none').hidden;
+            change(premium,'squares');
+            const squaresShown=!group('squares').hidden&&!group('bubbles,squares').hidden&&group('bubbles').hidden;
+            const atlasField=document.querySelector('textarea[name="texts[template_atlas_label]"]');
+            return {initial,reelShown,atlasShown,swipeShown,squaresShown,atlasEditable:!!atlasField&&!atlasField.disabled};
+          });
+          assert.deepEqual(templates,{initial:{reel:true,atlas:true,standard:false},reelShown:true,atlasShown:true,
+            swipeShown:true,squaresShown:true,atlasEditable:true},'Template text fields must follow the selected designs');
         }
         if(section==='design') {
           // Reordering moves the DOM rows (which is what gets submitted) and disables the edge buttons.

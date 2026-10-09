@@ -60,6 +60,7 @@ if ($premiumKey !== null) {
             <article
                 class="card<?= $hasTitle ? ' card--has-title' : '' ?>"
                 style="--aspect: <?= number_format($aspect, 4, '.', '') ?>"
+                data-template-atlas-photo-label="<?= site_text_html('template_atlas_photo_label') ?>"
                 data-reveal
                 data-index="<?= $i ?>"
                 data-title="<?= safe($item['title']) ?>"

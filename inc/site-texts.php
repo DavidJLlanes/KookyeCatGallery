@@ -1,6 +1,11 @@
 <?php
 // Stable keys: do not regenerate this catalog when defaults change.
 return [
+    'template_reel_label' => ['group' => 'Plantillas · Cine · rótulo superior', 'default' => '01 / KOOKYE EN MOVIMIENTO'],
+    'template_atlas_label' => ['group' => 'Plantillas · Atlas · título superior', 'default' => 'ATLAS  /  PROVINCIA DE KOOKYE'],
+    'template_atlas_photo_label' => ['group' => 'Plantillas · Atlas · rótulo de fotografía', 'default' => 'PLACA  ·  KOOKYE'],
+    'template_orbit_label' => ['group' => 'Plantillas · Órbita · rótulo superior', 'default' => '✦    ARCHIVO CELESTE    ✦'],
+    'template_scrapbook_label' => ['group' => 'Plantillas · Álbum · etiqueta de postales', 'default' => '✿  postales desde Kookye'],
     'deck_label' => ['group' => 'Galería premium · Estilo Baraja', 'default' => 'Galería de fotografías en baraja'],
     'drum_label' => ['group' => 'Galería premium · Estilo Tambor', 'default' => 'Galería de fotografías en tambor'],
     'cylinder_label' => ['group' => 'Galería premium · Estilo Cilindro', 'default' => 'Galería de fotografías en cilindro'],

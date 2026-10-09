@@ -180,6 +180,11 @@
 .admin-card__head p { margin: .3rem 0 0; color: var(--fg-soft); font-size: .8rem; line-height: 1.5; }
 .admin-card__body { display: grid; gap: 1rem; padding: 1rem 1.2rem 1.2rem; }
 .admin-fields { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+.template-text-editor { display: grid; gap: 1rem; min-width: 0; }
+.template-text-group { min-width: 0; border-top: 1px solid var(--line); padding-top: 1rem; }
+.template-text-group[hidden] { display: none !important; }
+.template-text-group h3 { margin: 0 0 .85rem; color: var(--fg); font: 400 1.12rem var(--serif); }
+.template-text-group textarea { width: 100%; }
 @media (min-width: 720px) { .admin-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .admin-switches { display: grid; gap: .25rem; padding-top: .25rem; border-top: 1px solid var(--adm-line); }
 
