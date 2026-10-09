@@ -465,9 +465,12 @@
         updateExitUp();
     };
 
+    root.addEventListener('deck:release-for-scroll', unpin);
+
     // Mientras está fijada no hay gesto nativo que valga: se cancela todo (también el «tirar para recargar»).
     document.addEventListener('touchmove', event => {
-        if (pinned && event.cancelable) event.preventDefault();
+        // El gesto vertical libera la fijación en Tinder para que el navegador pueda desplazar la página.
+        if (pinned && event.cancelable && root.dataset.layout !== 'swipe') event.preventDefault();
     }, { passive: false });
 
     // Táctil: vigilancia de llegada (solo mientras la baraja está a menos de una pantalla de distancia).
