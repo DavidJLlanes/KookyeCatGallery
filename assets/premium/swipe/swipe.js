@@ -302,19 +302,21 @@
     root.addEventListener('touchstart', event => {
         if (event.touches.length !== 1 || !isEngaged()) { verticalTouch = null; return; }
         const point = event.touches[0];
-        verticalTouch = { x: point.clientX, y: point.clientY, decided: false };
+        verticalTouch = { x: point.clientX, y: point.clientY, lastY: point.clientY, vertical: false };
     }, { passive: true });
 
     root.addEventListener('touchmove', event => {
-        if (!verticalTouch || verticalTouch.decided || event.touches.length !== 1) return;
+        if (!verticalTouch || event.touches.length !== 1) return;
         const point = event.touches[0];
         const dx = point.clientX - verticalTouch.x;
         const dy = point.clientY - verticalTouch.y;
-        if (Math.hypot(dx, dy) < 8) return;
-        verticalTouch.decided = true;
-        if (Math.abs(dy) > Math.abs(dx) && html.classList.contains('deck-pinned')) {
-            root.dispatchEvent(new CustomEvent('deck:release-for-scroll'));
+        if (!verticalTouch.vertical) {
+            if (Math.hypot(dx, dy) < 8) return;
+            if (Math.abs(dy) <= Math.abs(dx)) { verticalTouch = null; return; }
+            verticalTouch.vertical = true;
         }
+        root.dispatchEvent(new CustomEvent('deck:release-for-scroll', { detail: { deltaY: point.clientY - verticalTouch.lastY } }));
+        verticalTouch.lastY = point.clientY;
     }, { passive: true });
 
     const clearVerticalTouch = () => { verticalTouch = null; };
@@ -465,7 +467,14 @@
         updateExitUp();
     };
 
-    root.addEventListener('deck:release-for-scroll', unpin);
+    root.addEventListener('deck:release-for-scroll', event => {
+        if (pinned) {
+            unpin();
+            skipCatchUntil = performance.now() + 900;
+        }
+        const deltaY = Number(event.detail?.deltaY) || 0;
+        if (deltaY) window.scrollBy({ top: -deltaY, behavior: 'instant' });
+    });
 
     // Mientras está fijada no hay gesto nativo que valga: se cancela todo (también el «tirar para recargar»).
     document.addEventListener('touchmove', event => {
