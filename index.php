@@ -192,9 +192,10 @@ $pageTitle    = site_text('text_1a0ef9e63d20942b');
 $pageDesc     = str_replace('{count}', (string) $totalFotos, site_text('text_506b817f8bd1888e'));
 $pageKeywords = str_replace('{count}', (string) $totalFotos, site_text('text_570bd4204e3d077b'));
 $pageCanonical = $siteUrl . '/';
-$pageOgImage   = $siteUrl . '/assets/img/kookyecatgallery-photographers-cover.png';
-$pageOgWidth   = 1730;
-$pageOgHeight  = 909;
+$customOgImage = site_brand_og_url();
+$pageOgImage = $customOgImage !== '' ? $siteUrl . $customOgImage : $siteUrl . '/assets/img/kookyecatgallery-photographers-cover.png';
+$pageOgWidth = $customOgImage !== '' ? 1200 : 1730;
+$pageOgHeight = $customOgImage !== '' ? 630 : 909;
 
 if ($fotoItem !== null) {
     $pageTitle    = safe($fotoItem['title']) . site_text('text_0ad82954c86eec7c');
@@ -216,7 +217,7 @@ if ($fotoItem !== null) {
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="app-version" content="<?= safe($appVersion) ?>">
     <meta name="gallery-version" content="<?= safe($galleryVersion) ?>">
-    <link rel="manifest" href="/manifest.json?v=<?= safe($appVersion) ?>">
+    <link rel="manifest" href="/app-manifest.php?v=<?= safe($appVersion) ?>">
 
     <title><?= safe($pageTitle) ?></title>
     <meta name="description" content="<?= safe($pageDesc) ?>">
@@ -248,9 +249,13 @@ if ($fotoItem !== null) {
     <?php endif; ?>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.svg">
-    <link rel="icon" type="image/webp" sizes="192x192" href="/favicon.svg">
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.svg">
+    <?php if (is_file(__DIR__ . '/assets/icons/site-app-icon-32.png')): ?>
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= safe(site_brand_icon_url(32)) ?>">
+    <link rel="icon" type="image/png" sizes="192x192" href="<?= safe(site_brand_icon_url(192)) ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= safe(site_brand_icon_url(180)) ?>">
+    <?php else: ?>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <?php endif; ?>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
