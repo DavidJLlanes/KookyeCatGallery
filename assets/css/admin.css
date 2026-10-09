@@ -368,3 +368,13 @@
 /* Campos de la galería estándar desactivados por una galería premium. */
 .upload-field.is-disabled { opacity: .45; }
 .upload-field.is-disabled select { cursor: not-allowed; }
+
+
+/* El panel de proporciones y la ayuda no deben ensanchar el formulario en móviles. */
+.site-settings .admin-fields,
+.site-settings .admin-fields > .upload-field { min-width: 0; }
+.site-settings .admin-grid-explanation { max-width: 100%; overflow-wrap: anywhere; }
+@media (max-width: 768px) {
+    .site-settings .admin-card__body { min-width: 0; }
+    .site-settings .admin-fields { grid-template-columns: minmax(0, 1fr); }
+}
