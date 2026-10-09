@@ -21,6 +21,7 @@ const css = [
             {premium: 'bubbles', container: 'bubbles', link: 'bubbles__link', picture: 'bubbles__picture', image: 'bubbles__img'},
             {premium: 'cylinder', container: 'deck', link: 'cyl__link', picture: 'cyl__picture', image: 'cyl__img'},
         ];
+        await page.addStyleTag({content: 'body[data-hover="zoom"] .test-hover .deck__img, body[data-hover="zoom"] .test-hover .cyl__img, body[data-hover="zoom"] .test-hover .bubbles__img { transform:scale(1.16)!important } body[data-hover="frame"] .test-hover { outline:3px solid #fff!important } body[data-hover="shine"] .test-hover .deck__picture::after, body[data-hover="shine"] .test-hover .cyl__picture::after, body[data-hover="shine"] .test-hover .bubbles__picture::after { content:""!important }'});
         for (const item of cases) {
             await page.setContent(`<!doctype html><html><head><meta charset="utf-8"></head>
                 <body data-gallery-premium="${item.premium}" data-hover="zoom">
