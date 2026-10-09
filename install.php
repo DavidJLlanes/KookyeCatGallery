@@ -36,16 +36,17 @@ function install_page(string $message = '', bool $success = false, int $status =
     echo '</main></html>';
 }
 
-if (PHP_VERSION_ID < 80100) install_page('Este sitio requiere PHP 8.1 o posterior. Cambia la versión PHP desde el panel del hosting.', false, 500);
-if (!extension_loaded('gd') || !function_exists('imagewebp')) install_page('Falta GD con soporte para WebP. Pide al hosting que active GD con JPEG, PNG y WebP.', false, 500);
-if (!extension_loaded('fileinfo') || !class_exists('finfo')) install_page('Falta la extensión PHP Fileinfo. Pide al hosting que la active.', false, 500);
-
 if (is_file($authPath)) {
     $removed = @unlink(__FILE__);
     install_page($removed
         ? 'Esta web ya tenía un acceso configurado. El instalador se ha eliminado; usa la recuperación documentada solo si necesitas restablecer la contraseña.'
         : 'Esta web ya tiene un acceso configurado. Elimina install.php ahora desde el hosting. Para restablecer la contraseña, sigue la guía de recuperación.', true, 409);
 }
+if (PHP_VERSION_ID < 80100) install_page('Este sitio requiere PHP 8.1 o posterior. Cambia la versión PHP desde el panel del hosting.', false, 500);
+if (!extension_loaded('gd') || !function_exists('imagewebp')) install_page('Falta GD con soporte para WebP. Pide al hosting que active GD con JPEG, PNG y WebP.', false, 500);
+if (!extension_loaded('fileinfo') || !class_exists('finfo')) install_page('Falta la extensión PHP Fileinfo. Pide al hosting que la active.', false, 500);
+
+
 if (empty($_SESSION['install_csrf'])) $_SESSION['install_csrf'] = bin2hex(random_bytes(32));
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') install_page();
 $csrf = $_POST['csrf'] ?? null;
