@@ -10,7 +10,7 @@ require_once 'inc/helpers.php';
 require_once 'inc/site-settings.php';
 $siteSettings = site_settings_defaults(); $siteSettings['gallery_premium'] = 'coverflow';
 $rootDir = getcwd(); $author = 'Autor'; $galleryItems = [];
-for ($i = 0; $i < 6; $i++) $galleryItems[] = ['slug' => "foto-$i", 'title' => "Foto $i", 'description' => '',
+for ($i = 0; $i < 8; $i++) $galleryItems[] = ['slug' => "foto-$i", 'title' => "Foto $i", 'description' => '',
     'desktop' => "imagenes/desktop/foto-$i.webp", 'mobile' => "imagenes/mobile/foto-$i.webp",
     'aspect' => 1.5, 'category' => '', 'latitude' => 0, 'longitude' => 0];
 include 'inc/premium/deck.php';
