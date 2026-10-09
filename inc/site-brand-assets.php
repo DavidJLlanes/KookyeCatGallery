@@ -69,7 +69,7 @@ function site_brand_render_crop($source, int $sourceWidth, int $sourceHeight, in
  * Crea iconos cuadrados de favicon, Apple Touch y PWA, y la imagen social 1200×630.
  * La raíz se puede sustituir en pruebas para no escribir en los archivos de la aplicación.
  */
-function site_brand_assets_process(array $files, ?string $rootDir = null): array
+function site_brand_assets_process(array $files, ?string $rootDir = null): void
 {
     $rootDir ??= dirname(__DIR__);
     $icon = $files['app_icon_file'] ?? null;

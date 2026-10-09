@@ -41,6 +41,8 @@ jobs:
         run: node tests/photo-presets.cjs
       - name: Comprobar la configuración del sitio
         run: php tests/site-settings.php
+- name: Comprobar el guardado de marca sin archivos
+        run: php tests/site-brand-assets.php
       - name: Test template text fields
         run: php tests/template-texts.php
       - name: Comprobar la configuración de IA

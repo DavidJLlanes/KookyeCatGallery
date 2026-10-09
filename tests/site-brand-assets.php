@@ -10,6 +10,9 @@ if (!extension_loaded('gd')) {
 
 $root = sys_get_temp_dir() . '/site-brand-test-' . bin2hex(random_bytes(6));
 mkdir($root, 0755, true);
+
+// A settings save without icon uploads must be a safe no-op.
+site_brand_assets_process([], $root);
 $iconPath = $root . '/icon.png';
 $socialPath = $root . '/social.png';
 $icon = imagecreatetruecolor(512, 512);
