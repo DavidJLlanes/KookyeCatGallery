@@ -54,8 +54,9 @@ if (!is_string($csrf) || !hash_equals((string) $_SESSION['install_csrf'], $csrf)
 $url = rtrim(trim((string) ($_POST['url'] ?? '')), '/');
 $username = trim((string) ($_POST['username'] ?? ''));
 $password = (string) ($_POST['password'] ?? '');
-$urlParts = parse_url($url);
-if (!filter_var($url, FILTER_VALIDATE_URL) || !is_array($urlParts)
+$urlLooksValid = (bool) filter_var($url, FILTER_VALIDATE_URL);
+$urlParts = $urlLooksValid ? parse_url($url) : false;
+if (!$urlLooksValid || !is_array($urlParts)
     || strtolower((string) ($urlParts['scheme'] ?? '')) !== 'https'
     || empty($urlParts['host']) || isset($urlParts['user']) || isset($urlParts['pass'])
     || isset($urlParts['query']) || isset($urlParts['fragment'])
