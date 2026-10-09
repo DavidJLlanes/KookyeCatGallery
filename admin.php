@@ -410,9 +410,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $title = trim((string) ($_POST['title'] ?? ''));
         $description = trim((string) ($_POST['description'] ?? ''));
         $category = trim((string) ($_POST['category'] ?? ''));
-        if ($title === '' || mb_strlen($title, 'UTF-8') > 120 || $category === '' || mb_strlen($category, 'UTF-8') > 64
+        if ($title === '' || site_utf8_length($title) > 120 || $category === '' || site_utf8_length($category) > 64
             || preg_match('/[\r\n\x00-\x1F]/u', $title . $category)
-            || mb_strlen($description, 'UTF-8') > 5000) {
+            || site_utf8_length($description) > 5000) {
             uploadJson(422, ['ok' => false, 'error' => 'Revisa el nombre, la categoría y la descripción (máximo 5000 caracteres).']);
         }
 
