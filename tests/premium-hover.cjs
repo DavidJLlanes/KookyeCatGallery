@@ -23,7 +23,7 @@ const css = [
         for (const item of cases) {
             await page.setContent(`<!doctype html><html><head><meta charset="utf-8"></head>
                 <body data-gallery-premium="${item.premium}" data-hover="zoom">
-                    <div id="${item.container}"><a class="${item.link}" href="#"><picture class="${item.picture}"><img class="${item.image}" alt=""></picture></a></div>
+                    <div id="${item.container}"><article class="deck__card" data-pos="0"><a class="${item.link}" href="#"><picture class="${item.picture}"><img class="${item.image}" alt=""></picture></a></article></div>
                 </body></html>`);
             await page.addStyleTag({content: 'body{margin:0}#deck,#bubbles{position:relative;width:220px;height:220px;margin:20px}a{display:block;width:100%;height:100%}img{display:block;width:100%;height:100%}'});
             await page.addStyleTag({content: css});
