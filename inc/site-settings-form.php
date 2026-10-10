@@ -167,6 +167,11 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         $pages .= '<a class="page-editor-option" href="/admin.php?settings=1&amp;section=page&amp;doc=' . $key . '"><span>' . $escape($label) . '</span><span aria-hidden="true">Editar →</span></a>';
     }
     if ($section === 'texts') {
+        $adminAreaName = (string) ($settings['texts']['admin_area_name'] ?? site_text_catalog()['admin_area_name']['default']);
+        $adminAreaField = '<div class="upload-field"><label for="admin-area-name">Nombre visible</label>'
+            . '<input id="admin-area-name" name="texts[admin_area_name]" type="text" maxlength="120" autocomplete="organization" value="' . $escape($adminAreaName) . '">'
+            . '<small class="upload-help">Aparece después de «Área privada ·» en el panel de administración.</small></div>';
+        $html .= $card('Identidad del área privada', 'Personaliza el nombre del propietario, fotógrafo o estudio.', $adminAreaField);
         $html .= $card('Páginas de texto', 'Edita el contenido de «El proyecto», aviso legal, privacidad y cookies.', $pages . '</div>');
     }
     $html .= '</div>';

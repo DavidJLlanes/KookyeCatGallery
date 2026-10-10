@@ -326,6 +326,7 @@ function site_settings_defaults(): array
 function site_editable_text_keys(): array
 {
     $keys = [
+        'admin_area_name',
         'text_30170303c506cf6c',
         'text_318bb1fc64a6e036',
         'text_4577bab0d9627af1',
@@ -348,6 +349,7 @@ function site_editable_text_keys(): array
 function site_admin_text_labels(): array
 {
     return [
+        'admin_area_name' => 'Nombre que aparece en el área privada',
         'text_30170303c506cf6c' => 'Nombre del fotógrafo o estudio',
         'text_318bb1fc64a6e036' => 'Crédito del pie de página (después del año)',
         'text_4577bab0d9627af1' => 'Nombre de usuario del perfil',
@@ -445,6 +447,9 @@ function site_settings_validate(array $input): array
         $value = $input['texts'][$key] ?? $entry['default'];
         if (!is_string($value) || strlen($value) > 20000 || !preg_match('//u', $value)) {
             throw new InvalidArgumentException('Hay un texto inválido o demasiado largo.');
+        }
+        if ($key === 'admin_area_name' && (site_utf8_length($value) > 120 || preg_match('/[\\x00-\\x1F\\x7F]/u', $value))) {
+            throw new InvalidArgumentException('El nombre del área privada no puede superar 120 caracteres.');
         }
         if ($value !== $entry['default']) $out['texts'][$key] = $value;
     }

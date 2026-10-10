@@ -37,6 +37,7 @@ return [
     'categories_title' => ['group' => 'Inicio y galería', 'default' => 'Categorías'],
     'photo_navigation' => ['group' => 'Controles e instalación', 'default' => 'Navegación entre fotografías'],
     'social_threads_user' => ['group' => 'Redes Sociales', 'default' => '@kookyecatgallery'],
+    'admin_area_name' => ['group' => 'Administración', 'default' => 'Tu nombre o estudio'],
     'text_52179dc42df7efe5' => ['group' => 'Inicio y galería · accesibilidad', 'default' => 'Kookye Cat Gallery'],
     'text_2c6b326536186079' => ['group' => 'Inicio y galería', 'default' => 'Kookye Cat Gallery'],
     'text_20ab386d12d982bd' => ['group' => 'Inicio y galería', 'default' => 'Ver'],
