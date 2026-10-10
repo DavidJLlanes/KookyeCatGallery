@@ -152,16 +152,17 @@
             const result = await response.json();
             if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo guardar el texto.');
             const savedText = typeof result.value === 'string' ? result.value : input.value;
-            if (activeText.dataset.inlineEditKey === 'site_title') {
-                const titleUpdate = {value: savedText, updatedAt: Date.now()};
-                try { localStorage.setItem('gallery-admin-site-title', JSON.stringify(titleUpdate)); } catch (_) {}
-                if ('BroadcastChannel' in window) {
-                    try {
-                        const channel = new BroadcastChannel('gallery-admin-site-title');
-                        channel.postMessage(titleUpdate);
-                        channel.close();
-                    } catch (_) {}
-                }
+            const titleUpdate = {
+                value: typeof result.siteTitle === 'string' && result.siteTitle.trim() ? result.siteTitle : savedText,
+                updatedAt: Date.now()
+            };
+            try { localStorage.setItem('gallery-admin-site-title', JSON.stringify(titleUpdate)); } catch (_) {}
+            if ('BroadcastChannel' in window) {
+                try {
+                    const channel = new BroadcastChannel('gallery-admin-site-title');
+                    channel.postMessage(titleUpdate);
+                    channel.close();
+                } catch (_) {}
             }
             renderText(activeText, savedText);
             savedValue = savedText;
