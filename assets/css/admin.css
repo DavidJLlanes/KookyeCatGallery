@@ -454,15 +454,25 @@
 
 /* Crear categorías desde Gestionar categorías. */
 .admin-category-create {
-    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .8rem; align-items: end;
-    margin: 1rem 0 1.2rem; padding: 1rem 1.1rem;
-    border: 1px solid var(--adm-line); border-radius: var(--adm-radius); background: var(--adm-surface);
+    display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 1.2rem; align-items: center;
+    margin: 1rem 0 1.2rem; padding: 1.15rem 1.25rem;
+    border: 1px solid rgba(212, 165, 116, .42); border-left: 4px solid var(--accent);
+    border-radius: var(--adm-radius); background: linear-gradient(120deg, rgba(212, 165, 116, .1), var(--adm-surface) 62%);
 }
-.admin-category-create .upload-field { margin: 0; }
+.admin-category-create__intro { display: flex; align-items: center; gap: .85rem; }
+.admin-category-create__intro h2 { margin: 0; color: var(--fg); font-size: 1rem; font-weight: 650; }
+.admin-category-create__intro p { margin: .25rem 0 0; color: var(--fg-soft); font-size: .8rem; line-height: 1.45; }
+.admin-category-create__icon {
+    display: grid; flex: 0 0 2.7rem; width: 2.7rem; height: 2.7rem; place-items: center;
+    border: 1px solid rgba(212, 165, 116, .5); border-radius: 50%; color: var(--accent); font-size: 1.65rem;
+}
+.admin-category-create__form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, .65fr); gap: .8rem; align-items: end; }
+.admin-category-create__form .upload-field { margin: 0; }
+.admin-category-create__form .upload-submit { width: 100%; margin: 0; }
 .admin-empty-category-delete { grid-column: 2; }
 @media (max-width: 720px) {
-    .admin-category-create { grid-template-columns: 1fr; padding: .9rem; }
-    .admin-category-create .upload-submit { width: 100%; }
+    .admin-category-create { grid-template-columns: 1fr; gap: 1rem; padding: 1rem; }
+    .admin-category-create__form { grid-template-columns: 1fr; }
     .admin-empty-category-delete { grid-column: auto; }
 }
 
