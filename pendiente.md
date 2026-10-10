@@ -51,7 +51,7 @@ baraja; mi recomendación: **mano de cartas** y **Polaroids**, o el **libro** si
 - [ ] **Privacidad de metadatos:** mostrar y permitir eliminar los datos EXIF antes de publicar.
 - [ ] **Guardado tolerante a fallos:** autoguardado y recuperación después de perder conexión.
 - [ ] **Panel adaptable:** selección múltiple, acciones rápidas y atajos de teclado.
-- [ ] **Ayuda contextual:** ejemplos para texto alternativo, título, descripción y ubicación.
+- [x] **Ayuda contextual:** ejemplos para texto alternativo, título, descripción y ubicación en el editor, la edición rápida y la carga por lotes.
 - [ ] **Ajustes organizados:** mantener contenido, diseño, textos, redes y publicación en secciones claras.
 
 ## Hecho
