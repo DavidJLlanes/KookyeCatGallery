@@ -59,7 +59,7 @@ function gallery_collections_load(): array
             || mb_strlen($description, 'UTF-8') > 280
             || preg_match('/[\\x00-\\x1F\\x7F]/u', $name . $description)
             || ($cover !== '' && (basename($cover) !== $cover || !preg_match('/\\.(?:jpe?g|png)$/i', $cover))) continue;
-        $out[$name] = ['description' => $description, 'cover' => $cover];
+        $out[$name] = ['description' => $description, 'cover' => $cover, 'manual' => !empty($data['manual'])];
     }
     return $out;
 }
@@ -87,7 +87,37 @@ function gallery_collection_save(string $name, string $description, string $cove
         if (!$validCover) throw new RuntimeException('La portada debe ser una fotografía de esta colección.');
     }
     $collections = gallery_collections_load();
-    $collections[$name] = ['description' => $description, 'cover' => $cover];
+    $manual = !empty($collections[$name]['manual']);
+    $collections[$name] = ['description' => $description, 'cover' => $cover, 'manual' => $manual];
+    gallery_collections_write($collections);
+}
+
+function gallery_collection_create(string $name): void
+{
+    $name = trim($name);
+    if ($name === '' || mb_strlen($name, 'UTF-8') > 64 || preg_match('/[\\x00-\\x1F\\x7F]/u', $name)) {
+        throw new RuntimeException('Escribe un nombre de categoría válido (hasta 64 caracteres).');
+    }
+    $collections = gallery_collections_load();
+    if (isset($collections[$name])) throw new RuntimeException('Ya existe una categoría con ese nombre.');
+    $collections[$name] = ['description' => '', 'cover' => '', 'manual' => true];
+    gallery_collections_write($collections);
+}
+
+function gallery_collection_delete_empty(string $name, array $photos): void
+{
+    $name = trim($name);
+    foreach ($photos as $photo) {
+        $category = trim((string) ($photo['category'] ?? ''));
+        if (($category !== '' ? $category : 'Sin categoría') === $name) {
+            throw new RuntimeException('La categoría ya tiene fotografías y no se puede eliminar desde aquí.');
+        }
+    }
+    $collections = gallery_collections_load();
+    if (!isset($collections[$name]) || empty($collections[$name]['manual'])) {
+        throw new RuntimeException('No se encontró una categoría vacía para eliminar.');
+    }
+    unset($collections[$name]);
     gallery_collections_write($collections);
 }
 
