@@ -13,9 +13,9 @@
 <section class="contact" id="contacto" data-site-section="social">
     <div class="contact__glow" aria-hidden="true"></div>
     <div class="contact__inner">
-        <span class="contact__eyebrow"><?= site_text_html('text_bdd8f61b94c52379') ?></span>
-        <h2 class="contact__title"><?= nl2br(site_text_html('text_49a006d539216e16'), false) ?></h2>
-        <p class="contact__text"><?= site_text_html('text_ab3ceef210237f9d') ?></p>
+        <span class="contact__eyebrow"><?= site_inline_text_html('text_bdd8f61b94c52379') ?></span>
+        <h2 class="contact__title"><?= site_inline_text_html('text_49a006d539216e16', true) ?></h2>
+        <p class="contact__text"><?= site_inline_text_html('text_ab3ceef210237f9d') ?></p>
         <div class="contact__links">
             <?php
             $socialNames = site_social_networks();

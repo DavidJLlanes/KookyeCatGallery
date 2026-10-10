@@ -561,7 +561,10 @@ echo page_blocks_render_home($pageContext, $siteSettings['section_order'] ?? nul
 </footer>
 
 <?= site_client_texts() ?>
-<?php if ($isSiteAdmin): ?><script src="/assets/js/inline-editor.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/inline-editor.js')) ?>" defer></script><?php endif; ?>
+<?php if ($isSiteAdmin): ?>
+<script type="application/json" id="inline-editor-text-map"><?= json_encode(site_inline_text_values(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
+<script src="/assets/js/inline-editor.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/inline-editor.js')) ?>" defer></script>
+<?php endif; ?>
 <script src="/assets/js/pwa.js?v=<?= safe($appVersion) ?>" defer></script>
 <script src="/assets/js/gallery-layout.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/gallery-layout.js')) ?>" defer></script>
 <script src="/assets/js/main.js?v=<?= safe($appVersion) ?>" defer></script>

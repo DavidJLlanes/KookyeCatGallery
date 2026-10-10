@@ -434,11 +434,27 @@ function site_text_html(string $key): string
 /** Textos que se pueden editar desde la web por el administrador autenticado. */
 function site_inline_editable_text_keys(): array
 {
-    return array_values(array_diff(site_editable_text_keys(), [
-        'text_bdd8f61b94c52379',
-        'text_49a006d539216e16',
-        'text_ab3ceef210237f9d',
-    ]));
+    return site_editable_text_keys();
+}
+
+/** Valores autorizados para localizar también los textos de plantilla sin cambiar su marcado. */
+function site_inline_text_values(): array
+{
+    $values = [];
+    foreach (site_inline_editable_text_keys() as $key) {
+        $values[$key] = ['value' => site_text($key), 'label' => site_inline_text_label($key)];
+    }
+    return $values;
+}
+
+/** Rótulo editable del nombre de la web, guardado como ajuste de marca y no como texto suelto. */
+function site_inline_setting_html(string $key): string
+{
+    if ($key !== 'site_title') return '';
+    $value = site_title();
+    $escape = static fn(string $text): string => htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    if (empty($GLOBALS['siteInlineEditorEnabled'])) return $escape($value);
+    return '<span class="inline-edit-text" data-inline-edit-key="site_title" data-inline-edit-label="Título de la web">' . $escape($value) . '</span>';
 }
 
 function site_inline_text_label(string $key): string
@@ -451,11 +467,12 @@ function site_inline_text_label(string $key): string
     return (string) (site_text_catalog()[$key]['group'] ?? 'Texto');
 }
 
-function site_inline_text_html(string $key): string
+function site_inline_text_html(string $key, bool $preserveLineBreaks = false): string
 {
-    $value = site_text_html($key);
-    if (empty($GLOBALS['siteInlineEditorEnabled']) || !in_array($key, site_inline_editable_text_keys(), true)) return $value;
+    $raw = site_text($key);
     $escape = static fn(string $text): string => htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $value = $preserveLineBreaks ? nl2br($escape($raw), false) : $escape($raw);
+    if (empty($GLOBALS['siteInlineEditorEnabled']) || !in_array($key, site_inline_editable_text_keys(), true)) return $value;
     return '<span class="inline-edit-text" data-inline-edit-key="' . $escape($key) . '" data-inline-edit-label="' . $escape(site_inline_text_label($key)) . '">' . $value . '</span>';
 }
 

@@ -48,15 +48,27 @@ if (!is_array($payload) || !is_string($payload['key'] ?? null) || !is_string($pa
 }
 $key = $payload['key'];
 $value = $payload['value'];
-if (!in_array($key, site_inline_editable_text_keys(), true)) $fail(403, 'Este texto no se puede editar desde aquí.');
-if (strlen($value) > 20000) $fail(422, 'El texto supera el máximo permitido.');
+$isSiteTitle = $key === 'site_title';
+if (!$isSiteTitle && !in_array($key, site_inline_editable_text_keys(), true)) $fail(403, 'Este texto no se puede editar desde aquí.');
+if ($isSiteTitle) {
+    $value = trim($value);
+    if (site_utf8_length($value) > 80 || preg_match('/[\\x00-\\x1F\\x7F]/', $value)) $fail(422, 'El título debe tener 80 caracteres como máximo y no puede contener saltos de línea.');
+} elseif (strlen($value) > 20000) {
+    $fail(422, 'El texto supera el máximo permitido.');
+}
 
 session_write_close();
 try {
     $settings = site_settings_load();
-    $settings['texts'][$key] = $value;
+    if ($isSiteTitle) {
+        $settings['site_title'] = $value === site_title_default() ? '' : $value;
+        $savedValue = $value === '' ? site_title_default() : $value;
+    } else {
+        $settings['texts'][$key] = $value;
+        $savedValue = $value;
+    }
     site_settings_save($settings);
-    echo json_encode(['ok' => true], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['ok' => true, 'value' => $savedValue], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $error) {
     error_log('Inline text save failed: ' . $error->getMessage());
     $fail(500, 'No se pudo guardar el texto. Vuelve a intentarlo.');

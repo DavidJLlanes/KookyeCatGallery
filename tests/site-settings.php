@@ -19,12 +19,13 @@ check(isset(site_social_networks()['instagram'], site_social_networks()['threads
 check(!in_array('social_threads_user', site_editable_text_keys(), true) && !in_array('text_3b20084d3d94b4ee', site_editable_text_keys(), true), 'Network handles must not be editable text fields.');
 $inlineKeys = site_inline_editable_text_keys();
 check(in_array('text_cbbba360eb60dd04', $inlineKeys, true), 'Visible template copy must be available to inline editing.');
-check(!in_array('text_bdd8f61b94c52379', $inlineKeys, true) && !in_array('text_ab3ceef210237f9d', $inlineKeys, true), 'Social section copy must stay in the administration panel.');
+check(in_array('text_bdd8f61b94c52379', $inlineKeys, true) && in_array('text_49a006d539216e16', $inlineKeys, true) && in_array('text_ab3ceef210237f9d', $inlineKeys, true), 'Social section copy must be available in inline editing.');
 $GLOBALS['siteInlineEditorEnabled'] = false;
 check(!str_contains(site_inline_text_html('text_cbbba360eb60dd04'), 'data-inline-edit-key'), 'Inline controls must stay hidden for visitors.');
 $GLOBALS['siteInlineEditorEnabled'] = true;
 check(str_contains(site_inline_text_html('text_cbbba360eb60dd04'), 'data-inline-edit-key'), 'Inline controls must be available for an authenticated editor.');
-check(!str_contains(site_inline_text_html('text_bdd8f61b94c52379'), 'data-inline-edit-key'), 'Social copy must not be edited in inline mode.');
+check(str_contains(site_inline_text_html('text_bdd8f61b94c52379'), 'data-inline-edit-key'), 'Social copy must be editable in inline mode.');
+check(str_contains(site_inline_text_html('text_49a006d539216e16', true), '<br>'), 'Social title line breaks must remain visible in inline mode.');
 unset($GLOBALS['siteInlineEditorEnabled']);
 $inlineSaved = site_settings_validate(array_replace($defaults, ['texts' => ['text_cbbba360eb60dd04' => 'Un título editado']]));
 check(($inlineSaved['texts']['text_cbbba360eb60dd04'] ?? '') === 'Un título editado', 'Inline text changes must pass through normal settings validation.');
@@ -116,8 +117,10 @@ check(site_settings_validate(array_replace($defaults, ['site_title' => site_titl
 check(site_settings_validate(array_replace($defaults, ['site_title' => '']))['site_title'] === '', 'An empty title falls back to the default.');
 rejects(array_replace($defaults, ['site_title' => str_repeat('a', 81)]));
 rejects(array_replace($defaults, ['site_title' => "Dos\nlíneas"]));
-check(str_contains(site_settings_form('t', array_replace($defaults, ['site_title' => 'Mi Galería']), 'design'), 'value="Mi Galería"'), 'The title field must show the saved title.');
-check(str_contains(site_settings_form('t', $defaults, 'design'), 'value="' . htmlspecialchars(site_title_default(), ENT_QUOTES) . '"'), 'The title field must show the default title.');
+check(!str_contains(site_settings_form('t', $defaults, 'texts'), 'name="site_title"'), 'The title setting must be removed from the administration text fields.');
+$GLOBALS['siteInlineEditorEnabled'] = true;
+check(str_contains(site_inline_setting_html('site_title'), 'data-inline-edit-key="site_title"'), 'The site title must be available to inline editing.');
+unset($GLOBALS['siteInlineEditorEnabled']);
 
 // ── Galerías premium ──────────────────────────────────────────────────────────
 check($defaults['gallery_premium'] === 'none', 'No premium gallery by default.');

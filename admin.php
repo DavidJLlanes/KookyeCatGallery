@@ -229,6 +229,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $settingsInput = $_POST;
             $currentSettings = site_settings_load();
+            // Los textos generales se editan en la propia web; conserva su contenido al guardar el panel.
+            foreach (['site_title', 'profile_website_url'] as $preservedKey) {
+                if (!array_key_exists($preservedKey, $settingsInput)) $settingsInput[$preservedKey] = $currentSettings[$preservedKey] ?? '';
+            }
+            if (is_array($settingsInput['texts'] ?? null)) {
+                $settingsInput['texts'] = array_replace($currentSettings['texts'] ?? [], $settingsInput['texts']);
+            } elseif (!array_key_exists('texts', $settingsInput)) {
+                $settingsInput['texts'] = $currentSettings['texts'] ?? [];
+            }
             // Si los layouts elegidos no usan el tipo de cuadrícula, el control del panel llega desactivado y no se envía.
             // Conservamos su valor para cuando se seleccione más adelante un diseño compatible.
             if (!isset($settingsInput['grid'])) $settingsInput['grid'] = $currentSettings['grid'] ?? 'adaptive';

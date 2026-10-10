@@ -147,50 +147,6 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     $socialEditor .= $socialCopyFields . '</div></div></section>';
     $html .= $card('Estructura de la página', 'Ordena los bloques de la portada, decide cuáles mostrar y configura las Redes Sociales.', $list . $socialEditor);
     $html .= '</div><div class="settings-texts">';
-    $titleValue = (string) ($settings['site_title'] ?? '') !== '' ? (string) $settings['site_title'] : site_title_default();
-    $identity = '<div class="upload-field"><label for="setting-site_title">Nombre de la web</label>'
-        . '<input id="setting-site_title" name="site_title" type="text" maxlength="80" autocomplete="off" value="' . $escape($titleValue) . '" placeholder="' . $escape(site_title_default()) . '">'
-        . '<small class="upload-help">Se usa en la pestaña del navegador, las cabeceras y otros lugares que identifican la web. Déjalo vacío para volver al nombre inicial.</small></div>';
-    $identityLabels = [
-        'text_30170303c506cf6c' => 'Nombre del fotógrafo o estudio',
-        'text_4577bab0d9627af1' => 'Nombre de usuario que aparece en el perfil',
-        'text_2e2b80d871481edc' => 'Descripción breve del perfil',
-        'text_54b7645201863e32' => 'Segunda frase del perfil',
-        'text_7e6debbd1dab03b1' => 'Texto que se muestra para tu web',
-        'text_318bb1fc64a6e036' => 'Crédito del pie de página (después del año)',
-    ];
-    foreach ($identityLabels as $key => $label) {
-        $entry = site_text_catalog()[$key];
-        $value = $settings['texts'][$key] ?? $entry['default'];
-        $identity .= '<div class="upload-field"><label for="identity-' . $escape($key) . '">' . $escape($label) . '</label>'
-            . '<textarea id="identity-' . $escape($key) . '" name="texts[' . $escape($key) . ']" rows="2" maxlength="20000">' . $escape((string) $value) . '</textarea></div>';
-    }
-    $identity .= '<div class="upload-field"><label for="profile-website-url">Dirección de tu web personal</label>'
-        . '<input id="profile-website-url" name="profile_website_url" type="url" maxlength="500" placeholder="https://…" value="' . $escape((string) ($settings['profile_website_url'] ?? '')) . '">'
-        . '<small class="upload-help">Déjala vacía si no quieres mostrar un enlace.</small></div>';
-    $html .= $card('Nombre y marca', 'Personaliza el nombre de la web, tu presentación y el crédito que aparece en el pie.', $identity);
-
-    // Los campos de plantilla se agrupan por el diseño guardado y los grupos ocultos conservan su contenido.
-    $templateTextGroups = '';
-    foreach (site_template_text_groups() as $group) {
-        $setting = $group['setting'];
-        $options = $group['options'];
-        $visible = in_array('*', $options, true) || in_array((string) ($settings[$setting] ?? ''), $options, true);
-        $templateTextGroups .= '<section class="template-text-group" data-template-text-group data-template-setting="' . $escape($setting)
-            . '" data-template-options="' . $escape(implode(',', $options)) . '"' . ($visible ? '' : ' hidden') . '>'
-            . '<h3>' . $escape($group['title']) . '</h3><div class="admin-fields">';
-        foreach ($group['fields'] as $key => $label) {
-            $entry = site_text_catalog()[$key];
-            $value = $settings['texts'][$key] ?? $entry['default'];
-            $templateTextGroups .= '<div class="upload-field"><label for="template-text-' . $escape($key) . '">' . $escape($label) . '</label>'
-                . '<textarea id="template-text-' . $escape($key) . '" name="texts[' . $escape($key) . ']" rows="2" maxlength="20000">'
-                . $escape((string) $value) . '</textarea></div>';
-        }
-        $templateTextGroups .= '</div></section>';
-    }
-    $html .= $card('Textos de las plantillas', 'Los campos corresponden al diseño guardado en Diseño. Si cambias allí una cabecera o galería, vuelve aquí para adaptar sus textos.',
-        '<div class="template-text-editor" data-template-text-editor>' . $templateTextGroups . '</div>');
-
     $pages = '<div class="page-editor-options__grid">';
     foreach (site_page_labels() as $key => $label) {
         $pages .= '<a class="page-editor-option" href="/admin.php?settings=1&amp;section=page&amp;doc=' . $key . '"><span>' . $escape($label) . '</span><span aria-hidden="true">Editar →</span></a>';

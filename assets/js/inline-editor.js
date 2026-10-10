@@ -80,6 +80,55 @@
     closeButtons.forEach(button => button.addEventListener('click', () => {
         if (!dirty() || window.confirm('Descartar el texto sin guardar?')) closePanel();
     }));
+    const renderText = (element, value) => {
+        element.replaceChildren();
+        value.split(/\r?\n/).forEach((line, index) => {
+            if (index) element.append(document.createElement('br'));
+            element.append(document.createTextNode(line));
+        });
+    };
+
+    const mapNode = document.querySelector('#inline-editor-text-map');
+    if (mapNode) {
+        try {
+            const values = Object.entries(JSON.parse(mapNode.textContent || '{}'))
+                .filter(([, entry]) => entry && typeof entry.value === 'string' && entry.value.trim() !== '')
+                .sort((a, b) => b[1].value.length - a[1].value.length);
+            const normalize = value => value.replace(/\s+/g, ' ').trim();
+            const enhanceText = root => {
+                if (!root) return;
+                const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+                const nodes = [];
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+                nodes.forEach(node => {
+                    const parent = node.parentElement;
+                    if (!parent || parent.closest('[data-inline-edit-key],script,style,textarea,input,select,option,svg,canvas,template')) return;
+                    const text = normalize(node.nodeValue || '');
+                    if (!text) return;
+                    const entry = values.find(([, value]) => normalize(value.value) === text);
+                    if (!entry) return;
+                    const [key, definition] = entry;
+                    const marker = document.createElement('span');
+                    marker.className = 'inline-edit-text';
+                    marker.dataset.inlineEditKey = key;
+                    marker.dataset.inlineEditLabel = definition.label || 'Texto';
+                    if (body.dataset.inlineEditMode === 'true') {
+                        marker.tabIndex = 0;
+                        marker.setAttribute('role', 'button');
+                    }
+                    node.parentNode.insertBefore(marker, node);
+                    marker.append(node);
+                });
+            };
+            enhanceText(body);
+            new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => {
+                if (node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE) enhanceText(node);
+            }))).observe(body, {childList: true, subtree: true});
+        } catch (error) {
+            console.error('No se pudo preparar la edición de textos de plantilla.', error);
+        }
+    }
+
     save.addEventListener('click', async () => {
         if (!activeText || !dirty() || save.disabled) return;
         save.disabled = true;
@@ -94,8 +143,9 @@
             });
             const result = await response.json();
             if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo guardar el texto.');
-            activeText.textContent = input.value;
-            savedValue = input.value;
+            const savedText = typeof result.value === 'string' ? result.value : input.value;
+            renderText(activeText, savedText);
+            savedValue = savedText;
             const savedElement = activeText;
             savedElement.classList.add('inline-edit-text--saved');
             setStatus('Guardado correctamente.', 'success');
