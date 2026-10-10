@@ -7,7 +7,7 @@
         const mobile = matchMedia('(max-width:768px)').matches;
         const width = gallery.clientWidth;
         if (!width) return;
-        const cards = [...gallery.querySelectorAll('.card:not(.is-hidden)')];
+        const cards = [...gallery.querySelectorAll('.card:not(.is-hidden):not([hidden])')];
         const gap = mobile ? 6 : 14;
         const columns = Math.max(1, Math.min(10, Number(getComputedStyle(document.body)
             .getPropertyValue(mobile ? '--columns-mobile' : '--columns-desktop')) || 3));

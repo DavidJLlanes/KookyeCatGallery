@@ -67,7 +67,9 @@ body[data-gallery-active][data-grid] #masonry[data-layout="category-rails"] .car
 .category-rail__track {display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x proximity;overscroll-behavior-inline:contain;scrollbar-width:thin;scrollbar-color:var(--accent) transparent;padding-bottom:12px}
 /* Hiding must win over every display declaration, including themed cards. */
 body[data-gallery-active][data-grid] #masonry[data-layout] .card.is-hidden,
-body[data-gallery-active][data-grid] #masonry[data-layout] [hidden] {display:none!important}
+body[data-gallery-active][data-grid] #masonry[data-layout] .card[hidden],
+#masonry .card.is-hidden,
+#masonry .card[hidden] {display:none!important}
 @media(max-width:768px) {
     body[data-gallery-active][data-grid] #masonry[data-layout="category-rails"] .card {flex-basis:65vw!important;width:65vw!important}
 }
