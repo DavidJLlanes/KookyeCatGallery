@@ -209,8 +209,7 @@ try {
     site_settings_save($custom, $path);
     $form = site_settings_form('token"<>&', $custom, 'design');
     check(!str_contains($form, 'Paseo de arte') && !str_contains($form, 'proporción seleccionada'), 'Retired gallery labels remain in the form.');
-    check(!str_contains($form, '<script>alert'), 'Stored text injected HTML.');
-    check(str_contains($form, '&lt;script&gt;'), 'Stored text not shown as plain text.');
+    check(!str_contains($form, '<script>alert') && !str_contains($form, '&lt;script&gt;'), 'Legacy text fields must not reappear in the administration form.');
     check(str_contains($form, 'token&quot;&lt;&gt;&amp;'), 'CSRF not escaped.');
     check(str_contains($form, 'name="section" value="design"'), 'Settings section not preserved.');
     check(!str_contains($form, 'setting-premium') && !str_contains($form, 'Diseños Premium'), 'Premium selector must be removed.');
