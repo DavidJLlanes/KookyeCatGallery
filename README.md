@@ -6,189 +6,181 @@
 
 <p align="center">
   <strong>Tu fotografía. Tu web.</strong><br>
-  Una galería autoalojada para fotógrafos que quieren crear su web,<br>
-  subir imágenes fácilmente y elegir cómo presentar su trabajo.<br>
-  Personaliza tu portfolio y gestiona tus fotografías desde el navegador.
+  Una galería fotográfica autoalojada, personalizable y gestionada desde el navegador.
 </p>
 
 <p align="center">
   <a href="LICENSE"><img alt="Licencia PolyForm Noncommercial 1.0.0" src="https://img.shields.io/badge/LICENCIA-PolyForm_Noncommercial-d4a574?style=for-the-badge"></a>
   <a href="manifest.json"><img alt="PWA instalable" src="https://img.shields.io/badge/PWA-INSTALABLE-6366f1?style=for-the-badge&logo=pwa&logoColor=white"></a>
-  <a href="#plantillas-y-modos-de-presentación"><img alt="10 modos de galería" src="https://img.shields.io/badge/GALERÍA-10_MODOS-52796f?style=for-the-badge"></a>
+  <a href="#opciones-de-galería"><img alt="18 diseños de galería" src="https://img.shields.io/badge/GALERÍA-18_DISEÑOS-52796f?style=for-the-badge"></a>
 </p>
 
 <p align="center">
-  <a href="#requisitos"><img alt="PHP 8.1 o posterior" src="https://img.shields.io/badge/PHP-8.1%2B-777bb4?logo=php&logoColor=white"></a>
-  <a href="#tecnología"><img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-f7df1e?logo=javascript&logoColor=black"></a>
-  <a href="#tecnología"><img alt="Sin compilación" src="https://img.shields.io/badge/build-sin_compilación-52796f"></a>
-</p>
-
-<h3 align="center"><a href="#instalación">📷 Crear tu web con KookyeCatGallery</a></h3>
-
-<p align="center">
-  <a href="#plantillas-y-modos-de-presentación">Plantillas y presentación</a> ·
-  <a href="#instalación">Instalación</a> ·
+  <a href="#instalación-y-uso">PHP 8.1+</a> ·
+  <a href="#instalación-y-uso">Instalación</a> ·
+  <a href="#actualizar-una-instalación">Actualizaciones</a> ·
   <a href="docs/subida-fotografias.md">Subir fotografías</a> ·
-  <a href="docs/filtros-fotograficos.md">Editor y filtros</a> ·
-  <a href="CONTRIBUTING.md">Contribuir</a>
+  <a href="docs/opciones-galeria.md">Opciones de galería</a>
 </p>
 
 ---
 
-## Características
+KookyeCatGallery es una web de fotografía que se instala en tu propio alojamiento. No necesita base de datos, servicios externos ni un proceso de compilación. Después de instalarla, puedes gestionar las fotografías, el diseño y el contenido desde un panel privado.
 
-- **Tu portfolio en tu servidor:** presenta paisajes, retratos, arquitectura, fotografía de calle o cualquier otra especialidad con tu identidad y tus textos.
-- **Subida desde el navegador:** incorpora imágenes desde el panel de administración y organiza categorías, títulos, metadatos, borradores, orden y favoritos.
-- **Diseño configurable:** combina cabeceras, paletas y modos de galería, con ajustes independientes para móvil y escritorio.
-- **Editor integrado:** aplica filtros y ajustes fotográficos desde el navegador antes de publicar.
-- **Visor de fotografías:** navegación táctil, fotografía completa y modo de pantalla completa.
-- **Personalización del sitio:** edita perfil, logo, enlaces sociales, textos, proyecto y páginas legales desde el panel.
-- **PWA instalable:** diseño adaptable, soporte básico sin conexión y generación de imágenes WebP.
-- **Mapa opcional:** desactivado inicialmente; actívalo si quieres mostrar las ubicaciones de tus fotografías.
+## Funciones principales
 
-Guías: [instalación en hosting](docs/instalacion.md) · [textos y diseño](docs/textos-y-diseno.md) · [filtros fotográficos](docs/filtros-fotograficos.md) · [navegación entre fotos](docs/navegacion-fotografias.md) · [subida de fotografías](docs/subida-fotografias.md).
+- **Gestión de fotografías desde el navegador:** biblioteca visual con búsqueda y filtro por categoría, edición rápida de datos, editor fotográfico, favoritos, borradores y orden personalizado.
+- **Carga por lotes:** selecciona varias fotografías y asígnales una categoría existente o crea una nueva para todo el lote.
+- **Categorías:** crea, renombra, combina, mueve o elimina categorías. En la web se pueden mostrar como enlaces para filtrar las fotografías de cada colección.
+- **Edición visual del sitio:** tras iniciar sesión, activa «Editar página» para cambiar textos en su contexto directamente en la web. Las redes sociales y las páginas legales se administran en sus apartados del panel.
+- **Diseño adaptable:** cabeceras, paletas, organización de bloques y diseños independientes para móvil y escritorio.
+- **18 composiciones de galería:** diez diseños estándar y ocho premium. Los controles que no corresponden a un diseño se desactivan; la misma regla se aplica al guardar en el servidor.
+- **Efectos hover accesibles:** diez efectos compartidos por los diseños, también disponibles al enfocar con teclado y respetando la preferencia de movimiento reducido.
+- **Identidad visual:** sube el icono de la app (también usado como favicon) y la imagen para compartir en redes. El icono se adapta automáticamente a los tamaños necesarios.
+- **Mapa opcional:** representa las fotografías con coordenadas y permite abrir sus fichas. Está desactivado inicialmente.
+- **Aplicación instalable (PWA):** experiencia adaptable e instalación desde navegadores compatibles.
+- **Asistencia de escritura con IA opcional:** integración preparada para Gemini y OpenRouter, desactivada de inicio y sin claves en el repositorio.
 
-## Plantillas y modos de presentación
+## Instalación y uso
 
-Desde **Textos y diseño** puedes combinar las opciones del sitio sin editar código. La cabecera, el modo de galería y el número de columnas se eligen por separado para móvil y escritorio.
+### Requisitos
 
-### Cabeceras para dar personalidad a tu web
+- Hosting con **PHP 8.1 o posterior**.
+- Extensiones PHP **GD** con JPEG, PNG y WebP, y **Fileinfo**.
+- HTTPS y permisos de escritura para PHP en las carpetas de datos y cargas.
+- Apache con soporte para `.htaccess`, o Nginx configurado por el proveedor para las rutas de la aplicación y el bloqueo de carpetas privadas.
 
-| Móvil · 9 diseños | Escritorio · 9 diseños |
+No funciona en alojamiento exclusivamente estático. No necesita MySQL, Composer, npm ni Node.js para servir la web. Node.js y Playwright solo se usan para desarrollo y comprobaciones automatizadas.
+
+### Instalar en un hosting compartido
+
+1. Añade el dominio o subdominio en el panel del hosting y activa HTTPS.
+2. Descarga el repositorio y copia **todo su contenido** en la raíz pública del sitio, normalmente `public_html`. Incluye los archivos ocultos, en especial `.htaccess`.
+3. Comprueba que el dominio abre por HTTPS y que el alojamiento tiene PHP 8.1+, GD con WebP y Fileinfo.
+4. Cuando estés preparado para completar la instalación de inmediato, abre `https://tu-dominio/install.php`. Indica la URL HTTPS del sitio, un nombre de usuario y una contraseña única de al menos 12 caracteres.
+5. Confirma en el gestor de archivos que `install.php` se ha eliminado. Si sigue ahí, bórralo manualmente antes de continuar.
+6. Entra en `https://tu-dominio/admin.php`, inicia sesión y personaliza la web.
+
+El instalador prepara una carpeta privada `config/` fuera de la raíz pública cuando los permisos del hosting lo permiten. La estructura habitual queda así:
+
+```text
+cuenta/
+├── public_html/   ← archivos públicos de la web
+└── config/        ← ajustes y credenciales privadas
+```
+
+Si el alojamiento no permite escribir fuera de `public_html`, consulta la [guía detallada de instalación](docs/instalacion.md). Explica la ruta alternativa `var/`, la variable `GALLERY_PRIVATE_DIR`, los permisos y las diferencias entre Apache y Nginx. Que PHP funcione en Windows o Linux no garantiza que cualquier plan permita los permisos necesarios; el proveedor debe admitir los requisitos anteriores.
+
+> **Seguridad del instalador:** `install.php` es temporal. Mientras exista y todavía no haya acceso configurado, cualquier visitante puede llegar al formulario para crear el usuario administrador. Úsalo una sola vez y comprueba que se ha borrado. Si el alojamiento no puede borrarlo automáticamente, elimínalo manualmente.
+
+Las rutas de las fichas, como `/foto/slug`, requieren las reglas de reescritura incluidas en `.htaccess`. Si ves un 404 de LiteSpeed, verifica que el archivo se copió (algunos programas FTP ocultan los archivos que empiezan por punto) y que el proveedor permite sus reglas. En Nginx, `.htaccess` no tiene efecto: el proveedor debe configurar las rutas y denegar el acceso web a `var/`, `data/` e `img/`.
+
+### Actualizar una instalación
+
+No hay base de datos ni migraciones. Para actualizar, descarga la versión nueva y **copia los archivos del repositorio sobre los existentes**, aceptando sobrescribir los archivos de la aplicación. No borres primero toda la web ni reemplaces las carpetas de datos por las del repositorio.
+
+Antes de actualizar, guarda una copia de seguridad de las fotografías y de la carpeta privada `config/` (o `var/` si tu instalación usa esa alternativa). Al copiar:
+
+1. Sobrescribe los archivos de código y recursos con la versión nueva; incluye los archivos ocultos actualizados, como `.htaccess`.
+2. Conserva `config/`, `var/`, las fotografías y los datos generados por tu instalación. No publiques esos datos en GitHub.
+3. **No vuelvas a dejar `install.php` accesible tras la actualización.** Si la copia de la nueva versión lo ha vuelto a colocar en la raíz pública, elimínalo inmediatamente. No copies un archivo activo `reset-admin-access.php`; conserva solo el archivo de ejemplo con extensión `.example`.
+4. Abre la web y el panel. Si el navegador conserva recursos antiguos, recarga la página o limpia la caché.
+
+Así se actualiza la aplicación sin sobrescribir el usuario, la contraseña, los textos guardados ni la configuración privada. Los cambios hechos directamente en archivos de código se reemplazarán: guarda esas personalizaciones aparte y reaplícalas después de actualizar.
+
+### Copias de seguridad y cambio de dominio
+
+Guarda una copia de `config/` (o `var/`, según tu instalación), de las fotografías y de cualquier archivo propio que hayas añadido. No hay base de datos que exportar. Antes de restaurar, conserva la estructura y los permisos de escritura para PHP. Si cambias de dominio, actualiza la URL pública guardada (`public-url.txt`) o establece `GALLERY_PUBLIC_URL` en la configuración del hosting. Consulta [instalación](docs/instalacion.md) para los detalles.
+
+## Administración y personalización
+
+El panel está en `/admin.php`. Sus áreas separan **Contenido**, **Diseño**, **Textos**, **Redes sociales** y **Publicación**, para que cada tipo de ajuste tenga un lugar claro.
+
+- **Contenido:** sube una foto, edita una existente, utiliza la biblioteca visual o carga un lote.
+- **Categorías:** administra colecciones por separado y asigna las fotos desde el editor o la carga por lotes.
+- **Diseño:** elige cabeceras, galería móvil y de escritorio, paleta, efectos, estructura de la página e identidad gráfica.
+- **Textos:** cambia el nombre del sitio, la identidad del autor, textos de presentación, crédito y páginas de texto.
+- **Redes sociales:** elige los perfiles, enlaces y nombres visibles; configura también los textos de esa sección.
+- **Publicación:** ajusta opciones para mostrar y compartir la web.
+
+Al iniciar sesión, el botón redondo **Editar página** activa la edición contextual de los textos disponibles. Pulsa un texto editable, realiza el cambio y guárdalo. Esta edición no reemplaza las herramientas del panel para fotografías, redes sociales o páginas legales.
+
+El icono de la app debe ser cuadrado; se recomienda PNG, JPG o WebP de **512 × 512 px como mínimo**. Se generan las variantes para favicon, Apple Touch y PWA. Para compartir en redes se recomienda una imagen horizontal de **1200 × 630 px**. Los límites de archivo y los formatos aceptados aparecen junto a los controles de carga del panel.
+
+### Opciones de galería
+
+Móvil y escritorio tienen selectores independientes. Hay diez diseños estándar:
+
+| Diseño | Composición |
 | --- | --- |
-| Perfil social | Tipográfica |
-| Retrato centrado | Retrato centrado |
-| Compacta | Compacta |
-| Editorial | Editorial |
-| Cine · tira de película | Museo · galería blanca |
-| Atlas · cuaderno cartográfico | Observatorio · constelación 3D |
-| Estudio · retícula suiza | Periódico · portada de autor |
-| Órbita · cielo 3D | Noir · estreno de cine |
-| Álbum · recortes y postales | Plano · archivo técnico |
+| **Masonry** | Columnas que conservan las proporciones originales. |
+| **Cuadrícula** | Miniaturas uniformes; admite proporciones cuadrada, 4:3 o 3:4. |
+| **Mosaico cromático** | Filas de imágenes con sus proporciones originales y bordes contiguos. |
+| **Editorial asimétrica** | Filas con distinta densidad de columnas. |
+| **Filas por categoría** | Colecciones en tiras horizontales; muestra todas las fotos de cada fila. |
+| **Álbum desordenado** | Composición de tarjetas cuadradas con tamaños y giros variados. |
+| **Sala de exposición** | Fotografías grandes, centradas y espaciadas. |
+| **Hoja de contactos** | Presentación compacta; permite ajustar la proporción. |
+| **Secuencia narrativa** | Fotografía protagonista seguida de una secuencia. |
+| **Trípticos** | Grupos de tres con composición propia. |
 
-### Diez formas de mostrar tus fotografías
+Los diez efectos hover son Suave, Acercamiento, Elevación, Revelado, Virado de color, Marco luminoso, Desplazamiento, Perspectiva, Enfoque y Destello.
 
-Todos los modos están disponibles tanto en móvil como en escritorio.
+Las ocho galerías premium sustituyen la estándar y su interfaz se ajusta al tipo de navegación:
 
-| Modo | Presentación |
+| Galería | Presentación |
 | --- | --- |
-| **Masonry** | Columnas con alturas naturales que conservan las proporciones de cada fotografía. |
-| **Cuadrícula** | Miniaturas uniformes con proporción cuadrada, horizontal 4:3 o vertical 3:4. |
-| **Mosaico cromático** | Filas ajustadas que mantienen las proporciones originales y comparten sus bordes. |
-| **Editorial asimétrica** | Filas de distinta densidad para una composición editorial. |
-| **Filas por categoría** | Fotografías agrupadas en tiras por categoría. |
-| **Álbum desordenado** | Composición de imágenes cuadradas de distintos tamaños, con una ligera inclinación. |
-| **Sala de exposición** | Fotografías grandes y centradas, con espacio entre ellas. |
-| **Hoja de contactos** | Una vista compacta para recorrer una colección de imágenes. |
-| **Secuencia narrativa** | Una imagen protagonista seguida de una secuencia de fotografías. |
-| **Trípticos** | Composiciones de tres imágenes: una grande junto a dos más pequeñas. |
+| **Baraja** | Cartas fotográficas a pantalla completa con navegación gestual. |
+| **Cover Flow** | Foto central frontal y fotos vecinas giradas en perspectiva, con reflejo. |
+| **Burbujas** | Fotos circulares flotantes, distribuidas por la pantalla. |
+| **Cuadrados** | Composición flotante como Burbujas con tarjetas cuadradas. |
+| **Tambor** | Carrusel cilíndrico 3D con las imágenes curvadas hacia los lados. |
+| **Cilindro** | Varias filas de fotos dispuestas alrededor de un cilindro. |
+| **Polaroids** | La foto activa destaca entre tarjetas inclinadas sobre un fondo oscuro. |
+| **Tinder** | Una tarjeta cada vez, con gestos para pasar y marcar favoritos. |
 
-### Galerías premium
+Las opciones incompatibles se ocultan o desactivan con una explicación y el servidor también impide que se guarden para diseños que no las usan. Baraja, Cover Flow, Tambor, Cilindro, Polaroids y Tinder controlan su propia composición y navegación. Burbujas y Cuadrados sí utilizan «Fotos visibles a la vez» como límite de página. En los diseños compatibles, las columnas, la cantidad de fotos y la paginación se aplican según corresponda. La selección «Todas» desactiva la paginación cuando ya no se utiliza.
 
-Diseños completos que **sustituyen** a la galería estándar. Se eligen en **Textos y diseño → Diseño → Galería premium**; al activar una se ignoran (y se desactivan en el panel) los ajustes de la galería estándar que ella no use: el tipo de cuadrícula, las galerías de móvil y de escritorio, la forma de la paginación, las columnas y, salvo en «Estilo Burbujas» y «Estilo Cuadrados», las fotos visibles a la vez. Se integran con la paleta de colores y con las cabeceras.
+Consulta la [matriz completa de compatibilidad](docs/opciones-galeria.md) y la guía de [galerías premium](docs/galerias-premium.md) antes de elegir combinaciones.
 
-| Galería premium | Presentación |
-| --- | --- |
-| **Estilo Baraja** | Pantalla completa (100 % de ancho y alto en cualquier dispositivo). Las fotos son cartas apiladas en 3D: al avanzar —rueda del ratón hacia abajo o dedo hacia arriba— la carta sale hacia la izquierda, se encoge y se desvanece, dejando ver el mazo. La página de fondo no se mueve y, en la primera y última foto, el gesto vuelve a desplazar la página. |
-| **Estilo Burbujas** | Pantalla completa. Las fotos son círculos de distintos tamaños con un pequeño marco, repartidos al azar por toda la pantalla (sin solaparse ni salirse) y flotando lentamente, sin texto. Respeta «Fotos visibles a la vez» y se pagina con una paginación minimalista («1 / 7»). Al pulsar un círculo rebota y se abre su ficha. Comparte con la baraja la fijación en móvil, la parada del scroll, los botones de salir, los filtros y la vuelta a la misma foto. |
-| **Estilo Cuadrados** | Igual que «Estilo Burbujas» (mismo marcado, estilos y comportamiento), pero con cuadrados de distintos tamaños en lugar de círculos. |
-| **Estilo Tambor** | Pantalla completa. Carrusel cilíndrico 3D: las fotos giran como un tambor, con la activa de frente y las vecinas curvadas hacia atrás a ambos lados. Misma interfaz y comportamiento que «Estilo Baraja» (rueda, dedo, teclado, botones de salir, fijación en móvil, filtros y vuelta a la misma foto). |
-| **Estilo Cilindro** | Variación del tambor: varias filas de fotos de distintos tamaños forman un cilindro giratorio que ocupa todo el ancho de la pantalla (en escritorio, estirado hacia los bordes). Misma interfaz y comportamiento que «Estilo Baraja». |
-| **Estilo Polaroids** | Polaroids esparcidas sobre una mesa: la activa se centra y se amplía y las demás quedan alrededor, giradas y algo desenfocadas. Misma interfaz y comportamiento que «Estilo Baraja». |
-| **Estilo Tinder** | Una carta que se desliza a un lado: hacia el **corazón** (derecha) da un corazón a la foto y pasa a la siguiente; hacia la **flecha** (izquierda) solo pasa. En los dos casos avanza, y la interfaz lo indica con un corazón y una flecha. |
+## Acceso y seguridad
 
-Todos los detalles (comportamiento, ajustes de la animación, arquitectura y cómo crear una galería premium nueva) están en [docs/galerias-premium.md](docs/galerias-premium.md).
+La instalación admite un único usuario administrador. El acceso se almacena como hash de contraseña dentro de la carpeta privada.
 
-### Color, proporciones y efectos
+Si pierdes la contraseña, el repositorio incluye `reset-admin-access.php.example`. Para restablecer el acceso, copia ese ejemplo como `reset-admin-access.php`, súbelo cuando vayas a utilizarlo y abre su URL por HTTPS. El archivo muestra la advertencia antes del formulario e intenta borrarse al guardar. **Comprueba que desapareció; si continúa en el servidor, elimínalo inmediatamente desde el alojamiento.** No dejes el archivo activo online para usarlo más tarde: cualquiera que acceda a su dirección podría cambiar el único usuario y contraseña.
 
-- **7 paletas:** Elegante, Noche, Luz, Cyberpunk, Japón, Bosque y Océano.
-- **5 opciones de proporción:** adaptativa, masonry, cuadrada, horizontal 4:3 y vertical 3:4. La cuadrícula usa las proporciones fijas; masonry conserva las originales. El visor abre la fotografía completa.
-- **Columnas:** de 1 a 4 en móvil y de 1 a 10 en escritorio, respetando la composición de cada modo.
-- **10 efectos:** Suave, Acercamiento, Elevación, Revelado, Virado de color, Marco luminoso, Desplazamiento, Perspectiva, Enfoque y Destello.
+No guardes en este repositorio contraseñas, claves de API, fotografías privadas ni archivos de configuración de una instalación. Revisa los metadatos EXIF de las fotos antes de publicarlas; pueden incluir coordenadas GPS.
 
-Las opciones documentadas corresponden al catálogo de [diseños del sitio](inc/site-settings.php) y al motor de [composición de galerías](assets/js/gallery-layout.js).
+## IA opcional
 
-## Tecnología
+La generación de títulos y descripciones con Gemini u OpenRouter viene desactivada. El repositorio público no contiene claves API. Para activarla, configura las variables necesarias en el entorno del servidor y consulta [la guía de IA](docs/ia-textos.md). No introduzcas claves en archivos que vayas a publicar en GitHub.
 
-PHP 8.1+, JavaScript, HTML y CSS. No necesita framework ni proceso de compilación. La galería se ejecuta en tu propio servidor; las fotografías y la configuración pertenecen a tu instalación y no forman parte de este repositorio.
+## Guías
 
-## Requisitos
+- [Instalación y configuración del hosting](docs/instalacion.md)
+- [Opciones compatibles de las galerías](docs/opciones-galeria.md)
+- [Diseños de galería premium](docs/galerias-premium.md)
+- [Textos y diseño](docs/textos-y-diseno.md)
+- [Subir fotografías y límites del servidor](docs/subida-fotografias.md)
+- [Filtros fotográficos](docs/filtros-fotograficos.md)
+- [Navegación entre fotografías](docs/navegacion-fotografias.md)
+- [Estructura de bloques de la portada](docs/estructura-de-bloques.md)
+- [Configuración de IA](docs/ia-textos.md)
+- [Contribuir al proyecto](CONTRIBUTING.md)
+- [Política de seguridad](SECURITY.md)
 
-KookyeCatGallery necesita PHP 8.1 o posterior con GD (JPEG, PNG y WebP) y Fileinfo, HTTPS y permiso para escribir archivos. Funciona en hostings compartidos compatibles con PHP; no funciona en hosting estático. No requiere base de datos, Composer, npm ni compilación. Apache debe permitir el `.htaccess` incluido. En Nginx, el proveedor debe configurar las rutas y el bloqueo de carpetas privadas.
+## Desarrollo
 
-Node.js y Playwright solo son necesarios para ejecutar las comprobaciones de interfaz, no para publicar la web.
-
-## Instalación
-
-> **⛔ ADVERTENCIA SOBRE install.php:** mientras el instalador esté publicado y todavía no exista una cuenta, cualquier visitante que conozca la dirección puede intentar crear el acceso de administrador. Ábrelo solo cuando estés listo para completar el formulario de inmediato. Al terminar, comprueba que se ha borrado del hosting; si no, elimínalo manualmente enseguida.
-
-La instalación inicial se hace desde el navegador:
-
-1. Añade el dominio o subdominio en el hosting y activa HTTPS.
-2. Copia el contenido del repositorio en la raíz pública del dominio, normalmente `public_html`.
-3. Abre `https://tu-dominio/install.php` y completa la URL, el usuario y la contraseña de administración.
-4. Confirma en el panel del hosting que `install.php` se ha borrado automáticamente. Si aún aparece, elimínalo manualmente enseguida.
-5. Inicia sesión en `/admin.php` y personaliza la web.
-
-El instalador crea y utiliza `config/` fuera de `public_html` cuando el hosting permite escribir en la carpeta superior. Si el proveedor lo impide, consulta la [guía detallada de instalación](docs/instalacion.md), que explica la configuración manual, las alternativas para Linux, Windows, Apache y Nginx, y cómo resolver los errores de permisos.
-
-El instalador no puede saltarse restricciones del proveedor. Antes de contratar, confirma PHP 8.1+, GD con WebP, Fileinfo, HTTPS y permisos para guardar archivos. Las páginas legales son plantillas: complétalas con información correcta para tu instalación antes de hacerlas públicas.
-
-Para una prueba local:
+La aplicación está construida con PHP, JavaScript, HTML y CSS. Para servir el sitio no se necesita compilar nada. Para desarrollo local, con PHP instalado, puedes iniciar el servidor integrado:
 
 ```sh
 php -S 127.0.0.1:8000
 ```
 
-Abre `http://127.0.0.1:8000`. El servidor PHP integrado es solo para desarrollo; no aplica las reglas de `.htaccess`.
+Abre `http://127.0.0.1:8000`. Este servidor es solo para desarrollo: no aplica las reglas de `.htaccess` ni reproduce las protecciones de un hosting configurado para producción.
 
-## Configuración privada
-
-La instalación guiada guarda `site-settings.json`, `upload-auth.php`, `hearts.json` y `public-url.txt` en `config/`, junto a `public_html` y fuera del directorio público. Si el hosting no permite crear esa carpeta, sigue las alternativas de [la guía de instalación](docs/instalacion.md). No subas estos archivos a GitHub ni los coloques en una carpeta pública.
-
-No guardes credenciales, claves API, datos de acceso ni fotos privadas en el repositorio. Las imágenes pueden contener coordenadas GPS u otros datos EXIF: revísalas antes de subirlas. El mapa está desactivado inicialmente.
-
-## Recuperar o cambiar el acceso de administración
-
-> ## ⛔ ADVERTENCIA DE SEGURIDAD: ESTE ARCHIVO ABRE EL PANEL A CUALQUIERA
->
-> **No subas ni dejes `reset-admin-access.php` en el servidor salvo durante el instante en que vayas a configurar o recuperar el acceso.** Mientras el archivo esté publicado, el formulario es público: **cualquier visitante puede elegir un usuario y una contraseña y tomar el control del panel**. No pide la contraseña anterior ni una clave adicional. El nombre del archivo es conocido porque esta guía y el repositorio son públicos.
->
-> **El borrado automático no evita que otra persona lo use primero.** Sube el archivo solo cuando estés preparado para completar el formulario inmediatamente. Al terminar, confirma desde el gestor de archivos que ha desaparecido de la raíz pública. Si aún está allí, **elimínalo manualmente antes de abandonar la sesión de alojamiento**.
-
-El panel tiene **un solo usuario**. Para configurarlo por primera vez o reemplazar credenciales perdidas:
-
-1. Copia `reset-admin-access.php.example` y llámalo `reset-admin-access.php`.
-2. Cuando estés listo para usarlo, súbelo a la raíz pública del sitio desde el gestor de archivos o SFTP.
-3. Abre `https://tu-dominio/reset-admin-access.php`, escribe el nuevo usuario y una contraseña única de al menos 12 caracteres y guarda.
-4. Verifica inmediatamente que `reset-admin-access.php` ya no existe en el servidor. El script intenta borrarse al guardar; si no lo consigue, bórralo manualmente en ese momento.
-
-Al guardar, reemplaza `upload-auth.php` dentro de la carpeta privada detectada (`GALLERY_PRIVATE_DIR` si la configuraste, normalmente `../config` o, como alternativa, `var/`). La contraseña se guarda con un hash seguro. El archivo `.example` del repositorio no es el recuperador activo; solo se vuelve ejecutable después de copiarlo y subirlo con el nombre `reset-admin-access.php`. **Nunca guardes la copia PHP activa ni credenciales en GitHub y nunca mantengas el recuperador online para usarlo “más tarde”.**
-
-## Textos con IA
-
-La generación opcional de títulos y descripciones está disponible con Gemini u OpenRouter. Viene desactivada y sin claves. Consulta [configuración de IA](docs/ia-textos.md) para activarla mediante variables de entorno fuera del repositorio.
-
-## Desarrollo y comprobaciones
-
-GitHub Actions valida PHP y JavaScript y comprueba filtros, diseño adaptable, cuadrículas, administración, navegación, favoritos y editor fotográfico.
-
-Comprobaciones básicas locales:
-
-```sh
-node tests/photo-presets.cjs
-php tests/site-settings.php
-php tests/photo-navigation.php
-```
-
-Con Playwright y Chromium: `node tests/premium-deck.cjs` (galería premium Estilo Baraja), `node tests/admin-layout.cjs` (panel), `node tests/gallery-layout.cjs` (galerías estándar) y el resto de `tests/*.cjs`.
-
-Para las comprobaciones de interfaz se necesitan Playwright y Chromium. Consulta el flujo de [validación automática](.github/workflows/validate.yml).
-
-## Contribuir y seguridad
-
-Lee la guía para [contribuir](CONTRIBUTING.md) y las instrucciones de [seguridad](SECURITY.md).
+Las comprobaciones automatizadas y sus dependencias se describen en el flujo de [GitHub Actions](.github/workflows/validate.yml). No es necesario instalar Playwright para usar o publicar la web.
 
 ## Licencia
 
-El proyecto se distribuye bajo la **[PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0)**. El texto oficial completo está en [LICENSE](LICENSE). Esta licencia oficial para software establece los usos no comerciales permitidos; consulta sus términos completos antes de reutilizar o redistribuir el proyecto.
+Este proyecto se distribuye bajo **[PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0)**. Consulta el texto completo en [LICENSE](LICENSE) para conocer los usos permitidos y sus condiciones.
