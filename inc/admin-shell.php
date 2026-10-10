@@ -53,7 +53,7 @@ function adminActiveSection(): string
         $section = (string) ($_POST['section'] ?? $_GET['section'] ?? 'profile');
         if ($section === 'page') return 'texts';
         if ($section === 'content' || $section === 'profile' || $section === 'social') return 'profile';
-        if ($section === 'publication') return 'design';
+        if ($section === 'publication') return 'profile';
         return in_array($section, ['design', 'texts'], true) ? $section : 'profile';
     }
     if (isset($_GET['categories']) || $action === 'manage_category') return 'categories';
