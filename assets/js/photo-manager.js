@@ -44,12 +44,24 @@
     const batchForm = document.getElementById('photoBatchForm');
     if (batchForm) {
         const filesInput = document.getElementById('batchPhotos');
+        const categoryChoice = document.getElementById('batchCategoryChoice');
         const categoryInput = document.getElementById('batchCategory');
+        const newCategoryField = document.getElementById('batchNewCategoryField');
         const preview = document.getElementById('batchPreview');
         const batchStatus = document.getElementById('batchStatus');
         const batchSubmit = document.getElementById('batchSubmit');
         const csrf = batchForm.querySelector('[name="csrf"]')?.value || '';
         const maxBytes = 15 * 1024 * 1024;
+        const selectedCategory = () => categoryChoice.value === '__new__' ? categoryInput.value.trim() : categoryChoice.value;
+        const syncBatchCategory = () => {
+            const custom = categoryChoice.value === '__new__';
+            newCategoryField.hidden = !custom;
+            categoryInput.disabled = !custom;
+            categoryInput.required = custom;
+            if (!custom) categoryInput.value = '';
+            renderBatchSelection();
+            if (custom) categoryInput.focus();
+        };
         const renderBatchSelection = () => {
             const files = [...(filesInput.files || [])];
             preview.replaceChildren();
@@ -75,14 +87,16 @@
                 row.append(name, size);
                 preview.append(row);
             });
-            batchSubmit.disabled = !categoryInput.value.trim() || files.some(file => file.size > maxBytes || !/^image\/(jpeg|png)$/.test(file.type));
+            batchSubmit.disabled = !selectedCategory() || files.some(file => file.size > maxBytes || !/^image\/(jpeg|png)$/.test(file.type));
         };
         filesInput.addEventListener('change', renderBatchSelection);
+        categoryChoice.addEventListener('change', syncBatchCategory);
         categoryInput.addEventListener('input', renderBatchSelection);
+        syncBatchCategory();
         batchForm.addEventListener('submit', async event => {
             event.preventDefault();
             const files = [...(filesInput.files || [])];
-            const category = categoryInput.value.trim();
+            const category = selectedCategory();
             if (!files.length || !category || batchSubmit.disabled) return;
             batchSubmit.disabled = true;
             const draft = document.getElementById('batchDraft').checked;

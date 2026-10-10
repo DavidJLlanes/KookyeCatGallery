@@ -187,3 +187,5 @@
     .admin-quick-edit { max-height:88svh; padding:1rem; border-radius:20px 20px 0 0; }
     .admin-batch__file { align-items:flex-start; }
 }
+
+.admin-batch .upload-field[hidden] { display:none; }

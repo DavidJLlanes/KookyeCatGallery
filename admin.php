@@ -602,11 +602,21 @@ if (!empty($_SESSION['upload_authenticated'])) {
 
     // Carga por lotes: cada imagen se envía individualmente para respetar los límites de PHP del hosting.
     if (isset($_GET['batch'])) {
+        $batchCategories = array_values(array_unique(array_map(
+            static fn($photo) => trim((string) $photo['category']) !== '' ? trim((string) $photo['category']) : 'Sin categoría',
+            managedPhotos()
+        )));
+        sort($batchCategories, SORT_NATURAL | SORT_FLAG_CASE);
+        $batchCategoryOptions = '<option value="" selected disabled>Selecciona una categoría</option>';
+        foreach ($batchCategories as $categoryName) {
+            $batchCategoryOptions .= '<option value="' . uploadEscape($categoryName) . '">' . uploadEscape($categoryName) . '</option>';
+        }
         $batchContent = adminNavigation((string) $_SESSION['csrf'])
             . '<section class="admin-batch"><p class="admin-batch__intro">Selecciona varias fotos. Se subirán una a una; el título se tomará del nombre de archivo y podrás cambiarlo después con la edición rápida.</p>'
             . '<form id="photoBatchForm"><input type="hidden" name="csrf" value="' . uploadEscape((string) $_SESSION['csrf']) . '">'
             . '<div class="upload-field"><label for="batchPhotos">Fotografías (JPG o PNG, máximo 15 MB cada una)</label><input id="batchPhotos" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" multiple required></div>'
-            . '<div class="upload-field"><label for="batchCategory">Categoría común</label><input id="batchCategory" maxlength="64" required placeholder="Por ejemplo: Paisajes"></div>'
+            . '<div class="upload-field"><label for="batchCategoryChoice">Categoría común</label><select id="batchCategoryChoice" required>' . $batchCategoryOptions . '<option value="__new__">+ Añadir categoría nueva</option></select></div>'
+            . '<div class="upload-field" id="batchNewCategoryField" hidden><label for="batchCategory">Nombre de la nueva categoría</label><input id="batchCategory" maxlength="64" placeholder="Escribe el nombre"></div>'
             . '<label class="upload-featured"><input type="checkbox" id="batchDraft" checked> Guardar como borrador para revisar antes de publicar</label>'
             . '<div class="admin-batch__preview" id="batchPreview" aria-live="polite"><p>Las fotos seleccionadas aparecerán aquí.</p></div>'
             . '<p class="admin-batch__status" id="batchStatus" role="status" aria-live="polite"></p>'
