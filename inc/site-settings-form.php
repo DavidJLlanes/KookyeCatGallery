@@ -30,7 +30,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . '<input type="hidden" name="csrf" value="' . $escape($csrf) . '">'
         . '<input type="hidden" name="section" value="' . $escape($section) . '">'
         . '<p>Configura cada parte de la web desde su sección. Los títulos, descripciones y categorías de las fotos se editan en Gestionar fotos.</p>';
-    $settingsSections = ['content' => 'Contenido', 'design' => 'Diseño', 'texts' => 'Textos', 'social' => 'Redes', 'publication' => 'Publicación'];
+    $settingsSections = ['content' => 'Contenido', 'design' => 'Diseño', 'texts' => 'Textos', 'social' => 'Redes sociales', 'publication' => 'Publicación'];
     $settingsNav = '<nav class="admin-subnav settings-subnav" aria-label="Secciones de ajustes">';
     foreach ($settingsSections as $key => $label) {
         $settingsNav .= '<a href="/admin.php?settings=1&amp;section=' . $key . '"' . ($section === $key ? ' class="is-active" aria-current="page"' : '') . '>' . $escape($label) . '</a>';
@@ -119,7 +119,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     $list .= '</ol>';
     $publicationControls .= '</div>';
     $socialNames = site_social_networks();
-    $socialEditor = '<section class="admin-social-settings" data-social-editor><h3>Redes Sociales</h3>'
+    $socialEditor = '<section class="admin-social-settings" data-social-editor><h3>Perfiles sociales</h3>'
         . '<p>Elige qué perfiles aparecerán en esta sección.</p><div class="social-settings-list" data-social-list>';
     for ($i = 0; $i < 12; $i++) {
         $row = $settings['social_links'][$i] ?? ['network'=>'','url'=>'','handle'=>''];
