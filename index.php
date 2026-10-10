@@ -282,8 +282,8 @@ if ($fotoItem !== null) {
     <link rel="stylesheet" href="/assets/css/style.css?v=<?= safe($appVersion) ?>">
 
     <!-- Leaflet: Mapa interactivo -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" onerror="this.onerror=null;this.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';">
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js" onerror="this.onerror=null;var fallback=document.createElement('script');fallback.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';fallback.onload=function(){window.dispatchEvent(new Event('leaflet:ready'));};fallback.onerror=function(){window.dispatchEvent(new Event('leaflet:failed'));};document.head.appendChild(fallback);"></script>
 
     <!-- Schema.org JSON-LD: ImageGallery + Person (+ ImageObject si es página de foto) -->
     <?php

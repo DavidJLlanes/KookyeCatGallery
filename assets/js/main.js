@@ -746,7 +746,7 @@
             if (coordsEl && coordsTxt) {
                 const lat = parseFloat(card.dataset.lat);
                 const lng = parseFloat(card.dataset.lng);
-                if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                if (!isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0)) {
                     coordsTxt.textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
                     coordsEl.href = `https://www.google.com/maps?q=${lat},${lng}`;
                     coordsEl.hidden = false;
@@ -1866,12 +1866,21 @@
         const mapEl = $('#map');
         if (!mapEl) return;
         if (typeof L === 'undefined') {
-            console.warn('Leaflet no cargó');
+            if (mapEl.dataset.leafletWaiting !== 'true') {
+                mapEl.dataset.leafletWaiting = 'true';
+                window.addEventListener('leaflet:ready', () => {
+                    delete mapEl.dataset.leafletWaiting;
+                    initMap();
+                }, { once: true });
+                window.addEventListener('leaflet:failed', () => {
+                    delete mapEl.dataset.leafletWaiting;
+                    mapEl.textContent = 'No se pudo cargar el mapa. Comprueba tu conexión e inténtalo de nuevo.';
+                }, { once: true });
+            }
             return;
         }
 
         const cards = $$(CARDS);
-        if (!cards.length) return;
 
         // Agrupa fotos por ubicación
         const locations = {};
@@ -1888,12 +1897,14 @@
             }
         });
 
-        if (Object.keys(locations).length === 0) return; // Sin ubicaciones válidas
-
         try {
-            // Crea el mapa centrado en la primera foto con coordenadas
-            const firstLocation = Object.values(locations)[0];
-            photoMap = L.map(mapEl).setView([firstLocation.lat, firstLocation.lng], 9);
+            // Ajusta el mapa a todas las ubicaciones; sin coordenadas, muestra una vista mundial.
+            const locationList = Object.values(locations);
+            const hasLocations = locationList.length > 0;
+            photoMap = L.map(mapEl).setView(
+                hasLocations ? [locationList[0].lat, locationList[0].lng] : [20, 0],
+                hasLocations ? 9 : 2
+            );
 
             // Tile layer oscuro
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1902,7 +1913,7 @@
             }).addTo(photoMap);
 
             // Añade marcadores
-            Object.values(locations).forEach(loc => {
+            locationList.forEach(loc => {
                 const marker = L.circleMarker([loc.lat, loc.lng], {
                     radius: 20,
                     fillColor: getComputedStyle(document.body).getPropertyValue('--accent').trim(),
@@ -1955,6 +1966,11 @@
                     if (activeChip) activeChip.classList.remove('is-active');
                 });
             });
+
+            if (hasLocations) {
+                const bounds = L.latLngBounds(locationList.map(loc => [loc.lat, loc.lng]));
+                photoMap.fitBounds(bounds, { padding: [32, 32], maxZoom: 9 });
+            }
 
             window.photoMap = photoMap;
         } catch (e) {
