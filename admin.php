@@ -198,6 +198,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    if ($action === 'create_collection') {
+        try {
+            gallery_collection_create((string) ($_POST['category'] ?? ''));
+            header('Location: /admin.php?categories=1&status=' . rawurlencode('Categoría añadida.'), true, 303);
+            exit;
+        } catch (InvalidArgumentException | RuntimeException $error) {
+            uploadPage('Gestionar categorías', adminNavigation((string) $_SESSION['csrf'])
+                . '<p class="upload-message upload-message--error" role="alert">' . uploadEscape($error->getMessage()) . '</p>'
+                . '<a class="upload-logout" href="/admin.php?categories=1">Volver a categorías</a>', 422, true);
+        }
+    }
+
+    if ($action === 'delete_empty_collection') {
+        try {
+            gallery_collection_delete_empty((string) ($_POST['collection'] ?? ''), managedPhotos());
+            header('Location: /admin.php?categories=1&status=' . rawurlencode('Categoría vacía eliminada.'), true, 303);
+            exit;
+        } catch (InvalidArgumentException | RuntimeException $error) {
+            uploadPage('Gestionar categorías', adminNavigation((string) $_SESSION['csrf'])
+                . '<p class="upload-message upload-message--error" role="alert">' . uploadEscape($error->getMessage()) . '</p>'
+                . '<a class="upload-logout" href="/admin.php?categories=1">Volver a categorías</a>', 422, true);
+        }
+    }
+
     if ($action === 'save_collection') {
         try {
             $photos = managedPhotos();
@@ -661,12 +685,19 @@ if (!empty($_SESSION['upload_authenticated'])) {
             $groups[$name][] = $photo;
         }
         gallery_collections_sync_categories($photos);
+        $collectionSettings = gallery_collections_load();
+        foreach ($collectionSettings as $collectionName => $collectionData) {
+            if (!isset($groups[$collectionName]) && !empty($collectionData['manual'])) $groups[$collectionName] = [];
+        }
         uksort($groups, 'strnatcasecmp');
         $status = isset($_GET['status']) ? '<p class="upload-message" role="status">' . uploadEscape((string) $_GET['status']) . '</p>' : '';
         $content = adminNavigation((string) $_SESSION['csrf']) . $status
-            . '<p class="upload-help">Cada categoría funciona como colección: elige portada y escribe una breve descripción. Las fotos con esa categoría aparecerán juntas. Para editar fotos individuales, ve a <a href="/admin.php?library=1">Gestionar fotos</a>.</p>';
+            . '<p class="upload-help">Cada categoría funciona como colección. Añade una categoría aquí y asígnala a las fotos desde Gestionar fotos o Carga por lotes.</p>'
+            . '<form method="post" action="/admin.php" class="admin-category-create">'
+            . '<input type="hidden" name="action" value="create_collection"><input type="hidden" name="csrf" value="' . uploadEscape((string) $_SESSION['csrf']) . '">'
+            . '<div class="upload-field"><label for="new-category-name">Nueva categoría</label><input id="new-category-name" type="text" name="category" maxlength="64" placeholder="Ej.: Retratos" required></div>'
+            . '<button class="upload-submit" type="submit">Añadir categoría</button></form>';
         if (!$groups) $content .= '<p class="upload-message">Todavía no hay categorías.</p>';
-        $collectionSettings = gallery_collections_load();
         foreach ($groups as $name => $items) {
             $collection = $collectionSettings[$name] ?? ['description' => '', 'cover' => ''];
             $coverOptions = '<option value="">Elegir portada automáticamente</option>';
@@ -681,22 +712,29 @@ if (!empty($_SESSION['upload_authenticated'])) {
                 $value = uploadEscape($candidate);
                 $options .= '<option value="' . $value . '">' . $value . '</option>';
             }
-            $content .= '<section class="admin-category-card admin-collection-card"><div><h2>' . $escapedName . '</h2><p>' . count($items) . ' fotografías · colección</p></div>'
+            $content .= '<section class="admin-category-card admin-collection-card"><div><h2>' . $escapedName . '</h2><p>' . (count($items) ? count($items) . ' fotografías · colección' : 'Colección vacía · asígnale fotos desde Gestionar fotos o Carga por lotes.') . '</p></div>'
                 . '<form method="post" action="/admin.php" class="admin-collection-form">'
                 . '<input type="hidden" name="action" value="save_collection"><input type="hidden" name="csrf" value="' . uploadEscape((string) $_SESSION['csrf']) . '"><input type="hidden" name="collection" value="' . $escapedName . '">'
                 . '<div class="upload-field"><label>Descripción</label><textarea name="description" maxlength="280" rows="2" placeholder="Ej.: Paseos tranquilos al atardecer">' . uploadEscape((string) ($collection['description'] ?? '')) . '</textarea></div>'
                 . '<div class="upload-field"><label>Fotografía de portada</label><select name="cover">' . $coverOptions . '</select></div>'
-                . '<button class="upload-submit" type="submit">Guardar colección</button></form>'
-                . '<form method="post" action="/admin.php" class="admin-category-form" data-category-action>'
-                . '<input type="hidden" name="action" value="manage_category"><input type="hidden" name="csrf" value="' . uploadEscape((string) $_SESSION['csrf']) . '">'
-                . '<input type="hidden" name="source" value="' . $escapedName . '">'
-                . '<div class="upload-field"><label>Acción</label><select name="operation" data-category-operation>'
-                . '<option value="rename">Cambiar nombre o combinar</option><option value="move_existing"' . ($options === '' ? ' disabled' : '') . '>Mover a una existente</option>'
-                . '<option value="move_new">Mover a una nueva</option><option value="delete_photos">Eliminar categoría y todas sus fotos</option></select></div>'
-                . '<div class="upload-field" data-existing-target hidden><label>Destino existente</label><select name="target" data-existing-select disabled>' . ($options ?: '<option value="">No hay otras categorías</option>') . '</select></div>'
-                . '<div class="upload-field" data-new-target><label>Nuevo nombre de categoría</label><input type="text" name="target" maxlength="64" data-new-input placeholder="Escribe el nombre" required></div>'
-                . '<div class="upload-field" data-delete-confirm hidden><label>Escribe ELIMINAR para confirmar el borrado de ' . count($items) . ' fotos</label><input type="text" name="confirm" maxlength="20" data-confirm-input autocomplete="off" disabled></div>'
-                . '<button class="upload-submit" type="submit">Aplicar a las ' . count($items) . ' fotos</button></form></section>';
+                . '<button class="upload-submit" type="submit">Guardar colección</button></form>';
+            if ($items) {
+                $content .= '<form method="post" action="/admin.php" class="admin-category-form" data-category-action>'
+                    . '<input type="hidden" name="action" value="manage_category"><input type="hidden" name="csrf" value="' . uploadEscape((string) $_SESSION['csrf']) . '">'
+                    . '<input type="hidden" name="source" value="' . $escapedName . '">'
+                    . '<div class="upload-field"><label>Acción</label><select name="operation" data-category-operation>'
+                    . '<option value="rename">Cambiar nombre o combinar</option><option value="move_existing"' . ($options === '' ? ' disabled' : '') . '>Mover a una existente</option>'
+                    . '<option value="move_new">Mover a una nueva</option><option value="delete_photos">Eliminar categoría y todas sus fotos</option></select></div>'
+                    . '<div class="upload-field" data-existing-target hidden><label>Destino existente</label><select name="target" data-existing-select disabled>' . ($options ?: '<option value="">No hay otras categorías</option>') . '</select></div>'
+                    . '<div class="upload-field" data-new-target><label>Nuevo nombre de categoría</label><input type="text" name="target" maxlength="64" data-new-input placeholder="Escribe el nombre" required></div>'
+                    . '<div class="upload-field" data-delete-confirm hidden><label>Escribe ELIMINAR para confirmar el borrado de ' . count($items) . ' fotos</label><input type="text" name="confirm" maxlength="20" data-confirm-input autocomplete="off" disabled></div>'
+                    . '<button class="upload-submit" type="submit">Aplicar a las ' . count($items) . ' fotos</button></form>';
+            } elseif (!empty($collection['manual'])) {
+                $content .= '<form method="post" action="/admin.php" class="admin-empty-category-delete" onsubmit="return confirm(\'¿Eliminar esta categoría vacía?\')">'
+                    . '<input type="hidden" name="action" value="delete_empty_collection"><input type="hidden" name="csrf" value="' . uploadEscape((string) $_SESSION['csrf']) . '"><input type="hidden" name="collection" value="' . $escapedName . '">'
+                    . '<button class="upload-submit" type="submit">Eliminar categoría vacía</button></form>';
+            }
+            $content .= '</section>';
         }
         uploadPage('Gestionar categorías', $content, 200, true);
     }
