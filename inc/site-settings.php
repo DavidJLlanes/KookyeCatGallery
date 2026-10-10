@@ -154,8 +154,13 @@ function gallery_collections_sync_categories(array $photos): void
     $changed = false;
     foreach ($collections as $name => $data) {
         if (!isset($present[$name])) {
-            unset($collections[$name]);
-            $changed = true;
+            if (empty($data['manual'])) {
+                unset($collections[$name]);
+                $changed = true;
+            } elseif (($data['cover'] ?? '') !== '') {
+                $collections[$name]['cover'] = '';
+                $changed = true;
+            }
             continue;
         }
         if (($data['cover'] ?? '') !== '') {
