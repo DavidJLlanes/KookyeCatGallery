@@ -168,7 +168,7 @@ function app_version(): string
 
     $root = dirname(__DIR__);
     $files = ['index.php', 'admin.php', 'service-worker.js', 'manifest.json',
-        'assets/css/style.css', 'assets/css/photo-editor.css',
+        'assets/css/style.css', 'assets/css/admin.css', 'assets/css/photo-editor.css',
         'assets/js/main.js', 'assets/js/pwa.js', 'assets/js/photo-editor.js', 'assets/js/photo-editor-presets.js', 'assets/js/photo-filter-engine.js',
         'inc/site-settings.php', 'inc/site-texts.php', 'assets/css/site-design.css', 'assets/js/site-texts.js',
         'inc/photo-navigation.php', 'assets/css/photo-navigation.css'];
