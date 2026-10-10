@@ -553,10 +553,11 @@ function site_text(string $key): string
     static $settings;
     $settings ??= site_settings_load();
     if (isset($settings['texts'][$key])) return $settings['texts'][$key];
+    // El nombre público sigue el mismo resolver que el panel y la marca móvil.
+    if ($key === 'text_52179dc42df7efe5') return site_title();
     $default = site_text_catalog()[$key]['default'] ?? '';
-    // Los textos por defecto que mencionan el título de la web siguen al título elegido en el panel.
-    $title = trim((string) ($settings['site_title'] ?? ''));
-    return $title === '' ? $default : str_replace(site_title_default(), $title, $default);
+    // Los textos por defecto que mencionan el título siguen el nombre actual del sitio.
+    return str_replace(site_title_default(), site_title(), $default);
 }
 
 /**
@@ -573,9 +574,28 @@ function site_title_default(): string
  */
 function site_title(): string
 {
-    // Usa la misma fuente que el nombre público y los metadatos del sitio.
-    // site_text() resuelve el título personalizado y, si falta, el ajuste dedicado.
-    return site_text('text_52179dc42df7efe5');
+    $settings = site_settings_load();
+    $catalog = site_text_catalog();
+    $storedTitle = trim((string) ($settings['site_title'] ?? ''));
+    $customName = trim((string) ($settings['texts']['text_52179dc42df7efe5'] ?? ''));
+    if ($customName !== '') return $customName;
+
+    // Si se personalizó el encabezado en dos líneas, úsalo también como nombre de marca.
+    // Lee los valores directamente para evitar una dependencia circular.
+    $textValues = is_array($settings['texts'] ?? null) ? $settings['texts'] : [];
+    $firstLine = trim((string) ($textValues['text_cbbba360eb60dd04'] ?? $catalog['text_cbbba360eb60dd04']['default'] ?? ''));
+    $secondLine = trim((string) ($textValues['text_2c1ac3057629f681'] ?? $catalog['text_2c1ac3057629f681']['default'] ?? ''));
+    $headline = trim($firstLine . ' ' . $secondLine);
+    $defaultHeadline = trim(
+        (string) ($catalog['text_cbbba360eb60dd04']['default'] ?? '') . ' ' .
+        (string) ($catalog['text_2c1ac3057629f681']['default'] ?? '')
+    );
+    if ($headline !== '' && $headline !== $defaultHeadline
+        && ($storedTitle === '' || $storedTitle === site_title_default())) {
+        return $headline;
+    }
+
+    return $storedTitle !== '' ? $storedTitle : site_title_default();
 }
 
 /**
