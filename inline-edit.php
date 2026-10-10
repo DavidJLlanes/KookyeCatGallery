@@ -68,7 +68,7 @@ try {
         $savedValue = $value;
     }
     site_settings_save($settings);
-    echo json_encode(['ok' => true, 'value' => $savedValue], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['ok' => true, 'value' => $savedValue, 'siteTitle' => site_title()], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $error) {
     error_log('Inline text save failed: ' . $error->getMessage());
     $fail(500, 'No se pudo guardar el texto. Vuelve a intentarlo.');
