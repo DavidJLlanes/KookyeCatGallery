@@ -6,8 +6,8 @@ const assert = require('assert/strict');
 const root = path.join(__dirname,'..');
 // Render the real PHP shell and settings form without loading auth, sessions or private config.
 const fixture = String.raw`
-require 'inc/site-settings.php';
-function app_version(): string { return 'layout-test'; }
+require_once 'inc/helpers.php';
+require_once 'inc/site-settings.php';
 require 'inc/admin-shell.php';
 $_GET['settings'] = '1';
 $section = getenv('ADMIN_TEST_SECTION') ?: 'design';
@@ -19,7 +19,7 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
 (async()=>{
   const browser=await chromium.launch({headless:true,executablePath:process.env.TEST_BROWSER||undefined,args:['--no-sandbox']});
   try {
-    for(const section of ['design','texts','profile']) {
+    for(const section of ['design','texts','content','social','publication']) {
       const html=execFileSync('php',['-r',fixture],{cwd:root,encoding:'utf8',env:{...process.env,ADMIN_TEST_SECTION:section}});
       for(const width of [320,375,768,959,960,1280,1920]) {
         const page=await browser.newPage({viewport:{width,height:900}});
@@ -44,9 +44,9 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
               h1:document.querySelectorAll('h1').length,
               order:[...document.querySelectorAll('input[name="section_order[]"]')].map(i=>i.value)};
           },installed);
-          assert(!result.subnav,'Perfil, Diseño and Textos are separate menu entries, not sub-tabs');
-          assert.deepEqual(result.navLabels,['Subir foto','Gestionar fotos','Categorías','Perfil','Diseño','Textos'],'Menu entries');
-          assert.deepEqual(result.active,[section==='design'?'Diseño':(section==='texts'?'Textos':'Perfil')],'Active menu entry');
+          assert.equal(result.subnav, !['design', 'texts'].includes(section), 'Only Ajustes has its own subsection navigation');
+          assert.deepEqual(result.navLabels,['Subir foto','Gestionar fotos','Categorías','Ajustes','Diseño','Textos'],'Menu entries');
+          assert.deepEqual(result.active,[section==='design'?'Diseño':(section==='texts'?'Textos':'Ajustes')],'Active menu entry');
           assert(!result.overflow,`Admin overflow ${width}`);
           assert(result.installInTopbar,'Install belongs in the top bar');
           assert.equal(result.h1,1,'One h1 per page');
@@ -70,7 +70,7 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
                 oldLinks:!!document.querySelector('[name="instagram_url"], [name="threads_url"]'),
                 configuredRows:configured,visibleRows:visible,addButton:!!document.querySelector('[data-social-add]')};
             });
-            assert.deepEqual(socialSettings,{editorInStructure:true,instagram:true,threads:true,oldUsernameFields:false,oldLinks:false,
+            assert.deepEqual(socialSettings,{editorInStructure:false,instagram:true,threads:true,oldUsernameFields:false,oldLinks:false,
               configuredRows:socialSettings.configuredRows,visibleRows:socialSettings.configuredRows,addButton:true},
               'Configured social profiles stay visible and empty rows stay collapsed');
           }
@@ -79,7 +79,7 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
           // Galería premium: al elegir una se desactivan los ajustes de la galería estándar que no use (8 con la baraja; 6 con las burbujas, que respetan «Fotos visibles a la vez»); al quitarla se reactivan.
           const premium=await page.evaluate(()=>{
             const select=document.querySelector('#setting-gallery_premium');
-            const fields=[...document.querySelectorAll('[data-premium-off]')];
+            const fields=[...document.querySelectorAll('[data-gallery-control]')];
             const change=value=>{select.value=value;select.dispatchEvent(new Event('change',{bubbles:true}));};
             const count=()=>fields.filter(field=>field.disabled).length;
             const result={total:fields.length,initial:count(),titleField:!!document.querySelector('#setting-site_title'),options:[...select.options].map(o=>o.value)};
@@ -90,9 +90,9 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
             change('none');result.afterNone=count();result.noteHidden=document.querySelector('[data-premium-note]').hidden;
             return result;
           });
-          assert.deepEqual(premium,{total:8,initial:0,titleField:true,options:['none','deck','coverflow','bubbles','squares','drum','cylinder','polaroid','swipe'],afterDeck:8,afterCoverflow:8,noteShown:true,dimmed:8,afterBubbles:6,photosEnabled:true,afterNone:0,noteHidden:true},'Premium gallery must toggle the standard gallery fields');
+          assert.deepEqual(premium,{total:8,initial:1,titleField:false,options:['none','deck','coverflow','bubbles','squares','drum','cylinder','polaroid','swipe'],afterDeck:8,afterCoverflow:8,noteShown:true,dimmed:8,afterBubbles:6,photosEnabled:true,afterNone:1,noteHidden:true},'Premium gallery must toggle the standard gallery fields');
         }
-        if(section==='design' && width===375) {
+        if(section==='social' && width===375) {
           const socialEditor=await page.evaluate(()=>{
             const add=document.querySelector('[data-social-add]');
             const rows=[...document.querySelectorAll('[data-social-row]')];
@@ -109,27 +109,6 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
           });
           assert(socialEditor.opened&&socialEditor.selected&&socialEditor.removed&&socialEditor.addStillAvailable,
             'Social editor should add, select, and remove a profile row');
-        }
-        if(section==='design' && width===375) {
-          const templates=await page.evaluate(()=>{
-            const mobile=document.querySelector('#setting-header_mobile');
-            const premium=document.querySelector('#setting-gallery_premium');
-            const group=name=>document.querySelector('[data-template-text-group][data-template-options="'+name+'"]');
-            const change=(select,value)=>{select.value=value;select.dispatchEvent(new Event('change',{bubbles:true}));};
-            const initial={reel:group('reel').hidden,atlas:group('atlas').hidden,standard:group('none').hidden};
-            change(mobile,'reel');
-            const reelShown=!group('reel').hidden&&group('atlas').hidden;
-            change(mobile,'atlas');
-            const atlasShown=!group('atlas').hidden&&group('reel').hidden;
-            change(premium,'swipe');
-            const swipeShown=!group('swipe').hidden&&group('none').hidden;
-            change(premium,'squares');
-            const squaresShown=!group('bubbles,squares').hidden&&group('none').hidden&&group('swipe').hidden;
-            const atlasField=document.querySelector('textarea[name="texts[template_atlas_label]"]');
-            return {initial,reelShown,atlasShown,swipeShown,squaresShown,atlasEditable:!!atlasField&&!atlasField.disabled};
-          });
-          assert.deepEqual(templates,{initial:{reel:true,atlas:true,standard:false},reelShown:true,atlasShown:true,
-            swipeShown:true,squaresShown:true,atlasEditable:true},'Template text fields must follow the selected designs');
         }
         if(section==='design' && width===375) {
           const gridAvailability=await page.evaluate(()=>{
@@ -159,7 +138,7 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
             result.restored=grid.disabled;
             return result;
           });
-          assert.deepEqual(gridAvailability,{initialDisabled:false,initialHelp:true,unusedDisabled:true,helpShown:true,mobileUsesEnabled:true,desktopUsesEnabled:true,triptychEnabled:true,unusedAgain:true,premiumDisabled:true,restored:true},'Grid proportions must only be editable when a selected standard layout uses them');
+          assert.deepEqual(gridAvailability,{initialDisabled:true,initialHelp:false,unusedDisabled:true,helpShown:true,mobileUsesEnabled:true,desktopUsesEnabled:true,triptychEnabled:false,unusedAgain:true,premiumDisabled:true,restored:true},'Grid proportions must only be editable when a selected standard layout uses them');
         }
         if(section==='design') {
           // Reordering moves the DOM rows (which is what gets submitted) and disables the edge buttons.
@@ -178,6 +157,6 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
         await page.close();
       }
     }
-    console.log('Admin shell verified: sidebar/tab bar, separate Perfil/Diseño menu entries, section ordering and save bar at seven widths.');
+    console.log('Admin shell verified: sidebar/tab bar, separate Ajustes/Diseño/Textos menu entries, section ordering and save bar at seven widths.');
   } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1);});

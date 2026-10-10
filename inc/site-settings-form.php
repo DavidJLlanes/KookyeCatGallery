@@ -42,31 +42,33 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     }
     $labels = ['palette' => 'Paleta de colores', 'grid' => 'Proporción de las fotos', 'header_mobile' => 'Cabecera móvil', 'header_desktop' => 'Cabecera de escritorio', 'gallery_mobile' => 'Galería móvil', 'gallery_desktop' => 'Galería de escritorio', 'hover' => 'Efecto Hover', 'pagination_shape' => 'Forma de la paginación', 'gallery_premium' => 'Galería premium'];
     $choices = site_design_choices();
-    // ¿Hay una galería premium activa? Entonces se desactivan los campos de la galería estándar (los marcados con $premiumOff).
+    // Las capacidades del diseño determinan qué controles se pueden usar.
     $premiumOn = site_premium_gallery_active($settings) !== null;
-    // Cada galería premium ignora unos ajustes (y respeta otros). `data-premium-off` lista las galerías que ignoran el campo.
-    $premiumActive = site_premium_gallery_active($settings);
-    $ignoredBy = static fn(string $key): string => implode(',', array_keys(array_filter(
-        site_premium_gallery_definitions(), static fn($d, $k) => in_array($key, site_premium_ignored_settings($k), true), ARRAY_FILTER_USE_BOTH)));
-    $offAttr = static function (string $key) use ($ignoredBy, $premiumActive): string {
-        $list = $ignoredBy($key);
-        return $list === '' ? '' : ' data-premium-off="' . $list . '"' . ($premiumActive !== null && in_array($key, site_premium_ignored_settings($premiumActive), true) ? ' disabled' : '');
-    };
-    $select = static function (string $key, string $label, array $options, $current, bool $premiumOff = false) use ($escape, $offAttr, $premiumActive, $settings): string {
-        $gridUnused = $key === 'grid' && !site_grid_setting_is_used($settings);
-        $out = '<div class="upload-field' . (($premiumOff && str_contains($offAttr($key), ' disabled')) || $gridUnused ? ' is-disabled' : '') . '"' . ($key === 'grid' ? ' data-grid-setting' : '') . '><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '"' . ($gridUnused ? ' disabled' : '')
-            . ($premiumOff ? $offAttr($key) : '') . '>';
+    $contract = ['standard' => site_gallery_capabilities(), 'premium' => []];
+    foreach (site_premium_gallery_definitions() as $key => $definition) {
+        $contract['premium'][$key] = array_values(array_diff(site_gallery_control_keys(), site_premium_ignored_settings($key)));
+    }
+    $html .= '<script type="application/json" data-gallery-capabilities>'
+        . json_encode($contract, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) . '</script>';
+    $controlAttr = static fn(string $key): string => ' data-gallery-control="' . $key . '"'
+        . (site_gallery_control_enabled($key, $settings) ? '' : ' disabled');
+    $help = static fn(string $key): string => '<small class="upload-help" data-gallery-help="' . $key . '"'
+        . (site_gallery_control_help($key, $settings) === '' ? ' hidden' : '') . '>'
+        . $escape(site_gallery_control_help($key, $settings)) . '</small>';
+    $select = static function (string $key, string $label, array $options, $current, bool $galleryOption = false) use ($escape, $controlAttr, $settings, $help): string {
+        $out = '<div class="upload-field' . ($galleryOption && !site_gallery_control_enabled($key, $settings) ? ' is-disabled' : '') . '"' . ($key === 'grid' ? ' data-grid-setting' : '') . '><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '"'
+            . ($galleryOption ? $controlAttr($key) : '') . '>';
         foreach ($options as $value => $text) $out .= '<option value="' . $escape((string) $value) . '"' . ((string) $current === (string) $value ? ' selected' : '') . '>' . $escape((string) $text) . '</option>';
-        return $out . '</select></div>';
+        return $out . '</select>' . ($galleryOption ? $help($key) : '') . '</div>';
     };
     $switch = static fn(string $key, string $label, bool $on): string => '<label class="site-section-switch"><input type="checkbox" name="' . $key . '" value="1"' . ($on ? ' checked' : '') . '><span class="site-section-switch__track" aria-hidden="true"></span><span>' . $escape($label) . '</span></label>';
     $card = static fn(string $title, string $lead, string $body): string => '<section class="admin-card"><header class="admin-card__head"><h2>' . $escape($title) . '</h2><p>' . $escape($lead) . '</p></header><div class="admin-card__body">' . $body . '</div></section>';
-    $range = static function (string $key, string $label, array $values, $current, string $zero = '', bool $premiumOff = false) use ($escape, $offAttr): string {
+    $range = static function (string $key, string $label, array $values, $current, string $zero = '', bool $galleryOption = false) use ($escape, $controlAttr, $settings, $help): string {
         $options = [];
         foreach ($values as $n) $options[$n] = $n === 0 ? $zero : (string) $n;
-        return '<div class="upload-field' . ($premiumOff && str_contains($offAttr($key), ' disabled') ? ' is-disabled' : '') . '"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '"'
-            . ($premiumOff ? $offAttr($key) : '') . '>'
-            . implode('', array_map(static fn($n) => '<option value="' . $n . '"' . ((int) $current === $n ? ' selected' : '') . '>' . $escape($options[$n]) . '</option>', $values)) . '</select></div>';
+        return '<div class="upload-field' . ($galleryOption && !site_gallery_control_enabled($key, $settings) ? ' is-disabled' : '') . '"><label for="setting-' . $key . '">' . $escape($label) . '</label><select id="setting-' . $key . '" name="' . $key . '"'
+            . ($galleryOption ? $controlAttr($key) : '') . '>'
+            . implode('', array_map(static fn($n) => '<option value="' . $n . '"' . ((int) $current === $n ? ' selected' : '') . '>' . $escape($options[$n]) . '</option>', $values)) . '</select>' . ($galleryOption ? $help($key) : '') . '</div>';
     };
 
     // ── Diseño ────────────────────────────────────────────────────────────
@@ -99,7 +101,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . $range('columns_desktop', 'Columnas en escritorio', $columnsDesktop, $settings['columns_desktop'], '', true)
         . $range('photos_mobile', 'Fotos visibles a la vez en móvil', site_photos_per_view_choices(), $settings['photos_mobile'], 'Todas', true)
         . $range('photos_desktop', 'Fotos visibles a la vez en escritorio', site_photos_per_view_choices(), $settings['photos_desktop'], 'Todas', true) . '</div>'
-        . '<p class="upload-help" data-grid-help' . (site_grid_setting_is_used($settings) ? ' hidden' : '') . '>Este ajuste solo se aplica a Masonry, Cuadrícula, Hoja de contactos y Trípticos.</p>'
+        . '<p class="upload-help" data-grid-help' . (site_grid_setting_is_used($settings) ? ' hidden' : '') . '>La proporción solo se aplica a Cuadrícula y Hoja de contactos. Los demás diseños conservan sus proporciones propias.</p>'
         . '<p class="upload-help admin-grid-explanation">Las fotos visibles a la vez no dependen de las columnas: si hay más fotos, se paginan. Elige «Todas» para mostrarlas juntas. Masonry conserva las proporciones originales; para fotos cuadradas, horizontales o verticales, elige la galería «Cuadrícula» y su tipo de cuadrícula.</p>');
 
     $order = site_section_order_normalize($settings['section_order'] ?? null);

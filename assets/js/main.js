@@ -698,7 +698,7 @@
         if (!$$(CARDS).length) return;
 
         // Siempre usa las fotos visibles en el momento (respeta filtro + página activa)
-        const getCards = () => $('.card:not(.is-hidden):not([hidden])');
+        const getCards = () => $$('.card:not(.is-hidden):not([hidden])');
 
         // Elemento "flyer" que vuela
         const flyer = document.createElement('img');
@@ -1527,7 +1527,7 @@
         const initialCards = $$('.card', gallery || document);
         let galleryDesign = getGalleryDesign();
         document.body.dataset.galleryActive = galleryDesign;
-        if (gallery && galleryDesign === 'category-rails') {
+        const buildCategoryRails = () => {
             const groups = new Map();
             initialCards.forEach(card => {
                 const category = card.dataset.category || 'Otras';
@@ -1576,7 +1576,8 @@
                 fragment.append(row);
             });
             gallery.replaceChildren(fragment);
-        }
+        };
+        if (galleryDesign === 'category-rails') buildCategoryRails();
         const allCards = initialCards;
         if (!allCards.length) return;
 
@@ -1589,15 +1590,18 @@
             if (getGalleryDesign() === 'category-rails') return Number.MAX_SAFE_INTEGER;
             const mobile = window.matchMedia('(max-width: 768px)').matches;
             const attribute = mobile ? 'data-photos-mobile' : 'data-photos-desktop';
-            const configured = Number.parseInt(document.body.getAttribute(attribute) ?? '', 10);
+            const raw = document.body.getAttribute(attribute);
+            const configured = raw === null || raw.trim() === '' ? NaN : Number(raw);
             if (configured === 0) return Number.MAX_SAFE_INTEGER;
-            return Number.isFinite(configured) && configured > 0 ? configured : (mobile ? 12 : 20);
+            return Number.isSafeInteger(configured) && configured > 0 ? configured : (mobile ? 12 : 20);
         };
         let   currentCat    = '';
+        let   currentLocation = null;
         let   currentPage   = 1;
 
         const getFiltered = () => {
             let cards = currentCat ? allCards.filter(c => c.dataset.category === currentCat) : allCards;
+            if (currentLocation) cards = cards.filter(card => `${Number.parseFloat(card.dataset.lat)},${Number.parseFloat(card.dataset.lng)}` === currentLocation);
             if (document.body.classList.contains('favorites-only')) {
                 let saved = [];
                 try { saved = JSON.parse(localStorage.getItem('djl-photo-favorites-v1') || '[]'); } catch (_) {}
@@ -1680,10 +1684,8 @@
         const render = () => {
             const activeDesign = getGalleryDesign();
             if (activeDesign !== galleryDesign) {
-                if (activeDesign === 'category-rails' || galleryDesign === 'category-rails') {
-                    window.location.reload();
-                    return;
-                }
+                if (activeDesign === 'category-rails') buildCategoryRails();
+                else if (galleryDesign === 'category-rails') gallery.replaceChildren(...allCards);
                 galleryDesign = activeDesign;
                 document.body.dataset.galleryActive = activeDesign;
             }
@@ -1730,6 +1732,15 @@
             render();
         });
 
+        document.addEventListener('gallery:filter-location', event => {
+            currentLocation = event.detail?.location || null;
+            currentCat = '';
+            currentPage = 1;
+            $$('.categories-filter__chip', filterEl || document).forEach(chip => chip.classList.remove('is-active'));
+            if (categorySelect) categorySelect.value = '';
+            render();
+        });
+
         // Chips de categoría
         if (filterEl) {
             const chips = $$('.categories-filter__chip', filterEl);
@@ -1737,6 +1748,7 @@
                 chip.addEventListener('click', () => {
                     chips.forEach(c => c.classList.remove('is-active'));
                     chip.classList.add('is-active');
+                    currentLocation = null;
                     currentCat  = chip.dataset.category || '';
                     currentPage = 1;
                     render();
@@ -1746,6 +1758,7 @@
 
         if (categorySelect) {
             categorySelect.addEventListener('change', () => {
+                currentLocation = null;
                 currentCat = categorySelect.value || '';
                 currentPage = 1;
                 render();
@@ -1755,6 +1768,7 @@
         const collectionCards = $$('.collection-card[data-collection-category]');
         collectionCards.forEach(card => {
             card.addEventListener('click', () => {
+                currentLocation = null;
                 currentCat = card.dataset.collectionCategory || '';
                 currentPage = 1;
                 $$('.categories-filter__chip', filterEl || document).forEach(chip => {
@@ -1787,7 +1801,10 @@
             requestAnimationFrame(() => layoutMasonryCards(gallery, getGalleryDesign()));
         }, true);
         window.addEventListener('resize', () => {
-            requestAnimationFrame(() => layoutMasonryCards(gallery, getGalleryDesign()));
+            requestAnimationFrame(() => {
+                if (getGalleryDesign() !== galleryDesign) render();
+                else layoutMasonryCards(gallery, galleryDesign);
+            });
         }, { passive: true });
         let lastGalleryWidth = gallery.clientWidth;
         new ResizeObserver(() => {
@@ -1796,13 +1813,6 @@
             layoutMasonryCards(gallery, getGalleryDesign());
         }).observe(gallery);
         window.matchMedia('(max-width: 768px)').addEventListener('change', () => {
-            const nextDesign = getGalleryDesign();
-            if (nextDesign === 'category-rails' || galleryDesign === 'category-rails') {
-                window.location.reload();
-                return;
-            }
-            galleryDesign = nextDesign;
-            document.body.dataset.galleryActive = nextDesign;
             currentPage = 1;
             render();
         });
@@ -1956,23 +1966,11 @@
                     });
                 }
 
-                // Al pinchar el marcador, filtra las fotos de esa ubicación
+                // Filtering has one owner: it updates visibility, geometry and pagination together.
                 marker.on('click', () => {
-                    const cards = $$('.card');
-                    const locKey = marker._location;
-                    const activeChip = $('.categories-filter__chip.is-active');
-
-                    cards.forEach(card => {
-                        const cardLoc = `${card.dataset.lat},${card.dataset.lng}`;
-                        if (cardLoc === locKey) {
-                            card.classList.remove('is-hidden');
-                        } else {
-                            card.classList.add('is-hidden');
-                        }
-                    });
-
-                    // Marca el chip "Todas" como activo visualmente (aunque no es exacto)
-                    if (activeChip) activeChip.classList.remove('is-active');
+                    document.dispatchEvent(new CustomEvent('gallery:filter-location', {
+                        detail: { location: marker._location }
+                    }));
                 });
             });
 

@@ -5,7 +5,7 @@ const assert = require('assert/strict');
 const root = path.join(__dirname, '..');
 const css = ['style', 'site-design', 'interface-worlds', 'gallery-layout'].map(n => fs.readFileSync(path.join(root, `assets/css/${n}.css`), 'utf8')).join('\n');
 const scripts = ['gallery-layout', 'main'].map(n => fs.readFileSync(path.join(root, `assets/js/${n}.js`), 'utf8'));
-const designs = ['standard', 'grid', 'mosaic', 'asymmetric', 'scattered', 'category-rails'];
+const designs = ['standard', 'grid', 'mosaic', 'asymmetric', 'scattered', 'category-rails', 'exhibition', 'contact-sheet', 'narrative', 'triptych'];
 const ratios = [.67, 1.8, 1.33, .8, 2.2, 1];
 const cards = Array.from({length: 67}, (_, i) => {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${600 * ratios[i % 6]}" height="600"><rect width="100%" height="100%" fill="${['#2b779e','#528834','#9c5639'][i%3]}"/><circle cx="30%" cy="35%" r="80" fill="#e0c58c"/><text x="10" y="550" fill="white" font-size="70">Foto ${i+1}</text></svg>`;
@@ -24,6 +24,7 @@ const cards = Array.from({length: 67}, (_, i) => {
           cards: visible.map(c => {const r=c.getBoundingClientRect(), p=c.querySelector('picture').getBoundingClientRect();return {x:r.x-rect.x,y:r.y-rect.y,w:r.width,h:r.height,pw:p.width,ph:p.height,ratio:Number(c.style.getPropertyValue('--aspect')),hidden:c.hidden,style:c.style.cssText,transform:getComputedStyle(c).transform,header:document.body.dataset.headerMobile};})};
       });
       assert.equal(state.cards.length, expected, `${design}/${width}: pagination leaked hidden cards`);
+      if(state.overflow) console.log(await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).map(e=>({tag:e.tagName,cls:e.className,right:e.getBoundingClientRect().right,header:document.body.dataset.headerMobile})).slice(0,8)));
       assert(!state.overflow, `${design}/${width}: horizontal page overflow`);
       if (design === 'category-rails') return;
       state.cards.forEach((a,i) => {
@@ -40,11 +41,11 @@ const cards = Array.from({length: 67}, (_, i) => {
       page.on('pageerror', error => errors.push(error.message));
       await page.route('**/*', route => route.abort());
       await page.setViewportSize({width,height:900});
-      await page.setContent(`<style>${css}</style><body data-grid="masonry" data-palette="current" data-header-mobile="scrapbook" data-header-desktop="observatory" data-show-categories="false" data-gallery-mobile="${design}" data-gallery-desktop="${design}" style="--columns-mobile:3;--columns-desktop:3"><main class="gallery-section" id="galeria"><div id="categoriesFilter"><button class="categories-filter__chip" data-category="Naturaleza">Naturaleza</button></div><section class="masonry" id="masonry">${cards}</section><nav id="jsPagination"></nav></main></body>`);
+      await page.setContent(`<style>${css}</style><body data-grid="masonry" data-photos-mobile="8" data-photos-desktop="15" data-palette="current" data-header-mobile="scrapbook" data-header-desktop="observatory" data-show-categories="false" data-gallery-mobile="${design}" data-gallery-desktop="${design}" style="--columns-mobile:3;--columns-desktop:3"><main class="gallery-section" id="galeria"><div id="categoriesFilter"><button class="categories-filter__chip" data-category="Naturaleza">Naturaleza</button></div><section class="masonry" id="masonry">${cards}</section><nav id="jsPagination"></nav></main></body>`);
       await page.evaluate(() => {window.siteText = s=>s; window.siteTextHTML=s=>s;});
       for(const content of scripts) await page.addScriptTag({content});
       await page.waitForFunction(() => document.querySelector('#masonry').hasAttribute('data-layout'));
-      const count = design==='category-rails'?67:width<=768?12:20;
+      const count = design==='category-rails'?67:width<=768?8:15;
       await check(design,width,count);
       if(design==='standard') {
         // Reproduce the user's saved combination: square grid + Masonry gallery.
@@ -91,6 +92,6 @@ const cards = Array.from({length: 67}, (_, i) => {
       await page.close();
     }
     assert.deepEqual(errors,[],'Browser errors');
-    console.log('Gallery regression passed: real main.js, 67 photos, 6 designs, 4 viewports, themes, pagination, filtering, arrows and color extraction.');
+    console.log('Gallery regression passed: real main.js, 67 photos, 10 designs, 4 viewports, themes, pagination, filtering, arrows and color extraction.');
   } finally {await browser.close();}
 })().catch(error=>{console.error(error);process.exit(1);});

@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/private-storage.php';
 require_once __DIR__ . '/premium-galleries.php';
+require_once __DIR__ . '/gallery-capabilities.php';
 require_once __DIR__ . '/template-texts.php';
 require_once __DIR__ . '/site-brand-assets.php';
 
@@ -196,7 +197,7 @@ function site_design_choices(): array
 {
     return [
         'palette' => ['current' => 'Elegante', 'black' => 'Noche · negro y blanco', 'white' => 'Luz · blanco y tinta', 'cyberpunk' => 'Cyberpunk · neón', 'japanese' => 'Japón · papel y carmesí', 'forest' => 'Bosque · verde y marfil', 'ocean' => 'Océano · azul profundo y turquesa'],
-        'grid' => ['adaptive' => 'Adaptativa', 'masonry' => 'Masonry · alturas naturales', 'square' => 'Cuadrada', 'landscape' => 'Horizontal · 4:3', 'portrait' => 'Vertical · 3:4'],
+        'grid' => ['adaptive' => 'Según el diseño', 'square' => 'Cuadrada', 'landscape' => 'Horizontal · 4:3', 'portrait' => 'Vertical · 3:4'],
         'header_mobile' => ['current' => 'Perfil social', 'centered' => 'Retrato centrado', 'compact' => 'Compacta', 'editorial' => 'Editorial',
             'reel' => 'Cine · tira de película', 'atlas' => 'Atlas · cuaderno cartográfico', 'studio' => 'Estudio · retícula suiza',
             'orbit' => 'Órbita · cielo 3D', 'scrapbook' => 'Álbum · recortes y postales'],
@@ -222,14 +223,12 @@ function site_design_choices(): array
  */
 function site_grid_setting_layouts(): array
 {
-    return ['standard', 'grid', 'contact-sheet', 'triptych'];
+    return array_keys(array_filter(site_gallery_capabilities(), static fn(array $options): bool => $options['grid']));
 }
 
 function site_grid_setting_is_used(array $settings): bool
 {
-    $supported = site_grid_setting_layouts();
-    return in_array($settings['gallery_mobile'] ?? 'standard', $supported, true)
-        || in_array($settings['gallery_desktop'] ?? 'standard', $supported, true);
+    return site_gallery_control_enabled('grid', $settings);
 }
 
 function site_photos_per_view_choices(): array
@@ -402,6 +401,8 @@ function site_utf8_length(string $value): int
 
 function site_settings_validate(array $input): array
 {
+    // The retired ratio name duplicated the Masonry gallery selector. Migrate saved configurations.
+    if (($input['grid'] ?? null) === 'masonry') $input['grid'] = 'adaptive';
     $out = site_settings_defaults();
     // Con una galería premium activa, sus campos ignorados llegan desactivados (no se envían): se dejan como estén.
     $premiumOn = isset($input['gallery_premium']) && is_string($input['gallery_premium']) && $input['gallery_premium'] !== 'none';
@@ -528,8 +529,9 @@ function site_settings_load(?string $path = null): array
  */
 function site_settings_save(array $input, ?string $path = null): void
 {
-    $settings = site_settings_validate($input);
     $path ??= site_settings_path();
+    if (is_file($path)) $input = site_gallery_preserve_inactive($input, site_settings_load($path));
+    $settings = site_settings_validate($input);
     $directory = dirname($path);
     if (!is_dir($directory) && !@mkdir($directory, 0750, true) && !is_dir($directory)) {
         throw new RuntimeException('No se pudo crear la carpeta de configuración.');

@@ -52,12 +52,13 @@ foreach (['gallery_mobile', 'gallery_desktop'] as $field) {
     rejects(array_replace($defaults, [$field => 'art-walk']));
 }
 check(site_settings_validate($defaults) === $defaults, 'Defaults should round-trip.');
+check(site_settings_validate(array_replace($defaults, ['grid' => 'masonry']))['grid'] === 'adaptive', 'Legacy grid name must migrate without losing settings.');
 $gridLayouts = site_grid_setting_layouts();
-check($gridLayouts === ['standard', 'grid', 'contact-sheet', 'triptych'], 'Grid aspect compatibility list changed.');
+check($gridLayouts === ['grid', 'contact-sheet'], 'Grid aspect compatibility list changed.');
 check(site_grid_setting_is_used(array_replace($defaults, ['gallery_mobile' => 'mosaic', 'gallery_desktop' => 'asymmetric'])) === false, 'Grid setting should be unused when both layouts ignore it.');
 check(site_grid_setting_is_used(array_replace($defaults, ['gallery_mobile' => 'grid', 'gallery_desktop' => 'mosaic'])) === true, 'Mobile grid should keep proportions editable.');
 check(site_grid_setting_is_used(array_replace($defaults, ['gallery_mobile' => 'mosaic', 'gallery_desktop' => 'contact-sheet'])) === true, 'Desktop contact sheet should keep proportions editable.');
-check(site_grid_setting_is_used(array_replace($defaults, ['gallery_mobile' => 'narrative', 'gallery_desktop' => 'triptych'])) === true, 'Triptych should use proportions.');
+check(site_grid_setting_is_used(array_replace($defaults, ['gallery_mobile' => 'narrative', 'gallery_desktop' => 'triptych'])) === false, 'Triptych has a fixed composition.');
 
 $unsafePage = array_replace($defaults, ['pages' => ['project' => '<h2 onclick="alert(1)">Texto</h2><script>alert(2)</script><a href="javascript:alert(3)">enlace</a>']]);
 $safePage = site_settings_validate($unsafePage)['pages']['project'];
@@ -98,7 +99,7 @@ foreach (['show_header_mobile', 'show_header_desktop'] as $field) {
 check(str_contains(site_design_attributes(), 'data-show-header-mobile='), 'Header visibility must reach the page.');
 check(str_contains(site_settings_form('t', array_replace($defaults, ['section_order' => ['map', 'gallery', 'categories', 'project', 'social']]), 'design'), 'data-section-key="map"'), 'Section order list missing from the design form.');
 $designForm = site_settings_form('t', $defaults, 'design');
-check(str_contains($designForm, '<h3>Redes Sociales</h3>') && str_contains($designForm, '<option value="instagram">Instagram</option>') && str_contains($designForm, '<option value="threads">Threads</option>'), 'The page structure social section must include Instagram and Threads.');
+check(str_contains($designForm, '<h3>Perfiles sociales</h3>') && str_contains($designForm, '<option value="instagram">Instagram</option>') && str_contains($designForm, '<option value="threads">Threads</option>'), 'The page structure social section must include Instagram and Threads.');
 check(!str_contains($designForm, 'name="instagram_url"') && !str_contains($designForm, 'name="threads_url"') && !str_contains($designForm, 'Nombre de usuario de Instagram') && !str_contains($designForm, 'Nombre de usuario de Threads'), 'Legacy profile fields must be removed.');
 check(str_contains($designForm, '<strong>Redes Sociales</strong>'), 'Page structure must label the social block Redes Sociales.');
 
@@ -146,7 +147,7 @@ check(site_premium_ignored_settings('deck') === ['grid', 'gallery_mobile', 'gall
 // Atributos del <body> y formulario.
 $formStandard = site_settings_form('t', $defaults, 'design');
 $formDeck = site_settings_form('t', $deck, 'design');
-check(substr_count($formStandard, 'data-premium-off=') === 8 && substr_count($formStandard, ' disabled') === 0, 'Standard fields must be enabled without a premium gallery.');
+check(substr_count($formStandard, 'data-gallery-control=') === 8 && substr_count($formStandard, ' disabled') === 1, 'Masonry must disable the unused ratio field.');
 check(substr_count($formDeck, ' disabled') === 8, 'All 8 standard gallery fields must be disabled with a premium gallery.');
 // «Estilo Burbujas»: ignora la galería estándar salvo «Fotos visibles a la vez» (móvil y escritorio).
 $bubbles = array_replace($defaults, ['gallery_premium' => 'bubbles']);
@@ -157,7 +158,7 @@ foreach (site_premium_ignored_settings('bubbles') as $ignored) unset($bubblesPar
 check(site_settings_validate($bubblesPartial)['photos_desktop'] === $defaults['photos_desktop'], 'Bubbles: ignored fields must be optional.');
 rejects(array_replace($bubbles, ['photos_desktop' => 7]));   // «Fotos visibles a la vez» se sigue validando.
 $formBubbles = site_settings_form('t', $bubbles, 'design');
-check(substr_count($formBubbles, ' disabled') === 6 && preg_match('/name="photos_desktop" data-premium-off="[a-z,]+">/', $formBubbles) === 1, 'Bubbles: six standard fields disabled, photos per view enabled.');
+check(substr_count($formBubbles, ' disabled') === 6 && preg_match('/name="photos_desktop" data-gallery-control="photos_desktop">/', $formBubbles) === 1, 'Bubbles: six standard fields disabled, photos per view enabled.');
 // «Estilo Tambor»: misma interfaz que la baraja; ignora toda la galería estándar y carga dos hojas de estilos (deck.css + drum.css).
 check(site_premium_gallery_active(array_replace($defaults, ['gallery_premium' => 'drum'])) === 'drum', 'The drum gallery must be active.');
 check(site_premium_ignored_settings('drum') === site_premium_ignored_settings('deck'), 'Drum must ignore the same settings as deck.');
@@ -186,7 +187,7 @@ check(premium_gallery_head_tags() === '' || str_contains(premium_gallery_head_ta
 
 $key = site_editable_text_keys()[0];
 $custom = array_replace($defaults, [
-    'palette' => 'japanese', 'grid' => 'masonry', 'columns_mobile' => 4, 'columns_desktop' => 10,
+    'palette' => 'japanese', 'grid' => 'adaptive', 'columns_mobile' => 4, 'columns_desktop' => 10,
     'header_mobile' => 'compact', 'header_desktop' => 'editorial',
     'gallery_mobile' => 'category-rails', 'gallery_desktop' => 'mosaic',
     'show_categories' => false, 'show_map' => true, 'show_project' => false, 'show_social' => true,
@@ -198,8 +199,10 @@ $directory = sys_get_temp_dir() . '/site-settings-test-' . bin2hex(random_bytes(
 $path = $directory . '/settings.json';
 try {
     check(site_settings_load($path) === $defaults, 'Missing file should use defaults.');
+    mkdir($directory, 0700);
     file_put_contents($path, json_encode(array_replace($defaults, ['premium' => 'hub'])));
     check(site_settings_load($path) === $defaults, 'Legacy premium choice must be ignored.');
+    $custom = site_gallery_preserve_inactive($custom, $defaults);
     site_settings_save($custom, $path);
     check(site_settings_load($path) === $custom, 'Settings should persist independently.');
     file_put_contents($path, json_encode(array_replace($custom, ['gallery_desktop' => 'immersive'])));

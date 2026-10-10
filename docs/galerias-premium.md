@@ -2,7 +2,10 @@
 
 Una **galería premium** es un diseño completo (maquetación, animación e interacción) que **sustituye** al bloque «Galería» estándar. A diferencia de las galerías estándar, no se compone con columnas ni cuadrículas configurables: cada una es un diseño cerrado y cuidado como un todo.
 
-Se elige en el panel: **Textos y diseño → Diseño → Galería premium**.
+Se elige en el panel: **Diseño → Galería premium**.
+
+Las compatibilidades completas de diseños estándar y premium se documentan en
+[Opciones del bloque de galería](opciones-galeria.md).
 
 ## Catálogo
 

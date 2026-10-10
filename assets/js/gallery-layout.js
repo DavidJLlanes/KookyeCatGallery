@@ -9,9 +9,12 @@
         if (!width) return;
         const cards = [...gallery.querySelectorAll('.card:not(.is-hidden):not([hidden])')];
         const gap = mobile ? 6 : 14;
-        const columns = Math.max(1, Math.min(10, Number(getComputedStyle(document.body)
-            .getPropertyValue(mobile ? '--columns-mobile' : '--columns-desktop')) || 3));
-        const aspect = card => Math.max(.1, Number(card.style.getPropertyValue('--aspect')) || 1.5);
+        const columns = Math.max(1, Math.min(mobile ? 4 : 10, Math.floor(Number(getComputedStyle(document.body)
+            .getPropertyValue(mobile ? '--columns-mobile' : '--columns-desktop')) || 3)));
+        const aspect = card => {
+            const value = Number(card.style.getPropertyValue('--aspect'));
+            return Number.isFinite(value) && value > 0 ? Math.max(.1, value) : 1.5;
+        };
         let bottom = 0;
         const place = (card, x, y, w, h) => {
             // Float rounding at narrow breakpoints must not push a justified row
@@ -30,7 +33,7 @@
         }
         if (design === 'exhibition') {
             // A quiet gallery wall: generous, centered photographs with their native proportions.
-            const lane = Math.min(width, mobile ? width : Math.max(460, 1120 - columns * 32));
+            const lane = Math.min(width, mobile ? width : 1024);
             let y = 0;
             cards.forEach(card => {
                 const h = lane / aspect(card);
@@ -75,25 +78,19 @@
             let y = 0, index = 0;
             while (index < cards.length) {
                 const batch = cards.slice(index, index + 3);
-                if (batch.length === 1 || columns === 1) {
-                    const w = columns === 1 ? width : Math.min(width, (width - gap * (columns - 1)) / columns);
-                    let rowHeight = 0;
-                    batch.forEach(card => {
-                        const h = w / aspect(card);
-                        place(card, 0, y, w, h);
-                        y += h + gap;
-                        rowHeight = Math.max(rowHeight, h);
-                    });
-                    if (batch.length === 1 && columns > 1) y = y - rowHeight;
+                if (batch.length === 1) {
+                    const h = width / aspect(batch[0]);
+                    place(batch[0], 0, y, width, h);
+                    y += h + gap;
                 } else {
-                    const widthFactor = columns === 2 ? 1 : 1;
-                    const lane = Math.min(width, width * widthFactor);
-                    const heroWidth = (lane - gap) * .58;
-                    const sideWidth = lane - heroWidth - gap;
-                    const rowHeight = Math.max(heroWidth / aspect(batch[0]), sideWidth / Math.min(aspect(batch[1] || batch[0]), aspect(batch[2] || batch[0])));
-                    place(batch[0], (width - lane) / 2, y, heroWidth, rowHeight);
-                    if (batch[1]) place(batch[1], (width - lane) / 2 + heroWidth + gap, y, sideWidth, (rowHeight - gap) / 2);
-                    if (batch[2]) place(batch[2], (width - lane) / 2 + heroWidth + gap, y + rowHeight / 2 + gap / 2, sideWidth, (rowHeight - gap) / 2);
+                    const heroWidth = (width - gap) * .58;
+                    const sideWidth = width - heroWidth - gap;
+                    const rowHeight = Math.max(heroWidth / aspect(batch[0]),
+                        sideWidth / aspect(batch[1]) * (batch.length - 1) + (batch.length === 3 ? gap : 0));
+                    const sideHeight = batch.length === 2 ? rowHeight : (rowHeight - gap) / 2;
+                    place(batch[0], 0, y, heroWidth, rowHeight);
+                    place(batch[1], heroWidth + gap, y, sideWidth, sideHeight);
+                    if (batch[2]) place(batch[2], heroWidth + gap, y + sideHeight + gap, sideWidth, sideHeight);
                     y += rowHeight + gap;
                 }
                 index += batch.length;
@@ -115,7 +112,7 @@
             }
         } else if (design === 'scattered') {
             // Dense square packing: search the first free cell, including earlier holes.
-            const cols = columns === 1 ? 1 : mobile ? Math.max(2, columns) : Math.max(4, columns * 2);
+            const cols = columns;
             const inset = Math.max(4, width * .01);
             const unit = (width - inset * 2 - (cols - 1) * gap) / cols;
             const occupied = [];

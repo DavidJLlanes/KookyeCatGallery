@@ -41,6 +41,8 @@ jobs:
         run: node tests/photo-presets.cjs
       - name: Comprobar la configuración del sitio
         run: php tests/site-settings.php
+      - name: Comprobar compatibilidades y conservación de ajustes de galería
+        run: php tests/gallery-options.php
       - name: Comprobar el guardado de marca sin archivos
         run: php tests/site-brand-assets.php
       - name: Test template text fields
@@ -61,6 +63,12 @@ jobs:
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules
         run: node tests/gallery-layout.cjs
+      - name: Comprobar controles de galería y casos límite de navegación
+        env:
+          NODE_PATH: /tmp/site-browser-tools/node_modules
+        run: |
+          node tests/gallery-options.cjs
+          node tests/gallery-behavior.cjs
       - name: Comprobar la forma de la paginación
         env:
           NODE_PATH: /tmp/site-browser-tools/node_modules

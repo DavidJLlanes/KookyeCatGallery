@@ -275,16 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif (!array_key_exists('texts', $settingsInput)) {
                 $settingsInput['texts'] = $currentSettings['texts'] ?? [];
             }
-            // Si los layouts elegidos no usan el tipo de cuadrícula, el control del panel llega desactivado y no se envía.
-            // Conservamos su valor para cuando se seleccione más adelante un diseño compatible.
-            if (!isset($settingsInput['grid'])) $settingsInput['grid'] = $currentSettings['grid'] ?? 'adaptive';
-            // Con una galería premium activa, sus campos ignorados llegan desactivados (el navegador no los envía):
-            // se conservan los valores guardados para cuando se vuelva a la galería estándar.
-            if (($settingsInput['gallery_premium'] ?? 'none') !== 'none') {
-                foreach (site_premium_ignored_settings((string) $settingsInput['gallery_premium']) as $ignoredKey) {
-                    if (!isset($settingsInput[$ignoredKey])) $settingsInput[$ignoredKey] = $currentSettings[$ignoredKey];
-                }
-            }
+            $settingsInput = site_gallery_preserve_inactive($settingsInput, $currentSettings);
             foreach (['profile_image_file' => 'profile_image', 'logo_image_file' => 'logo_image'] as $fileKey => $settingKey) {
                 $settingsInput[$settingKey] = $currentSettings[$settingKey] ?? ($settingKey === 'logo_image' ? '/favicon.svg' : '/profile-placeholder.svg');
                 $file = $_FILES[$fileKey] ?? null;

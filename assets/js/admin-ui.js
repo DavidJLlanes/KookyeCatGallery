@@ -29,54 +29,45 @@
         } catch (_) {}
     }
 
-    /* -------------------------------------------------------------------------
-       1. Galería premium
-       Al elegir una galería premium se desactivan los campos marcados con
-       data-premium-off="<galerías que lo ignoran>" (los genera site_settings_form()). Un campo
-       desactivado no se envía; el servidor conserva entonces los valores guardados (admin.php).
-       Los campos que ignora cada galería premium están en site_premium_ignored_settings().
-       ------------------------------------------------------------------------- */
-    const premiumSelect = document.getElementById('setting-gallery_premium');
-    if (premiumSelect) {
-        const fields = [...document.querySelectorAll('[data-premium-off]')];
-        const note = document.querySelector('[data-premium-note]');
-        const apply = () => {
-            const gallery = premiumSelect.value;
-            fields.forEach(field => {
-                const off = gallery !== 'none' && (field.dataset.premiumOff || '').split(',').includes(gallery);
-                field.disabled = off;
-                field.closest('.upload-field')?.classList.toggle('is-disabled', off);
+    // The server exports the same capability contract used when saving settings.
+    const contractNode = document.querySelector('[data-gallery-capabilities]');
+    if (contractNode) {
+        const contract = JSON.parse(contractNode.textContent);
+        const control = key => document.getElementById('setting-' + key);
+        const value = key => control(key)?.value;
+        const applyGalleryOptions = () => {
+            const premium = value('gallery_premium') || 'none';
+            const supports = (device, option) => Boolean(contract.standard[value('gallery_' + device)]?.[option]);
+            const enabled = key => {
+                if (premium !== 'none') return (contract.premium[premium] || []).includes(key);
+                if (key.startsWith('gallery_')) return true;
+                if (key === 'grid') return supports('mobile', 'grid') || supports('desktop', 'grid');
+                if (key === 'pagination_shape') return ['mobile', 'desktop'].some(device =>
+                    supports(device, 'pagination') && Number(value('photos_' + device)) !== 0);
+                const [option, device] = key.split('_');
+                return supports(device, option);
+            };
+            document.querySelectorAll('[data-gallery-control]').forEach(field => {
+                const key = field.dataset.galleryControl;
+                field.disabled = !enabled(key);
+                field.closest('.upload-field')?.classList.toggle('is-disabled', field.disabled);
+                const help = document.querySelector('[data-gallery-help="' + key + '"]');
+                if (help) {
+                    help.textContent = field.disabled
+                        ? 'Este ajuste no se aplica al diseño seleccionado. Su valor se conserva.'
+                        : key.startsWith('photos_') && ['bubbles', 'squares'].includes(premium)
+                            ? 'Máximo por página: si no caben sin solaparse, se muestran menos y el resto pasa a la siguiente página. «Todas» usa la capacidad de la pantalla.' : '';
+                    help.hidden = !help.textContent;
+                }
             });
-            if (note) note.hidden = gallery === 'none';
+            const note = document.querySelector('[data-premium-note]');
+            if (note) note.hidden = premium === 'none';
+            const gridHelp = document.querySelector('[data-grid-help]');
+            if (gridHelp) gridHelp.hidden = enabled('grid');
         };
-        premiumSelect.addEventListener('change', apply);
-        apply();
-    }
-
-    /* -------------------------------------------------------------------------
-       3. Textos editables del diseño seleccionado. Los campos ocultos permanecen
-       habilitados para que un cambio de plantilla no borre sus textos guardados.
-       ------------------------------------------------------------------------- */
-    const gridSelect = document.getElementById('setting-grid');
-    const gridField = gridSelect?.closest('[data-grid-setting]');
-    const gridHelp = document.querySelector('[data-grid-help]');
-    const galleryLayoutSelects = [
-        document.getElementById('setting-gallery_mobile'),
-        document.getElementById('setting-gallery_desktop'),
-    ].filter(Boolean);
-    const premiumForGrid = document.getElementById('setting-gallery_premium');
-    if (gridSelect && galleryLayoutSelects.length) {
-        const updateGridAvailability = () => {
-            const premium = premiumForGrid && premiumForGrid.value !== 'none';
-            const used = galleryLayoutSelects.some(select => ['standard', 'grid', 'contact-sheet', 'triptych'].includes(select.value));
-            const disabled = Boolean(premium || !used);
-            gridSelect.disabled = disabled;
-            gridField?.classList.toggle('is-disabled', disabled);
-            if (gridHelp) gridHelp.hidden = Boolean(premium || used);
-        };
-        galleryLayoutSelects.forEach(select => select.addEventListener('change', updateGridAvailability));
-        premiumForGrid?.addEventListener('change', updateGridAvailability);
-        updateGridAvailability();
+        ['gallery_premium', 'gallery_mobile', 'gallery_desktop', 'photos_mobile', 'photos_desktop']
+            .forEach(key => control(key)?.addEventListener('change', applyGalleryOptions));
+        applyGalleryOptions();
     }
 
     const templateGroups = [...document.querySelectorAll('[data-template-text-group]')];

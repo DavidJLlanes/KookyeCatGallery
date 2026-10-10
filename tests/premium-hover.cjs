@@ -1,48 +1,69 @@
-// Asegura que los efectos del panel alcanzan las imágenes de los tres tipos de marcado premium.
-const {chromium} = require('playwright');
+// Real CSS states, without injecting effect overrides or replacing :hover with a test class.
+const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert/strict');
 const root = path.join(__dirname, '..');
-const css = [
-    'assets/css/gallery-layout.css',
-    'assets/premium/deck/deck.css',
-    'assets/premium/bubbles/bubbles.css',
-    'assets/premium/cylinder/cylinder.css',
-].map(file => fs.readFileSync(path.join(root, file), 'utf8')).join('\\n');
+const base = ['style', 'site-design', 'interface-worlds', 'gallery-layout'].map(n =>
+    fs.readFileSync(path.join(root, `assets/css/${n}.css`), 'utf8')).join('\n');
+const standards = ['standard', 'grid', 'mosaic', 'asymmetric', 'category-rails', 'scattered', 'exhibition', 'contact-sheet', 'narrative', 'triptych'];
+const premiums = ['deck', 'coverflow', 'bubbles', 'squares', 'drum', 'cylinder', 'polaroid', 'swipe'];
+const effects = ['soft', 'zoom', 'lift', 'reveal', 'tint', 'frame', 'slide', 'tilt', 'focus', 'shine'];
+const png = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="red"/></svg>');
 
 (async () => {
-    const browser = await chromium.launch({headless: true, executablePath: process.env.TEST_BROWSER || undefined, args: ['--no-sandbox']});
+    const browser = await chromium.launch({ headless: true, executablePath: process.env.TEST_BROWSER || undefined, args: ['--no-sandbox'] });
     try {
-        const page = await browser.newPage({viewport: {width: 1000, height: 900}});
-        await page.emulateMedia({reducedMotion: 'reduce'});
-        const cases = [
-            {premium: 'deck', container: 'deck', link: 'deck__link', picture: 'deck__picture', image: 'deck__img'},
-            {premium: 'bubbles', container: 'bubbles', link: 'bubbles__link', picture: 'bubbles__picture', image: 'bubbles__img'},
-            {premium: 'cylinder', container: 'deck', link: 'cyl__link', picture: 'cyl__picture', image: 'cyl__img'},
-        ];
-        await page.addStyleTag({content: 'body[data-hover="zoom"] .test-hover .deck__img, body[data-hover="zoom"] .test-hover .cyl__img, body[data-hover="zoom"] .test-hover .bubbles__img { transform:scale(1.16)!important } body[data-hover="frame"] .test-hover { outline:3px solid #fff!important } body[data-hover="shine"] .test-hover .deck__picture::after, body[data-hover="shine"] .test-hover .cyl__picture::after, body[data-hover="shine"] .test-hover .bubbles__picture::after { content:""!important }'});
-        for (const item of cases) {
-            await page.setContent(`<!doctype html><html><head><meta charset="utf-8"></head>
-                <body data-gallery-premium="${item.premium}" data-hover="zoom">
-                    <div id="${item.container}"><article class="deck__card" data-pos="0"><a class="${item.link}" href="#"><picture class="${item.picture}"><img class="${item.image}" alt=""></picture></a></article></div>
-                </body></html>`);
-            await page.addStyleTag({content: 'body{margin:0}#deck,#bubbles{position:relative;width:220px;height:220px;margin:20px}a{display:block;width:100%;height:100%}img{display:block;width:100%;height:100%}'});
-            await page.addStyleTag({content: css});
-            const link = `#${item.container} .${item.link}`;
-            const image = `#${item.container} .${item.image}`;
-            await page.locator(link).evaluate(node => node.classList.add('test-hover'));
-            const transform = await page.locator(image).evaluate(node => getComputedStyle(node).transform);
-            assert.notEqual(transform, 'none', `El efecto hover debe llegar a ${image} (${transform})`);
-            await page.locator('body').evaluate(node => { node.dataset.hover = 'frame'; });
-            const outline = await page.locator(link).evaluate(node => getComputedStyle(node).outlineStyle);
-            assert.equal(outline, 'solid', `El efecto de marco debe alcanzar ${link}`);
-            await page.locator('body').evaluate(node => { node.dataset.hover = 'shine'; });
-            const shine = await page.locator(`#${item.container} .${item.picture}`).evaluate(node => getComputedStyle(node, '::after').content);
-            assert.notEqual(shine, 'none', `El destello debe generar una capa sobre ${item.picture}`);
+        for (const design of [...standards, ...premiums]) {
+            const premium = premiums.includes(design);
+            const kind = ['bubbles', 'squares'].includes(design) ? 'bubbles' : design === 'cylinder' ? 'cyl' : 'deck';
+            const prefix = premium ? kind : 'card';
+            const rootId = premium ? kind === 'bubbles' ? 'bubbles' : 'deck' : 'masonry';
+            const picture = prefix + '__picture';
+            const link = prefix + (premium ? '__link' : '__btn');
+            const img = prefix + '__img';
+            let css = base;
+            if (premium) {
+                const files = kind === 'bubbles' ? ['bubbles/bubbles.css'] : ['deck/deck.css', ...(design !== 'deck' ? [`${design}/${design}.css`] : [])];
+                for (const file of files) css += '\n' + fs.readFileSync(path.join(root, 'assets/premium', file), 'utf8');
+            }
+            const page = await browser.newPage({ viewport: { width: 1000, height: 800 }, reducedMotion: 'reduce' });
+            await page.setContent(`<style>${css}</style><body data-gallery-active="${premium ? '' : design}" data-gallery-premium="${premium ? design : 'none'}"
+                data-header-mobile="orbit" data-header-desktop="noir" data-grid="square" data-hover="soft">
+                <div id="${rootId}" data-layout="${design}" data-shape="${design === 'squares' ? 'square' : 'circle'}">
+                  <article class="${premium ? kind === 'bubbles' ? 'bubbles__item' : kind === 'cyl' ? 'cyl__item' : 'deck__card' : 'card'}" data-pos="0"
+                    style="--layout-x:0px;--layout-y:0px;--layout-w:240px;--layout-h:200px;position:relative;width:240px;height:200px">
+                    <a class="${link}" href="#"><picture class="${picture}"><img class="${img}" src="${png}" alt="Foto"></picture></a>
+                  </article>
+                </div></body>`);
+            const target = page.locator('.' + link);
+            const image = page.locator('.' + img);
+            const frame = premium ? target : page.locator('.' + picture);
+            for (const effect of effects) {
+                await target.evaluate(el => el.blur());
+                await page.mouse.move(900, 700);
+                await page.locator('body').evaluate((el, effect) => { el.dataset.hover = effect; }, effect);
+                const before = await image.evaluate(el => ({ transform: getComputedStyle(el).transform, filter: getComputedStyle(el).filter }));
+                const outerBefore = await target.evaluate(el => getComputedStyle(el.closest('article')).transform);
+                await target.focus();
+                if (effect === 'frame') {
+                    assert.equal(await frame.evaluate(el => getComputedStyle(el).outlineStyle), 'solid', design + '/frame');
+                } else if (effect === 'shine') {
+                    const state = await page.locator('.' + picture).evaluate(el => {
+                        const s = getComputedStyle(el, '::after'); return { content: s.content, display: s.display, transform: s.transform };
+                    });
+                    assert.notEqual(state.content, 'none', design + '/shine missing');
+                    assert.notEqual(state.display, 'none', design + '/shine hidden by geometry');
+                    assert.notEqual(state.transform, 'none', design + '/shine sweep');
+                } else {
+                    const after = await image.evaluate(el => ({ transform: getComputedStyle(el).transform, filter: getComputedStyle(el).filter }));
+                    assert.notDeepEqual(after, before, design + '/' + effect + ': effect flattened by theme/geometry');
+                }
+                assert.equal(await target.evaluate(el => getComputedStyle(el.closest('article')).transform), outerBefore,
+                    design + '/' + effect + ': hover must not replace the layout transform');
+            }
+            await page.close();
         }
-        console.log('OK: efectos hover aplicados a Baraja, Burbujas y Cilindro.');
-    } finally {
-        await browser.close();
-    }
+        console.log('Hover passed: 10 effects × 10 standard layouts + 8 premium layouts, real focus states and preserved geometry.');
+    } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
