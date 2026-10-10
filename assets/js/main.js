@@ -1865,6 +1865,7 @@
     const initMap = () => {
         const mapEl = $('#map');
         if (!mapEl) return;
+        if (photoMap) return;
         if (typeof L === 'undefined') {
             if (mapEl.dataset.leafletWaiting !== 'true') {
                 mapEl.dataset.leafletWaiting = 'true';
@@ -2001,6 +2002,21 @@
         document.addEventListener('contextmenu', blockOnImg); // clic derecho + pulsación larga (Android)
         document.addEventListener('dragstart', blockOnImg);   // arrastrar al escritorio
     };
+
+    // El mapa arranca por separado para que un error de otra parte de la galería no lo deje vacío.
+    const initMapIndependently = () => {
+        try {
+            initMap();
+        } catch (error) {
+            console.error('Error inicializando el mapa:', error);
+        }
+    };
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMapIndependently, { once: true });
+    } else {
+        initMapIndependently();
+    }
+    window.addEventListener('load', initMapIndependently, { once: true });
 
     /* ---------- Init ---------- */
     const init = () => {
