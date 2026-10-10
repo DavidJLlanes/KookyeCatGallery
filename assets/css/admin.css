@@ -465,3 +465,9 @@
     .admin-category-create .upload-submit { width: 100%; }
     .admin-empty-category-delete { grid-column: auto; }
 }
+
+/* Ayuda contextual bajo los campos de edición. */
+.upload-field > small.upload-help {
+    display: block;
+    margin-top: .35rem;
+}
