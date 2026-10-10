@@ -7,12 +7,14 @@ Necesitas un hosting con PHP 8.1 o posterior, GD con soporte para JPEG, PNG y We
 ## Instalación sencilla
 
 1. Añade tu dominio o subdominio en el panel del hosting y activa HTTPS.
-2. Descarga el repositorio y copia **todo su contenido** en la raíz pública del dominio, normalmente `public_html`.
+2. Descarga el repositorio y copia **todo su contenido, incluidos los archivos ocultos**, en la raíz pública del dominio, normalmente `public_html`. Asegúrate de que también se copie `.htaccess`; algunos programas FTP ocultan los archivos que empiezan por punto.
 3. Confirma que el hosting usa PHP 8.1+ y permite las reglas de `.htaccess`. Si usa Nginx, el proveedor debe habilitar el fallback de rutas a `index.php` y bloquear `var/`, `data/` e `img/`; el archivo `.htaccess` no configura Nginx.
 4. Abre `https://tu-dominio/install.php`, introduce la dirección HTTPS del sitio, el usuario y una contraseña única de al menos 12 caracteres.
 5. El instalador prepara `config/` fuera de la carpeta pública cuando el hosting permite escribir en la carpeta superior de `public_html`. Guarda allí la URL pública y el hash de acceso. Al terminar intenta borrarse automáticamente.
 6. **Comprueba en el gestor de archivos del hosting que `install.php` ya no está en `public_html`. Si sigue allí, bórralo manualmente antes de continuar.**
 7. Inicia sesión en `https://tu-dominio/admin.php`, personaliza el diseño y los textos, y sube fotografías.
+
+Las rutas de fotografía como `/foto/slug` dependen de las reglas de `.htaccess`. Si una ficha muestra el error 404 de LiteSpeed, comprueba que ese archivo está en la raíz pública y que el hosting permite sus reglas de reescritura.
 
 La estructura recomendada es:
 

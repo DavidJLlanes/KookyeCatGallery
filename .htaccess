@@ -11,4 +11,5 @@ Options -Indexes
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteRule ^(?:\.git|var|data|img)(?:/|$) - [F,L,NC]
+    RewriteRule ^foto/[a-z0-9-]+/?$ index.php [QSA,L,NC]
 </IfModule>
