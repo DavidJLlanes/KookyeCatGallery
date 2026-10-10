@@ -1588,9 +1588,10 @@
         const perPage = () => {
             if (getGalleryDesign() === 'category-rails') return Number.MAX_SAFE_INTEGER;
             const mobile = window.matchMedia('(max-width: 768px)').matches;
-            const configured = Number(document.body.dataset[mobile ? 'photosMobile' : 'photosDesktop']);
+            const attribute = mobile ? 'data-photos-mobile' : 'data-photos-desktop';
+            const configured = Number.parseInt(document.body.getAttribute(attribute) ?? '', 10);
             if (configured === 0) return Number.MAX_SAFE_INTEGER;
-            return configured > 0 ? configured : (mobile ? 12 : 20);
+            return Number.isFinite(configured) && configured > 0 ? configured : (mobile ? 12 : 20);
         };
         let   currentCat    = '';
         let   currentPage   = 1;
@@ -1688,17 +1689,24 @@
             }
             const filtered   = getFiltered();
             const total      = filtered.length;
-            const totalPages = Math.max(1, Math.ceil(total / perPage()));
+            const pageSize   = perPage();
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
             if (currentPage > totalPages) currentPage = 1;
 
-            const start     = (currentPage - 1) * perPage();
-            const pageCards = filtered.slice(start, start + perPage());
+            const start     = (currentPage - 1) * pageSize;
+            const pageCards = filtered.slice(start, start + pageSize);
+            const visibleCards = new Set(pageCards);
 
-            // Oculta todo, muestra solo la página actual del filtro
-            allCards.forEach(c => { c.classList.add('is-hidden'); c.hidden = true; });
+            // La página activa es el único conjunto que puede mostrarse. El display inline !important
+            // evita que una regla de cualquier diseño vuelva a pintar tarjetas fuera del límite.
+            allCards.forEach(c => {
+                const isOnPage = visibleCards.has(c);
+                c.classList.toggle('is-hidden', !isOnPage);
+                c.hidden = !isOnPage;
+                if (isOnPage) c.style.removeProperty('display');
+                else c.style.setProperty('display', 'none', 'important');
+            });
             pageCards.forEach((c, i) => {
-                c.classList.remove('is-hidden');
-                c.hidden = false;
                 // Fuerza el reveal si no lo tiene aún (entraron al DOM sin pasar por el viewport)
                 if (!c.classList.contains('is-revealed')) {
                     setTimeout(() => c.classList.add('is-revealed'), i * 50);
