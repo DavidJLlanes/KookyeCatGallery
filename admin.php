@@ -346,6 +346,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+
+    // Carga en lote: el navegador envía cada foto por separado para respetar los límites del hosting.
+    if ($action === 'batch_upload') {
+        try {
+            $file = $_FILES['photo'] ?? null;
+            $category = trim((string) ($_POST['category'] ?? ''));
+            if (!is_array($file)) throw new RuntimeException('Selecciona una imagen.');
+            if ($category === '' || mb_strlen($category, 'UTF-8') > 64 || preg_match('/[\\x00-\\x1F\\x7F]/u', $category)) {
+                throw new RuntimeException('Escribe una categoría de hasta 64 caracteres.');
+            }
+            $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+            if ($error !== UPLOAD_ERR_OK) throw new RuntimeException(uploadIniErrorMessage($error));
+            if ((int) ($file['size'] ?? 0) < 1 || (int) $file['size'] > MAX_IMAGE_BYTES || !is_uploaded_file((string) ($file['tmp_name'] ?? ''))) {
+                throw new RuntimeException('Cada fotografía debe pesar como máximo 15 MB.');
+            }
+            $mime = (new finfo(FILEINFO_MIME_TYPE))->file((string) $file['tmp_name']);
+            $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png'];
+            if (!isset($extensions[$mime]) || !@getimagesize((string) $file['tmp_name'])) throw new RuntimeException('Formato no admitido. Usa JPG, JPEG o PNG.');
+            if (!is_dir(UPLOAD_DIRECTORY) || !is_writable(UPLOAD_DIRECTORY)) throw new RuntimeException('La carpeta de fotos no permite guardar imágenes.');
+            $title = trim(preg_replace('/\\s+/u', ' ', pathinfo((string) ($file['name'] ?? ''), PATHINFO_FILENAME)) ?? '');
+            if ($title === '') $title = 'Fotografía';
+            $title = mb_substr($title, 0, 120, 'UTF-8');
+            $stem = safeUploadStem($title);
+            do {
+                $basename = $stem . '-' . bin2hex(random_bytes(3)) . '.' . $extensions[$mime];
+                $target = UPLOAD_DIRECTORY . '/' . $basename;
+                $sidecar = UPLOAD_DIRECTORY . '/' . pathinfo($basename, PATHINFO_FILENAME) . '.txt';
+            } while (file_exists($target) || file_exists($sidecar));
+            $slug = generate_slug($title);
+            $baseSlug = $slug !== '' ? $slug : 'fotografia';
+            $suffix = 2;
+            $usedSlugs = array_column(managedPhotos(), 'slug');
+            while (in_array($slug, $usedSlugs, true)) $slug = $baseSlug . '-' . $suffix++;
+            if (!move_uploaded_file((string) $file['tmp_name'], $target)) throw new RuntimeException('No se pudo guardar la fotografía.');
+            $sidecarText = $title . "\n\n# Categoría: " . $category . "\n# Slug: " . $slug . "\n# auto-description-pending";
+            if (($_POST['draft'] ?? '') === '1') $sidecarText .= "\n# Borrador: 1";
+            $sidecarText .= "\n";
+            if (@file_put_contents($sidecar, $sidecarText, LOCK_EX) === false) {
+                @unlink($target);
+                throw new RuntimeException('No se pudieron guardar los datos de la fotografía.');
+            }
+            @chmod($target, 0644);
+            @chmod($sidecar, 0644);
+            $aiConfig = ai_text_config([], site_text('text_52179dc42df7efe5'), rtrim(getenv('GALLERY_PUBLIC_URL') ?: '', '/'));
+            if ($aiConfig['ai_enabled']) {
+                $generator = new AiTextGenerator(__DIR__, $aiConfig);
+                $generator->processMissing([['original' => $basename, 'sidecar' => $sidecar, 'filename_clean' => $title]], 1);
+            }
+            uploadJson(200, ['ok' => true, 'title' => $title, 'filename' => $basename]);
+        } catch (RuntimeException $error) {
+            uploadJson(422, ['ok' => false, 'error' => $error->getMessage()]);
+        }
+    }
+
     // Subida, paso 1: valida la imagen recibida y detecta si trae coordenadas GPS.
     if ($action === 'inspect') {
         $file = $_FILES['photo'] ?? null;
@@ -541,9 +595,32 @@ if (!empty($_SESSION['upload_authenticated'])) {
                 . '<nav class="admin-subnav admin-subnav--back" aria-label="Secciones de configuración"><a href="/admin.php?settings=1&amp;section=texts">← Textos</a></nav>'
                 . site_page_editor_form((string) $_SESSION['csrf'], $page), 200, true);
         }
-        uploadPage($section === 'profile' ? 'Perfil' : ($section === 'texts' ? 'Textos' : 'Diseño'), adminNavigation((string) $_SESSION['csrf']) . $status
+        $previewLink = $section === 'design' ? '<a class="admin-mobile-preview-link" href="/admin.php?mobile_preview=1">Vista previa en móvil</a>' : '';
+        uploadPage($section === 'profile' ? 'Perfil' : ($section === 'texts' ? 'Textos' : 'Diseño'), adminNavigation((string) $_SESSION['csrf']) . $status . $previewLink
             . site_settings_form((string) $_SESSION['csrf'], null, $section), 200, true);
     }
+
+    // Carga por lotes: cada imagen se envía individualmente para respetar los límites de PHP del hosting.
+    if (isset($_GET['batch'])) {
+        $batchContent = adminNavigation((string) $_SESSION['csrf'])
+            . '<section class="admin-batch"><p class="admin-batch__intro">Selecciona varias fotos. Se subirán una a una; el título se tomará del nombre de archivo y podrás cambiarlo después con la edición rápida.</p>'
+            . '<form id="photoBatchForm"><input type="hidden" name="csrf" value="' . uploadEscape((string) $_SESSION['csrf']) . '">'
+            . '<div class="upload-field"><label for="batchPhotos">Fotografías (JPG o PNG, máximo 15 MB cada una)</label><input id="batchPhotos" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" multiple required></div>'
+            . '<div class="upload-field"><label for="batchCategory">Categoría común</label><input id="batchCategory" maxlength="64" required placeholder="Por ejemplo: Paisajes"></div>'
+            . '<label class="upload-featured"><input type="checkbox" id="batchDraft" checked> Guardar como borrador para revisar antes de publicar</label>'
+            . '<div class="admin-batch__preview" id="batchPreview" aria-live="polite"><p>Las fotos seleccionadas aparecerán aquí.</p></div>'
+            . '<p class="admin-batch__status" id="batchStatus" role="status" aria-live="polite"></p>'
+            . '<button class="upload-submit" id="batchSubmit" type="submit" disabled>Subir fotografías</button></form></section>';
+        uploadPage('Carga por lotes', $batchContent, 200, true);
+    }
+
+    if (isset($_GET['mobile_preview'])) {
+        $previewContent = adminNavigation((string) $_SESSION['csrf'])
+            . '<section class="admin-mobile-preview"><p><a href="/admin.php?settings=1&amp;section=design">Volver a Diseño</a> · Vista de la web con ancho móvil. Guarda los cambios de diseño y textos y vuelve aquí para revisarlos.</p>'
+            . '<div class="admin-mobile-preview__device"><iframe src="/" title="Vista previa móvil de la web" loading="eager"></iframe></div></section>';
+        uploadPage('Vista previa móvil', $previewContent, 200, true);
+    }
+
     // Gestión de categorías.
     if (isset($_GET['categories'])) {
         $photos = managedPhotos();
@@ -584,6 +661,12 @@ if (!empty($_SESSION['upload_authenticated'])) {
     if (isset($_GET['library'])) {
         (new ImageProcessor(__DIR__))->processAll();
         $photos = managedPhotos();
+        $libraryCategories = array_values(array_unique(array_map(static fn($item) => trim((string) $item['category']) !== '' ? trim((string) $item['category']) : 'Sin categoría', $photos)));
+        sort($libraryCategories, SORT_NATURAL | SORT_FLAG_CASE);
+        $categoryOptions = '';
+        foreach ($libraryCategories as $categoryName) {
+            $categoryOptions .= '<option value="' . uploadEscape($categoryName) . '">' . uploadEscape($categoryName) . '</option>';
+        }
         $cards = '';
         foreach ($photos as $photo) {
             $filename = uploadEscape($photo['filename']);
@@ -594,14 +677,17 @@ if (!empty($_SESSION['upload_authenticated'])) {
             $featured = !empty($photo['featured']);
             $draft = !empty($photo['draft']);
             $slug = uploadEscape((string) ($photo['slug'] ?? ''));
-            $cards .= '<article class="admin-photo-card' . ($featured ? ' is-featured' : '') . ($draft ? ' is-draft' : '') . '" data-photo-file="' . $filename . '" data-photo-mtime="' . (int) $photo['mtime'] . '">'
+            $description = uploadEscape((string) ($photo['description'] ?? ''));
+            $latitude = uploadEscape((string) ($photo['latitude'] ?? ''));
+            $longitude = uploadEscape((string) ($photo['longitude'] ?? ''));
+            $cards .= '<article class="admin-photo-card' . ($featured ? ' is-featured' : '') . ($draft ? ' is-draft' : '') . '" data-photo-file="' . $filename . '" data-photo-mtime="' . (int) $photo['mtime'] . '" data-photo-category="' . $category . '" data-photo-draft="' . ($draft ? '1' : '0') . '" data-photo-featured="' . ($featured ? '1' : '0') . '" data-photo-title="' . $title . '" data-photo-description="' . $description . '" data-photo-slug="' . $slug . '" data-photo-latitude="' . $latitude . '" data-photo-longitude="' . $longitude . '">'
                 . '<img src="' . $thumbnail . '" alt="" loading="lazy" decoding="async">'
                 . '<div class="admin-photo-card__body"><div class="admin-photo-card__heading"><h2>' . $title . '</h2>'
                 . ($featured ? '<span class="admin-photo-featured" title="Fotografía destacada">★ Destacada</span>' : '')
                 . ($draft ? '<span class="admin-photo-draft">Borrador</span>' : '') . '</div><p>' . $category . '</p>'
                 . ($slug !== '' ? '<p class="admin-photo-hearts" data-admin-heart="' . $slug . '">♥ <span>0</span> corazones</p>' : '')
                 . '<div class="admin-photo-order-actions"><button type="button" data-order-up aria-label="Mover antes">↑</button><button type="button" data-order-down aria-label="Mover después">↓</button></div>'
-                . '<div class="admin-photo-card__actions"><a class="upload-logout" href="' . uploadEscape($editUrl) . '">Editar</a>'
+                . '<div class="admin-photo-card__actions"><button class="upload-logout" type="button" data-quick-edit>Edición rápida</button><a class="upload-logout" href="' . uploadEscape($editUrl) . '">Editar foto</a>'
                 . '<button class="admin-photo-delete" type="button" data-delete-file="' . $filename
                 . '" data-delete-title="' . $title . '">Eliminar</button></div></div></article>';
         }
@@ -618,10 +704,12 @@ if (!empty($_SESSION['upload_authenticated'])) {
             }
         }
         $content = adminNavigation((string) $_SESSION['csrf']) . $status
-            . '<div class="admin-library__intro"><p>Administra cada fotografía publicada sin modificar el original.</p>'
-            . '<a class="upload-submit" href="/admin.php">+ Subir nueva</a></div>'
-            . '<div class="admin-library-tools"><div class="upload-field"><label for="photoLibrarySearch">Buscar por título, categoría o archivo</label>'
-            . '<input id="photoLibrarySearch" type="search" autocomplete="off" placeholder="Buscar fotografías"></div>'
+            . '<div class="admin-library__intro"><p>Tu archivo fotográfico, ordenado y listo para editar.</p>'
+            . '<div class="admin-library__intro-actions"><a class="upload-submit" href="/admin.php?batch=1">Subida por lotes</a><a class="upload-submit" href="/admin.php">+ Subir una foto</a></div></div>'
+            . '<div class="admin-library-tools"><div class="upload-field"><label for="photoLibrarySearch">Buscar fotografías</label>'
+            . '<input id="photoLibrarySearch" type="search" autocomplete="off" placeholder="Título, categoría o archivo"></div>'
+            . '<div class="upload-field"><label for="photoLibraryCategory">Categoría</label><select id="photoLibraryCategory"><option value="">Todas las categorías</option>' . $categoryOptions . '</select></div>'
+            . '<div class="upload-field"><label for="photoLibraryStatus">Estado</label><select id="photoLibraryStatus"><option value="">Todos los estados</option><option value="published">Publicadas</option><option value="draft">Borradores</option><option value="featured">Destacadas</option></select></div>'
             . '<div class="upload-field"><label for="photoLibrarySort">Orden</label><select id="photoLibrarySort"><option value="manual">Manual</option><option value="recent">Más recientes</option><option value="popular">Más corazones</option></select></div>'
             . '<button class="upload-submit" id="savePhotoOrder" type="button">Guardar orden manual</button></div>'
             . '<p class="admin-library__count" id="photoLibraryCount">' . count($photos) . ' fotografías</p>'
@@ -636,8 +724,18 @@ if (!empty($_SESSION['upload_authenticated'])) {
             . '<label for="deleteConfirm">Escribe ELIMINAR para confirmar</label>'
             . '<input id="deleteConfirm" name="confirm" type="text" autocomplete="off" required>'
             . '<p class="admin-delete-dialog__error" id="deleteFeedback" role="alert" hidden></p>'
-            . '<div class="admin-delete-dialog__actions"><button type="button" id="deleteCancel">Cancelar</button>'
-            . '<button type="submit" id="deleteSubmit">Eliminar definitivamente</button></div></form></dialog>';
+            . '<dialog class="admin-quick-edit" id="adminQuickEdit" aria-labelledby="quickEditTitle">'
+            . '<form id="adminQuickEditForm" method="post" action="/admin.php"><input type="hidden" name="action" value="update_existing">'
+            . '<input type="hidden" name="csrf" value="' . uploadEscape((string) $_SESSION['csrf']) . '"><input type="hidden" name="file" data-quick-file>'
+            . '<h2 id="quickEditTitle">Edición rápida</h2><p class="admin-quick-edit__hint">Actualiza los datos sin entrar al editor de imagen.</p>'
+            . '<div class="upload-field"><label for="quickTitle">Título</label><input id="quickTitle" name="title" maxlength="120" required></div>'
+            . '<div class="upload-field"><label for="quickCategory">Categoría</label><input id="quickCategory" name="category" maxlength="64" required></div>'
+            . '<div class="upload-field"><label for="quickDescription">Descripción</label><textarea id="quickDescription" name="description" rows="4" maxlength="5000"></textarea></div>'
+            . '<div class="upload-field"><label for="quickSlug">Enlace de la foto</label><input id="quickSlug" name="slug" maxlength="80" pattern="[a-z0-9]+(-[a-z0-9]+)*"></div>'
+            . '<div class="admin-quick-edit__checks"><label><input type="checkbox" name="featured" value="1"> Destacada</label><label><input type="checkbox" name="draft" value="1"> Borrador</label></div>'
+            . '<input type="hidden" name="latitude" data-quick-latitude><input type="hidden" name="longitude" data-quick-longitude>'
+            . '<p class="admin-quick-edit__error" data-quick-error role="alert" hidden></p>'
+            . '<div class="admin-delete-dialog__actions"><button type="button" data-quick-cancel>Cancelar</button><button type="submit" data-quick-save>Guardar cambios</button></div></form></dialog>';
         uploadPage('Gestionar fotografías', $content, 200, true);
     }
 

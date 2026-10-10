@@ -40,6 +40,90 @@
         update();
     });
 
+
+    const batchForm = document.getElementById('photoBatchForm');
+    if (batchForm) {
+        const filesInput = document.getElementById('batchPhotos');
+        const categoryInput = document.getElementById('batchCategory');
+        const preview = document.getElementById('batchPreview');
+        const batchStatus = document.getElementById('batchStatus');
+        const batchSubmit = document.getElementById('batchSubmit');
+        const csrf = batchForm.querySelector('[name="csrf"]')?.value || '';
+        const maxBytes = 15 * 1024 * 1024;
+        const renderBatchSelection = () => {
+            const files = [...(filesInput.files || [])];
+            preview.replaceChildren();
+            if (!files.length) {
+                const note = document.createElement('p');
+                note.textContent = 'Las fotos seleccionadas aparecerán aquí.';
+                preview.append(note);
+                batchSubmit.disabled = true;
+                return;
+            }
+            const summary = document.createElement('p');
+            summary.className = 'admin-batch__summary';
+            summary.textContent = files.length + ' fotografías · ' + (files.reduce((total, file) => total + file.size, 0) / 1048576).toFixed(1) + ' MB';
+            preview.append(summary);
+            files.forEach(file => {
+                const row = document.createElement('div');
+                row.className = 'admin-batch__file';
+                row.dataset.invalid = String(file.size > maxBytes || !/^image\/(jpeg|png)$/.test(file.type));
+                const name = document.createElement('span');
+                name.textContent = file.name;
+                const size = document.createElement('small');
+                size.textContent = file.size > maxBytes ? 'Supera 15 MB' : (file.size / 1048576).toFixed(1) + ' MB';
+                row.append(name, size);
+                preview.append(row);
+            });
+            batchSubmit.disabled = !categoryInput.value.trim() || files.some(file => file.size > maxBytes || !/^image\/(jpeg|png)$/.test(file.type));
+        };
+        filesInput.addEventListener('change', renderBatchSelection);
+        categoryInput.addEventListener('input', renderBatchSelection);
+        batchForm.addEventListener('submit', async event => {
+            event.preventDefault();
+            const files = [...(filesInput.files || [])];
+            const category = categoryInput.value.trim();
+            if (!files.length || !category || batchSubmit.disabled) return;
+            batchSubmit.disabled = true;
+            const draft = document.getElementById('batchDraft').checked;
+            const outcomes = [];
+            for (let index = 0; index < files.length; index++) {
+                const file = files[index];
+                batchStatus.textContent = 'Subiendo ' + (index + 1) + ' de ' + files.length + ': ' + file.name;
+                const row = preview.querySelectorAll('.admin-batch__file')[index];
+                row.dataset.state = 'uploading';
+                try {
+                    const body = new FormData();
+                    body.set('action', 'batch_upload');
+                    body.set('csrf', csrf);
+                    body.set('category', category);
+                    body.set('draft', draft ? '1' : '0');
+                    body.set('photo', file, file.name);
+                    const response = await fetch('/admin.php', {method: 'POST', body, credentials: 'same-origin'});
+                    const result = await response.json();
+                    if (!response.ok || !result?.ok) throw new Error(result?.error || 'No se pudo subir esta fotografía.');
+                    row.dataset.state = 'success';
+                    row.querySelector('small').textContent = 'Subida';
+                    outcomes.push({ok: true});
+                } catch (error) {
+                    row.dataset.state = 'error';
+                    row.querySelector('small').textContent = error.message || 'Error de subida';
+                    outcomes.push({ok: false});
+                }
+            }
+            const succeeded = outcomes.filter(result => result.ok).length;
+            batchStatus.textContent = succeeded + ' de ' + files.length + ' fotografías subidas.' + (succeeded < files.length ? ' Las que fallaron siguen marcadas arriba.' : '');
+            batchSubmit.textContent = 'Subida finalizada';
+            if (succeeded) {
+                const link = document.createElement('a');
+                link.className = 'upload-submit admin-batch__library-link';
+                link.href = '/admin.php?library=1&status=' + encodeURIComponent(succeeded + ' fotografías añadidas' + (draft ? ' como borradores.' : '.'));
+                link.textContent = 'Abrir biblioteca';
+                batchForm.append(link);
+            }
+        });
+    }
+
     const grid = document.getElementById('adminPhotoGrid');
     if (!grid) return;
 
@@ -61,6 +145,8 @@
     }
 
     const search = document.getElementById('photoLibrarySearch');
+    const categoryFilter = document.getElementById('photoLibraryCategory');
+    const statusFilter = document.getElementById('photoLibraryStatus');
     const count = document.getElementById('photoLibraryCount');
     const empty = document.getElementById('photoLibraryEmpty');
     const dialog = document.getElementById('adminDeleteDialog');
@@ -72,9 +158,14 @@
     const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es');
     const filter = () => {
         const needle = normalize(search.value.trim());
+        const category = categoryFilter?.value || '';
+        const state = statusFilter?.value || '';
         let visible = 0;
         grid.querySelectorAll('.admin-photo-card').forEach(card => {
-            const match = normalize(card.textContent + ' ' + card.dataset.photoFile).includes(needle);
+            const matchesSearch = normalize(card.textContent + ' ' + card.dataset.photoFile).includes(needle);
+            const matchesCategory = !category || card.dataset.photoCategory === category;
+            const matchesState = !state || (state === 'draft' ? card.dataset.photoDraft === '1' : state === 'featured' ? card.dataset.photoFeatured === '1' : card.dataset.photoDraft !== '1');
+            const match = matchesSearch && matchesCategory && matchesState;
             card.hidden = !match;
             if (match) visible++;
         });
@@ -126,7 +217,50 @@
         }
     });
 
-    search.addEventListener('input', filter);
+    search?.addEventListener('input', filter);
+    categoryFilter?.addEventListener('change', filter);
+    statusFilter?.addEventListener('change', filter);
+
+    const quickDialog = document.getElementById('adminQuickEdit');
+    const quickForm = document.getElementById('adminQuickEditForm');
+    if (quickDialog && quickForm) {
+        const quickError = quickDialog.querySelector('[data-quick-error]');
+        const quickSave = quickDialog.querySelector('[data-quick-save]');
+        grid.addEventListener('click', event => {
+            const button = event.target.closest('[data-quick-edit]');
+            if (!button) return;
+            const card = button.closest('.admin-photo-card');
+            quickForm.querySelector('[data-quick-file]').value = card.dataset.photoFile || '';
+            quickForm.elements.title.value = card.dataset.photoTitle || '';
+            quickForm.elements.category.value = card.dataset.photoCategory || '';
+            quickForm.elements.description.value = card.dataset.photoDescription || '';
+            quickForm.elements.slug.value = card.dataset.photoSlug || '';
+            quickForm.elements.latitude.value = card.dataset.photoLatitude || '';
+            quickForm.elements.longitude.value = card.dataset.photoLongitude || '';
+            quickForm.elements.featured.checked = card.dataset.photoFeatured === '1';
+            quickForm.elements.draft.checked = card.dataset.photoDraft === '1';
+            quickError.hidden = true;
+            quickDialog.showModal();
+            quickForm.elements.title.focus();
+        });
+        quickDialog.querySelector('[data-quick-cancel]')?.addEventListener('click', () => quickDialog.close());
+        quickForm.addEventListener('submit', async event => {
+            event.preventDefault();
+            quickSave.disabled = true;
+            quickError.hidden = true;
+            try {
+                const response = await fetch('/admin.php', {method: 'POST', body: new FormData(quickForm), credentials: 'same-origin'});
+                const result = await response.json();
+                if (!response.ok || !result?.ok) throw new Error(result?.error || 'No se pudieron guardar los cambios.');
+                window.location.assign('/admin.php?library=1&status=' + encodeURIComponent('Fotografía actualizada.'));
+            } catch (error) {
+                quickError.textContent = error.message || 'Error de conexión. Vuelve a intentarlo.';
+                quickError.hidden = false;
+                quickSave.disabled = false;
+            }
+        });
+    }
+
     grid.addEventListener('click', event => {
         const button = event.target.closest('[data-delete-file]');
         if (!button) return;

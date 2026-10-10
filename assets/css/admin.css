@@ -406,3 +406,14 @@
     .site-settings .admin-card__body { min-width: 0; }
     .site-settings .admin-fields { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Vista real de la web dentro de un marco con viewport móvil */
+.admin-mobile-preview-link { display:inline-flex; align-items:center; justify-content:center; min-height:44px; margin:0 0 1rem; padding:.65rem .9rem; border:1px solid var(--accent); border-radius:10px; color:var(--accent)!important; text-decoration:none; font:600 .8rem var(--sans); }
+.admin-mobile-preview { display:grid; justify-items:center; gap:.9rem; }
+.admin-mobile-preview > p { width:min(100%,650px); color:var(--fg-soft); font-size:.85rem; line-height:1.55; }
+.admin-mobile-preview__device { width:390px; height:min(844px,72svh); min-height:560px; overflow:hidden; border:8px solid #24211d; border-radius:38px; background:#000; box-shadow:0 22px 65px #000b, inset 0 0 0 1px #ffffff24; }
+.admin-mobile-preview__device iframe { display:block; width:390px; height:844px; border:0; }
+@media (max-width:600px) {
+    .admin-mobile-preview__device { width:100vw; height:72svh; min-height:0; border:0; border-radius:0; }
+    .admin-mobile-preview__device iframe { width:100%; height:100%; }
+}

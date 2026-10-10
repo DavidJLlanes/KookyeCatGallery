@@ -39,6 +39,21 @@ baraja; mi recomendación: **mano de cartas** y **Polaroids**, o el **libro** si
       pocas fotos.
 - [ ] **Acordeón.** Tiras verticales de foto; la activa se expande mientras las demás se estrechan.
 
+## CMS de fotografía
+
+- [x] **Biblioteca visual:** cuadrícula, búsqueda, filtros por categoría y estado, orden por fecha/popularidad y orden manual.
+- [x] **Edición rápida:** cambiar título, descripción, categoría, enlace, destacada y borrador desde la biblioteca.
+- [x] **Carga por lotes:** selección múltiple, categoría común, progreso por foto y tratamiento individual de fallos; cada archivo se envía en una petición para adaptarse al hosting compartido.
+- [x] **Vista previa móvil:** revisar la web en un viewport de teléfono desde Diseño.
+- [ ] **Organización flexible:** álbumes o colecciones, etiquetas, portada y reordenación táctil.
+- [ ] **Publicación controlada:** programación, papelera recuperable y confirmación antes de borrar.
+- [ ] **Procesamiento de imágenes:** tamaños adaptativos, formatos modernos, punto focal y recorte por dispositivo.
+- [ ] **Privacidad de metadatos:** mostrar y permitir eliminar los datos EXIF antes de publicar.
+- [ ] **Guardado tolerante a fallos:** autoguardado y recuperación después de perder conexión.
+- [ ] **Panel adaptable:** selección múltiple, acciones rápidas y atajos de teclado.
+- [ ] **Ayuda contextual:** ejemplos para texto alternativo, título, descripción y ubicación.
+- [ ] **Ajustes organizados:** mantener contenido, diseño, textos, redes y publicación en secciones claras.
+
 ## Hecho
 
 - [x] **Estilo Burbujas** (`bubbles`): fotos en círculos de distintos tamaños que flotan lentamente, paginadas.
