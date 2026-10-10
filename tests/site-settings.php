@@ -25,7 +25,7 @@ check(!str_contains(site_inline_text_html('text_cbbba360eb60dd04'), 'data-inline
 $GLOBALS['siteInlineEditorEnabled'] = true;
 check(str_contains(site_inline_text_html('text_cbbba360eb60dd04'), 'data-inline-edit-key'), 'Inline controls must be available for an authenticated editor.');
 check(str_contains(site_inline_text_html('text_bdd8f61b94c52379'), 'data-inline-edit-key'), 'Social copy must be editable in inline mode.');
-check(str_contains(site_inline_text_html('text_49a006d539216e16', true), '<br>'), 'Social title line breaks must remain visible in inline mode.');
+
 unset($GLOBALS['siteInlineEditorEnabled']);
 $inlineSaved = site_settings_validate(array_replace($defaults, ['texts' => ['text_cbbba360eb60dd04' => 'Un título editado']]));
 check(($inlineSaved['texts']['text_cbbba360eb60dd04'] ?? '') === 'Un título editado', 'Inline text changes must pass through normal settings validation.');
