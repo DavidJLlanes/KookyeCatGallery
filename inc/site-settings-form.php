@@ -30,13 +30,16 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . '<input type="hidden" name="csrf" value="' . $escape($csrf) . '">'
         . '<input type="hidden" name="section" value="' . $escape($section) . '">'
         . '<p>Configura cada parte de la web desde su sección. Los títulos, descripciones y categorías de las fotos se editan en Gestionar fotos.</p>';
-    $settingsSections = ['content' => 'Contenido', 'design' => 'Diseño', 'texts' => 'Textos', 'social' => 'Redes sociales', 'publication' => 'Publicación'];
-    $settingsNav = '<nav class="admin-subnav settings-subnav" aria-label="Secciones de ajustes">';
-    foreach ($settingsSections as $key => $label) {
-        $settingsNav .= '<a href="/admin.php?settings=1&amp;section=' . $key . '"' . ($section === $key ? ' class="is-active" aria-current="page"' : '') . '>' . $escape($label) . '</a>';
+    // Diseño y Textos ya son secciones principales del panel: no se repiten en Ajustes.
+    $settingsSections = ['content' => 'Contenido', 'social' => 'Redes sociales', 'publication' => 'Publicación'];
+    if (!in_array($section, ['design', 'texts'], true)) {
+        $settingsNav = '<nav class="admin-subnav settings-subnav" aria-label="Secciones de ajustes">';
+        foreach ($settingsSections as $key => $label) {
+            $settingsNav .= '<a href="/admin.php?settings=1&amp;section=' . $key . '"' . ($section === $key ? ' class="is-active" aria-current="page"' : '') . '>' . $escape($label) . '</a>';
+        }
+        $settingsNav .= '</nav>';
+        $html .= $settingsNav;
     }
-    $settingsNav .= '</nav>';
-    $html .= $settingsNav;
     $labels = ['palette' => 'Paleta de colores', 'grid' => 'Proporción de las fotos', 'header_mobile' => 'Cabecera móvil', 'header_desktop' => 'Cabecera de escritorio', 'gallery_mobile' => 'Galería móvil', 'gallery_desktop' => 'Galería de escritorio', 'hover' => 'Efecto Hover', 'pagination_shape' => 'Forma de la paginación', 'gallery_premium' => 'Galería premium'];
     $choices = site_design_choices();
     // ¿Hay una galería premium activa? Entonces se desactivan los campos de la galería estándar (los marcados con $premiumOff).
@@ -163,7 +166,10 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     foreach (site_page_labels() as $key => $label) {
         $pages .= '<a class="page-editor-option" href="/admin.php?settings=1&amp;section=page&amp;doc=' . $key . '"><span>' . $escape($label) . '</span><span aria-hidden="true">Editar →</span></a>';
     }
-    $html .= $card('Páginas de texto', 'Edita el contenido de «El proyecto», aviso legal, privacidad y cookies.', $pages . '</div>') . '</div>';
+    if ($section === 'texts') {
+        $html .= $card('Páginas de texto', 'Edita el contenido de «El proyecto», aviso legal, privacidad y cookies.', $pages . '</div>');
+    }
+    $html .= '</div>';
     $html = str_replace('<form method="post"', '<form method="post" enctype="multipart/form-data"', $html);
     // ── Contenido: imágenes de marca ───────────────────────────────────────
     $html .= '<div class="settings-content"><section class="admin-card"><header class="admin-card__head"><h2>Imágenes</h2><p>Foto de perfil y logo de la web.</p></header><div class="admin-card__body">';
@@ -181,7 +187,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . '<div class="upload-field"><label for="og-image-file">Imagen para compartir en redes sociales (Open Graph)</label>'
         . '<input id="og-image-file" name="og_image_file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
         . '<small class="upload-help">JPG, PNG o WebP. Recomendado 1200 × 630 px (relación 1,91:1; mínimo 600 × 315). Se recorta y adapta a 1200 × 630 px. Máximo 15 MB.</small></div></div></section></div>';
-    return $html . '<div class="admin-savebar"><span class="admin-savebar__hint">Los cambios se aplican a la web al guardar.</span><a class="upload-logout" href="/">Ver la web</a><button class="upload-submit" type="submit">Guardar configuración</button></div></form>';
+    return $html . '<div class="admin-savebar"><span class="admin-savebar__hint">Los cambios se aplican a la web al guardar.</span><button class="upload-submit" type="submit">Guardar configuración</button></div></form>';
 }
 
 /**
