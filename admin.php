@@ -659,8 +659,8 @@ if (!empty($_SESSION['upload_authenticated'])) {
             . '<section class="admin-batch"><p class="admin-batch__intro">Selecciona varias fotos. Se subirán una a una; el título se tomará del nombre de archivo y podrás cambiarlo después con la edición rápida.</p>'
             . '<form id="photoBatchForm"><input type="hidden" name="csrf" value="' . uploadEscape((string) $_SESSION['csrf']) . '">'
             . '<div class="upload-field"><label for="batchPhotos">Fotografías (JPG o PNG, máximo 15 MB cada una)</label><input id="batchPhotos" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" multiple required></div>'
-            . '<div class="upload-field"><label for="batchCategoryChoice">Categoría común</label><select id="batchCategoryChoice" required>' . $batchCategoryOptions . '<option value="__new__">+ Añadir categoría nueva</option></select></div>'
-            . '<div class="upload-field" id="batchNewCategoryField" hidden><label for="batchCategory">Nombre de la nueva categoría</label><input id="batchCategory" maxlength="64" placeholder="Escribe el nombre"></div>'
+            . '<div class="upload-field"><label for="batchCategoryChoice">Categoría común</label><select id="batchCategoryChoice" required>' . $batchCategoryOptions . '<option value="__new__">+ Añadir categoría nueva</option></select><small class="upload-help">Se aplicará a todas las fotos del lote. Ej.: «Paisajes» o «Viaje a Bélgica».</small></div>'
+            . '<div class="upload-field" id="batchNewCategoryField" hidden><label for="batchCategory">Nombre de la nueva categoría</label><input id="batchCategory" maxlength="64" placeholder="Escribe el nombre"><small class="upload-help">Elige un nombre corto que puedas reutilizar. Ej.: «Arquitectura».</small></div>'
             . '<label class="upload-featured"><input type="checkbox" id="batchDraft" checked> Guardar como borrador para revisar antes de publicar</label>'
             . '<div class="admin-batch__preview" id="batchPreview" aria-live="polite"><p>Las fotos seleccionadas aparecerán aquí.</p></div>'
             . '<p class="admin-batch__status" id="batchStatus" role="status" aria-live="polite"></p>'
@@ -715,8 +715,8 @@ if (!empty($_SESSION['upload_authenticated'])) {
             $content .= '<section class="admin-category-card admin-collection-card"><div><h2>' . $escapedName . '</h2><p>' . (count($items) ? count($items) . ' fotografías · colección' : 'Colección vacía · asígnale fotos desde Gestionar fotos o Carga por lotes.') . '</p></div>'
                 . '<form method="post" action="/admin.php" class="admin-collection-form">'
                 . '<input type="hidden" name="action" value="save_collection"><input type="hidden" name="csrf" value="' . uploadEscape((string) $_SESSION['csrf']) . '"><input type="hidden" name="collection" value="' . $escapedName . '">'
-                . '<div class="upload-field"><label>Descripción</label><textarea name="description" maxlength="280" rows="2" placeholder="Ej.: Paseos tranquilos al atardecer">' . uploadEscape((string) ($collection['description'] ?? '')) . '</textarea></div>'
-                . '<div class="upload-field"><label>Fotografía de portada</label><select name="cover">' . $coverOptions . '</select></div>'
+                . '<div class="upload-field"><label>Descripción</label><small class="upload-help">Texto que presentará la colección. Ej.: «Calles, plazas y rincones de la ciudad».</small><textarea name="description" maxlength="280" rows="2" placeholder="Ej.: Paseos tranquilos al atardecer">' . uploadEscape((string) ($collection['description'] ?? '')) . '</textarea></div>'
+                . '<div class="upload-field"><label>Fotografía de portada</label><small class="upload-help">Elige la imagen que mejor representa esta colección; si no eliges una, se seleccionará automáticamente.</small><select name="cover">' . $coverOptions . '</select></div>'
                 . '<button class="upload-submit" type="submit">Guardar colección</button></form>';
             if ($items) {
                 $content .= '<form method="post" action="/admin.php" class="admin-category-form" data-category-action>'
@@ -809,9 +809,9 @@ if (!empty($_SESSION['upload_authenticated'])) {
             . '<form id="adminQuickEditForm" method="post" action="/admin.php"><input type="hidden" name="action" value="update_existing">'
             . '<input type="hidden" name="csrf" value="' . uploadEscape((string) $_SESSION['csrf']) . '"><input type="hidden" name="file" data-quick-file>'
             . '<h2 id="quickEditTitle">Edición rápida</h2><p class="admin-quick-edit__hint">Actualiza los datos sin entrar al editor de imagen.</p>'
-            . '<div class="upload-field"><label for="quickTitle">Título</label><input id="quickTitle" name="title" maxlength="120" required></div>'
-            . '<div class="upload-field"><label for="quickCategory">Categoría</label><input id="quickCategory" name="category" maxlength="64" required></div>'
-            . '<div class="upload-field"><label for="quickDescription">Descripción</label><textarea id="quickDescription" name="description" rows="4" maxlength="5000"></textarea></div>'
+            . '<div class="upload-field"><label for="quickTitle">Título</label><input id="quickTitle" name="title" maxlength="120" required><small class="upload-help">También es el texto alternativo: describe lo que aparece. Ej.: «Dos gatos jugando sobre una alfombra roja».</small></div>'
+            . '<div class="upload-field"><label for="quickCategory">Categoría</label><input id="quickCategory" name="category" maxlength="64" required><small class="upload-help">Agrupa fotos parecidas. Ej.: «Paisajes» o «Retratos».</small></div>'
+            . '<div class="upload-field"><label for="quickDescription">Descripción</label><textarea id="quickDescription" name="description" rows="4" maxlength="5000"></textarea><small class="upload-help">Añade contexto: lugar, momento o historia. Ej.: «La luz del atardecer entra por la ventana del estudio».</small></div>'
             . '<div class="upload-field"><label for="quickSlug">Enlace de la foto</label><input id="quickSlug" name="slug" maxlength="80" pattern="[a-z0-9]+(-[a-z0-9]+)*"></div>'
             . '<div class="admin-quick-edit__checks"><label><input type="checkbox" name="featured" value="1"> Destacada</label><label><input type="checkbox" name="draft" value="1"> Borrador</label></div>'
             . '<input type="hidden" name="latitude" data-quick-latitude><input type="hidden" name="longitude" data-quick-longitude>'
@@ -923,13 +923,13 @@ __UPLOAD_GUIDE__
             <button type="button" class="photo-editor__cancel" id="detailsCancel" aria-label="Cancelar edición y volver al inicio" title="Cancelar y volver al inicio"><span aria-hidden="true">×</span><span class="photo-editor__cancel-label">Cancelar</span></button>
         </header>
         <div class="photo-details__preview"><img id="reviewPreview" alt="Previsualización de la publicación"><span id="photoGpsSummary">Ubicación pendiente</span></div><p class="upload-gps-status photo-details__gps-status" id="gpsStatusReview" aria-live="polite"></p>
-        <div class="upload-field"><label for="photoTitle">Nombre de la fotografía</label><input id="photoTitle" name="title" type="text" maxlength="120" autocomplete="off" value="__TITLE__" required></div>
+        <div class="upload-field"><label for="photoTitle">Nombre de la fotografía</label><input id="photoTitle" name="title" type="text" maxlength="120" autocomplete="off" value="__TITLE__" required><small class="upload-help">Este título también se usa como texto alternativo. Describe lo que aparece y evita «foto de». Ej.: «Dos gatos jugando sobre una alfombra roja».</small></div>
         <div class="upload-field"><label for="photoCategoryChoice">Categoría</label><select id="photoCategoryChoice" required><option value="" selected disabled>Selecciona una categoría</option>__OPTIONS__<option value="__new__">+ Crear categoría nueva</option></select><input id="photoCategory" name="category" type="text" maxlength="64" autocomplete="off" placeholder="Escribe una categoría nueva" aria-label="Nueva categoría" required disabled hidden>__CATEGORY_HELP__</div>
-        <div class="upload-field"><label for="photoDescription">Descripción <span class="upload-help">__DESCRIPTION_HELP__</span></label><textarea id="photoDescription" name="description" rows="4" maxlength="5000">__DESCRIPTION__</textarea></div>
+        <div class="upload-field"><label for="photoDescription">Descripción</label><small class="upload-help">__DESCRIPTION_HELP__</small><textarea id="photoDescription" name="description" rows="4" maxlength="5000">__DESCRIPTION__</textarea></div>
         <label class="upload-featured"><input type="checkbox" name="featured" value="1" __FEATURED_CHECKED__> <span>Marcar como fotografía destacada</span></label>
         <label class="upload-featured"><input type="checkbox" name="draft" value="1" __DRAFT_CHECKED__> <span>Guardar como borrador (no aparecerá públicamente)</span></label>
         __SLUG_FIELD__
-        <fieldset class="upload-gps" id="gpsFields" hidden><legend>Ubicación GPS (opcional)</legend><p class="upload-help">Puedes añadir coordenadas para mostrar la foto en el mapa. Deja ambos campos vacíos si no quieres compartir su ubicación.</p><div class="upload-form"><div class="upload-field"><label for="photoLatitude">Latitud</label><input id="photoLatitude" name="latitude" type="number" min="-90" max="90" step="any" value="__LATITUDE__"></div><div class="upload-field"><label for="photoLongitude">Longitud</label><input id="photoLongitude" name="longitude" type="number" min="-180" max="180" step="any" value="__LONGITUDE__"></div></div></fieldset>
+        <fieldset class="upload-gps" id="gpsFields" hidden><legend>Ubicación GPS (opcional)</legend><p class="upload-help">La ubicación es opcional. Ej.: latitud 40.0000 y longitud -3.0000. Déjalas vacías si no quieres revelar dónde se tomó la foto.</p><div class="upload-form"><div class="upload-field"><label for="photoLatitude">Latitud</label><input id="photoLatitude" name="latitude" type="number" min="-90" max="90" step="any" value="__LATITUDE__"></div><div class="upload-field"><label for="photoLongitude">Longitud</label><input id="photoLongitude" name="longitude" type="number" min="-180" max="180" step="any" value="__LONGITUDE__"></div></div></fieldset>
         <div class="upload-actions"><button class="upload-submit" id="uploadSubmit" type="submit" disabled>__SUBMIT_LABEL__</button></div>
     </section>
     </form>
@@ -941,14 +941,14 @@ HTML;
         ? '<div class="upload-field"><label for="photoSlug">Enlace de la fotografía</label>'
           . '<input id="photoSlug" name="slug" type="text" maxlength="80" pattern="[a-z0-9]+(-[a-z0-9]+)*" value="'
           . uploadEscape($edit['slug']) . '" placeholder="Se generará a partir del título">'
-          . '<small class="upload-help">Cambiar este enlace puede romper enlaces compartidos anteriormente.</small></div>'
+          . '<small class="upload-help">Ej.: «gato-en-la-ventana». Si ya compartiste el enlace, cambiarlo puede romperlo.</small></div>'
         : '';
     $form = strtr($formTemplate, [
         '__STATUS__' => $status,
         '__UPLOAD_GUIDE__' => '',
         '__CSRF__' => $csrf,
         '__OPTIONS__' => $options,
-        '__CATEGORY_HELP__' => $editMode ? '<small class="upload-help">Aquí puedes cambiar la categoría de esta foto. Para cambiar varias a la vez, usa «Gestionar categorías».</small>' : '',
+        '__CATEGORY_HELP__' => '<small class="upload-help">Usa una categoría breve para agrupar fotos parecidas. Ej.: «Paisajes», «Retratos» o «Bélgica».</small>',
         '__EDIT_FILE__' => $editMode ? uploadEscape($edit['filename']) : '',
         '__HAS_EDITED__' => $editMode && $edit['edited'] ? '1' : '0',
         '__ACTION__' => $editMode ? 'update_existing' : 'complete',
@@ -960,7 +960,7 @@ HTML;
         '__STEP_LABEL__' => $editMode ? '2 / 2 · Actualizar fotografía' : '2 / 2 · Nueva publicación',
         '__TITLE__' => $editMode ? uploadEscape($edit['title']) : '',
         '__DESCRIPTION__' => $editMode ? uploadEscape($edit['description']) : '',
-        '__DESCRIPTION_HELP__' => $editMode ? '(opcional; puedes dejarla vacía)' : '(opcional; se generará automáticamente si queda vacía)',
+        '__DESCRIPTION_HELP__' => 'Opcional. Añade contexto que no cabe en el título: lugar, momento o historia. Ej.: «La luz del atardecer entra por la ventana del estudio».',
         '__FEATURED_CHECKED__' => $editMode && !empty($edit['featured']) ? 'checked' : '',
         '__DRAFT_CHECKED__' => $editMode && !empty($edit['draft']) ? 'checked' : '',
         '__SLUG_FIELD__' => $slugField,
