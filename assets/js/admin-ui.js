@@ -9,6 +9,26 @@
 (() => {
     'use strict';
 
+    const applySiteTitle = value => {
+        if (typeof value !== 'string' || !value.trim()) return;
+        const title = value.trim().slice(0, 80);
+        document.querySelectorAll('.admin-brand__text strong').forEach(node => { node.textContent = title; });
+        const initial = Array.from(title)[0]?.toLocaleUpperCase() || '';
+        document.querySelectorAll('.admin-brand__mark').forEach(node => { node.textContent = initial; });
+    };
+    const readSiteTitleUpdate = raw => {
+        try { applySiteTitle(JSON.parse(raw)?.value); } catch (_) {}
+    };
+    window.addEventListener('storage', event => {
+        if (event.key === 'gallery-admin-site-title' && event.newValue) readSiteTitleUpdate(event.newValue);
+    });
+    if ('BroadcastChannel' in window) {
+        try {
+            const titleChannel = new BroadcastChannel('gallery-admin-site-title');
+            titleChannel.addEventListener('message', event => applySiteTitle(event.data?.value));
+        } catch (_) {}
+    }
+
     /* -------------------------------------------------------------------------
        1. Galería premium
        Al elegir una galería premium se desactivan los campos marcados con
