@@ -1752,12 +1752,12 @@
             });
         }
 
-        const collectionCards = $('.collection-card[data-collection-category]');
+        const collectionCards = $$('.collection-card[data-collection-category]');
         collectionCards.forEach(card => {
             card.addEventListener('click', () => {
                 currentCat = card.dataset.collectionCategory || '';
                 currentPage = 1;
-                $('.categories-filter__chip', filterEl || document).forEach(chip => {
+                $$('.categories-filter__chip', filterEl || document).forEach(chip => {
                     const active = (chip.dataset.category || '') === currentCat;
                     chip.classList.toggle('is-active', active);
                 });
