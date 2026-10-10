@@ -128,6 +128,20 @@ sort($categories);
 
 // Todas las fotos van al DOM; la paginación la gestiona completamente JS
 $galleryItems = $heroItem ? $items : [];
+$collections = gallery_collections_load();
+$collectionCovers = [];
+foreach ($categories as $categoryName) {
+    $meta = $collections[$categoryName] ?? ['cover' => '', 'description' => ''];
+    $coverItem = null;
+    foreach ($items as $candidate) {
+        $candidateCategory = trim((string) ($candidate['category'] ?? ''));
+        if (($candidateCategory !== '' ? $candidateCategory : 'Sin categoría') !== $categoryName) continue;
+        if (($meta['cover'] ?? '') !== '' && ($candidate['original'] ?? '') === $meta['cover']) { $coverItem = $candidate; break; }
+        if ($coverItem === null) $coverItem = $candidate;
+    }
+    if ($coverItem !== null) $collectionCovers[$categoryName] = ['image' => photo_asset_url($coverItem['mobile'], __DIR__), 'title' => (string) ($coverItem['title'] ?? $coverItem['original'] ?? ''), 'description' => (string) ($meta['description'] ?? '')];
+}
+
 
 // Genera slug para fotos con título pero sin # Slug: en el .txt
 // Conserva los títulos editados manualmente.
@@ -363,7 +377,7 @@ if ($fotoItem !== null) {
 </head>
 <?php
 // Datos compartidos por los bloques de la portada (inc/blocks/*.php).
-$pageContext = ['author' => $author, 'categories' => $categories, 'galleryItems' => $galleryItems, 'heroItem' => $heroItem, 'rootDir' => __DIR__, 'siteSettings' => $siteSettings, 'totalFotos' => $totalFotos, 'yearLabel' => $yearLabel];
+$pageContext = ['author' => $author, 'categories' => $categories, 'galleryItems' => $galleryItems, 'collectionCovers' => $collectionCovers, 'heroItem' => $heroItem, 'rootDir' => __DIR__, 'siteSettings' => $siteSettings, 'totalFotos' => $totalFotos, 'yearLabel' => $yearLabel];
 ?>
 <body<?= site_design_attributes() ?> class="<?= $heroItem ? 'has-photos' : 'no-photos' ?>"<?= $fotoSlug ? ' data-open-slug="' . safe($fotoSlug) . '"' : '' ?><?= $isSiteAdmin ? ' data-inline-editor-csrf="' . safe($inlineEditorCsrf) . '"' : '' ?>>
 <?php if ($isSiteAdmin): ?>
