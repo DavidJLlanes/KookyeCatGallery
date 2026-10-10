@@ -27,7 +27,15 @@
             else { element.removeAttribute('tabindex'); element.removeAttribute('role'); }
         });
         launch.setAttribute('aria-pressed', String(enabled));
-        launch.querySelector('span').textContent = enabled ? 'Salir de edición' : 'Editar página';
+        const accessibleLabel = enabled ? 'Salir de edición' : 'Editar página';
+        launch.setAttribute('aria-label', accessibleLabel);
+        launch.title = accessibleLabel;
+        const icon = launch.querySelector('[data-inline-editor-icon]');
+        if (icon) {
+            icon.innerHTML = enabled
+                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>'
+                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L8 18l-4 1 1-4Z"/></svg>';
+        }
         if (!enabled) closePanel();
     };
     const closePanel = () => {

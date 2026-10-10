@@ -367,7 +367,7 @@ $pageContext = ['author' => $author, 'categories' => $categories, 'galleryItems'
 ?>
 <body<?= site_design_attributes() ?> class="<?= $heroItem ? 'has-photos' : 'no-photos' ?>"<?= $fotoSlug ? ' data-open-slug="' . safe($fotoSlug) . '"' : '' ?><?= $isSiteAdmin ? ' data-inline-editor-csrf="' . safe($inlineEditorCsrf) . '"' : '' ?>>
 <?php if ($isSiteAdmin): ?>
-<button class="inline-edit-launch" type="button" data-inline-editor-toggle aria-pressed="false">✎ <span>Editar página</span></button>
+<button class="inline-edit-launch" type="button" data-inline-editor-toggle aria-label="Editar página" title="Editar página" aria-pressed="false"><span data-inline-editor-icon aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L8 18l-4 1 1-4Z"/></svg></span></button>
 <aside class="inline-edit-panel" data-inline-editor-panel role="dialog" aria-modal="false" aria-labelledby="inline-edit-title" hidden>
     <div class="inline-edit-panel__top"><div><span class="inline-edit-panel__eyebrow">EDICIÓN EN CONTEXTO</span><h2 id="inline-edit-title">Editar texto</h2></div><button type="button" class="inline-edit-panel__close" data-inline-editor-close aria-label="Cerrar editor">×</button></div>
     <label class="inline-edit-panel__label" for="inline-edit-value" data-inline-editor-label>Texto</label>
