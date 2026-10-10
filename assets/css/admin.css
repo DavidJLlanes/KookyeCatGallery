@@ -263,33 +263,10 @@
 }
 @media (min-width: 960px) { .admin-savebar { bottom: 1rem; } }
 
-/* ---------- Ajustes: cinco secciones del CMS ---------- */
-.site-settings[data-settings-section="content"] .settings-design,
-.site-settings[data-settings-section="content"] .settings-texts,
-.site-settings[data-settings-section="content"] .settings-social,
-.site-settings[data-settings-section="content"] .settings-publication { display: none; }
-.site-settings[data-settings-section="design"] .settings-content,
-.site-settings[data-settings-section="design"] .settings-texts,
-.site-settings[data-settings-section="design"] .settings-social,
-.site-settings[data-settings-section="design"] .settings-publication { display: none; }
-.site-settings[data-settings-section="texts"] .settings-content,
-.site-settings[data-settings-section="texts"] .settings-design,
-.site-settings[data-settings-section="texts"] .settings-social,
-.site-settings[data-settings-section="texts"] .settings-publication { display: none; }
-.site-settings[data-settings-section="social"] .settings-content,
-.site-settings[data-settings-section="social"] .settings-design,
-.site-settings[data-settings-section="social"] .settings-texts,
-.site-settings[data-settings-section="social"] .settings-publication { display: none; }
-.site-settings[data-settings-section="publication"] .settings-content,
-.site-settings[data-settings-section="publication"] .settings-design,
-.site-settings[data-settings-section="publication"] .settings-texts,
-.site-settings[data-settings-section="publication"] .settings-social { display: none; }
-.settings-subnav { display: flex; flex-wrap: wrap; width: fit-content; }
-.settings-publication-list { padding-top: .25rem; }
-@media (max-width: 600px) {
-    .settings-subnav { display: flex; width: 100%; flex-wrap: nowrap; overflow-x: auto; }
-    .settings-subnav a { flex: 0 0 auto; }
-}
+/* ---------- Ajustes: pestañas Perfil / Diseño ---------- */
+.site-settings[data-settings-section="profile"] .settings-design, .site-settings[data-settings-section="profile"] .settings-texts { display: none; }
+.site-settings[data-settings-section="design"] .settings-profile, .site-settings[data-settings-section="design"] .settings-texts { display: none; }
+.site-settings[data-settings-section="texts"] .settings-profile, .site-settings[data-settings-section="texts"] .settings-design { display: none; }
 .site-settings textarea { width: 100%; min-height: 4rem; resize: vertical; }
 .site-settings label { white-space: normal; overflow-wrap: anywhere; }
 .page-editor-options__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
