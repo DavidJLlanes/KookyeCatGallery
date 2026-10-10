@@ -33,7 +33,7 @@ $pageH1 = site_text('text_e4124618327d933f');
     </a>
     <a href="/" class="legal-brand">
         <span class="legal-brand__title"><?= site_text_html('text_52179dc42df7efe5') ?></span>
-        <span class="legal-brand__sub"><?= site_text_html('text_30170303c506cf6c') ?></span>
+        <span class="legal-brand__sub"><?= site_inline_text_html('text_30170303c506cf6c') ?></span>
     </a>
 </header>
 

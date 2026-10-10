@@ -431,6 +431,34 @@ function site_text_html(string $key): string
     return htmlspecialchars(site_text($key), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+/** Textos que se pueden editar desde la web por el administrador autenticado. */
+function site_inline_editable_text_keys(): array
+{
+    return array_values(array_diff(site_editable_text_keys(), [
+        'text_bdd8f61b94c52379',
+        'text_49a006d539216e16',
+        'text_ab3ceef210237f9d',
+    ]));
+}
+
+function site_inline_text_label(string $key): string
+{
+    $labels = site_admin_text_labels();
+    if (isset($labels[$key])) return $labels[$key];
+    foreach (site_template_text_groups() as $group) {
+        if (isset($group['fields'][$key])) return $group['fields'][$key];
+    }
+    return (string) (site_text_catalog()[$key]['group'] ?? 'Texto');
+}
+
+function site_inline_text_html(string $key): string
+{
+    $value = site_text_html($key);
+    if (empty($GLOBALS['siteInlineEditorEnabled']) || !in_array($key, site_inline_editable_text_keys(), true)) return $value;
+    $escape = static fn(string $text): string => htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    return '<span class="inline-edit-text" data-inline-edit-key="' . $escape($key) . '" data-inline-edit-label="' . $escape(site_inline_text_label($key)) . '">' . $value . '</span>';
+}
+
 // =============================================================================
 // 6. PÁGINAS DE TEXTO EDITABLES
 // =============================================================================

@@ -1,0 +1,40 @@
+.inline-edit-launch {
+    position: fixed; z-index: 1200; left: max(1rem, env(safe-area-inset-left)); bottom: max(1rem, env(safe-area-inset-bottom));
+    display: inline-flex; align-items: center; gap: .55rem; min-height: 50px; padding: .75rem 1.05rem;
+    border: 1px solid rgba(232, 193, 145, .65); border-radius: 999px; color: #21170e;
+    background: linear-gradient(135deg, #f0d0a7, #c68f5f); box-shadow: 0 12px 36px rgba(0,0,0,.34);
+    font: 650 .88rem/1 system-ui, sans-serif; cursor: pointer; transition: transform .2s, box-shadow .2s;
+}
+.inline-edit-launch:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,.42); }
+.inline-edit-launch:focus-visible, .inline-edit-panel button:focus-visible, .inline-edit-panel textarea:focus-visible { outline: 3px solid #e9bd8c; outline-offset: 3px; }
+.inline-edit-panel {
+    position: fixed; z-index: 1199; right: 1rem; bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 64px);
+    width: min(420px, calc(100vw - 2rem)); padding: 1.2rem; border: 1px solid rgba(255,255,255,.14);
+    border-radius: 22px; color: #f5f1eb; background: rgba(24,22,20,.97); box-shadow: 0 24px 80px rgba(0,0,0,.56);
+    -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px); font-family: system-ui, sans-serif;
+}
+.inline-edit-panel[hidden] { display: none; }
+.inline-edit-panel__top { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:1.2rem; }
+.inline-edit-panel__eyebrow { color:#c69a70; font-size:.65rem; font-weight:700; letter-spacing:.15em; }
+.inline-edit-panel h2 { margin:.25rem 0 0; font-size:1.3rem; line-height:1.2; }
+.inline-edit-panel__close { width:40px; height:40px; border:1px solid rgba(255,255,255,.15); border-radius:50%; color:inherit; background:transparent; font-size:1.5rem; cursor:pointer; }
+.inline-edit-panel__label { display:block; margin-bottom:.45rem; color:#c9c3bb; font-size:.82rem; font-weight:600; }
+.inline-edit-panel textarea { box-sizing:border-box; display:block; width:100%; min-height:120px; padding:.85rem .9rem; border:1px solid rgba(255,255,255,.16); border-radius:13px; color:#f5f1eb; background:#100f0e; font:400 1rem/1.55 system-ui,sans-serif; resize:vertical; }
+.inline-edit-panel__status { min-height:1.4em; margin:.7rem 0 1rem; color:#aaa39a; font-size:.78rem; }
+.inline-edit-panel__status[data-state="pending"], .inline-edit-panel__status[data-state="saving"] { color:#e9bd8c; }
+.inline-edit-panel__status[data-state="success"] { color:#a7d7ad; }
+.inline-edit-panel__status[data-state="error"] { color:#ff9c9c; }
+.inline-edit-panel__actions { display:flex; justify-content:flex-end; gap:.6rem; }
+.inline-edit-panel__actions button { min-height:44px; padding:.65rem 1rem; border:1px solid rgba(255,255,255,.16); border-radius:11px; color:#f5f1eb; background:transparent; font:600 .84rem system-ui,sans-serif; cursor:pointer; }
+.inline-edit-panel__actions .inline-edit-panel__save { border-color:transparent; color:#21170e; background:#e2b98c; }
+.inline-edit-panel__actions button:disabled { opacity:.45; cursor:default; }
+body[data-inline-edit-mode="true"] .inline-edit-text { position:relative; outline:1px dashed rgba(227,184,137,.65); outline-offset:3px; border-radius:2px; cursor:pointer; transition:background .15s, outline-color .15s; white-space:pre-line; }
+body[data-inline-edit-mode="true"] .inline-edit-text:hover, body[data-inline-edit-mode="true"] .inline-edit-text:focus { outline:2px solid #e2b98c; outline-offset:4px; background:rgba(226,185,140,.1); }
+.inline-edit-text--saved { animation:inline-edit-saved .8s ease; }
+@keyframes inline-edit-saved { 50% { background:rgba(106,184,123,.28); } }
+@media (max-width:600px) {
+    .inline-edit-launch { left:max(.8rem, env(safe-area-inset-left)); bottom:max(.8rem, env(safe-area-inset-bottom)); min-height:48px; padding:.7rem .95rem; }
+    .inline-edit-panel { inset:auto 0 0; width:auto; max-height:88dvh; overflow:auto; padding:1.15rem 1rem calc(1rem + env(safe-area-inset-bottom)); border-radius:24px 24px 0 0; border-bottom:0; }
+    .inline-edit-panel textarea { min-height:150px; }
+}
+@media (prefers-reduced-motion:reduce) { .inline-edit-launch, .inline-edit-text--saved { transition:none; animation:none; } }

@@ -17,6 +17,17 @@ function rejects(array $input): void
 $defaults = site_settings_defaults();
 check(isset(site_social_networks()['instagram'], site_social_networks()['threads']), 'Instagram and Threads must be available networks.');
 check(!in_array('social_threads_user', site_editable_text_keys(), true) && !in_array('text_3b20084d3d94b4ee', site_editable_text_keys(), true), 'Network handles must not be editable text fields.');
+$inlineKeys = site_inline_editable_text_keys();
+check(in_array('text_cbbba360eb60dd04', $inlineKeys, true), 'Visible template copy must be available to inline editing.');
+check(!in_array('text_bdd8f61b94c52379', $inlineKeys, true) && !in_array('text_ab3ceef210237f9d', $inlineKeys, true), 'Social section copy must stay in the administration panel.');
+$GLOBALS['siteInlineEditorEnabled'] = false;
+check(!str_contains(site_inline_text_html('text_cbbba360eb60dd04'), 'data-inline-edit-key'), 'Inline controls must stay hidden for visitors.');
+$GLOBALS['siteInlineEditorEnabled'] = true;
+check(str_contains(site_inline_text_html('text_cbbba360eb60dd04'), 'data-inline-edit-key'), 'Inline controls must be available for an authenticated editor.');
+check(!str_contains(site_inline_text_html('text_bdd8f61b94c52379'), 'data-inline-edit-key'), 'Social copy must not be edited in inline mode.');
+unset($GLOBALS['siteInlineEditorEnabled']);
+$inlineSaved = site_settings_validate(array_replace($defaults, ['texts' => ['text_cbbba360eb60dd04' => 'Un título editado']]));
+check(($inlineSaved['texts']['text_cbbba360eb60dd04'] ?? '') === 'Un título editado', 'Inline text changes must pass through normal settings validation.');
 $profileLinks = array_replace($defaults, ['social_links' => [
     ['network'=>'instagram', 'url'=>'https://instagram.com/example', 'handle'=>'@example'],
     ['network'=>'threads', 'url'=>'https://threads.net/@example', 'handle'=>'@example'],

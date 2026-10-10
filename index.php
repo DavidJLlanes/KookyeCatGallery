@@ -162,8 +162,9 @@ if (preg_match('~^/foto/([a-z0-9-]+)~', $requestUri, $m)) {
 // La ficha pública solo muestra el acceso de edición si existe una sesión privada válida.
 $photoNeighbors = $fotoItem !== null ? photo_neighbors($items, (string) $fotoItem['slug']) : ['previous' => null, 'next' => null];
 
-$isPhotoAdmin = false;
-if ($fotoItem !== null && !empty($_COOKIE['kookye_gallery_admin']) && is_string($_COOKIE['kookye_gallery_admin'])) {
+$isSiteAdmin = false;
+$inlineEditorCsrf = '';
+if (!empty($_COOKIE['kookye_gallery_admin']) && is_string($_COOKIE['kookye_gallery_admin'])) {
     ini_set('session.use_strict_mode', '1');
     ini_set('session.cookie_httponly', '1');
     ini_set('session.cookie_secure', '1');
@@ -177,10 +178,13 @@ if ($fotoItem !== null && !empty($_COOKIE['kookye_gallery_admin']) && is_string(
         'samesite' => 'Strict',
     ]);
     if (session_start(['read_and_close' => true])) {
-        $isPhotoAdmin = !empty($_SESSION['upload_authenticated']);
+        $isSiteAdmin = !empty($_SESSION['upload_authenticated']);
+        $inlineEditorCsrf = (string) ($_SESSION['csrf'] ?? '');
     }
 }
-if ($fotoItem !== null) header('Vary: Cookie');
+$isPhotoAdmin = $fotoItem !== null && $isSiteAdmin;
+$GLOBALS['siteInlineEditorEnabled'] = $isSiteAdmin;
+if ($isSiteAdmin) header('Vary: Cookie');
 // session_start() puede modificar la cabecera de caché; reafirmarla antes de emitir HTML.
 header('Cache-Control: private, no-store, max-age=0');
 
@@ -354,13 +358,24 @@ if ($fotoItem !== null) {
     <noscript><style>html.viewer-pending body > * { visibility: visible !important; }</style></noscript>
     <link rel="stylesheet" href="/assets/css/interface-worlds.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/interface-worlds.css')) ?>">
     <link rel="stylesheet" href="/assets/css/gallery-layout.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/gallery-layout.css')) ?>">
+    <?php if ($isSiteAdmin): ?><link rel="stylesheet" href="/assets/css/inline-editor.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/inline-editor.css')) ?>"><?php endif; ?>
     <?php if ($fotoItem === null) echo premium_gallery_head_tags(); // Estilos de la galería premium activa (ver inc/premium-galleries.php). ?>
 </head>
 <?php
 // Datos compartidos por los bloques de la portada (inc/blocks/*.php).
 $pageContext = ['author' => $author, 'categories' => $categories, 'galleryItems' => $galleryItems, 'heroItem' => $heroItem, 'rootDir' => __DIR__, 'siteSettings' => $siteSettings, 'totalFotos' => $totalFotos, 'yearLabel' => $yearLabel];
 ?>
-<body<?= site_design_attributes() ?> class="<?= $heroItem ? 'has-photos' : 'no-photos' ?>"<?= $fotoSlug ? ' data-open-slug="' . safe($fotoSlug) . '"' : '' ?>>
+<body<?= site_design_attributes() ?> class="<?= $heroItem ? 'has-photos' : 'no-photos' ?>"<?= $fotoSlug ? ' data-open-slug="' . safe($fotoSlug) . '"' : '' ?><?= $isSiteAdmin ? ' data-inline-editor-csrf="' . safe($inlineEditorCsrf) . '"' : '' ?>>
+<?php if ($isSiteAdmin): ?>
+<button class="inline-edit-launch" type="button" data-inline-editor-toggle aria-pressed="false">✎ <span>Editar página</span></button>
+<aside class="inline-edit-panel" data-inline-editor-panel role="dialog" aria-modal="false" aria-labelledby="inline-edit-title" hidden>
+    <div class="inline-edit-panel__top"><div><span class="inline-edit-panel__eyebrow">EDICIÓN EN CONTEXTO</span><h2 id="inline-edit-title">Editar texto</h2></div><button type="button" class="inline-edit-panel__close" data-inline-editor-close aria-label="Cerrar editor">×</button></div>
+    <label class="inline-edit-panel__label" for="inline-edit-value" data-inline-editor-label>Texto</label>
+    <textarea id="inline-edit-value" data-inline-editor-input rows="4" maxlength="20000"></textarea>
+    <p class="inline-edit-panel__status" data-inline-editor-status aria-live="polite">Los cambios se guardan al pulsar Guardar.</p>
+    <div class="inline-edit-panel__actions"><button type="button" class="inline-edit-panel__cancel" data-inline-editor-cancel>Cancelar</button><button type="button" class="inline-edit-panel__save" data-inline-editor-save>Guardar cambios</button></div>
+</aside>
+<?php endif; ?>
 
 <?php if ($fotoItem === null): ?>
 <!-- PRELOADER cinematográfico (solo en la home) -->
@@ -535,7 +550,7 @@ echo page_blocks_render_home($pageContext, $siteSettings['section_order'] ?? nul
 <?php if ($fotoItem !== null) echo page_block_render('social', $pageContext); // En la home lo coloca page_blocks_render_home(). ?>
 
 <footer class="site-footer">
-    <p>&copy; <?= date('Y') ?> <?= site_text_html('text_318bb1fc64a6e036') ?></p>
+    <p>&copy; <?= date('Y') ?> <?= site_inline_text_html('text_318bb1fc64a6e036') ?></p>
     <nav class="site-footer__nav">
         <a href="/aviso-legal.php"><?= site_text_html('text_7664bd753da07ad5') ?></a>
         <a href="/politica-privacidad.php"><?= site_text_html('text_52233e2c4d6b2e9a') ?></a>
@@ -546,6 +561,7 @@ echo page_blocks_render_home($pageContext, $siteSettings['section_order'] ?? nul
 </footer>
 
 <?= site_client_texts() ?>
+<?php if ($isSiteAdmin): ?><script src="/assets/js/inline-editor.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/inline-editor.js')) ?>" defer></script><?php endif; ?>
 <script src="/assets/js/pwa.js?v=<?= safe($appVersion) ?>" defer></script>
 <script src="/assets/js/gallery-layout.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/gallery-layout.js')) ?>" defer></script>
 <script src="/assets/js/main.js?v=<?= safe($appVersion) ?>" defer></script>

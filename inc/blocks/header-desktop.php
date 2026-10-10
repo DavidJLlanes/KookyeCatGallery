@@ -22,13 +22,13 @@
         <a href="/" class="hero__crest" aria-label="<?= site_text_html('text_83f4e59e2da59d76') ?>">
             <img src="<?= safe(site_media_url('logo_image')) ?>" width="500" height="640" alt="" loading="eager" decoding="async">
         </a>
-        <span class="hero__eyebrow"><?= site_text_html('text_b6b50664e231e202') ?></span>
+        <span class="hero__eyebrow"><?= site_inline_text_html('text_b6b50664e231e202') ?></span>
         <h1 class="hero__title">
-            <span class="hero__title-line" data-reveal><?= site_text_html('text_cbbba360eb60dd04') ?></span>
-            <span class="hero__title-line hero__title-line--accent" data-reveal><?= site_text_html('text_2c1ac3057629f681') ?></span>
+            <span class="hero__title-line" data-reveal><?= site_inline_text_html('text_cbbba360eb60dd04') ?></span>
+            <span class="hero__title-line hero__title-line--accent" data-reveal><?= site_inline_text_html('text_2c1ac3057629f681') ?></span>
         </h1>
         <span class="hero__divider" aria-hidden="true"></span>
-        <p class="hero__subtitle" data-reveal><?= site_text_html('text_30170303c506cf6c') ?></p>
+        <p class="hero__subtitle" data-reveal><?= site_inline_text_html('text_30170303c506cf6c') ?></p>
         <?php if ($heroItem): ?>
         <div class="hero__meta" data-reveal>
             <span><?= $totalFotos ?> <?= site_text_html($totalFotos === 1 ? 'text_08e81d4e64f6b4ff' : 'text_577e559428a23438') ?></span>
@@ -36,7 +36,7 @@
             <span><?= safe($yearLabel) ?></span>
         </div>
         <?php else: ?>
-        <p class="hero__empty-note" data-reveal><?= site_text_html('template_empty_gallery_message') ?></p>
+        <p class="hero__empty-note" data-reveal><?= site_inline_text_html('template_empty_gallery_message') ?></p>
         <?php endif; ?>
     </div>
 

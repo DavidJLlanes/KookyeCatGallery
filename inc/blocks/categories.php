@@ -11,7 +11,7 @@
     <?php if ($siteSettings['show_categories'] && $heroItem && !empty($categories)): ?>
     <!-- SELECTOR DE CATEGORÍAS -->
     <section class="categories-block" aria-labelledby="categoriesTitle">
-    <h2 class="categories-block__title" id="categoriesTitle" data-reveal><?= site_text_html('categories_title') ?></h2>
+    <h2 class="categories-block__title" id="categoriesTitle" data-reveal><?= site_inline_text_html('categories_title') ?></h2>
     <div class="categories-filter" id="categoriesFilter" data-site-section="categories" data-reveal>
         <div class="categories-filter__inner">
             <button class="categories-filter__chip is-active" data-category=""><?= site_text_html('text_aff4d19d6ee43b20') ?></button>

@@ -72,7 +72,7 @@ $bubblesShape = site_premium_gallery_active($siteSettings ?? null) === 'squares'
             <?php endforeach; ?>
         </div>
 
-        <p class="bubbles__empty" data-bubbles-empty hidden><?= site_text_html('bubbles_empty_filter') ?></p>
+        <p class="bubbles__empty" data-bubbles-empty hidden><?= site_inline_text_html('bubbles_empty_filter') ?></p>
 
         <div class="bubbles__ui">
             <div class="bubbles__tools" aria-label="Herramientas de galería">
@@ -98,8 +98,8 @@ $bubblesShape = site_premium_gallery_active($siteSettings ?? null) === 'squares'
             </nav>
 
             <p class="bubbles__hint" data-bubbles-hint>
-                <span class="bubbles__hint--touch"><?= site_text_html('bubbles_hint_touch') ?></span>
-                <span class="bubbles__hint--pointer"><?= site_text_html('bubbles_hint_wheel') ?></span>
+                <span class="bubbles__hint--touch"><?= site_inline_text_html('bubbles_hint_touch') ?></span>
+                <span class="bubbles__hint--pointer"><?= site_inline_text_html('bubbles_hint_wheel') ?></span>
             </p>
         </div>
     </section>

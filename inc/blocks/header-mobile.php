@@ -16,7 +16,7 @@
     data-template-scrapbook-label="<?= site_text_html('template_scrapbook_label') ?>">
     <div class="mobile-profile__masthead">
         <a class="mobile-profile__brand" href="/" aria-label="<?= site_text_html('text_84f085942c2a2aa1') ?>"><?= site_text_html('text_52179dc42df7efe5') ?></a>
-        <span class="mobile-profile__edition"><?= site_text_html('text_8aa8595771f39463') ?></span>
+        <span class="mobile-profile__edition"><?= site_inline_text_html('text_8aa8595771f39463') ?></span>
     </div>
     <div class="mobile-profile__identity">
         <div class="mobile-profile__portraits">
@@ -26,15 +26,15 @@
         <div class="mobile-profile__stats" aria-label="<?= site_text_html('text_7f9488ff977b7f67') ?>">
             <div><strong><?= $totalFotos ?></strong><span><?= site_text_html('text_577e559428a23438') ?></span></div>
             <div><strong><?= count($categories) ?></strong><span><?= site_text_html('text_bb6db5ced87f3dfa') ?></span></div>
-            <div><strong><?= site_text_html('text_b5c772cf5b14f84e') ?></strong><span><?= site_text_html('text_ff1de97302308752') ?></span></div>
+            <div><strong><?= site_inline_text_html('text_b5c772cf5b14f84e') ?></strong><span><?= site_inline_text_html('text_ff1de97302308752') ?></span></div>
         </div>
     </div>
     <div class="mobile-profile__bio">
-        <strong class="mobile-profile__name"><?= site_text_html('text_4577bab0d9627af1') ?> <span class="mobile-profile__verified" role="img" aria-label="<?= site_text_html('text_6ba397681d3ee9c1') ?>" title="<?= site_text_html('text_30170303c506cf6c') ?>">✓</span></strong>
-        <p><?= site_text_html('text_2e2b80d871481edc') ?></p>
-        <p><?= site_text_html('text_54b7645201863e32') ?></p>
+        <strong class="mobile-profile__name"><?= site_inline_text_html('text_4577bab0d9627af1') ?> <span class="mobile-profile__verified" role="img" aria-label="<?= site_text_html('text_6ba397681d3ee9c1') ?>" title="<?= site_text_html('text_30170303c506cf6c') ?>">✓</span></strong>
+        <p><?= site_inline_text_html('text_2e2b80d871481edc') ?></p>
+        <p><?= site_inline_text_html('text_54b7645201863e32') ?></p>
         <?php if (!empty($siteSettings['profile_website_url'])): ?>
-            <a class="mobile-profile__website" href="<?= safe((string) $siteSettings['profile_website_url']) ?>" target="_blank" rel="noopener noreferrer" aria-label="Visitar <?= site_text_html('text_7e6debbd1dab03b1') ?>, se abre en una pestaña nueva"><?= site_text_html('text_7e6debbd1dab03b1') ?></a>
+            <a class="mobile-profile__website" href="<?= safe((string) $siteSettings['profile_website_url']) ?>" target="_blank" rel="noopener noreferrer" aria-label="Visitar <?= site_text_html('text_7e6debbd1dab03b1') ?>, se abre en una pestaña nueva"><?= site_inline_text_html('text_7e6debbd1dab03b1') ?></a>
             <?php endif; ?>
     </div>
 </section>

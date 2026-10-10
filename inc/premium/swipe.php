@@ -86,12 +86,12 @@ $swipeTotal = count($galleryItems);
 
             <!-- Fin de las fotos. -->
             <div class="swipe__end" data-swipe-end>
-                <p><?= site_text_html('swipe_end') ?></p>
-                <button type="button" class="swipe__restart" data-swipe-restart><?= site_text_html('swipe_restart') ?></button>
+                <p><?= site_inline_text_html('swipe_end') ?></p>
+                <button type="button" class="swipe__restart" data-swipe-restart><?= site_inline_text_html('swipe_restart') ?></button>
             </div>
         </div>
 
-        <p class="deck__empty" data-deck-empty hidden><?= site_text_html('deck_empty_filter') ?></p>
+        <p class="deck__empty" data-deck-empty hidden><?= site_inline_text_html('deck_empty_filter') ?></p>
 
         <div class="deck__ui">
             <div class="deck__tools" aria-label="Herramientas de galería">
@@ -114,14 +114,14 @@ $swipeTotal = count($galleryItems);
                 </button>
                 <span class="deck__nav-sep" aria-hidden="true"></span>
                 <button type="button" class="deck__exit" data-deck-exit aria-label="<?= site_text_html('deck_exit_label') ?>">
-                    <span class="deck__exit-text"><?= site_text_html('deck_exit') ?></span>
+                    <span class="deck__exit-text"><?= site_inline_text_html('deck_exit') ?></span>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l6 6 6-6M6 13l6 6 6-6"/></svg>
                 </button>
             </div>
 
             <p class="deck__hint" data-deck-hint>
-                <span class="deck__hint--touch"><?= site_text_html('swipe_hint_touch') ?></span>
-                <span class="deck__hint--pointer"><?= site_text_html('swipe_hint_wheel') ?></span>
+                <span class="deck__hint--touch"><?= site_inline_text_html('swipe_hint_touch') ?></span>
+                <span class="deck__hint--pointer"><?= site_inline_text_html('swipe_hint_wheel') ?></span>
             </p>
         </div>
     </section>

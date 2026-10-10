@@ -22,9 +22,9 @@ if ($premiumKey !== null) {
 
     <?php if ($heroItem): ?>
     <div class="gallery-intro" data-site-section="intro">
-        <h2 class="gallery-intro__title" data-reveal><?= site_text_html('text_7d367bc92702d135') ?></h2>
+        <h2 class="gallery-intro__title" data-reveal><?= site_inline_text_html('text_7d367bc92702d135') ?></h2>
         <p class="gallery-intro__text" data-reveal>
-            <?= site_text_html('text_c15e876671f50d92') ?> <strong><?= site_text_html('text_b5c772cf5b14f84e') ?></strong><?= site_text_html('text_a9157ae01488ec67') ?>
+            <?= site_inline_text_html('text_c15e876671f50d92') ?> <strong><?= site_inline_text_html('text_b5c772cf5b14f84e') ?></strong><?= site_inline_text_html('text_a9157ae01488ec67') ?>
         </p>
     </div>
 
