@@ -52,9 +52,7 @@ function adminActiveSection(): string
     if (isset($_GET['settings']) || $action === 'save_site_settings') {
         $section = (string) ($_POST['section'] ?? $_GET['section'] ?? 'profile');
         if ($section === 'page') return 'texts';
-        if ($section === 'content' || $section === 'profile' || $section === 'social') return 'profile';
-        if ($section === 'publication') return 'design';
-        return in_array($section, ['design', 'texts'], true) ? $section : 'profile';
+        return in_array($section, ['profile', 'design', 'texts'], true) ? $section : 'profile';
     }
     if (isset($_GET['categories']) || $action === 'manage_category') return 'categories';
     if (isset($_GET['library']) || isset($_GET['edit']) || $action === 'delete_existing') return 'library';
@@ -72,7 +70,7 @@ function adminShellHtml(string $title, string $content, bool $wide): string
         'upload' => ['/admin.php', 'Subir foto', 'Subir'],
         'library' => ['/admin.php?library=1', 'Gestionar fotos', 'Fotos'],
         'categories' => ['/admin.php?categories=1', 'Categorías', 'Temas'],
-        'profile' => ['/admin.php?settings=1&amp;section=content', 'Ajustes', 'Ajustes'],
+        'profile' => ['/admin.php?settings=1&amp;section=profile', 'Perfil', 'Perfil'],
         'design' => ['/admin.php?settings=1&amp;section=design', 'Diseño', 'Diseño'],
         'texts' => ['/admin.php?settings=1&amp;section=texts', 'Textos', 'Textos'],
     ];
