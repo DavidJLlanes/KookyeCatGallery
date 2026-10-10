@@ -275,10 +275,6 @@ if ($fotoItem !== null) {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <?php endif; ?>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap">
-
     <link rel="stylesheet" href="/assets/css/style.css?v=<?= safe($appVersion) ?>">
 
     <!-- Leaflet: Mapa interactivo -->
@@ -374,6 +370,7 @@ if ($fotoItem !== null) {
     <link rel="stylesheet" href="/assets/css/gallery-layout.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/gallery-layout.css')) ?>">
     <?php if ($isSiteAdmin): ?><link rel="stylesheet" href="/assets/css/inline-editor.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/inline-editor.css')) ?>"><?php endif; ?>
     <?php if ($fotoItem === null) echo premium_gallery_head_tags(); // Estilos de la galería premium activa (ver inc/premium-galleries.php). ?>
+    <link rel="stylesheet" href="/assets/css/typography.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/typography.css')) ?>">
 </head>
 <?php
 // Datos compartidos por los bloques de la portada (inc/blocks/*.php).

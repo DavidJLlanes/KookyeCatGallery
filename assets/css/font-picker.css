@@ -1,0 +1,31 @@
+.font-picker { min-width: 0; }
+.font-picker__filters { display: flex; gap: .45rem; overflow-x: auto; padding: .15rem .1rem .55rem; scrollbar-width: thin; }
+.font-picker__filters button {
+    flex: 0 0 auto; min-height: 40px; padding: .55rem .8rem; border: 1px solid var(--adm-line-strong);
+    border-radius: 999px; color: var(--fg-soft); background: var(--adm-surface-2);
+    font: 600 .76rem var(--sans); white-space: nowrap;
+}
+.font-picker__filters button.is-active { border-color: var(--accent); color: #15100c; background: var(--accent); }
+.font-picker__status { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem; margin: .25rem 0 1rem; font-size: .76rem; }
+.font-picker__count { color: var(--fg-soft); }
+.font-picker__selected { color: var(--accent); font-weight: 600; }
+.font-picker__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+.font-pair-card {
+    position: relative; display: flex; flex-direction: column; gap: .45rem; min-width: 0;
+    padding: 1rem; border: 1px solid var(--adm-line-strong); border-radius: 14px;
+    background: linear-gradient(135deg, rgba(212,165,116,.055), transparent 58%), #171614;
+    color: var(--fg); cursor: pointer; transition: border-color .18s, background .18s, transform .18s;
+}
+.font-pair-card[hidden] { display: none; }
+.font-pair-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.font-pair-card:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.font-pair-card:has(input:checked) { border-color: var(--accent); background: linear-gradient(135deg, rgba(212,165,116,.16), rgba(212,165,116,.035) 65%), #171614; box-shadow: inset 0 0 0 1px var(--accent); }
+.font-pair-card input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.font-pair-card__top { display: flex; justify-content: space-between; align-items: center; gap: .5rem; color: var(--fg-soft); font: 600 .72rem var(--sans); }
+.font-pair-card__check { display: grid; place-items: center; width: 21px; height: 21px; border: 1px solid var(--adm-line-strong); border-radius: 50%; color: transparent; }
+.font-pair-card input:checked ~ .font-pair-card__top .font-pair-card__check { color: #15100c; background: var(--accent); border-color: var(--accent); }
+.font-pair-card__heading { display: block; margin-top: .35rem; color: var(--fg); font: 500 clamp(1.35rem, 2.4vw, 1.8rem)/1.12 var(--preview-heading); letter-spacing: -.02em; overflow-wrap: anywhere; }
+.font-pair-card__body { display: block; color: var(--fg-soft); font: 400 .83rem/1.45 var(--preview-body); }
+.font-pair-card__names { display: block; margin-top: auto; padding-top: .7rem; border-top: 1px solid var(--adm-line); color: var(--fg-soft); font: 500 .66rem/1.4 var(--sans); }
+@media (max-width: 680px) { .font-picker__grid { grid-template-columns: minmax(0, 1fr); } .font-pair-card { padding: .9rem; } }
+@media (prefers-reduced-motion: reduce) { .font-pair-card { transition: none; } .font-pair-card:hover { transform: none; } }

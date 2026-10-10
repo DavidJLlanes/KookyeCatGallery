@@ -21,6 +21,7 @@ require_once __DIR__ . '/premium-galleries.php';
 require_once __DIR__ . '/gallery-capabilities.php';
 require_once __DIR__ . '/template-texts.php';
 require_once __DIR__ . '/site-brand-assets.php';
+require_once __DIR__ . '/site-typography.php';
 
 // =============================================================================
 // 1. ALMACENAMIENTO Y OPCIONES DE DISEÑO
@@ -196,6 +197,7 @@ function gallery_collections_sync_categories(array $photos): void
 function site_design_choices(): array
 {
     return [
+        'font_pair' => array_map(static fn(array $pair): string => $pair['name'], site_font_pairs()),
         'palette' => ['current' => 'Elegante', 'black' => 'Noche · negro y blanco', 'white' => 'Luz · blanco y tinta', 'cyberpunk' => 'Cyberpunk · neón', 'japanese' => 'Japón · papel y carmesí', 'forest' => 'Bosque · verde y marfil', 'ocean' => 'Océano · azul profundo y turquesa'],
         'grid' => ['adaptive' => 'Según el diseño', 'square' => 'Cuadrada', 'landscape' => 'Horizontal · 4:3', 'portrait' => 'Vertical · 3:4'],
         'header_mobile' => ['current' => 'Perfil social', 'centered' => 'Retrato centrado', 'compact' => 'Compacta', 'editorial' => 'Editorial',
@@ -309,7 +311,7 @@ function site_social_networks(): array
  */
 function site_settings_defaults(): array
 {
-    return ['palette' => 'current', 'grid' => 'adaptive', 'columns_mobile' => 3,
+    return ['palette' => 'current', 'font_pair' => 'classic', 'grid' => 'adaptive', 'columns_mobile' => 3,
         'columns_desktop' => 3, 'photos_mobile' => 12, 'photos_desktop' => 20, 'header_mobile' => 'current', 'header_desktop' => 'current',
         'gallery_mobile' => 'standard', 'gallery_desktop' => 'standard', 'hover' => 'soft', 'pagination_shape' => 'circle', 'gallery_premium' => 'none', 'site_title' => '',
         'section_order' => array_keys(site_section_labels()), 'show_header_mobile' => true, 'show_header_desktop' => true,
@@ -748,7 +750,7 @@ function site_design_attributes(): string
     $attributes = '';
     // Con una galería premium activa los ajustes estándar de galería no se aplican: el <body> los marca como «premium».
     $premium = site_premium_gallery_active($settings);
-    foreach (['palette', 'grid', 'header_mobile', 'header_desktop', 'gallery_mobile', 'gallery_desktop', 'hover', 'pagination_shape', 'gallery_premium'] as $key) {
+    foreach (['palette', 'font_pair', 'grid', 'header_mobile', 'header_desktop', 'gallery_mobile', 'gallery_desktop', 'hover', 'pagination_shape', 'gallery_premium'] as $key) {
         $value = $premium !== null && in_array($key, ['grid', 'gallery_mobile', 'gallery_desktop'], true) ? 'premium' : $settings[$key];
         $attributes .= ' data-' . str_replace('_', '-', $key) . '="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '"';
     }
@@ -756,7 +758,12 @@ function site_design_attributes(): string
         $attributes .= ' data-' . str_replace('_', '-', $key) . '="' . ($settings[$key] ? 'true' : 'false') . '"';
     }
     $attributes .= ' data-photos-mobile="' . (int) $settings['photos_mobile'] . '" data-photos-desktop="' . (int) $settings['photos_desktop'] . '"';
-    return $attributes . ' style="--columns-mobile:' . $settings['columns_mobile'] . ';--columns-desktop:' . $settings['columns_desktop'] . '"';
+    $font = site_font_pair($settings['font_pair']);
+    $heading = "'" . $font['heading'] . "',Georgia,serif";
+    $body = "'" . $font['body'] . "',system-ui,sans-serif";
+    return $attributes . ' style="--columns-mobile:' . $settings['columns_mobile'] . ';--columns-desktop:' . $settings['columns_desktop']
+        . ';--site-heading-font:' . $heading . ';--site-body-font:' . $body
+        . ';--serif:var(--site-heading-font);--sans:var(--site-body-font)"';
 }
 
 /**

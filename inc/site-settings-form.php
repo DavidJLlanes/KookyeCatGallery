@@ -76,6 +76,25 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     // Tarjeta «Apariencia»: paleta y efecto hover.
     $html .= $card('Apariencia', 'Colores y efecto al pasar el ratón por las fotos.',
         '<div class="admin-fields">' . $select('palette', $labels['palette'], $choices['palette'], $settings['palette']) . $select('hover', $labels['hover'], $choices['hover'], $settings['hover']) . '</div>');
+    $fontCards = '<div class="font-picker" data-font-picker><div class="font-picker__filters" role="group" aria-label="Filtrar combinaciones">';
+    foreach (['all' => 'Todas', 'editorial' => 'Editoriales', 'modern' => 'Modernas', 'experimental' => 'Expresivas'] as $group => $label) {
+        $fontCards .= '<button type="button" data-font-filter="' . $group . '"' . ($group === 'all' ? ' class="is-active" aria-pressed="true"' : ' aria-pressed="false"') . '>' . $escape($label) . '</button>';
+    }
+    $fontCards .= '</div><div class="font-picker__status"><p class="font-picker__count" data-font-count aria-live="polite">30 combinaciones disponibles</p>'
+        . '<p class="font-picker__selected" data-font-selected>Elegida: ' . $escape(site_font_pair($settings['font_pair'])['name']) . '</p></div>'
+        . '<fieldset class="font-picker__grid"><legend class="sr-only">Pareja de tipografías de la web</legend>';
+    foreach (site_font_pairs() as $key => $pair) {
+        $heading = $escape($pair['heading']);
+        $body = $escape($pair['body']);
+        $fontCards .= '<label class="font-pair-card" data-font-category="' . $pair['group'] . '" style="--preview-heading:\'' . $heading . '\';--preview-body:\'' . $body . '\'">'
+            . '<input type="radio" name="font_pair" value="' . $escape($key) . '"' . ($settings['font_pair'] === $key ? ' checked' : '') . '>'
+            . '<span class="font-pair-card__top"><strong>' . $escape($pair['name']) . '</strong><span class="font-pair-card__check" aria-hidden="true">✓</span></span>'
+            . '<span class="font-pair-card__heading">La luz cuenta historias</span>'
+            . '<span class="font-pair-card__body">Una colección de imágenes para mirar sin prisa.</span>'
+            . '<span class="font-pair-card__names">Títulos: ' . $heading . ' · Texto: ' . $body . '</span></label>';
+    }
+    $fontCards .= '</fieldset></div><p class="upload-help">Vista previa con las fuentes reales. Se aplican a todas las páginas y a los diseños de móvil y escritorio después de guardar.</p>';
+    $html .= $card('Tipografías', 'Elige una pareja para los títulos y el resto del texto. Las fuentes se sirven desde tu propia web.', $fontCards);
     // Tarjeta «Cabecera»: estilo y visibilidad independientes en móvil y escritorio.
     $html .= $card('Cabecera', 'Elige el estilo y decide si se muestra en cada tipo de pantalla.',
         '<div class="admin-fields">' . $select('header_mobile', $labels['header_mobile'], $choices['header_mobile'], $settings['header_mobile']) . $select('header_desktop', $labels['header_desktop'], $choices['header_desktop'], $settings['header_desktop']) . '</div>'
@@ -196,7 +215,12 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . '<input id="og-image-file" name="og_image_file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
         . '<small class="upload-help">JPG, PNG o WebP. Recomendado 1200 × 630 px (relación 1,91:1; mínimo 600 × 315). Se recorta y adapta a 1200 × 630 px. Máximo 15 MB.</small></div></div></section></div>';
     }
-    return $html . '<div class="admin-savebar"><span class="admin-savebar__hint">Los cambios se aplican a la web al guardar.</span><button class="upload-submit" type="submit">Guardar configuración</button></div></form>';
+    $html .= '<div class="admin-savebar"><span class="admin-savebar__hint">Los cambios se aplican a la web al guardar.</span><button class="upload-submit" type="submit">Guardar configuración</button></div></form>';
+    if ($section === 'design') {
+        $html .= '<link rel="stylesheet" href="/assets/css/font-picker.css?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/css/font-picker.css'), 0, 12) . '">'
+            . '<script src="/assets/js/font-picker.js?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/js/font-picker.js'), 0, 12) . '" defer></script>';
+    }
+    return $html;
 }
 
 /**

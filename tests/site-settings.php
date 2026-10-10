@@ -15,6 +15,15 @@ function rejects(array $input): void
 }
 
 $defaults = site_settings_defaults();
+check(count(site_font_pairs()) === 30, 'The typography picker must offer 30 curated pairs.');
+check($defaults['font_pair'] === 'classic', 'Existing installations must keep the original typography by default.');
+foreach (site_font_pairs() as $pair) {
+    foreach (['heading', 'body'] as $role) {
+        check($pair[$role] !== '', 'A font pair is missing a family.');
+        check(str_contains((string) file_get_contents(dirname(__DIR__) . '/assets/css/typography.css'), "font-family:'" . $pair[$role] . "'"), 'A pair references a font that is not self-hosted.');
+    }
+}
+rejects(array_replace($defaults, ['font_pair' => 'url(https://example.com/font.woff2)']));
 check(isset(site_social_networks()['instagram'], site_social_networks()['threads']), 'Instagram and Threads must be available networks.');
 check(!in_array('social_threads_user', site_editable_text_keys(), true) && !in_array('text_3b20084d3d94b4ee', site_editable_text_keys(), true), 'Network handles must not be editable text fields.');
 $inlineKeys = site_inline_editable_text_keys();
@@ -97,8 +106,11 @@ foreach (['show_header_mobile', 'show_header_desktop'] as $field) {
     check(site_settings_validate(array_replace($defaults, [$field => '1']))[$field] === true, 'Header toggle did not turn on.');
 }
 check(str_contains(site_design_attributes(), 'data-show-header-mobile='), 'Header visibility must reach the page.');
+check(str_contains(site_design_attributes(), 'data-font-pair="classic"') && str_contains(site_design_attributes(), '--site-heading-font:'), 'The chosen font pair must reach the public page.');
 check(str_contains(site_settings_form('t', array_replace($defaults, ['section_order' => ['map', 'gallery', 'categories', 'project', 'social']]), 'design'), 'data-section-key="map"'), 'Section order list missing from the design form.');
 $designForm = site_settings_form('t', $defaults, 'design');
+check(substr_count($designForm, 'name="font_pair"') === 30, 'All font pairs must be selectable in the design panel.');
+check(str_contains($designForm, 'La luz cuenta historias') && str_contains($designForm, 'data-font-picker'), 'The font picker must show a real preview.');
 check(str_contains($designForm, '<h3>Perfiles sociales</h3>') && str_contains($designForm, '<option value="instagram">Instagram</option>') && str_contains($designForm, '<option value="threads">Threads</option>'), 'The page structure social section must include Instagram and Threads.');
 check(!str_contains($designForm, 'name="instagram_url"') && !str_contains($designForm, 'name="threads_url"') && !str_contains($designForm, 'Nombre de usuario de Instagram') && !str_contains($designForm, 'Nombre de usuario de Threads'), 'Legacy profile fields must be removed.');
 check(str_contains($designForm, '<strong>Redes Sociales</strong>'), 'Page structure must label the social block Redes Sociales.');
@@ -187,7 +199,7 @@ check(premium_gallery_head_tags() === '' || str_contains(premium_gallery_head_ta
 
 $key = site_editable_text_keys()[0];
 $custom = array_replace($defaults, [
-    'palette' => 'japanese', 'grid' => 'adaptive', 'columns_mobile' => 4, 'columns_desktop' => 10,
+    'palette' => 'japanese', 'font_pair' => 'urban', 'grid' => 'adaptive', 'columns_mobile' => 4, 'columns_desktop' => 10,
     'header_mobile' => 'compact', 'header_desktop' => 'editorial',
     'gallery_mobile' => 'category-rails', 'gallery_desktop' => 'mosaic',
     'show_categories' => false, 'show_map' => true, 'show_project' => false, 'show_social' => true,

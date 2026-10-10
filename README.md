@@ -34,6 +34,7 @@ KookyeCatGallery es una web de fotografía que se instala en tu propio alojamien
 - **Categorías:** crea, renombra, combina, mueve o elimina categorías. En la web se pueden mostrar como enlaces para filtrar las fotografías de cada colección.
 - **Edición visual del sitio:** tras iniciar sesión, activa «Editar página» para cambiar textos en su contexto directamente en la web. Las redes sociales y las páginas legales se administran en sus apartados del panel.
 - **Diseño adaptable:** cabeceras, paletas, organización de bloques y diseños independientes para móvil y escritorio.
+- **Tipografías locales:** 30 parejas de fuentes para títulos y texto, con ejemplos reales en el panel. Los archivos y sus licencias se distribuyen con la web.
 - **18 composiciones de galería:** diez diseños estándar y ocho premium. Los controles que no corresponden a un diseño se desactivan; la misma regla se aplica al guardar en el servidor.
 - **Efectos hover accesibles:** diez efectos compartidos por los diseños, también disponibles al enfocar con teclado y respetando la preferencia de movimiento reducido.
 - **Identidad visual:** sube el icono de la app (también usado como favicon) y la imagen para compartir en redes. El icono se adapta automáticamente a los tamaños necesarios.
@@ -159,6 +160,7 @@ La generación de títulos y descripciones con Gemini u OpenRouter viene desacti
 
 - [Instalación y configuración del hosting](docs/instalacion.md)
 - [Opciones compatibles de las galerías](docs/opciones-galeria.md)
+- [Tipografías y licencias](docs/tipografias.md)
 - [Diseños de galería premium](docs/galerias-premium.md)
 - [Textos y diseño](docs/textos-y-diseno.md)
 - [Subir fotografías y límites del servidor](docs/subida-fotografias.md)

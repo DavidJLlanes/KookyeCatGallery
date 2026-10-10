@@ -18,11 +18,9 @@ $pageH1 = site_text('text_fa322aa36e894213');
     <title><?= htmlspecialchars($pageTitle) ?></title>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.svg">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.svg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap">
     <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/assets/css/style.css') ?: time() ?>">
     <link rel="stylesheet" href="/assets/css/site-design.css?v=<?= filemtime(__DIR__ . '/assets/css/site-design.css') ?>">
+    <link rel="stylesheet" href="/assets/css/typography.css?v=<?= filemtime(__DIR__ . '/assets/css/typography.css') ?>">
 </head>
 <body<?= site_design_attributes() ?> class="legal-page">
 
