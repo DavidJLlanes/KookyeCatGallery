@@ -451,3 +451,17 @@
     .admin-collection-form { grid-template-columns: 1fr; }
     .admin-collection-form .upload-submit { width: 100%; }
 }
+
+/* Crear categorías desde Gestionar categorías. */
+.admin-category-create {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .8rem; align-items: end;
+    margin: 1rem 0 1.2rem; padding: 1rem 1.1rem;
+    border: 1px solid var(--adm-line); border-radius: var(--adm-radius); background: var(--adm-surface);
+}
+.admin-category-create .upload-field { margin: 0; }
+.admin-empty-category-delete { grid-column: 2; }
+@media (max-width: 720px) {
+    .admin-category-create { grid-template-columns: 1fr; padding: .9rem; }
+    .admin-category-create .upload-submit { width: 100%; }
+    .admin-empty-category-delete { grid-column: auto; }
+}
