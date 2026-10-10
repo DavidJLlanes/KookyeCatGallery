@@ -176,6 +176,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     }
     $html .= '</div>';
     $html = str_replace('<form method="post"', '<form method="post" enctype="multipart/form-data"', $html);
+    if ($section === 'content') {
     // ── Contenido: imágenes de marca ───────────────────────────────────────
     $html .= '<div class="settings-content"><section class="admin-card"><header class="admin-card__head"><h2>Imágenes</h2><p>Foto de perfil y logo de la web.</p></header><div class="admin-card__body">';
     $html .= '<input type="hidden" name="profile_image" value="' . $escape((string) $settings['profile_image']) . '">'
@@ -192,6 +193,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . '<div class="upload-field"><label for="og-image-file">Imagen para compartir en redes sociales (Open Graph)</label>'
         . '<input id="og-image-file" name="og_image_file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
         . '<small class="upload-help">JPG, PNG o WebP. Recomendado 1200 × 630 px (relación 1,91:1; mínimo 600 × 315). Se recorta y adapta a 1200 × 630 px. Máximo 15 MB.</small></div></div></section></div>';
+    }
     return $html . '<div class="admin-savebar"><span class="admin-savebar__hint">Los cambios se aplican a la web al guardar.</span><button class="upload-submit" type="submit">Guardar configuración</button></div></form>';
 }
 
