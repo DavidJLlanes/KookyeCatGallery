@@ -336,7 +336,13 @@
     .social-settings-row__fields { grid-template-columns: minmax(0, 1fr); }
 }
 
-/*
+.social-settings-copy { margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid var(--adm-line); }
+.social-settings-copy h4 { margin: 0 0 .8rem; color: var(--fg); font: 600 .92rem var(--sans); }
+.social-settings-copy__fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: .8rem; }
+.social-settings-copy .upload-field { margin: 0; }
+.social-settings-copy textarea { box-sizing: border-box; width: 100%; min-height: 44px; border: 1px solid var(--adm-line-strong); border-radius: 10px; padding: .7rem .8rem; color: var(--fg); background: #171513; font: 400 .9rem/1.5 var(--sans); resize: vertical; }
+.social-settings-copy textarea:focus { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 1px; }
+
 /* ---------- Biblioteca de fotos ---------- */
 .admin-library__intro { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; color: var(--fg-soft); font-size: .88rem; }
 .admin-library__intro p { margin: 0; }
@@ -455,6 +461,10 @@
 
 /* Colecciones en la gestión de categorías */
 .admin-collection-card { grid-template-columns: minmax(0, 1fr); }
+.admin-collection-card > div:first-child,
+.admin-collection-card > .admin-collection-form,
+.admin-collection-card > .admin-category-form,
+.admin-collection-card > .admin-empty-category-delete { grid-column: 1 / -1; width: 100%; min-width: 0; }
 .admin-collection-form { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; gap: .7rem; align-items: end; padding: .8rem 0 1rem; border-bottom: 1px solid var(--adm-line); }
 .admin-collection-form textarea { width: 100%; min-height: 2.7rem; resize: vertical; }
 .admin-collection-form .upload-submit { margin: 0; white-space: nowrap; }
