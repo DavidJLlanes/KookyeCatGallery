@@ -13,30 +13,23 @@ declare(strict_types=1);
  */
 
 /**
- * Formulario de ajustes. `$section` decide qué parte se ve: content, design, texts, social o publication.
+ * Formulario de ajustes. `$section` decide qué parte se ve: 'profile', 'design' o 'texts'.
  *
- * Las secciones agrupan contenido (imágenes de marca), diseño, páginas de texto, redes sociales y publicación (visibilidad).
+ * Estructura de la parte «Diseño» (una tarjeta por apartado):
+ *   Apariencia · Cabecera · Galería · Estructura de la página.
+ * «Textos» contiene marca, textos de plantilla y páginas; «Diseño» incluye estructura de página y redes sociales; «Perfil» contiene imágenes.
  *
  * @param array|null $values Valores a mostrar (p. ej. tras un error); null = los guardados.
  */
 function site_settings_form(string $csrf, ?array $values = null, string $section = 'profile'): string
 {
     $settings = $values ?? site_settings_load();
-    if ($section === 'profile') $section = 'content';
-    if (!in_array($section, ['content', 'design', 'texts', 'social', 'publication'], true)) $section = 'content';
     $escape = fn(string $value): string => htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $html = '<form method="post" action="/admin.php?settings=1" class="upload-form site-settings" data-settings-section="' . $escape($section) . '">'
         . '<input type="hidden" name="action" value="save_site_settings">'
         . '<input type="hidden" name="csrf" value="' . $escape($csrf) . '">'
         . '<input type="hidden" name="section" value="' . $escape($section) . '">'
-        . '<p>Configura cada parte de la web desde su sección. Los títulos, descripciones y categorías de las fotos se editan en Gestionar fotos.</p>';
-    $settingsSections = ['content' => 'Contenido', 'design' => 'Diseño', 'texts' => 'Textos', 'social' => 'Redes', 'publication' => 'Publicación'];
-    $settingsNav = '<nav class="admin-subnav settings-subnav" aria-label="Secciones de ajustes">';
-    foreach ($settingsSections as $key => $label) {
-        $settingsNav .= '<a href="/admin.php?settings=1&amp;section=' . $key . '"' . ($section === $key ? ' class="is-active" aria-current="page"' : '') . '>' . $escape($label) . '</a>';
-    }
-    $settingsNav .= '</nav>';
-    $html .= $settingsNav;
+        . '<p>Personaliza la web. Los títulos, descripciones y categorías de cada fotografía se editan en Gestionar fotos.</p>';
     $labels = ['palette' => 'Paleta de colores', 'grid' => 'Proporción de las fotos', 'header_mobile' => 'Cabecera móvil', 'header_desktop' => 'Cabecera de escritorio', 'gallery_mobile' => 'Galería móvil', 'gallery_desktop' => 'Galería de escritorio', 'hover' => 'Efecto Hover', 'pagination_shape' => 'Forma de la paginación', 'gallery_premium' => 'Galería premium'];
     $choices = site_design_choices();
     // ¿Hay una galería premium activa? Entonces se desactivan los campos de la galería estándar (los marcados con $premiumOff).
@@ -104,12 +97,12 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     // El orden del DOM es el que se envía en section_order[].
     $definitions = site_section_definitions();
     $list = '<ol class="section-order" data-section-order>';
-    $publicationControls = '<div class="admin-switches settings-publication-list">';
     foreach ($order as $key) {
         $name = $definitions[$key]['label'];
         $toggle = $definitions[$key]['toggle'];
-        $control = '<span class="section-order__fixed">' . ($toggle !== null ? 'Ajustar en Publicación' : 'Siempre visible') . '</span>';
-        if ($toggle !== null) $publicationControls .= $switch($toggle, 'Mostrar ' . $name, !empty($settings[$toggle]));
+        $control = $toggle !== null
+            ? $switch($toggle, 'Mostrar', !empty($settings[$toggle]))
+            : '<span class="section-order__fixed">Siempre visible</span>';
         $list .= '<li class="section-order__item" data-section-key="' . $key . '"><input type="hidden" name="section_order[]" value="' . $key . '">'
             . '<span class="section-order__grip" aria-hidden="true">⋮⋮</span>'
             . '<span class="section-order__text"><strong>' . $escape($name) . '</strong><small>' . $escape($definitions[$key]['hint']) . '</small></span>'
@@ -117,7 +110,6 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
             . '<span class="section-order__move"><button type="button" data-move="up" aria-label="Subir ' . $escape($name) . '">↑</button><button type="button" data-move="down" aria-label="Bajar ' . $escape($name) . '">↓</button></span></li>';
     }
     $list .= '</ol>';
-    $publicationControls .= '</div>';
     $socialNames = site_social_networks();
     $socialEditor = '<section class="admin-social-settings" data-social-editor><h3>Redes Sociales</h3>'
         . '<p>Elige qué perfiles aparecerán en esta sección.</p><div class="social-settings-list" data-social-list>';
@@ -153,20 +145,16 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
             . $escape((string) $value) . '</textarea></div>';
     }
     $socialEditor .= $socialCopyFields . '</div></div></section>';
-    $html .= $card('Estructura de la página', 'Ordena los bloques de la portada y cabeceras.', $list);
-    $html .= '</div><div class="settings-publication">'
-        . $card('Visibilidad de la página', 'Elige qué bloques se muestran en la web. Los cambios se aplican al guardar.', $publicationControls)
-        . '</div><div class="settings-social">'
-        . $card('Redes Sociales', 'Configura los perfiles y los textos que aparecen en esa sección.', $socialEditor)
-        . '</div><div class="settings-texts">';
+    $html .= $card('Estructura de la página', 'Ordena los bloques de la portada, decide cuáles mostrar y configura las Redes Sociales.', $list . $socialEditor);
+    $html .= '</div><div class="settings-texts">';
     $pages = '<div class="page-editor-options__grid">';
     foreach (site_page_labels() as $key => $label) {
         $pages .= '<a class="page-editor-option" href="/admin.php?settings=1&amp;section=page&amp;doc=' . $key . '"><span>' . $escape($label) . '</span><span aria-hidden="true">Editar →</span></a>';
     }
     $html .= $card('Páginas de texto', 'Edita el contenido de «El proyecto», aviso legal, privacidad y cookies.', $pages . '</div>') . '</div>';
     $html = str_replace('<form method="post"', '<form method="post" enctype="multipart/form-data"', $html);
-    // ── Contenido: imágenes de marca ───────────────────────────────────────
-    $html .= '<div class="settings-content"><section class="admin-card"><header class="admin-card__head"><h2>Imágenes</h2><p>Foto de perfil y logo de la web.</p></header><div class="admin-card__body">';
+    // ── Perfil: imágenes ───────────────────────────────────────────────────
+    $html .= '<div class="settings-profile"><section class="admin-card"><header class="admin-card__head"><h2>Imágenes</h2><p>Foto de perfil y logo de la web.</p></header><div class="admin-card__body">';
     $html .= '<input type="hidden" name="profile_image" value="' . $escape((string) $settings['profile_image']) . '">'
         . '<input type="hidden" name="logo_image" value="' . $escape((string) $settings['logo_image']) . '">'
         . '<div class="upload-field"><label for="profile-image">Foto de perfil</label>'
