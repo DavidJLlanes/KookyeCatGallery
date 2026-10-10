@@ -1744,6 +1744,26 @@
             });
         }
 
+        const collectionCards = $('.collection-card[data-collection-category]');
+        collectionCards.forEach(card => {
+            card.addEventListener('click', () => {
+                currentCat = card.dataset.collectionCategory || '';
+                currentPage = 1;
+                $('.categories-filter__chip', filterEl || document).forEach(chip => {
+                    const active = (chip.dataset.category || '') === currentCat;
+                    chip.classList.toggle('is-active', active);
+                });
+                collectionCards.forEach(item => {
+                    const active = item === card;
+                    item.classList.toggle('is-active', active);
+                    item.setAttribute('aria-pressed', active ? 'true' : 'false');
+                });
+                render();
+                document.querySelector('#masonry')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        // La tarjeta de colección sincroniza el filtro existente.
         // Si la URL es /foto/slug, muestra la página que contiene esa foto
         const openSlug = document.body.dataset.openSlug;
         if (openSlug) {
