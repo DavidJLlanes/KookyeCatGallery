@@ -573,14 +573,9 @@ function site_title_default(): string
  */
 function site_title(): string
 {
-    $settings = site_settings_load();
-    $title = trim((string) ($settings['site_title'] ?? ''));
-    if ($title !== '') return $title;
-
-    // El nombre puede haberse personalizado en el catálogo de textos antes de existir
-    // el ajuste dedicado. Mantén el encabezado del panel y el de la web sincronizados.
-    $customTextTitle = trim((string) ($settings['texts']['text_52179dc42df7efe5'] ?? ''));
-    return $customTextTitle !== '' ? $customTextTitle : site_title_default();
+    // Usa la misma fuente que el nombre público y los metadatos del sitio.
+    // site_text() resuelve el título personalizado y, si falta, el ajuste dedicado.
+    return site_text('text_52179dc42df7efe5');
 }
 
 /**
