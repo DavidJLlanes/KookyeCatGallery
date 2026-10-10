@@ -692,11 +692,13 @@ if (!empty($_SESSION['upload_authenticated'])) {
         uksort($groups, 'strnatcasecmp');
         $status = isset($_GET['status']) ? '<p class="upload-message" role="status">' . uploadEscape((string) $_GET['status']) . '</p>' : '';
         $content = adminNavigation((string) $_SESSION['csrf']) . $status
-            . '<p class="upload-help">Cada categoría funciona como colección. Añade una categoría aquí y asígnala a las fotos desde Gestionar fotos o Carga por lotes.</p>'
-            . '<form method="post" action="/admin.php" class="admin-category-create">'
+            . '<p class="upload-help">Cada categoría reúne fotos relacionadas; después podrás asignarlas desde Gestionar fotos o Carga por lotes.</p>'
+            . '<section class="admin-category-create" aria-labelledby="createCategoryTitle">'
+            . '<div class="admin-category-create__intro"><span class="admin-category-create__icon" aria-hidden="true">+</span><div><h2 id="createCategoryTitle">Añadir categoría</h2><p>Crea un nuevo grupo para organizar tus fotografías.</p></div></div>'
+            . '<form method="post" action="/admin.php" class="admin-category-create__form">'
             . '<input type="hidden" name="action" value="create_collection"><input type="hidden" name="csrf" value="' . uploadEscape((string) $_SESSION['csrf']) . '">'
-            . '<div class="upload-field"><label for="new-category-name">Nueva categoría</label><input id="new-category-name" type="text" name="category" maxlength="64" placeholder="Ej.: Retratos" required></div>'
-            . '<button class="upload-submit" type="submit">Añadir categoría</button></form>';
+            . '<div class="upload-field"><label for="new-category-name">Nombre de la categoría</label><input id="new-category-name" type="text" name="category" maxlength="64" placeholder="Ej.: Retratos" required></div>'
+            . '<button class="upload-submit" type="submit">Crear categoría</button></form></section>';
         if (!$groups) $content .= '<p class="upload-message">Todavía no hay categorías.</p>';
         foreach ($groups as $name => $items) {
             $collection = $collectionSettings[$name] ?? ['description' => '', 'cover' => ''];
