@@ -291,18 +291,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             site_brand_assets_process($_FILES);
             site_settings_save($settingsInput);
-            $section = (string) ($_POST['section'] ?? 'profile');
-            if (!in_array($section, ['profile', 'design', 'texts'], true)) $section = 'profile';
+            $section = (string) ($_POST['section'] ?? 'content');
+            if ($section === 'profile') $section = 'content';
+            if (!in_array($section, ['content', 'design', 'texts', 'social', 'publication'], true)) $section = 'content';
             header('Location: /admin.php?settings=1&section=' . rawurlencode($section) . '&saved=1', true, 303);
             exit;
         } catch (InvalidArgumentException | RuntimeException $error) {
             $values = site_settings_load();
             try { $values = site_settings_validate($_POST); } catch (InvalidArgumentException $ignored) {}
-            $section = (string) ($_POST['section'] ?? 'profile');
-            if (!in_array($section, ['profile', 'design', 'texts'], true)) $section = 'profile';
-            uploadPage($section === 'profile' ? 'Perfil' : ($section === 'texts' ? 'Textos' : 'Diseño'), adminNavigation((string) $_SESSION['csrf'])
+            $section = (string) ($_POST['section'] ?? 'content');
+            if ($section === 'profile') $section = 'content';
+            if (!in_array($section, ['content', 'design', 'texts', 'social', 'publication'], true)) $section = 'content';
+            $settingsTitles = ['content' => 'Contenido', 'design' => 'Diseño', 'texts' => 'Textos', 'social' => 'Redes Sociales', 'publication' => 'Publicación'];
+            $settingsErrorContent = adminNavigation((string) $_SESSION['csrf'])
                 . '<p class="upload-message upload-message--error" role="alert">' . uploadEscape($error->getMessage()) . '</p>'
-                . site_settings_form((string) $_SESSION['csrf'], $values, $section), 422, true);
+                . site_settings_form((string) $_SESSION['csrf'], $values, $section);
+            uploadPage($settingsTitles[$section], $settingsErrorContent, 422, true);
         }
     }
 
@@ -595,11 +599,12 @@ if (!empty($_SESSION['upload_authenticated'])) {
         if (!empty($_SESSION['pending_upload']['edit_path'])) @unlink((string) $_SESSION['pending_upload']['edit_path']);
         unset($_SESSION['pending_upload']);
     }
-    // Perfil, Diseño y editor de páginas de texto (?settings=1&section=profile|design|page).
+    // Ajustes organizados en Contenido, Diseño, Textos, Redes y Publicación.
     if (isset($_GET['settings'])) {
         $status = isset($_GET['saved']) ? '<p class="upload-message" role="status">Configuración guardada.</p>' : '';
-        $section = (string) ($_GET['section'] ?? 'profile');
-        if (!in_array($section, ['profile', 'design', 'texts', 'page'], true)) $section = 'profile';
+        $section = (string) ($_GET['section'] ?? 'content');
+        if ($section === 'profile') $section = 'content';
+        if (!in_array($section, ['content', 'design', 'texts', 'social', 'publication', 'page'], true)) $section = 'content';
         if ($section === 'page') {
             $page = (string) ($_GET['doc'] ?? '');
             if (!in_array($page, site_editable_page_keys(), true)) $page = 'legal_notice';
@@ -609,8 +614,10 @@ if (!empty($_SESSION['upload_authenticated'])) {
                 . site_page_editor_form((string) $_SESSION['csrf'], $page), 200, true);
         }
         $previewLink = $section === 'design' ? '<a class="admin-mobile-preview-link" href="/admin.php?mobile_preview=1">Vista previa en móvil</a>' : '';
-        uploadPage($section === 'profile' ? 'Perfil' : ($section === 'texts' ? 'Textos' : 'Diseño'), adminNavigation((string) $_SESSION['csrf']) . $status . $previewLink
-            . site_settings_form((string) $_SESSION['csrf'], null, $section), 200, true);
+        $settingsTitles = ['content' => 'Contenido', 'design' => 'Diseño', 'texts' => 'Textos', 'social' => 'Redes Sociales', 'publication' => 'Publicación'];
+        $settingsContent = adminNavigation((string) $_SESSION['csrf']) . $status . $previewLink
+            . site_settings_form((string) $_SESSION['csrf'], null, $section);
+        uploadPage($settingsTitles[$section] ?? 'Ajustes', $settingsContent, 200, true);
     }
 
     // Carga por lotes: cada imagen se envía individualmente para respetar los límites de PHP del hosting.
@@ -682,7 +689,7 @@ if (!empty($_SESSION['upload_authenticated'])) {
                 . '<button class="upload-submit" type="submit">Guardar colección</button></form>'
                 . '<form method="post" action="/admin.php" class="admin-category-form" data-category-action>'
                 . '<input type="hidden" name="action" value="manage_category"><input type="hidden" name="csrf" value="' . uploadEscape((string) $_SESSION['csrf']) . '">'
-                . '<input type="hidden" name="source" value="' . $escapedName . '">';
+                . '<input type="hidden" name="source" value="' . $escapedName . '">'
                 . '<div class="upload-field"><label>Acción</label><select name="operation" data-category-operation>'
                 . '<option value="rename">Cambiar nombre o combinar</option><option value="move_existing"' . ($options === '' ? ' disabled' : '') . '>Mover a una existente</option>'
                 . '<option value="move_new">Mover a una nueva</option><option value="delete_photos">Eliminar categoría y todas sus fotos</option></select></div>'
