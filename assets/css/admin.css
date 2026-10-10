@@ -263,7 +263,7 @@
 }
 @media (min-width: 960px) { .admin-savebar { bottom: 1rem; } }
 
-/* ---------- Ajustes: cinco secciones del CMS ---------- */
+/* ---------- Ajustes: secciones y redes sociales ---------- */
 .site-settings[data-settings-section="content"] .settings-design,
 .site-settings[data-settings-section="content"] .settings-texts,
 .site-settings[data-settings-section="content"] .settings-social,
@@ -292,6 +292,12 @@
 }
 .site-settings textarea { width: 100%; min-height: 4rem; resize: vertical; }
 .site-settings label { white-space: normal; overflow-wrap: anywhere; }
+
+/* Etiqueta accesible: mantiene el nombre del control para lectores de pantalla sin ocupar espacio visual. */
+.admin-body .sr-only {
+    position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important;
+    overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important;
+}
 .page-editor-options__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
 .page-editor-option {
     display: flex; align-items: center; justify-content: space-between; gap: .6rem; min-height: 52px; padding: .7rem .9rem;
@@ -301,18 +307,21 @@
 .page-editor-option span:last-child { color: var(--accent); white-space: nowrap; }
 .page-editor-option:hover, .page-editor-option:focus-visible { border-color: var(--accent); }
 @media (max-width: 520px) { .page-editor-options__grid { grid-template-columns: 1fr; } }
-.admin-social-settings { display: block; box-sizing: border-box; width: 100%; margin-top: 1.25rem; padding: 1.1rem; border: 1px solid var(--adm-line-strong); border-radius: 16px; background: var(--adm-surface); }
+.admin-social-settings { display: block; box-sizing: border-box; width: 100%; min-width: 0; margin-top: 1.25rem; padding: 1.1rem; border: 1px solid var(--adm-line-strong); border-radius: 16px; background: var(--adm-surface); }
 .admin-social-settings h3 { margin: 0 0 .45rem; font: 600 1.05rem var(--sans); }
 .admin-social-settings > p { margin: 0 0 1rem; color: var(--fg-soft); font-size: .82rem; }
-.social-settings-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
-.social-settings-row { display: grid; gap: .7rem; min-width: 0; padding: .85rem; border: 1px solid var(--adm-line-strong); border-radius: 14px; background: var(--adm-surface-2); }
+.social-settings-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: .7rem; min-width: 0; }
+.social-settings-row {
+    display: grid; grid-template-columns: minmax(180px, .65fr) minmax(0, 1.8fr); align-items: end;
+    gap: .8rem; min-width: 0; padding: .85rem; border: 1px solid var(--adm-line-strong); border-radius: 14px; background: var(--adm-surface-2);
+}
 .admin-social-settings.is-enhanced .social-settings-row[data-social-empty="true"]:not([data-social-open="true"]) { display: none; }
-.social-settings-row__head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .55rem; }
+.social-settings-row__head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .55rem; min-width: 0; }
 .social-settings-row select,
 .social-settings-row input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--adm-line-strong); border-radius: 10px; color: var(--fg); background: #171513; }
 .social-settings-row select { padding: .55rem .7rem; font-weight: 600; }
 .social-settings-row select option { color: var(--fg); background: #171513; }
-.social-settings-row__fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .72fr); gap: .65rem; }
+.social-settings-row__fields { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, .8fr); gap: .65rem; min-width: 0; }
 .social-settings-field { display: grid; gap: .3rem; min-width: 0; color: var(--fg-soft); font-size: .72rem; font-weight: 600; }
 .social-settings-row input { padding: .55rem .7rem; font-size: .82rem; }
 .social-settings-row input::placeholder { color: color-mix(in srgb, var(--fg-soft) 72%, transparent); }
@@ -323,18 +332,11 @@
 .social-settings-add:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 16%, var(--adm-surface-2)); }
 .social-settings-add:disabled { opacity: .45; cursor: default; }
 @media (max-width: 720px) {
-    .social-settings-list { grid-template-columns: minmax(0, 1fr); }
+    .social-settings-row { grid-template-columns: minmax(0, 1fr); }
     .social-settings-row__fields { grid-template-columns: minmax(0, 1fr); }
 }
 
-
-.social-settings-copy { margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid var(--adm-line); }
-.social-settings-copy h4 { margin: 0 0 .8rem; color: var(--fg); font: 600 .92rem var(--sans); }
-.social-settings-copy__fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: .8rem; }
-.social-settings-copy .upload-field { margin: 0; }
-.social-settings-copy textarea { box-sizing: border-box; width: 100%; min-height: 44px; border: 1px solid var(--adm-line-strong); border-radius: 10px; padding: .7rem .8rem; color: var(--fg); background: #171513; font: 400 .9rem/1.5 var(--sans); resize: vertical; }
-.social-settings-copy textarea:focus { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 1px; }
-
+/*
 /* ---------- Biblioteca de fotos ---------- */
 .admin-library__intro { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; color: var(--fg-soft); font-size: .88rem; }
 .admin-library__intro p { margin: 0; }
