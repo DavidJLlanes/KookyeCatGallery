@@ -22,6 +22,10 @@
     const setEditing = enabled => {
         if (!enabled && dirty() && !window.confirm('Hay cambios sin guardar. ¿Salir y descartarlos?')) return;
         body.dataset.inlineEditMode = enabled ? 'true' : 'false';
+        document.querySelectorAll('[data-inline-edit-key]').forEach(element => {
+            if (enabled) { element.tabIndex = 0; element.setAttribute('role', 'button'); }
+            else { element.removeAttribute('tabindex'); element.removeAttribute('role'); }
+        });
         launch.setAttribute('aria-pressed', String(enabled));
         launch.querySelector('span').textContent = enabled ? 'Salir de edición' : 'Editar página';
         if (!enabled) closePanel();
@@ -57,7 +61,7 @@
     }, true);
     document.addEventListener('keydown', event => {
         if (body.dataset.inlineEditMode === 'true' && event.key === 'Escape') {
-            if (!panel.hidden) closePanel(); else setEditing(false);
+            if (!panel.hidden) { if (!dirty() || window.confirm('Descartar el texto sin guardar?')) closePanel(); } else setEditing(false);
         }
         const target = event.target.closest?.('[data-inline-edit-key]');
         if (target && body.dataset.inlineEditMode === 'true' && (event.key === 'Enter' || event.key === ' ')) {
@@ -92,9 +96,10 @@
             if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo guardar el texto.');
             activeText.textContent = input.value;
             savedValue = input.value;
-            activeText.classList.add('inline-edit-text--saved');
+            const savedElement = activeText;
+            savedElement.classList.add('inline-edit-text--saved');
             setStatus('Guardado correctamente.', 'success');
-            window.setTimeout(() => activeText?.classList.remove('inline-edit-text--saved'), 1200);
+            window.setTimeout(() => savedElement.classList.remove('inline-edit-text--saved'), 1200);
             save.disabled = true;
         } catch (error) {
             save.disabled = false;
