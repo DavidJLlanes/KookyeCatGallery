@@ -58,7 +58,7 @@ function gallery_collections_load(): array
         if ($name === '' || mb_strlen($name, 'UTF-8') > 64
             || mb_strlen($description, 'UTF-8') > 280
             || preg_match('/[\\x00-\\x1F\\x7F]/u', $name . $description)
-            || ($cover !== '' && (basename($cover) !== $cover || !preg_match('/\\.(?:jpe?g|png)$/i', $cover))) continue;
+            || ($cover !== '' && (basename($cover) !== $cover || !preg_match('/\\.(?:jpe?g|png)$/i', $cover)))) { continue; }
         $out[$name] = ['description' => $description, 'cover' => $cover, 'manual' => !empty($data['manual'])];
     }
     return $out;
