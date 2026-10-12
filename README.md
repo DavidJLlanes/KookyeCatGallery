@@ -38,7 +38,7 @@ KookyeCatGallery es una web de fotografía que se instala en tu propio alojamien
 - **18 composiciones de galería:** diez diseños estándar y ocho premium. Los controles que no corresponden a un diseño se desactivan; la misma regla se aplica al guardar en el servidor.
 - **Efectos hover accesibles:** diez efectos compartidos por los diseños, también disponibles al enfocar con teclado y respetando la preferencia de movimiento reducido.
 - **Identidad visual:** sube el icono de la app (también usado como favicon) y la imagen para compartir en redes. El icono se adapta automáticamente a los tamaños necesarios.
-- **Microblog opcional:** feed de notas estilo Tumblr / Threads con texto y enlaces, citas, imágenes, tres niveles de destacado, post fijado, publicación programada, hilos de respuestas, corazones y código para incrustar cada post. Se crea desde el panel o desde un panel flotante en la propia web. Está desactivado inicialmente.
+- **Microblog opcional:** feed estilo Tumblr / Threads con texto y enlaces (`[texto](url)`), citas, imágenes en WebP, tres niveles de destacado, post fijado, publicación programada, hilos de respuestas del propietario, corazones y código para incrustar cada post. Se crea desde el panel o desde un panel flotante en la propia web, abierto con el botón «+». Está desactivado inicialmente. [Ver la sección](#microblog).
 - **Mapa opcional:** representa las fotografías con coordenadas y permite abrir sus fichas. Está desactivado inicialmente.
 - **Aplicación instalable (PWA):** experiencia adaptable e instalación desde navegadores compatibles.
 - **Asistencia de escritura con IA opcional:** integración preparada para Gemini y OpenRouter, desactivada de inicio y sin claves en el repositorio.
@@ -144,6 +144,57 @@ Las ocho galerías premium sustituyen la estándar y su interfaz se ajusta al ti
 Las opciones incompatibles se ocultan o desactivan con una explicación y el servidor también impide que se guarden para diseños que no las usan. Baraja, Cover Flow, Tambor, Cilindro, Polaroids y Tinder controlan su propia composición y navegación. Burbujas y Cuadrados sí utilizan «Fotos visibles a la vez» como límite de página. En los diseños compatibles, las columnas, la cantidad de fotos y la paginación se aplican según corresponda. La selección «Todas» desactiva la paginación cuando ya no se utiliza.
 
 Consulta la [matriz completa de compatibilidad](docs/opciones-galeria.md) y la guía de [galerías premium](docs/galerias-premium.md) antes de elegir combinaciones.
+
+## Microblog
+
+Feed de notas cortas en la portada, con aspecto de Tumblr / Threads y una columna estrecha de unos 560 px en escritorio. Solo el propietario (el usuario del panel) publica, edita, responde y borra; cualquier visitante puede dar corazón. Está desactivado inicialmente: actívalo en **Ajustes → Publicación**.
+
+### Qué puede llevar un post
+
+- **Texto** de hasta 2.000 caracteres, con párrafos y saltos de línea.
+- **Enlaces dentro del texto:** escribe `[texto](https://…)` para que «texto» sea el enlace, o usa el botón **Enlace** (también Ctrl+K), que lo inserta por ti usando como texto lo que tengas seleccionado. Las URLs sueltas se enlazan solas. Solo se admiten `http` y `https`; el resto del texto se escapa.
+- **Una cita** con su fuente y un enlace opcional.
+- **Hasta 4 enlaces** con tarjeta (título opcional).
+- **Hasta 4 imágenes**, con texto alternativo opcional. Se convierten siempre a **WebP con calidad 80** y su **lado mayor se reduce a 1500 px** manteniendo la proporción (nunca se amplían las pequeñas), y se eliminan los metadatos EXIF y GPS. El navegador las reduce a la misma medida antes de enviarlas. Se guardan en `/microblog/`, separadas de la galería.
+
+### Niveles, fijado y programación
+
+| Opción | Efecto |
+| --- | --- |
+| **Normal** | Tarjeta sencilla. |
+| **Destacado** | Franja lateral de color y velo del color de acento. |
+| **Súper destacado** | Borde luminoso animado, brillo que barre la tarjeta y letra algo mayor. |
+| **Fijar arriba** | Un post raíz se coloca el primero del feed con el distintivo «Fijado». Solo hay uno a la vez: fijar otro suelta el anterior. |
+| **Programar** | Fecha y hora de publicación (la zona horaria del servidor o la de la variable `MICROBLOG_TIMEZONE`; hasta un año vista). Hasta entonces no se ve en el feed, ni en su enlace, ni en el sitemap, y en el panel aparece como «Programado». Se puede cambiar o vaciar mientras siga programado. |
+
+### Hilos, corazones e incrustación
+
+- **Hilos:** solo el propietario responde. Las respuestas cuelgan del post, con una línea conectora como en Threads, y siempre son de nivel normal. En la portada se ven las dos primeras y un enlace lleva al hilo completo.
+- **Corazones:** abiertos a todo el mundo, sin registro. Reutilizan `hearts.php` con el identificador `mb-{id}`.
+- **Enlace permanente** de cada post (`/microblog.php?id=…`), botón de compartir y botón `</>` que genera un `<iframe>` para pegar el post en otra web (`&embed=1`, con `assets/js/microblog-embed.js` para ajustar su alto).
+- **Imágenes a pantalla completa:** al pulsar una imagen se abre un lightbox que ocupa toda la ventana, con contador, texto alternativo, flechas, teclado (← → Esc), deslizar en móvil y botón de pantalla completa del navegador (tecla F).
+- **«Cargar más»:** el feed se carga de 8 en 8.
+
+### Cómo se crean los posts
+
+- **Pestaña «Microblog» del panel:** formulario completo, lista de hilos del más reciente al más antiguo, editar, responder y eliminar.
+- **Panel flotante en la propia web:** con la sesión iniciada, el botón **«+»** de la esquina se despliega con *Subir foto* y *Nuevo post*. «Nuevo post» abre, sin salir de la página, una hoja que sube desde abajo en móvil y una tarjeta centrada en escritorio, con todas las opciones (texto con enlaces, cita, enlaces, imágenes, destacado, fijar y programar). Guarda un borrador del texto en el navegador y actualiza el feed al publicar, sin recargar. Sin sesión, el botón lleva al acceso del panel.
+
+### Integración con el resto de la web
+
+- **Diseño:** usa las variables de la paleta y de las tipografías, así que sigue los ajustes de **Diseño** y cambia con ellos.
+- **Visibilidad y orden:** el interruptor «Mostrar Microblog» está en **Ajustes → Publicación** y la posición en **Diseño → Estructura de la página**. Sin posts, el bloque no se pinta.
+- **Textos editables:** el rótulo («Microblog») y el título («Notas, citas y hallazgos») se editan en **Ajustes → Publicación** o pulsándolos en la web con «Editar página».
+- **Sitemap:** `sitemap.xml` incluye el hilo de cada post público cuando el microblog está visible.
+
+### Dónde viven los datos
+
+| Qué | Dónde |
+| --- | --- |
+| Imágenes | `/microblog/` (no se versiona; se crea al subir la primera imagen). |
+| Posts (`posts.json`) | La carpeta privada de la instalación (`../config/microblog/`, o `var/microblog/` si no se puede escribir fuera de la raíz pública); se puede forzar con `MICROBLOG_DATA_DIR`. |
+
+Detalles de arquitectura y archivos en [docs/microblog.md](docs/microblog.md). Para probarlo: `php tests/microblog.php` (las comprobaciones de imágenes necesitan la extensión GD con WebP).
 
 ## Acceso y seguridad
 
