@@ -254,6 +254,7 @@ function site_section_definitions(): array
         'gallery' => ['label' => 'Bloque de galería', 'hint' => 'Fotos, buscador y presentación', 'toggle' => null],
         'map' => ['label' => 'Mapa', 'hint' => 'Mapa de ubicaciones', 'toggle' => 'show_map'],
         'project' => ['label' => '«El proyecto»', 'hint' => 'Texto y retrato del proyecto', 'toggle' => 'show_project'],
+        'microblog' => ['label' => 'Microblog', 'hint' => 'Feed de notas, citas, enlaces e imágenes', 'toggle' => 'show_microblog'],
         'social' => ['label' => 'Redes Sociales', 'hint' => 'Perfiles y enlaces sociales', 'toggle' => 'show_social'],
     ];
 }
@@ -315,7 +316,7 @@ function site_settings_defaults(): array
         'columns_desktop' => 3, 'photos_mobile' => 12, 'photos_desktop' => 20, 'header_mobile' => 'current', 'header_desktop' => 'current',
         'gallery_mobile' => 'standard', 'gallery_desktop' => 'standard', 'hover' => 'soft', 'pagination_shape' => 'circle', 'gallery_premium' => 'none', 'site_title' => '',
         'section_order' => array_keys(site_section_labels()), 'show_header_mobile' => true, 'show_header_desktop' => true,
-        'show_categories' => true, 'show_map' => false, 'show_project' => true, 'show_social' => false,
+        'show_categories' => true, 'show_map' => false, 'show_project' => true, 'show_microblog' => false, 'show_social' => false,
         'texts' => [], 'pages' => [], 'profile_image' => '/profile-placeholder.svg', 'logo_image' => '/favicon.svg',
         'profile_website_url' => 'https://example.com',
         'social_links' => []];
@@ -337,6 +338,8 @@ function site_editable_text_keys(): array
         'text_bdd8f61b94c52379',
         'text_49a006d539216e16',
         'text_ab3ceef210237f9d',
+        'text_6d1f0b7e2a4c9853',
+        'text_b3e82f5a7c10d946',
     ];
     foreach (site_template_text_groups() as $group) {
         array_push($keys, ...array_keys($group['fields']));
@@ -360,6 +363,8 @@ function site_admin_text_labels(): array
         'text_bdd8f61b94c52379' => 'Título de Redes Sociales',
         'text_49a006d539216e16' => 'Subtítulo de Redes Sociales',
         'text_ab3ceef210237f9d' => 'Texto de Redes Sociales',
+        'text_6d1f0b7e2a4c9853' => 'Rótulo pequeño del Microblog',
+        'text_b3e82f5a7c10d946' => 'Título del Microblog',
     ];
 }
 

@@ -97,9 +97,9 @@ foreach (['photos_mobile', 'photos_desktop'] as $field) {
     foreach ([-1, 7, 101, '1.5', [], 'bad'] as $invalid) rejects(array_replace($defaults, [$field => $invalid]));
 }
 
-check(site_settings_validate($defaults)['section_order'] === ['categories', 'gallery', 'map', 'project', 'social'], 'Default section order changed.');
-check(site_settings_validate(array_replace($defaults, ['section_order' => ['social', 'gallery', 'social', 'bad', 5]]))['section_order'] === ['social', 'gallery', 'categories', 'map', 'project'], 'Section order was not normalized.');
-check(site_settings_validate(array_replace($defaults, ['section_order' => 'gallery']))['section_order'] === ['categories', 'gallery', 'map', 'project', 'social'], 'Invalid section order must fall back to the default.');
+check(site_settings_validate($defaults)['section_order'] === ['categories', 'gallery', 'map', 'project', 'microblog', 'social'], 'Default section order changed.');
+check(site_settings_validate(array_replace($defaults, ['section_order' => ['social', 'gallery', 'social', 'bad', 5]]))['section_order'] === ['social', 'gallery', 'categories', 'map', 'project', 'microblog'], 'Section order was not normalized.');
+check(site_settings_validate(array_replace($defaults, ['section_order' => 'gallery']))['section_order'] === ['categories', 'gallery', 'map', 'project', 'microblog', 'social'], 'Invalid section order must fall back to the default.');
 foreach (['show_header_mobile', 'show_header_desktop'] as $field) {
     check($defaults[$field] === true, 'Headers must be visible by default.');
     check(site_settings_validate(array_replace($defaults, [$field => '0']))[$field] === false, 'Header toggle did not turn off.');

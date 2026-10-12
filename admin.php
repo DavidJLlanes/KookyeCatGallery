@@ -40,6 +40,8 @@ require __DIR__ . '/inc/processor.php';
 require __DIR__ . '/inc/ai-text.php';
 require __DIR__ . '/inc/admin-photos.php';
 require __DIR__ . '/inc/admin-shell.php';
+require __DIR__ . '/inc/microblog.php';
+require __DIR__ . '/inc/admin-microblog.php';
 
 // =============================================================================
 // 1. UTILIDADES (JSON, EXIF, configuración de acceso, CSRF)
@@ -177,6 +179,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($_SESSION['upload_authenticated'])) uploadJson(401, ['ok' => false, 'error' => 'Inicia sesión para continuar.']);
+
+    // Microblog: crear, editar, responder y borrar posts (inc/admin-microblog.php).
+    if ($action === 'microblog_save' || $action === 'microblog_delete') admin_microblog_handle($action, (string) $_SESSION['csrf']);
 
     // Ajustes → Diseño: guarda el contenido de una página de texto.
     if ($action === 'save_site_page') {
@@ -614,6 +619,9 @@ if (!empty($_SESSION['upload_authenticated'])) {
         if (!empty($_SESSION['pending_upload']['edit_path'])) @unlink((string) $_SESSION['pending_upload']['edit_path']);
         unset($_SESSION['pending_upload']);
     }
+    // Microblog: nuevo post, lista de hilos, edición y respuesta.
+    if (isset($_GET['microblog'])) admin_microblog_page((string) $_SESSION['csrf']);
+
     // Ajustes organizados en Contenido, Diseño, Textos, Redes y Publicación.
     if (isset($_GET['settings'])) {
         $status = isset($_GET['saved']) ? '<p class="upload-message" role="status">Configuración guardada.</p>' : '';

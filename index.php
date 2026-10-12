@@ -13,6 +13,8 @@ require __DIR__ . '/inc/sitemap.php';
 require __DIR__ . '/inc/ai-text.php';
 require __DIR__ . '/inc/photo-navigation.php';
 require __DIR__ . '/inc/page-blocks.php';
+require __DIR__ . '/inc/microblog.php';
+require __DIR__ . '/inc/microblog-composer.php';
 
 $appVersion = app_version();
 
@@ -203,7 +205,7 @@ if ($isSiteAdmin) header('Vary: Cookie');
 header('Cache-Control: private, no-store, max-age=0');
 
 // Regenera sitemap.xml si hay cambios (con TODAS las fotos)
-generate_sitemap(__DIR__, $siteUrl, $items);
+generate_sitemap(__DIR__, $siteUrl, $items, !empty($siteSettings['show_microblog']) ? microblog_sitemap_entries($siteUrl) : []);
 
 // SEO: meta title y description (se sobreescriben si es URL de foto concreta)
 $pageTitle    = site_text('text_1a0ef9e63d20942b');
@@ -368,7 +370,8 @@ if ($fotoItem !== null) {
     <noscript><style>html.viewer-pending body > * { visibility: visible !important; }</style></noscript>
     <link rel="stylesheet" href="/assets/css/interface-worlds.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/interface-worlds.css')) ?>">
     <link rel="stylesheet" href="/assets/css/gallery-layout.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/gallery-layout.css')) ?>">
-    <?php if ($isSiteAdmin): ?><link rel="stylesheet" href="/assets/css/inline-editor.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/inline-editor.css')) ?>"><?php endif; ?>
+    <link rel="stylesheet" href="/assets/css/microblog.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/microblog.css')) ?>">
+    <?php if ($isSiteAdmin): ?><link rel="stylesheet" href="/assets/css/inline-editor.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/inline-editor.css')) ?>"><link rel="stylesheet" href="/assets/css/microblog-composer.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/microblog-composer.css')) ?>"><?php endif; ?>
     <?php if ($fotoItem === null) echo premium_gallery_head_tags(); // Estilos de la galería premium activa (ver inc/premium-galleries.php). ?>
     <link rel="stylesheet" href="/assets/css/typography.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/typography.css')) ?>">
 </head>
@@ -406,10 +409,26 @@ $pageContext = ['author' => $author, 'categories' => $categories, 'galleryItems'
 <div class="cursor-dot" aria-hidden="true"></div>
 <div class="cursor-ring" aria-hidden="true"><span class="cursor-ring__label"><?= site_text_html('text_20ab386d12d982bd') ?></span></div>
 
-<a class="upload-fab" href="/admin.php" aria-label="<?= site_text_html('text_929d5afb3be64e4a') ?>" title="<?= site_text_html('text_929d5afb3be64e4a') ?>">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-    <span class="upload-fab__label"><?= site_text_html('text_c55b46a0c60668c4') ?></span>
-</a>
+<!-- Botón «+»: se despliega con «Subir foto» (galería) y «Nuevo post» (microblog). Ver assets/js/fab-menu.js -->
+<div class="fab-menu" data-fab-menu>
+    <div class="fab-menu__scrim" aria-hidden="true"></div>
+    <div class="fab-menu__items" id="fabMenuItems" style="--n:2">
+        <a class="fab-menu__item" href="/admin.php" style="--i:0">
+            <span class="fab-menu__label">Subir foto</span>
+            <span class="fab-menu__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5-5-8 9"/></svg></span>
+        </a>
+        <?php $newPostTag = $isSiteAdmin ? 'button type="button" data-mbc-open' : 'a href="/admin.php?microblog=1&amp;new=1"'; ?>
+        <<?= $newPostTag ?> class="fab-menu__item" style="--i:1">
+            <span class="fab-menu__label">Nuevo post</span>
+            <span class="fab-menu__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L8 18l-4 1 1-4z"/></svg></span>
+        </<?= $isSiteAdmin ? 'button' : 'a' ?>>
+    </div>
+    <button class="upload-fab" type="button" data-fab-toggle aria-expanded="false" aria-controls="fabMenuItems" aria-label="Crear contenido" title="Crear contenido">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span class="upload-fab__label">Crear</span>
+    </button>
+    <noscript><style>.fab-menu__item{opacity:1!important;transform:none!important}.fab-menu__label{transform:none!important}.fab-menu__items{pointer-events:auto!important;bottom:20px!important}.upload-fab{display:none!important}</style></noscript>
+</div>
 
 
 <?php if ($fotoItem !== null): ?>
@@ -575,8 +594,13 @@ echo page_blocks_render_home($pageContext, $siteSettings['section_order'] ?? nul
 <?php if ($isSiteAdmin): ?>
 <script type="application/json" id="inline-editor-text-map"><?= json_encode(site_inline_text_values(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script src="/assets/js/inline-editor.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/inline-editor.js')) ?>" defer></script>
+<?= microblog_composer_html($inlineEditorCsrf) ?>
+<script src="/assets/js/microblog-admin.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/microblog-admin.js')) ?>" defer></script>
+<script src="/assets/js/microblog-composer.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/microblog-composer.js')) ?>" defer></script>
 <?php endif; ?>
 <script src="/assets/js/pwa.js?v=<?= safe($appVersion) ?>" defer></script>
+<script src="/assets/js/fab-menu.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/fab-menu.js')) ?>" defer></script>
+<?php if ($fotoItem === null && !empty($siteSettings['show_microblog'])): ?><script src="/assets/js/microblog.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/microblog.js')) ?>" defer></script><?php endif; ?>
 <script src="/assets/js/gallery-layout.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/gallery-layout.js')) ?>" defer></script>
 <script src="/assets/js/main.js?v=<?= safe($appVersion) ?>" defer></script>
 <?php if ($fotoItem === null) echo premium_gallery_script_tags(); // Comportamiento de la galería premium activa. ?>

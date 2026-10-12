@@ -45,7 +45,7 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
               order:[...document.querySelectorAll('input[name="section_order[]"]')].map(i=>i.value)};
           },installed);
           assert.equal(result.subnav, !['design', 'texts'].includes(section), 'Only Ajustes has its own subsection navigation');
-          assert.deepEqual(result.navLabels,['Subir foto','Gestionar fotos','Categorías','Ajustes','Diseño','Textos'],'Menu entries');
+          assert.deepEqual(result.navLabels,['Subir foto','Gestionar fotos','Categorías','Microblog','Ajustes','Diseño','Textos'],'Menu entries');
           assert.deepEqual(result.active,[section==='design'?'Diseño':(section==='texts'?'Textos':'Ajustes')],'Active menu entry');
           assert(!result.overflow,`Admin overflow ${width}`);
           assert(result.installInTopbar,'Install belongs in the top bar');

@@ -9,7 +9,10 @@
 
 declare(strict_types=1);
 
-function generate_sitemap(string $baseDir, string $siteUrl, array $items): void
+/**
+ * @param array $extraUrls Páginas adicionales [['loc' => URL, 'lastmod' => fecha ISO]] (p. ej. los hilos del microblog).
+ */
+function generate_sitemap(string $baseDir, string $siteUrl, array $items, array $extraUrls = []): void
 {
     $sitemapPath = $baseDir . '/sitemap.xml';
     $signaturePath = $baseDir . '/data/sitemap.sig';
@@ -17,7 +20,7 @@ function generate_sitemap(string $baseDir, string $siteUrl, array $items): void
     $signature = md5(json_encode(array_map(
         fn($i) => ($i['original'] ?? '') . '|' . ($i['mtime'] ?? 0) . '|' . ($i['slug'] ?? ''),
         $items
-    )) ?: '');
+    )) . json_encode($extraUrls) ?: '');
 
     $previousSig = is_file($signaturePath) ? file_get_contents($signaturePath) : '';
     if ($previousSig === $signature && is_file($sitemapPath)) {
@@ -66,6 +69,16 @@ function generate_sitemap(string $baseDir, string $siteUrl, array $items): void
         $xml .= "    <changefreq>monthly</changefreq>\n";
         $xml .= "    <priority>0.8</priority>\n";
         $xml .= $imgXml($it);
+        $xml .= "  </url>\n";
+    }
+
+    // Páginas extra (hilos del microblog), con prioridad menor que las fotos
+    foreach (array_slice($extraUrls, 0, 2000) as $extra) {
+        $xml .= "  <url>\n";
+        $xml .= "    <loc>" . $esc($extra['loc']) . "</loc>\n";
+        $xml .= "    <lastmod>" . $esc($extra['lastmod'] ?? $lastmod) . "</lastmod>\n";
+        $xml .= "    <changefreq>monthly</changefreq>\n";
+        $xml .= "    <priority>0.6</priority>\n";
         $xml .= "  </url>\n";
     }
 

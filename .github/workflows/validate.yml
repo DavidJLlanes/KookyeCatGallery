@@ -31,6 +31,11 @@ jobs:
           node --check assets/js/admin-settings.js
           node --check assets/js/pwa.js
           node --check assets/js/admin-ui.js
+          node --check assets/js/microblog.js
+          node --check assets/js/microblog-admin.js
+          node --check assets/js/microblog-composer.js
+          node --check assets/js/microblog-embed.js
+          node --check assets/js/fab-menu.js
           node --check assets/premium/deck/deck.js
           node --check tests/premium-coverflow.cjs
           node --check assets/js/site-texts.js
@@ -41,6 +46,8 @@ jobs:
         run: node tests/photo-presets.cjs
       - name: Comprobar la configuración del sitio
         run: php tests/site-settings.php
+      - name: Comprobar el microblog
+        run: php tests/microblog.php
       - name: Comprobar compatibilidades y conservación de ajustes de galería
         run: php tests/gallery-options.php
       - name: Comprobar el guardado de marca sin archivos

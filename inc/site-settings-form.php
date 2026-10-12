@@ -177,9 +177,17 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
             . $escape((string) $value) . '</textarea></div>';
     }
     $socialEditor .= $socialCopyFields . '</div></div></section>';
+    $microblogCopy = '<div class="social-settings-copy__fields">';
+    foreach (['text_6d1f0b7e2a4c9853' => 'Rótulo pequeño', 'text_b3e82f5a7c10d946' => 'Título'] as $key => $label) {
+        $value = $settings['texts'][$key] ?? site_text_catalog()[$key]['default'];
+        $microblogCopy .= '<div class="upload-field"><label for="microblog-copy-' . $escape($key) . '">' . $escape($label) . '</label>'
+            . '<input id="microblog-copy-' . $escape($key) . '" name="texts[' . $escape($key) . ']" type="text" maxlength="200" value="' . $escape((string) $value) . '"></div>';
+    }
+    $microblogCopy .= '</div><p class="upload-help">También puedes editarlos pulsando sobre ellos en la propia web con el lápiz de «Editar página».</p>';
     $html .= $card('Estructura de la página', 'Ordena los bloques de la portada y cabeceras.', $list);
     $html .= '</div><div class="settings-publication">'
         . $card('Visibilidad de la página', 'Elige qué bloques se muestran en la web. Los cambios se aplican al guardar.', $publicationControls)
+        . $card('Textos del microblog', 'Rótulo y título que encabezan el feed en la portada.', $microblogCopy)
         . '</div><div class="settings-social">'
         . $card('Redes Sociales', 'Configura los perfiles y los textos que aparecen en esa sección.', $socialEditor)
         . '</div><div class="settings-texts">';

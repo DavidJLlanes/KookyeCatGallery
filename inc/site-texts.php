@@ -104,6 +104,8 @@ return [
     'text_6e24ef52e0e9edbd' => ['group' => 'Inicio y galería · accesibilidad', 'default' => 'Foto anterior'],
     'text_8bed218e5d1a26ca' => ['group' => 'Inicio y galería · accesibilidad', 'default' => 'Foto siguiente'],
     'text_e06e2e6400797b86' => ['group' => 'Inicio y galería · accesibilidad', 'default' => 'Volver arriba'],
+    'text_6d1f0b7e2a4c9853' => ['group' => 'Microblog', 'default' => 'Microblog'],
+    'text_b3e82f5a7c10d946' => ['group' => 'Microblog', 'default' => 'Notas, citas y hallazgos'],
     'text_bdd8f61b94c52379' => ['group' => 'Inicio y galería', 'default' => 'Hablemos'],
     'text_49a006d539216e16' => ['group' => 'Inicio y galería', 'default' => '¿Una copia, un encargo\no simplemente saludar?'],
     'text_f366ccf006a44b3f' => ['group' => 'Inicio y galería', 'default' => 'o simplemente saludar?'],

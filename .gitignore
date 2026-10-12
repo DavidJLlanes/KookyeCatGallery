@@ -7,6 +7,8 @@
 /img/*
 !/img/.htaccess
 !/img/.gitkeep
+/microblog/*
+!/microblog/.gitkeep
 /imagenes/desktop/*
 !/imagenes/desktop/.gitkeep
 /imagenes/mobile/*

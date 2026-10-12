@@ -38,6 +38,7 @@ KookyeCatGallery es una web de fotografía que se instala en tu propio alojamien
 - **18 composiciones de galería:** diez diseños estándar y ocho premium. Los controles que no corresponden a un diseño se desactivan; la misma regla se aplica al guardar en el servidor.
 - **Efectos hover accesibles:** diez efectos compartidos por los diseños, también disponibles al enfocar con teclado y respetando la preferencia de movimiento reducido.
 - **Identidad visual:** sube el icono de la app (también usado como favicon) y la imagen para compartir en redes. El icono se adapta automáticamente a los tamaños necesarios.
+- **Microblog opcional:** feed de notas estilo Tumblr / Threads con texto y enlaces, citas, imágenes, tres niveles de destacado, post fijado, publicación programada, hilos de respuestas, corazones y código para incrustar cada post. Se crea desde el panel o desde un panel flotante en la propia web. Está desactivado inicialmente.
 - **Mapa opcional:** representa las fotografías con coordenadas y permite abrir sus fichas. Está desactivado inicialmente.
 - **Aplicación instalable (PWA):** experiencia adaptable e instalación desde navegadores compatibles.
 - **Asistencia de escritura con IA opcional:** integración preparada para Gemini y OpenRouter, desactivada de inicio y sin claves en el repositorio.
@@ -167,6 +168,7 @@ La generación de títulos y descripciones con Gemini u OpenRouter viene desacti
 - [Filtros fotográficos](docs/filtros-fotograficos.md)
 - [Navegación entre fotografías](docs/navegacion-fotografias.md)
 - [Estructura de bloques de la portada](docs/estructura-de-bloques.md)
+- [Microblog](docs/microblog.md)
 - [Configuración de IA](docs/ia-textos.md)
 - [Contribuir al proyecto](CONTRIBUTING.md)
 - [Política de seguridad](SECURITY.md)
