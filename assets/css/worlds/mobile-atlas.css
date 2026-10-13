@@ -7,6 +7,7 @@ body[data-header-mobile="atlas"] .mobile-profile:before{content:attr(data-templa
 body[data-header-mobile="atlas"] .mobile-profile__masthead{border:0}
 body[data-header-mobile="atlas"] .mobile-profile__brand{font:italic 400 clamp(2.8rem,12vw,5rem)/.85 Georgia,serif;letter-spacing:-.08em;color:var(--fg)}
 body[data-header-mobile="atlas"] .mobile-profile__edition{color:var(--accent)}
+body[data-header-mobile="atlas"] .mobile-profile__portraits{gap:14px}
 body[data-header-mobile="atlas"] .mobile-profile__avatar{border:4px solid var(--bg-soft);border-radius:0;transform:rotate(-5deg);box-shadow:0 8px 22px #253a3640}
 body[data-header-mobile="atlas"] .mobile-profile__crest-wrap{background:var(--bg-soft)}
 body[data-header-mobile="atlas"] .mobile-profile__identity{margin:1.5rem 0;border-bottom:1px solid var(--fg);padding-bottom:1.2rem}

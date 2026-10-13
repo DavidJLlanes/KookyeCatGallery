@@ -361,6 +361,8 @@ class AiTextGenerator
         $existingCategoria   = '';
         $existingCoordenadas = '';
         $existingFeatured    = '';
+        $existingPinned      = '';
+        $existingOrder       = '';
         $existingDraft       = '';
         if (is_file($path)) {
             $prev = file_get_contents($path) ?: '';
@@ -368,6 +370,8 @@ class AiTextGenerator
             if (preg_match('/^# Categoría:\s*(.+?)$/m', $prev, $m))            $existingCategoria   = trim($m[1]);
             if (preg_match('/^# Coordenadas:\s*[\d\.\-]+,[\d\.\-]+$/m', $prev, $m)) $existingCoordenadas = trim($m[0]);
             if (preg_match('/^# Destacada:\s*1$/m', $prev, $m)) $existingFeatured = trim($m[0]);
+            if (preg_match('/^# Fijada:\s*1$/m', $prev, $m)) $existingPinned = trim($m[0]);
+            if (preg_match('/^# Orden:\s*-?\d+$/m', $prev, $m)) $existingOrder = trim($m[0]);
             if (preg_match('/^# Borrador:\s*1$/m', $prev, $m)) $existingDraft = trim($m[0]);
         }
 
@@ -386,6 +390,8 @@ class AiTextGenerator
         if ($existingCategoria   !== '') $content .= "# Categoría: {$existingCategoria}\n";
         if ($existingCoordenadas !== '') $content .= "{$existingCoordenadas}\n";
         if ($existingFeatured !== '') $content .= "{$existingFeatured}\n";
+        if ($existingPinned !== '') $content .= "{$existingPinned}\n";
+        if ($existingOrder !== '') $content .= "{$existingOrder}\n";
         if ($existingDraft !== '') $content .= "{$existingDraft}\n";
 
         @file_put_contents($path, $content);

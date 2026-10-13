@@ -9,9 +9,11 @@ return [
         // Datos mal formados: no se tocan, el validador los rechazará con su mensaje.
         if (!is_array($texts)) return $data;
         $key = 'text_52179dc42df7efe5';
-        $first = trim((string) ($texts['text_cbbba360eb60dd04'] ?? ''));
-        $second = trim((string) ($texts['text_2c1ac3057629f681'] ?? ''));
-        if (trim((string) ($texts[$key] ?? '')) === '') {
+        // Valores que no son texto (datos mal formados) se tratan como vacíos; el validador los rechazará después.
+        $text = static fn(mixed $value): string => is_string($value) ? trim($value) : '';
+        $first = $text($texts['text_cbbba360eb60dd04'] ?? '');
+        $second = $text($texts['text_2c1ac3057629f681'] ?? '');
+        if ($text($texts[$key] ?? '') === '') {
             $name = '';
             if ($first !== '' || $second !== '') {
                 // Se personalizó alguna línea del título: el nombre es el título completo (la línea que falta, la de siempre).

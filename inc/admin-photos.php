@@ -46,6 +46,7 @@ function managedPhotoData(string $filename): ?array
         'longitude' => $longitude,
         'slug' => (string) $metadata['slug'],
         'featured' => !empty($metadata['featured']),
+        'pinned' => !empty($metadata['pinned']),
         'draft' => !empty($metadata['draft']),
         'order' => $metadata['order'],
         'thumbnail' => is_file(__DIR__ . '/../' . $thumbnail)
@@ -105,6 +106,7 @@ function managedSidecarText(array $fields): string
     }
     $text .= "\n# Slug: " . $fields['slug'];
     if (!empty($fields['featured'])) $text .= "\n# Destacada: 1";
+    if (!empty($fields['pinned'])) $text .= "\n# Fijada: 1";
     if (!empty($fields['draft'])) $text .= "\n# Borrador: 1";
     if ($fields['order'] !== null) $text .= "\n# Orden: " . (int) $fields['order'];
     $text .= "\n";
@@ -118,6 +120,7 @@ function managedValidateFields(array $input, string $filename): array
     $description = trim(str_replace("\r\n", "\n", (string) ($input['description'] ?? '')));
     $slug = trim((string) ($input['slug'] ?? ''));
     $featured = ($input['featured'] ?? '') === '1';
+    $pinned = ($input['pinned'] ?? '') === '1';
     $draft = ($input['draft'] ?? '') === '1';
     $existingMeta = read_sidecar(UPLOAD_DIRECTORY . '/' . pathinfo($filename, PATHINFO_FILENAME) . '.txt');
     $order = $existingMeta['order'];
@@ -155,7 +158,13 @@ function managedValidateFields(array $input, string $filename): array
         }
     }
 
-    return compact('title', 'description', 'category', 'latitude', 'longitude', 'slug', 'featured', 'draft', 'order');
+    return compact('title', 'description', 'category', 'latitude', 'longitude', 'slug', 'featured', 'pinned', 'draft', 'order');
+}
+
+/** Genera ya las versiones WebP de las fotos nuevas o editadas, para que nadie espere a la primera visita. */
+function managedRefreshImages(): void
+{
+    (new ImageProcessor(dirname(__DIR__)))->processAll();
 }
 
 function managedSavePhoto(array $input, ?array $editedUpload): void
@@ -273,7 +282,7 @@ function managedChangePhotoCategory(string $filename, string $category): void
         $content = managedSidecarText([
             'title' => $photo['title'], 'description' => $photo['description'], 'category' => $category,
             'latitude' => null, 'longitude' => null, 'slug' => (string) $meta['slug'],
-            'featured' => $photo['featured'], 'draft' => $photo['draft'], 'order' => $photo['order'],
+            'featured' => $photo['featured'], 'pinned' => $photo['pinned'], 'draft' => $photo['draft'], 'order' => $photo['order'],
         ]);
     }
     $temporary = tempnam(UPLOAD_DIRECTORY, '.djl-category-');

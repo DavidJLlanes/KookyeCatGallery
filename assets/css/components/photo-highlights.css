@@ -1,0 +1,36 @@
+/* Fotos fijadas y destacadas de la galería (`# Fijada: 1` y `# Destacada: 1` en el .txt; ver inc/blocks/gallery.php).
+   · Fijadas: van arriba del todo y llevan un marco muy fino, con el color de acento de la paleta.
+   · Destacadas: no cambian de sitio; llevan un distintivo de esquina (triángulo con estrella) con los colores de la paleta. */
+/* Marco: un elemento propio (no pseudo-elementos ni outline, que los efectos hover y los diseños apagan o tapan con la imagen). Dos filetes
+   finísimos, uno en el borde y otro 5 px dentro. */
+.card__frame {
+    position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    border: 1px solid color-mix(in srgb, var(--accent) 80%, transparent);
+    border-radius: 4px;
+    transition: border-color 0.4s var(--ease-out);
+}
+.card__frame::after {
+    content: ''; position: absolute; inset: 4px;
+    border: 1px solid color-mix(in srgb, var(--accent) 52%, transparent);
+    border-radius: 2px;
+}
+.card__btn:hover .card__frame { border-color: var(--accent); }
+
+.card__badge {
+    position: absolute; top: 0; left: 0; z-index: 3;
+    width: 46px; height: 46px; overflow: hidden;
+    border-top-left-radius: 4px; pointer-events: none;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+.card__badge::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, var(--accent) 0 49%, transparent 51%);
+}
+.card__badge svg {
+    position: absolute; top: 6px; left: 6px; width: 15px; height: 15px;
+    fill: var(--bg); stroke: var(--bg); stroke-width: 1; stroke-linejoin: round;
+}
+@media (max-width: 768px) {
+    .card__badge { width: 38px; height: 38px; }
+    .card__badge svg { top: 5px; left: 5px; width: 12px; height: 12px; }
+}

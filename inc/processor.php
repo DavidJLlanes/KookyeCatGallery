@@ -2,8 +2,10 @@
 /**
  * Procesador de imágenes
  * - Lee originales de /img/
- * - Genera WebP en /imagenes/desktop/ (1600px max) y /imagenes/mobile/ (800px max)
- * - Solo procesa imágenes nuevas o modificadas (cache por mtime)
+ * - Genera WebP en /imagenes/desktop/ (lado mayor 1800 px max, calidad 80) y /imagenes/mobile/ (800 px de ancho y 1200 de alto max)
+ * - Solo procesa imágenes nuevas o modificadas (cache por mtime). Al publicar o editar una foto el panel la procesa en el momento
+ *   (processAll()), de modo que quien visita la web no espera. Si cambia la «receta» (tamaños o calidad), las fotos ya generadas se
+ *   rehacen poco a poco: como mucho STALE_PER_CALL por llamada.
  * - Mantiene la orientación EXIF (no rota fotos verticales)
  */
 
@@ -42,10 +44,15 @@ class ImageProcessor
     private string $cachePath;
     private array $cache = [];
 
-    private const DESKTOP_MAX_WIDTH = 1600;
+    /** Lado mayor máximo de la versión de escritorio (la galería, la ficha y el microblog usan el mismo límite). */
+    public const DESKTOP_MAX_SIDE = 1800;
     private const MOBILE_MAX_WIDTH  = 800;
-    private const DESKTOP_QUALITY   = 88;
-    private const MOBILE_QUALITY    = 82;
+    private const MOBILE_MAX_SIDE   = 1200;
+    public const QUALITY = 80;
+    /** Cambia cuando cambian tamaños o calidad: las fotos generadas con otra receta se rehacen. */
+    private const RECIPE = 'webp80-1800-800';
+    /** Fotos ya generadas con una receta anterior que se rehacen en cada llamada (las nuevas se procesan siempre). */
+    private const STALE_PER_CALL = 4;
 
     private const SUPPORTED_EXT = ['jpg', 'jpeg', 'png'];
 
@@ -85,6 +92,7 @@ class ImageProcessor
         $items = [];
         $cacheDirty = false;
         $foundOriginals = [];
+        $staleBudget = self::STALE_PER_CALL;
 
         $files = scandir($this->sourceDir) ?: [];
 
@@ -113,12 +121,15 @@ class ImageProcessor
             $editSize = $hasEditedVersion ? (filesize($editedPath) ?: 0) : 0;
             $cached = $this->cache[$file] ?? null;
 
-            $needsProcess = !$cached
+            $missing = !$cached
                 || ($cached['mtime'] ?? 0) !== $mtime
                 || ($cached['edit_mtime'] ?? 0) !== $editMtime
                 || ($cached['edit_size'] ?? 0) !== $editSize
                 || !is_file($desktopFile)
                 || !is_file($mobileFile);
+            $stale = !$missing && ($cached['recipe'] ?? '') !== self::RECIPE;
+            $needsProcess = $missing || ($stale && $staleBudget > 0);
+            if ($stale && $needsProcess) $staleBudget--;
 
             if ($needsProcess) {
                 $result = $this->generate($sourcePath, $desktopFile, $mobileFile, $originalPath);
@@ -128,6 +139,7 @@ class ImageProcessor
                     'mtime'         => $mtime,
                     'edit_mtime'    => $editMtime,
                     'edit_size'     => $editSize,
+                    'recipe'        => self::RECIPE,
                     'desktop_w'     => $result['desktop_w'],
                     'desktop_h'     => $result['desktop_h'],
                     'mobile_w'      => $result['mobile_w'],
@@ -218,8 +230,8 @@ class ImageProcessor
         $h = imagesy($src);
         $aspect = $h > 0 ? $w / $h : 1.5;
 
-        $desktop = $this->resizeAndWebp($src, $w, $h, self::DESKTOP_MAX_WIDTH, $desktopOut, self::DESKTOP_QUALITY);
-        $mobile  = $this->resizeAndWebp($src, $w, $h, self::MOBILE_MAX_WIDTH,  $mobileOut,  self::MOBILE_QUALITY);
+        $desktop = $this->resizeAndWebp($src, $w, $h, PHP_INT_MAX, self::DESKTOP_MAX_SIDE, $desktopOut, self::QUALITY);
+        $mobile  = $this->resizeAndWebp($src, $w, $h, self::MOBILE_MAX_WIDTH, self::MOBILE_MAX_SIDE, $mobileOut, self::QUALITY);
 
         imagedestroy($src);
 
@@ -235,15 +247,12 @@ class ImageProcessor
         ];
     }
 
-    private function resizeAndWebp(\GdImage $src, int $w, int $h, int $maxW, string $outPath, int $quality): ?array
+    private function resizeAndWebp(GdImage $src, int $w, int $h, int $maxW, int $maxSide, string $outPath, int $quality): ?array
     {
-        if ($w <= $maxW) {
-            $newW = $w;
-            $newH = $h;
-        } else {
-            $newW = $maxW;
-            $newH = (int) round($h * ($maxW / $w));
-        }
+        // Solo se reduce, nunca se amplía: el ancho y el lado mayor quedan dentro de sus límites y la proporción se conserva.
+        $scale = min(1.0, $maxW / max(1, $w), $maxSide / max(1, $w, $h));
+        $newW = max(1, (int) round($w * $scale));
+        $newH = max(1, (int) round($h * $scale));
 
         $dst = imagecreatetruecolor($newW, $newH);
         imagealphablending($dst, false);

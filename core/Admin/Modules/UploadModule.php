@@ -81,10 +81,13 @@ final class UploadModule extends AbstractModule
             }
             @chmod($target, 0644);
             @chmod($sidecar, 0644);
+            managedRefreshImages();
             $aiConfig = ai_text_config([], site_text('text_52179dc42df7efe5'), rtrim(getenv('GALLERY_PUBLIC_URL') ?: '', '/'));
             if ($aiConfig['ai_enabled']) {
-                $generator = new AiTextGenerator(Router::root(), $aiConfig);
-                $generator->processMissing([['original' => $basename, 'sidecar' => $sidecar, 'filename_clean' => $title]], 1);
+                // La descripción con IA se pide tras responder: la carga en lote no espera a cada llamada.
+                uploadAfterResponse(static function () use ($aiConfig, $basename, $sidecar, $title): void {
+                    (new AiTextGenerator(Router::root(), $aiConfig))->processMissing([['original' => $basename, 'sidecar' => $sidecar, 'filename_clean' => $title]], 1);
+                });
             }
             uploadJson(200, ['ok' => true, 'title' => $title, 'filename' => $basename]);
         } catch (RuntimeException $error) {
@@ -216,6 +219,7 @@ final class UploadModule extends AbstractModule
         }
         if ($description === '') $sidecarText .= "\n# auto-description-pending";
         if (($_POST['featured'] ?? '') === '1') $sidecarText .= "\n# Destacada: 1";
+        if (($_POST['pinned'] ?? '') === '1') $sidecarText .= "\n# Fijada: 1";
         if (($_POST['draft'] ?? '') === '1') $sidecarText .= "\n# Borrador: 1";
         $sidecarText .= "\n";
         if (@file_put_contents($sidecar, $sidecarText, LOCK_EX) === false) {
@@ -227,18 +231,21 @@ final class UploadModule extends AbstractModule
         @chmod($editedTarget, 0644);
         @chmod($sidecar, 0644);
         unset($_SESSION['pending_upload']);
+        managedRefreshImages();
 
         if ($description === '') {
             $siteConfigPath = \Kcg\Core\Installation::aiConfigFile();
             $siteConfig = $siteConfigPath !== '' && is_file($siteConfigPath) ? require $siteConfigPath : [];
             $siteConfig = ai_text_config($siteConfig, site_text('text_52179dc42df7efe5'), \Kcg\Core\Installation::siteUrl());
             if (!empty($siteConfig['ai_enabled'])) {
-                $generator = new AiTextGenerator(Router::root(), $siteConfig);
-                $generator->processMissing([[
-                    'original' => $basename,
-                    'sidecar' => $sidecar,
-                    'filename_clean' => $title,
-                ]], 1);
+                // La descripción con IA se pide tras responder: publicar no espera a la llamada al proveedor.
+                uploadAfterResponse(static function () use ($siteConfig, $basename, $sidecar, $title): void {
+                    (new AiTextGenerator(Router::root(), $siteConfig))->processMissing([[
+                        'original' => $basename,
+                        'sidecar' => $sidecar,
+                        'filename_clean' => $title,
+                    ]], 1);
+                });
             }
         }
 
@@ -256,8 +263,7 @@ final class UploadModule extends AbstractModule
                 @file_put_contents($sidecar, rtrim((string) file_get_contents($sidecar)) . "\n# Slug: " . $publishedSlug . "\n", LOCK_EX);
             }
         }
-        header('Location: /admin.php?library=1&published=' . rawurlencode($basename), true, 303);
-        exit;
+        uploadRedirect('/admin.php?library=1&published=' . rawurlencode($basename));
     }
 
     /** Carga por lotes: cada imagen se envía individualmente para respetar los límites de PHP del hosting. */
@@ -275,7 +281,7 @@ final class UploadModule extends AbstractModule
         $batchContent = adminNavigation((string) $_SESSION['csrf'])
             . '<section class="admin-batch"><p class="admin-batch__intro">Selecciona varias fotos. Se subirán una a una; el título se tomará del nombre de archivo y podrás cambiarlo después con la edición rápida.</p>'
             . '<form id="photoBatchForm"><input type="hidden" name="csrf" value="' . uploadEscape((string) $_SESSION['csrf']) . '">'
-            . '<div class="upload-field"><label for="batchPhotos">Fotografías (JPG o PNG, máximo 15 MB cada una)</label><input id="batchPhotos" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" multiple required></div>'
+            . '<div class="upload-field"><label for="batchPhotos">Fotografías (JPG o PNG, máximo 15 MB cada una)</label><input id="batchPhotos" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" multiple required data-camera></div>'
             . '<div class="upload-field"><label for="batchCategoryChoice">Categoría común</label><select id="batchCategoryChoice" required>' . $batchCategoryOptions . '<option value="__new__">+ Añadir categoría nueva</option></select><small class="upload-help">Se aplicará a todas las fotos del lote. Ej.: «Paisajes» o «Viaje a Bélgica».</small></div>'
             . '<div class="upload-field" id="batchNewCategoryField" hidden><label for="batchCategory">Nombre de la nueva categoría</label><input id="batchCategory" maxlength="64" placeholder="Escribe el nombre"><small class="upload-help">Elige un nombre corto que puedas reutilizar. Ej.: «Arquitectura».</small></div>'
             . '<label class="upload-featured"><input type="checkbox" id="batchDraft" checked> Guardar como borrador para revisar antes de publicar</label>'
@@ -354,6 +360,7 @@ final class UploadModule extends AbstractModule
             '__DESCRIPTION__' => $editMode ? uploadEscape($edit['description']) : '',
             '__DESCRIPTION_HELP__' => 'Opcional. Añade contexto que no cabe en el título: lugar, momento o historia. Ej.: «La luz del atardecer entra por la ventana del estudio».',
             '__FEATURED_CHECKED__' => $editMode && !empty($edit['featured']) ? 'checked' : '',
+            '__PINNED_CHECKED__' => $editMode && !empty($edit['pinned']) ? 'checked' : '',
             '__DRAFT_CHECKED__' => $editMode && !empty($edit['draft']) ? 'checked' : '',
             '__SLUG_FIELD__' => $slugField,
             '__LATITUDE__' => $editMode && $edit['latitude'] != 0.0 ? uploadEscape((string) $edit['latitude']) : '',

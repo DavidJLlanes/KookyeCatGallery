@@ -71,9 +71,9 @@ function microblog_composer_html(string $csrf): string
         . '<button type="button" class="mbc-add" data-mb-add-link>＋ Añadir otro enlace</button></section>'
 
         . '<section class="mbc-section" data-mbc-section="images" hidden>'
-        . '<label class="mbc-drop"><input name="images[]" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple data-mb-images data-mb-max="' . MICROBLOG_MAX_IMAGES . '">'
+        . '<label class="mbc-drop"><input name="images[]" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple data-camera data-mb-images data-mb-max="' . MICROBLOG_MAX_IMAGES . '">'
         . '<span class="mbc-drop__icon">' . $icon('<path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>') . '</span>'
-        . '<span class="mbc-drop__text"><strong>Elegir imágenes</strong><small>Hasta ' . MICROBLOG_MAX_IMAGES . ' · JPG, PNG o WebP · se guardan en WebP (máx. 1500 px)</small></span></label>'
+        . '<span class="mbc-drop__text"><strong>Elegir imágenes</strong><small>Hasta ' . MICROBLOG_MAX_IMAGES . ' · JPG, PNG o WebP · se guardan en WebP (máx. 1800 px)</small></span></label>'
         . '<div class="mbc-previews" data-mb-previews></div></section>'
 
         // Destacado, fijado y programación.

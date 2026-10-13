@@ -74,7 +74,22 @@ $unsafePage = array_replace($defaults, ['pages' => ['project' => '<h2 onclick="a
 $safePage = site_settings_validate($unsafePage)['pages']['project'];
 check(str_contains($safePage, '<h2>Texto</h2>') && !str_contains($safePage, 'onclick') && !str_contains($safePage, '<script'), 'Page editor did not remove unsafe markup.');
 check(!str_contains($safePage, 'javascript:') && str_contains($safePage, '>enlace</a>'), 'Page editor accepted an unsafe link.');
-check(str_contains(site_page_editor_form('csrf', 'legal_notice'), 'contenteditable="true"'), 'Page editor is missing its text surface.');
+$editorForm = site_page_editor_form('csrf', 'legal_notice');
+check(str_contains($editorForm, 'data-page-editor') && str_contains($editorForm, 'class="ql-bold"') && str_contains($editorForm, '/assets/vendor/quill/quill.js'), 'Page editor is missing its Quill text surface and toolbar.');
+check(is_file(dirname(__DIR__) . '/assets/vendor/quill/quill.js') && is_file(dirname(__DIR__) . '/assets/vendor/quill/LICENSE'), 'Quill must be served locally with its license.');
+
+// ── Insignia de verificación ──────────────────────────────────────────────────
+check(count(\Kcg\Core\Registry::for('badges')->all()) >= 10, 'There must be at least 10 verification badges.');
+check($defaults['show_verified_badge'] === true && $defaults['verified_badge'] === 'check', 'The badge is shown by default with the check style.');
+check(str_contains(site_verified_badge_html($defaults), 'verified-badge--check'), 'The default badge is rendered.');
+check(site_verified_badge_html(array_replace($defaults, ['show_verified_badge' => false])) === '', 'The badge can be hidden.');
+check(site_settings_validate(array_diff_key($defaults, ['show_verified_badge' => 1]))['show_verified_badge'] === false, 'An unchecked switch hides the badge.');
+foreach (\Kcg\Core\Registry::for('badges')->ids() as $badgeId) {
+    check(str_contains(site_verified_badge_html(array_replace($defaults, ['verified_badge' => $badgeId])), 'verified-badge--' . $badgeId), "Badge $badgeId was not rendered.");
+}
+rejects(array_replace($defaults, ['verified_badge' => 'no-existe']));
+check(str_contains(site_settings_form('t', $defaults, 'design'), 'name="verified_badge"') && str_contains(site_settings_form('t', $defaults, 'design'), 'name="show_verified_badge"'), 'Badge controls missing from the design form.');
+
 foreach (site_design_choices() as $field => $choices) {
     foreach ($choices as $choice => $label) {
         $input = $defaults;
@@ -122,19 +137,14 @@ rejects(array_replace($defaults, ['pagination_shape' => 'oval']));
 check(str_contains(site_design_attributes(), 'data-pagination-shape="circle"'), 'Pagination shape must reach the page.');
 check(str_contains(site_settings_form('t', $defaults, 'design'), 'name="pagination_shape"'), 'Pagination shape selector missing from the form.');
 
-// ── Título de la web ──────────────────────────────────────────────────────────
-check($defaults['site_title'] === '', 'The site title must default to the catalog title.');
+// ── Nombre de la web ──────────────────────────────────────────────────────────
+// Un único sitio donde se guarda (text_52179dc42df7efe5). El ajuste «Título de la web» (site_title) ya no existe.
+check(!array_key_exists('site_title', $defaults), 'El ajuste site_title ya no existe: el nombre es un texto.');
 check(site_title_default() === site_text_catalog()['text_52179dc42df7efe5']['default'], 'Default site title mismatch.');
-$titled = site_settings_validate(array_replace($defaults, ['site_title' => '  Mi Galería  ']));
-check($titled['site_title'] === 'Mi Galería', 'Site title must be trimmed.');
-check(site_settings_validate(array_replace($defaults, ['site_title' => site_title_default()]))['site_title'] === '', 'The default title is stored as empty.');
-check(site_settings_validate(array_replace($defaults, ['site_title' => '']))['site_title'] === '', 'An empty title falls back to the default.');
-rejects(array_replace($defaults, ['site_title' => str_repeat('a', 81)]));
-rejects(array_replace($defaults, ['site_title' => "Dos\nlíneas"]));
-check(!str_contains(site_settings_form('t', $defaults, 'texts'), 'name="site_title"'), 'The title setting must be removed from the administration text fields.');
-$GLOBALS['siteInlineEditorEnabled'] = true;
-check(str_contains(site_inline_setting_html('site_title'), 'data-inline-edit-key="site_title"'), 'The site title must be available to inline editing.');
-unset($GLOBALS['siteInlineEditorEnabled']);
+check(site_title() === site_title_default(), 'Sin nombre propio se usa el predeterminado.');
+check(str_contains(site_settings_form('t', $defaults, 'texts'), 'name="texts[text_52179dc42df7efe5]"'), 'El nombre de la web se edita en Textos.');
+check(!str_contains(site_settings_form('t', $defaults, 'texts'), 'name="site_title"'), 'No debe quedar un segundo campo de título.');
+check(!function_exists('site_inline_setting_html'), 'La edición en línea del título usa el nombre único, no un ajuste aparte.');
 
 // ── Galerías premium ──────────────────────────────────────────────────────────
 check($defaults['gallery_premium'] === 'none', 'No premium gallery by default.');

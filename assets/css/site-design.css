@@ -24,26 +24,13 @@ body[data-palette]:not([data-palette="current"]) .contact__glow { background:var
 body[data-palette]:not([data-palette="current"]) .mobile-profile__crest-wrap,
 body[data-palette]:not([data-palette="current"]) .card__picture { background:var(--bg-card); }
 body[data-palette]:not([data-palette="current"]) .pwa-install-button,
-body[data-palette]:not([data-palette="current"]) .upload-fab,
-body[data-palette]:not([data-palette="current"]) .mobile-profile__verified {
+body[data-palette]:not([data-palette="current"]) .upload-fab  {
     color:var(--bg); background:var(--accent);
 }
+/* Insignia de verificación: la marca interior toma el fondo de la paleta */
+body[data-palette]:not([data-palette="current"]) .verified-badge { --badge-ink:var(--bg); }
 
-/* The map keeps its original dark/gold appearance regardless of theme selectors. */
-.map-section {
-    --bg:#0a0a0a;
-    --bg-soft:#131313;
-    --bg-card:#181818;
-    --fg:#f3f0ea;
-    --fg-soft:rgba(243,240,234,.65);
-    --fg-dim:rgba(243,240,234,.35);
-    --accent:#d4a574;
-    --accent-soft:rgba(212,165,116,.15);
-    --line:rgba(243,240,234,.08);
-    --serif:'Cormorant Garamond',Georgia,serif;
-    --sans:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-    color:var(--fg);
-}
+/* El mapa (sección, marco y puntos de localización) usa la paleta elegida, como el resto de la web. */
 
 /* All gallery modes use the selected column count. Masonry uses native columns. */
 body[data-grid] #masonry { --gallery-columns:var(--columns-desktop); }
@@ -108,19 +95,19 @@ body[data-grid="portrait"] #masonry .card__img { width:100%; height:100% !import
     body[data-header-mobile="centered"] .mobile-profile { padding:1.5rem; text-align:center; }
     body[data-header-mobile="centered"] .mobile-profile__masthead { flex-direction:column; gap:.6rem; }
     body[data-header-mobile="centered"] .mobile-profile__identity { display:flex; flex-direction:column; gap:1rem; }
+    body[data-header-mobile="centered"] .mobile-profile__portraits { justify-content:center; }
     body[data-header-mobile="centered"] .mobile-profile__stats { width:100%; }
     body[data-header-mobile="centered"] .mobile-profile__name { justify-content:center; }
     body[data-header-mobile="compact"] .mobile-profile { padding:.9rem; }
     body[data-header-mobile="compact"] .mobile-profile__masthead { margin:0; padding:0 0 .5rem; }
     body[data-header-mobile="compact"] .mobile-profile__identity { grid-template-columns:56px 1fr; padding:.5rem 0; }
-    body[data-header-mobile="compact"] .mobile-profile__portraits { width:48px; height:48px; }
-    body[data-header-mobile="compact"] .mobile-profile__avatar { width:48px; height:48px; }
+    body[data-header-mobile="compact"] .mobile-profile__portraits { --avatar:48px; }
     body[data-header-mobile="compact"] .mobile-profile__crest-wrap,
     body[data-header-mobile="compact"] .mobile-profile__bio p { display:none; }
     body[data-header-mobile="editorial"] .mobile-profile { padding:2rem 1.2rem; border-top:5px solid var(--accent); }
     body[data-header-mobile="editorial"] .mobile-profile__masthead { align-items:flex-start; flex-direction:column; gap:.7rem; padding-bottom:1.2rem; }
     body[data-header-mobile="editorial"] .mobile-profile__brand { font-size:clamp(2.5rem,10vw,4rem); }
-    body[data-header-mobile="editorial"] .mobile-profile__identity { grid-template-columns:1fr 92px; }
+    body[data-header-mobile="editorial"] .mobile-profile__identity { grid-template-columns:1fr auto; }
     body[data-header-mobile="editorial"] .mobile-profile__portraits { grid-column:2; grid-row:1; }
     body[data-header-mobile="editorial"] .mobile-profile__stats { grid-column:1; grid-row:1; }
     body[data-header-mobile="editorial"] .mobile-profile__bio { margin-top:1rem; padding-top:1rem; border-top:1px solid var(--line); font-size:.85rem; }

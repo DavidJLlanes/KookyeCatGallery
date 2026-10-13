@@ -75,7 +75,7 @@ final class SettingsModule extends AbstractModule
             $settingsInput = $_POST;
             $currentSettings = site_settings_load();
             // Los textos generales se editan en la propia web; conserva su contenido al guardar el panel.
-            foreach (['site_title', 'profile_website_url'] as $preservedKey) {
+            foreach (['profile_website_url'] as $preservedKey) {
                 if (!array_key_exists($preservedKey, $settingsInput)) $settingsInput[$preservedKey] = $currentSettings[$preservedKey] ?? '';
             }
             if (is_array($settingsInput['texts'] ?? null)) {

@@ -180,6 +180,13 @@
       ]
     },
     {
+      "id": "verified-badge",
+      "title": "Insignia de verificación junto al nombre",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
       "id": "admin-access",
       "title": "Acceso discreto al panel privado",
       "profiles": [
@@ -199,6 +206,13 @@
       "profiles": [
         "full",
         "legal"
+      ]
+    },
+    {
+      "id": "photo-highlights",
+      "title": "Fotos fijadas (marco) y destacadas (distintivo de esquina)",
+      "profiles": [
+        "full"
       ]
     },
     {

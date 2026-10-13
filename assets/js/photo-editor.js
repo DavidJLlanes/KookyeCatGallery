@@ -890,11 +890,6 @@ const solvePerspectiveAffine = (src,dst) => {
             setMessage('');
         }
     });
-    $('cameraSourceButton').addEventListener('click',()=>{
-        fileInput.setAttribute('capture','environment');
-        fileInput.click();
-    });
-    fileInput.addEventListener('cancel',()=>fileInput.removeAttribute('capture'));
     startEditingButton.addEventListener('click',async()=>{
         const file=selectedUploadFile;
         if(!file||saving)return;

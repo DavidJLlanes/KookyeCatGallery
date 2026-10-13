@@ -159,23 +159,23 @@ check(microblog_find($root['id']) === null && microblog_find($reply['id']) === n
 
 // Imágenes (solo con GD).
 if (function_exists('imagecreatetruecolor') && function_exists('imagepng')) {
-    $source = imagecreatetruecolor(2000, 1000);
+    $source = imagecreatetruecolor(3000, 1500);
     imagefill($source, 0, 0, imagecolorallocate($source, 200, 80, 40));
     $png = $tmp . '/photo.png';
     imagepng($source, $png);
     $withImage = microblog_create(['text' => 'Con foto', 'image_alt' => ['Una foto']], [['name' => 'photo.png', 'tmp_name' => $png, 'error' => UPLOAD_ERR_OK, 'size' => filesize($png)]]);
     $image = $withImage['images'][0];
-    check($image['w'] === 1500 && $image['h'] === 750 && is_file($tmp . '/img/' . $image['file']), 'Landscape image was not scaled to 1500 px on its longest side.');
+    check($image['w'] === 1800 && $image['h'] === 900 && is_file($tmp . '/img/' . $image['file']), 'Landscape image was not scaled to 1800 px on its longest side.');
     check(str_ends_with($image['file'], '.webp') && (getimagesize($tmp . '/img/' . $image['file'])[2] ?? 0) === IMAGETYPE_WEBP, 'Stored image is not WebP.');
     // Foto vertical: el lado mayor es el alto; las pequeñas no se amplían.
-    $tall = imagecreatetruecolor(1000, 2000); imagepng($tall, $tmp . '/tall.png');
+    $tall = imagecreatetruecolor(1500, 3000); imagepng($tall, $tmp . '/tall.png');
     $small = imagecreatetruecolor(400, 300); imagepng($small, $tmp . '/small.png');
     $sizes = microblog_create(['text' => 'Tamaños'], [
         ['name' => 'tall.png', 'tmp_name' => $tmp . '/tall.png', 'error' => UPLOAD_ERR_OK, 'size' => filesize($tmp . '/tall.png')],
         ['name' => 'small.png', 'tmp_name' => $tmp . '/small.png', 'error' => UPLOAD_ERR_OK, 'size' => filesize($tmp . '/small.png')]]);
-    check($sizes['images'][0]['w'] === 750 && $sizes['images'][0]['h'] === 1500, 'Portrait image was not scaled to 1500 px high.');
+    check($sizes['images'][0]['w'] === 900 && $sizes['images'][0]['h'] === 1800, 'Portrait image was not scaled to 1800 px high.');
     check($sizes['images'][1]['w'] === 400 && $sizes['images'][1]['h'] === 300, 'Small images must not be enlarged.');
-    check(MICROBLOG_IMAGE_QUALITY === 80 && MICROBLOG_IMAGE_MAX_SIDE === 1500, 'Image limits changed.');
+    check(MICROBLOG_IMAGE_QUALITY === 80 && MICROBLOG_IMAGE_MAX_SIDE === 1800, 'Image limits changed.');
     check(str_contains(microblog_render_thread($withImage, []), '/microblog/' . $image['file']), 'Image URL missing from the post.');
     fails(fn() => microblog_update($withImage['id'], ['text' => ''], [], [$image['file']]), 'Removing the only content must be rejected.');
     microblog_update($withImage['id'], ['text' => 'Sin foto'], [], [$image['file']]);

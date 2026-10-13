@@ -1,6 +1,6 @@
 /* Cabecera de perfil y galería móvil: lenguaje visual editorial de la galería */
 .mobile-profile { display: none; }
-.map-section { padding: 4rem 5vw 4.5rem; background: linear-gradient(180deg, var(--bg), #11100e); border-top: 1px solid var(--line); }
+.map-section { padding: 4rem 5vw 4.5rem; background: linear-gradient(180deg, var(--bg), var(--bg-soft)); border-top: 1px solid var(--line); }
 .map-section__head { max-width: 1200px; margin: 0 auto 1.25rem; }
 .map-section__eyebrow { color: var(--accent); font-size: .66rem; letter-spacing: .22em; text-transform: uppercase; }
 .map-section__title { margin: .35rem 0 1rem; font: 400 clamp(2rem, 4vw, 3.2rem)/1.05 var(--serif); }
@@ -28,17 +28,18 @@
     }
     .mobile-profile__brand { font: 1.55rem/1 var(--serif); color: var(--fg); letter-spacing: -.025em; }
     .mobile-profile__edition { color: var(--accent); font-size: .57rem; letter-spacing: .13em; text-transform: uppercase; }
-    .mobile-profile__identity { display: grid; grid-template-columns: 104px 1fr; align-items: center; gap: 1rem; padding: .9rem 0 .55rem; }
-    .mobile-profile__portraits { position: relative; width: 92px; height: 92px; }
+    .mobile-profile__identity { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 1rem; padding: .9rem 0 .55rem; }
+    /* Foto de perfil y logo van en fila: el logo (siempre redondo) queda al lado y nunca tapa la foto. Cada plantilla ajusta --avatar y --crest. */
+    .mobile-profile__portraits { --avatar: 82px; --crest: 34px; display: flex; align-items: flex-end; gap: 8px; }
     .mobile-profile__avatar {
-        width: 82px; height: 82px; object-fit: cover; border-radius: 50%; padding: 3px;
+        flex: 0 0 auto; width: var(--avatar); height: var(--avatar); object-fit: cover; border-radius: 50%; padding: 3px;
         border: 1px solid rgba(212,165,116,.8); background: var(--bg); box-shadow: 0 4px 18px #0006;
     }
     .mobile-profile__crest-wrap {
-        position: absolute; right: 0; bottom: 0; width: 35px; height: 40px; display: grid; place-items: center;
-        padding: 4px; border-radius: 50%; background: #11100e; border: 1px solid var(--accent);
+        flex: 0 0 auto; display: grid; place-items: center; width: var(--crest); height: var(--crest); aspect-ratio: 1 / 1;
+        padding: 3px; overflow: hidden; border-radius: 50%; background: #11100e; border: 1px solid var(--accent);
     }
-    .mobile-profile__crest-wrap img { width: 19px; height: 28px; object-fit: contain; }
+    .mobile-profile__crest-wrap img { display: block; width: 100%; height: 100%; aspect-ratio: 1 / 1; object-fit: contain; border-radius: 50%; }
     .mobile-profile__stats { display: flex; justify-content: space-around; gap: .25rem; }
     .mobile-profile__stats div { display: flex; flex-direction: column; align-items: center; gap: .1rem; }
     .mobile-profile__stats strong { color: var(--fg); font-size: .94rem; font-weight: 500; }

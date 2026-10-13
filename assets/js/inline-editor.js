@@ -97,6 +97,19 @@
         });
     };
 
+    // Si el nombre se cambia desde el panel (otra pestaña), esta página se actualiza sola salvo que haya un texto a medio editar.
+    const onPanelTitle = update => {
+        if (!update || update.source !== 'panel' || dirty()) return;
+        window.location.reload();
+    };
+    window.addEventListener('storage', event => {
+        if (event.key !== 'gallery-admin-site-title' || !event.newValue) return;
+        try { onPanelTitle(JSON.parse(event.newValue)); } catch (_) {}
+    });
+    if ('BroadcastChannel' in window) {
+        try { new BroadcastChannel('gallery-admin-site-title').addEventListener('message', event => onPanelTitle(event.data)); } catch (_) {}
+    }
+
     const mapNode = document.querySelector('#inline-editor-text-map');
     if (mapNode) {
         try {

@@ -26,7 +26,7 @@ const MICROBLOG_MAX_IMAGES = 4;
 const MICROBLOG_MAX_LINKS = 4;
 const MICROBLOG_PAGE_SIZE = 8;
 const MICROBLOG_MAX_IMAGE_BYTES = 15728640; // 15 MiB
-const MICROBLOG_IMAGE_MAX_SIDE = 1500;   // píxeles del lado mayor (se conserva la proporción)
+const MICROBLOG_IMAGE_MAX_SIDE = 1800;   // píxeles del lado mayor (se conserva la proporción)
 const MICROBLOG_IMAGE_QUALITY = 80;      // calidad WebP
 const MICROBLOG_FEED_REPLIES = 2; // respuestas visibles en la portada antes de «Ver hilo completo»
 
@@ -265,7 +265,7 @@ function microblog_collect_uploads(array $files): array
 // =============================================================================
 
 /**
- * Procesa una imagen subida: comprueba el tipo real, corrige la orientación, reduce su lado mayor a 1500 px y la
+ * Procesa una imagen subida: comprueba el tipo real, corrige la orientación, reduce su lado mayor a 1800 px y la
  * guarda en /microblog/ sin metadatos (EXIF/GPS). Devuelve ['file', 'w', 'h', 'alt'].
  */
 function microblog_store_image(array $upload, string $postId, string $alt = ''): array
@@ -297,7 +297,7 @@ function microblog_store_image(array $upload, string $postId, string $alt = ''):
     }
     $width = imagesx($source);
     $height = imagesy($source);
-    // Solo se reduce (nunca se amplía): el lado mayor queda en 1500 px como máximo y la proporción se conserva.
+    // Solo se reduce (nunca se amplía): el lado mayor queda en 1800 px como máximo y la proporción se conserva.
     $scale = min(1.0, MICROBLOG_IMAGE_MAX_SIDE / max(1, $width, $height));
     $newWidth = (int) max(1, round($width * $scale));
     $newHeight = (int) max(1, round($height * $scale));

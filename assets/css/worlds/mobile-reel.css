@@ -7,8 +7,8 @@ body[data-header-mobile="reel"] .mobile-profile:before{content:attr(data-templat
 body[data-header-mobile="reel"] .mobile-profile__masthead{border:0;align-items:center}
 body[data-header-mobile="reel"] .mobile-profile__brand{font:700 clamp(2.4rem,11vw,4rem)/.9 var(--sans);text-transform:uppercase;letter-spacing:-.085em;max-width:8ch}
 body[data-header-mobile="reel"] .mobile-profile__edition{writing-mode:vertical-rl;letter-spacing:.3em;color:var(--fg)}
-body[data-header-mobile="reel"] .mobile-profile__identity{grid-template-columns:68px 1fr;border-block:1px solid var(--line);margin-top:1.2rem}
-body[data-header-mobile="reel"] .mobile-profile__portraits,body[data-header-mobile="reel"] .mobile-profile__avatar{width:62px;height:62px}
+body[data-header-mobile="reel"] .mobile-profile__identity{grid-template-columns:auto 1fr;border-block:1px solid var(--line);margin-top:1.2rem}
+body[data-header-mobile="reel"] .mobile-profile__portraits{--avatar:62px;--crest:30px}
 body[data-header-mobile="reel"] .mobile-profile__avatar{border:2px solid var(--accent);border-radius:3px;padding:0}
 body[data-header-mobile="reel"] .mobile-profile__crest-wrap{border-color:var(--accent)}
 body[data-header-mobile="reel"] .mobile-profile__stats strong{font:700 1.15rem var(--sans)}

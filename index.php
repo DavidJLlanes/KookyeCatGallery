@@ -24,19 +24,11 @@ $siteName = site_text('text_52179dc42df7efe5');
 $author   = site_text('text_30170303c506cf6c');
 $siteSettings = site_settings_load();
 
-// Claves de IA desde fuera del document root, si la instalación declara un archivo (installation.php, «ai_config_file»).
-$externalConfigPath = \Kcg\Core\Installation::aiConfigFile();
-$config = $externalConfigPath !== '' && is_file($externalConfigPath) ? require $externalConfigPath : [];
-$config = ai_text_config($config, $siteName, $siteUrl);
-
 $processor = new ImageProcessor(__DIR__);
 $items     = $processor->processAll();
 
-// Generar textos con IA (cascada de proveedores) para fotos sin sidecar .txt
-if (!empty($config['ai_enabled'])) {
-    $ai = new AiTextGenerator(__DIR__, $config);
-    $ai->processMissing($items, (int) ($config['ai_max_per_request'] ?? 5));
-}
+// Las descripciones con IA ya no se piden aquí (una llamada a un proveedor bloqueaba la portada a los visitantes): se piden al
+// publicar una foto y desde la biblioteca del panel (core/Admin/Modules/LibraryModule.php).
 
 $items = enrich_with_sidecar($items);
 $items = array_values(array_filter($items, static fn(array $item): bool => empty($item['draft'])));
@@ -94,6 +86,9 @@ if (array_filter($items, static fn(array $item): bool => $item['order'] !== null
         return $ao <=> $bo;
     });
 }
+
+// Fijadas arriba (después del orden manual, que no las mueve entre sí).
+$items = pin_to_top($items);
 
 $totalFotos = count($items);
 $yearLabel  = year_range($items);
@@ -440,7 +435,7 @@ $pageContext = ['author' => $author, 'categories' => $categories, 'galleryItems'
 <!-- PRELOADER cinematográfico (solo en la home) -->
 <div class="preloader" id="preloader" aria-hidden="true">
     <div class="preloader__inner">
-        <img class="preloader__crest" src="<?= safe(site_media_src('logo_image')) ?>" width="500" height="640" alt="">
+        <img class="preloader__crest" src="<?= safe(site_media_src('logo_image')) ?>" width="512" height="512" alt="">
         <span class="preloader__title"><?= site_text_html('text_2c6b326536186079') ?></span>
         <span class="preloader__bar"><span class="preloader__bar-fill"></span></span>
     </div>
@@ -641,6 +636,7 @@ echo page_blocks_render_home($pageContext, $siteSettings['section_order'] ?? nul
 <script src="/assets/js/inline-editor.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/inline-editor.js')) ?>" defer></script>
 <?= microblog_composer_html($inlineEditorCsrf) ?>
 <script src="/assets/js/microblog-admin.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/microblog-admin.js')) ?>" defer></script>
+<script src="/assets/js/camera-input.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/camera-input.js')) ?>" defer></script>
 <script src="/assets/js/microblog-composer.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/microblog-composer.js')) ?>" defer></script>
 <?php endif; ?>
 <script src="/assets/js/pwa.js?v=<?= safe($appVersion) ?>" defer></script>

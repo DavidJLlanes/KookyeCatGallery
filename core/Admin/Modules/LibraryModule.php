@@ -70,7 +70,14 @@ final class LibraryModule extends AbstractModule
     /** Biblioteca: listado, búsqueda, orden y borrado de fotos. */
     protected function libraryPage(): void
     {
-        (new ImageProcessor(Router::root()))->processAll();
+        $items = (new ImageProcessor(Router::root()))->processAll();
+        // Fotos dejadas por FTP, sin descripción: la IA (si está activada) las describe aquí, en el panel, y no en la web pública.
+        $siteConfigPath = KcgCoreInstallation::aiConfigFile();
+        $siteConfig = $siteConfigPath !== '' && is_file($siteConfigPath) ? require $siteConfigPath : [];
+        $siteConfig = ai_text_config($siteConfig, site_text('text_52179dc42df7efe5'), KcgCoreInstallation::siteUrl());
+        if (!empty($siteConfig['ai_enabled'])) {
+            (new AiTextGenerator(Router::root(), $siteConfig))->processMissing($items, (int) ($siteConfig['ai_max_per_request'] ?? 5));
+        }
         $photos = managedPhotos();
         $libraryCategories = array_values(array_unique(array_map(static fn($item) => trim((string) $item['category']) !== '' ? trim((string) $item['category']) : 'Sin categoría', $photos)));
         sort($libraryCategories, SORT_NATURAL | SORT_FLAG_CASE);
@@ -86,14 +93,16 @@ final class LibraryModule extends AbstractModule
             $thumbnail = uploadEscape($photo['thumbnail']);
             $editUrl = '/admin.php?edit=' . rawurlencode($photo['filename']);
             $featured = !empty($photo['featured']);
+            $pinned = !empty($photo['pinned']);
             $draft = !empty($photo['draft']);
             $slug = uploadEscape((string) ($photo['slug'] ?? ''));
             $description = uploadEscape((string) ($photo['description'] ?? ''));
             $latitude = uploadEscape((string) ($photo['latitude'] ?? ''));
             $longitude = uploadEscape((string) ($photo['longitude'] ?? ''));
-            $cards .= '<article class="admin-photo-card' . ($featured ? ' is-featured' : '') . ($draft ? ' is-draft' : '') . '" data-photo-file="' . $filename . '" data-photo-mtime="' . (int) $photo['mtime'] . '" data-photo-category="' . $category . '" data-photo-draft="' . ($draft ? '1' : '0') . '" data-photo-featured="' . ($featured ? '1' : '0') . '" data-photo-title="' . $title . '" data-photo-description="' . $description . '" data-photo-slug="' . $slug . '" data-photo-latitude="' . $latitude . '" data-photo-longitude="' . $longitude . '">'
+            $cards .= '<article class="admin-photo-card' . ($featured ? ' is-featured' : '') . ($pinned ? ' is-pinned' : '') . ($draft ? ' is-draft' : '') . '" data-photo-file="' . $filename . '" data-photo-mtime="' . (int) $photo['mtime'] . '" data-photo-category="' . $category . '" data-photo-draft="' . ($draft ? '1' : '0') . '" data-photo-featured="' . ($featured ? '1' : '0') . '" data-photo-pinned="' . ($pinned ? '1' : '0') . '" data-photo-title="' . $title . '" data-photo-description="' . $description . '" data-photo-slug="' . $slug . '" data-photo-latitude="' . $latitude . '" data-photo-longitude="' . $longitude . '">'
                 . '<img src="' . $thumbnail . '" alt="" loading="lazy" decoding="async">'
                 . '<div class="admin-photo-card__body"><div class="admin-photo-card__heading"><h2>' . $title . '</h2>'
+                . ($pinned ? '<span class="admin-photo-featured admin-photo-pinned" title="Fijada arriba en la galería">Fijada</span>' : '')
                 . ($featured ? '<span class="admin-photo-featured" title="Fotografía destacada">★ Destacada</span>' : '')
                 . ($draft ? '<span class="admin-photo-draft">Borrador</span>' : '') . '</div><p>' . $category . '</p>'
                 . ($slug !== '' ? '<p class="admin-photo-hearts" data-admin-heart="' . $slug . '">♥ <span>0</span> corazones</p>' : '')
@@ -120,7 +129,7 @@ final class LibraryModule extends AbstractModule
             . '<div class="admin-library-tools"><div class="upload-field"><label for="photoLibrarySearch">Buscar fotografías</label>'
             . '<input id="photoLibrarySearch" type="search" autocomplete="off" placeholder="Título, categoría o archivo"></div>'
             . '<div class="upload-field"><label for="photoLibraryCategory">Categoría</label><select id="photoLibraryCategory"><option value="">Todas las categorías</option>' . $categoryOptions . '</select></div>'
-            . '<div class="upload-field"><label for="photoLibraryStatus">Estado</label><select id="photoLibraryStatus"><option value="">Todos los estados</option><option value="published">Publicadas</option><option value="draft">Borradores</option><option value="featured">Destacadas</option></select></div>'
+            . '<div class="upload-field"><label for="photoLibraryStatus">Estado</label><select id="photoLibraryStatus"><option value="">Todos los estados</option><option value="published">Publicadas</option><option value="draft">Borradores</option><option value="featured">Destacadas</option><option value="pinned">Fijadas</option></select></div>'
             . '<div class="upload-field"><label for="photoLibrarySort">Orden</label><select id="photoLibrarySort"><option value="manual">Manual</option><option value="recent">Más recientes</option><option value="popular">Más corazones</option></select></div>'
             . '<button class="upload-submit" id="savePhotoOrder" type="button">Guardar orden manual</button></div>'
             . '<p class="admin-library__count" id="photoLibraryCount">' . count($photos) . ' fotografías</p>'
@@ -143,7 +152,7 @@ final class LibraryModule extends AbstractModule
             . '<div class="upload-field"><label for="quickCategory">Categoría</label><input id="quickCategory" name="category" maxlength="64" required><small class="upload-help">Agrupa fotos parecidas. Ej.: «Paisajes» o «Retratos».</small></div>'
             . '<div class="upload-field"><label for="quickDescription">Descripción</label><textarea id="quickDescription" name="description" rows="4" maxlength="5000"></textarea><small class="upload-help">Añade contexto: lugar, momento o historia. Ej.: «La luz del atardecer entra por la ventana del estudio».</small></div>'
             . '<div class="upload-field"><label for="quickSlug">Enlace de la foto</label><input id="quickSlug" name="slug" maxlength="80" pattern="[a-z0-9]+(-[a-z0-9]+)*"></div>'
-            . '<div class="admin-quick-edit__checks"><label><input type="checkbox" name="featured" value="1"> Destacada</label><label><input type="checkbox" name="draft" value="1"> Borrador</label></div>'
+            . '<div class="admin-quick-edit__checks"><label><input type="checkbox" name="featured" value="1"> Destacada</label><label><input type="checkbox" name="pinned" value="1"> Fijada arriba</label><label><input type="checkbox" name="draft" value="1"> Borrador</label></div>'
             . '<input type="hidden" name="latitude" data-quick-latitude><input type="hidden" name="longitude" data-quick-longitude>'
             . '<p class="admin-quick-edit__error" data-quick-error role="alert" hidden></p>'
             . '<div class="admin-delete-dialog__actions"><button type="button" data-quick-cancel>Cancelar</button><button type="submit" data-quick-save>Guardar cambios</button></div></form></dialog>';

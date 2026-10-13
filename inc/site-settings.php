@@ -14,6 +14,7 @@ use Kcg\Core\Settings\Validator;
  *   inc/site-sections.php       bloques de la portada: definiciones, interruptores y orden
  *   inc/site-text-api.php       textos editables: catálogo y lectura por clave
  *   inc/site-pages.php          páginas de texto editables
+ *   inc/site-badges.php         insignias de verificación (themes/badges)
  *   inc/gallery-collections.php colecciones de la galería
  *   inc/site-settings-form.php  formularios del panel
  *   inc/premium-galleries.php   galerías premium
@@ -28,6 +29,7 @@ require_once __DIR__ . '/site-typography.php';
 require_once __DIR__ . '/site-sections.php';
 require_once __DIR__ . '/site-text-api.php';
 require_once __DIR__ . '/site-pages.php';
+require_once __DIR__ . '/site-badges.php';
 require_once __DIR__ . '/gallery-collections.php';
 require_once __DIR__ . '/site-assets.php';
 

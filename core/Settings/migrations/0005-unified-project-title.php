@@ -7,8 +7,9 @@ return [
     'apply' => static function (array $data): array {
         $texts = $data['texts'] ?? [];
         if (!is_array($texts)) return $data;
-        $first = trim((string) ($texts['text_6636c29ab23b6ec8'] ?? ''));
-        $second = trim((string) ($texts['text_3d9d76375e115725'] ?? ''));
+        $text = static fn(mixed $value): string => is_string($value) ? trim($value) : '';
+        $first = $text($texts['text_6636c29ab23b6ec8'] ?? '');
+        $second = $text($texts['text_3d9d76375e115725'] ?? '');
         if ($second !== '') {
             $catalog = function_exists('site_text_catalog') ? site_text_catalog() : [];
             $first = $first !== '' ? $first : (string) ($catalog['text_6636c29ab23b6ec8']['default'] ?? '');

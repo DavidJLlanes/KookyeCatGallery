@@ -152,33 +152,14 @@ function site_title_default(): string
 }
 
 /**
- * Título actual de la web (ajuste «Título de la web»). Se usa en cabeceras, pie, <title>, textos
- * accesibles y en el panel.
+ * Nombre de la web: el texto «Nombre de la web» (Ajustes → Textos, o la edición en la propia página) o, si no hay, el del núcleo.
+ * Es el título grande de la portada, el pie, el <title>, los textos accesibles y la marca del panel: un único sitio donde se guarda.
  */
 function site_title(): string
 {
     $settings = site_settings_load();
-    $catalog = site_text_catalog();
-    $storedTitle = trim((string) ($settings['site_title'] ?? ''));
-    $customName = trim((string) ($settings['texts']['text_52179dc42df7efe5'] ?? ''));
-    if ($customName !== '') return $customName;
-
-    // Si se personalizó el encabezado en dos líneas, úsalo también como nombre de marca.
-    // Lee los valores directamente para evitar una dependencia circular.
-    $textValues = is_array($settings['texts'] ?? null) ? $settings['texts'] : [];
-    $firstLine = trim((string) ($textValues['text_cbbba360eb60dd04'] ?? $catalog['text_cbbba360eb60dd04']['default'] ?? ''));
-    $secondLine = trim((string) ($textValues['text_2c1ac3057629f681'] ?? $catalog['text_2c1ac3057629f681']['default'] ?? ''));
-    $headline = trim($firstLine . ' ' . $secondLine);
-    $defaultHeadline = trim(
-        (string) ($catalog['text_cbbba360eb60dd04']['default'] ?? '') . ' ' .
-        (string) ($catalog['text_2c1ac3057629f681']['default'] ?? '')
-    );
-    if ($headline !== '' && $headline !== $defaultHeadline
-        && ($storedTitle === '' || $storedTitle === site_title_default())) {
-        return $headline;
-    }
-
-    return $storedTitle !== '' ? $storedTitle : site_title_default();
+    $name = trim((string) ($settings['texts']['text_52179dc42df7efe5'] ?? ''));
+    return $name !== '' ? $name : site_title_default();
 }
 
 /**
@@ -201,15 +182,6 @@ function site_inline_text_values(): array
         $values[$key] = ['value' => site_text($key), 'label' => site_inline_text_label($key)];
     }
     return $values;
-}
-
-function site_inline_setting_html(string $key): string
-{
-    if ($key !== 'site_title') return '';
-    $value = site_title();
-    $escape = static fn(string $text): string => htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    if (empty($GLOBALS['siteInlineEditorEnabled'])) return $escape($value);
-    return '<span class="inline-edit-text" data-inline-edit-key="site_title" data-inline-edit-label="Título de la web">' . $escape($value) . '</span>';
 }
 
 function site_inline_text_label(string $key): string

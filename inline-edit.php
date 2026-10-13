@@ -50,11 +50,11 @@ if (!is_array($payload) || !is_string($payload['key'] ?? null) || !is_string($pa
 }
 $key = $payload['key'];
 $value = $payload['value'];
-$isSiteTitle = $key === 'site_title';
-if (!$isSiteTitle && !in_array($key, site_inline_editable_text_keys(), true)) $fail(403, 'Este texto no se puede editar desde aquí.');
-if ($isSiteTitle) {
+if (!in_array($key, site_inline_editable_text_keys(), true)) $fail(403, 'Este texto no se puede editar desde aquí.');
+if ($key === 'text_52179dc42df7efe5') {
+    // El nombre de la web: una línea, igual que en Ajustes → Textos.
     $value = trim($value);
-    if (site_utf8_length($value) > 80 || preg_match('/[\\x00-\\x1F\\x7F]/', $value)) $fail(422, 'El título debe tener 80 caracteres como máximo y no puede contener saltos de línea.');
+    if (site_utf8_length($value) > 80 || preg_match('/[\\x00-\\x1F\\x7F]/', $value)) $fail(422, 'El nombre debe tener 80 caracteres como máximo y no puede contener saltos de línea.');
 } elseif (strlen($value) > 20000) {
     $fail(422, 'El texto supera el máximo permitido.');
 }
@@ -62,13 +62,8 @@ if ($isSiteTitle) {
 session_write_close();
 try {
     $settings = site_settings_load();
-    if ($isSiteTitle) {
-        $settings['site_title'] = $value === site_title_default() ? '' : $value;
-        $savedValue = $value === '' ? site_title_default() : $value;
-    } else {
-        $settings['texts'][$key] = $value;
-        $savedValue = $value;
-    }
+    $settings['texts'][$key] = $value;
+    $savedValue = $key === 'text_52179dc42df7efe5' && $value === '' ? site_title_default() : $value;
     site_settings_save($settings);
     echo json_encode(['ok' => true, 'value' => $savedValue, 'siteTitle' => site_title(), 'reload' => $key === 'text_52179dc42df7efe5'], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $error) {

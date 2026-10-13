@@ -1,0 +1,13 @@
+/* Insignia de verificación junto al nombre (themes/badges, inc/site-badges.php). El color sale de la paleta elegida. */
+.verified-badge {
+    --badge-ink: #17120d;
+    display: inline-grid; place-items: center; flex: 0 0 auto;
+    width: 1.15em; height: 1.15em; margin-left: .25em; vertical-align: -.2em;
+    color: var(--accent);
+}
+.verified-badge svg { width: 100%; height: 100%; overflow: visible; }
+.verified-badge .b-fill { fill: currentColor; }
+.verified-badge .b-round { stroke: currentColor; stroke-width: 1.2; stroke-linejoin: round; }
+.verified-badge .b-ink, .verified-badge .b-stroke { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.verified-badge .b-ink { stroke: var(--badge-ink); stroke-width: 2; }
+.verified-badge .b-stroke { stroke: currentColor; stroke-width: 3; }

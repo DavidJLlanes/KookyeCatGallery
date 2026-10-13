@@ -20,7 +20,7 @@
     <div class="hero__content">
         <img class="hero__portrait" src="<?= safe(site_media_src('profile_image')) ?>" width="120" height="120" alt="<?= site_text_html('text_30170303c506cf6c') ?>" loading="lazy">
         <a href="/" class="hero__crest" aria-label="<?= site_text_html('text_83f4e59e2da59d76') ?>">
-            <img src="<?= safe(site_media_src('logo_image')) ?>" width="500" height="640" alt="" loading="eager" decoding="async">
+            <img src="<?= safe(site_media_src('logo_image')) ?>" width="512" height="512" alt="" loading="eager" decoding="async">
         </a>
         <span class="hero__eyebrow"><?= site_inline_text_html('text_b6b50664e231e202') ?></span>
         <h1 class="hero__title">

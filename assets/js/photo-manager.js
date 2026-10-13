@@ -1,18 +1,5 @@
 (() => {
     'use strict';
-    const cameraButton = document.getElementById('cameraSourceButton');
-    const photoFile = document.getElementById('photoFile');
-    if (cameraButton && photoFile) {
-        cameraButton.addEventListener('click', () => {
-            photoFile.setAttribute('capture', 'environment');
-            photoFile.click();
-            window.setTimeout(() => photoFile.removeAttribute('capture'), 1000);
-        });
-        photoFile.addEventListener('click', event => {
-            if (event.isTrusted && !photoFile.hasAttribute('capture')) photoFile.removeAttribute('capture');
-        });
-    }
-
     document.querySelectorAll('[data-category-action]').forEach(form => {
         const operation = form.querySelector('[data-category-operation]');
         const existing = form.querySelector('[data-existing-target]');
@@ -178,7 +165,7 @@
         grid.querySelectorAll('.admin-photo-card').forEach(card => {
             const matchesSearch = normalize(card.textContent + ' ' + card.dataset.photoFile).includes(needle);
             const matchesCategory = !category || card.dataset.photoCategory === category;
-            const matchesState = !state || (state === 'draft' ? card.dataset.photoDraft === '1' : state === 'featured' ? card.dataset.photoFeatured === '1' : card.dataset.photoDraft !== '1');
+            const matchesState = !state || (state === 'draft' ? card.dataset.photoDraft === '1' : state === 'featured' ? card.dataset.photoFeatured === '1' : state === 'pinned' ? card.dataset.photoPinned === '1' : card.dataset.photoDraft !== '1');
             const match = matchesSearch && matchesCategory && matchesState;
             card.hidden = !match;
             if (match) visible++;
@@ -252,6 +239,7 @@
             quickForm.elements.latitude.value = card.dataset.photoLatitude || '';
             quickForm.elements.longitude.value = card.dataset.photoLongitude || '';
             quickForm.elements.featured.checked = card.dataset.photoFeatured === '1';
+            quickForm.elements.pinned.checked = card.dataset.photoPinned === '1';
             quickForm.elements.draft.checked = card.dataset.photoDraft === '1';
             quickError.hidden = true;
             quickDialog.showModal();

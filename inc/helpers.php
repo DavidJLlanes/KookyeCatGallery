@@ -39,7 +39,7 @@ function generate_slug(string $title): string
 
 function read_sidecar(string $txtPath): array
 {
-    $out = ['title' => '', 'description' => '', 'category' => '', 'latitude' => 0, 'longitude' => 0, 'slug' => '', 'featured' => false, 'draft' => false, 'order' => null];
+    $out = ['title' => '', 'description' => '', 'category' => '', 'latitude' => 0, 'longitude' => 0, 'slug' => '', 'featured' => false, 'pinned' => false, 'draft' => false, 'order' => null];
 
     if (!is_file($txtPath)) return $out;
 
@@ -60,6 +60,7 @@ function read_sidecar(string $txtPath): array
         $out['slug'] = trim($m[1]);
     }
     $out['featured'] = (bool) preg_match('/^# Destacada:\s*1\s*$/m', $raw);
+    $out['pinned'] = (bool) preg_match('/^# Fijada:\s*1\s*$/m', $raw);
     $out['draft'] = (bool) preg_match('/^# Borrador:\s*1\s*$/m', $raw);
     if (preg_match('/^# Orden:\s*(-?\d+)\s*$/m', $raw, $m)) $out['order'] = (int) $m[1];
 
@@ -83,6 +84,17 @@ function sort_by_upload_desc(array $items): array
 {
     usort($items, fn($a, $b) => ($b['mtime'] ?? 0) <=> ($a['mtime'] ?? 0));
     return $items;
+}
+
+/**
+ * Las fotos fijadas (`# Fijada: 1`) van arriba del todo, en el mismo orden relativo que tenían; el resto no se mueve.
+ * Las destacadas (`# Destacada: 1`) no cambian de sitio: solo llevan su distintivo.
+ */
+function pin_to_top(array $items): array
+{
+    $pinned = array_values(array_filter($items, static fn(array $item): bool => !empty($item['pinned'])));
+    if ($pinned === []) return $items;
+    return array_merge($pinned, array_values(array_filter($items, static fn(array $item): bool => empty($item['pinned']))));
 }
 
 function year_range(array $items): string
@@ -113,6 +125,7 @@ function enrich_with_sidecar(array $items): array
         $it['longitude']   = $sidecar['longitude'];
         $it['slug']        = $sidecar['slug'];
         $it['featured']    = !empty($sidecar['featured']);
+        $it['pinned']      = !empty($sidecar['pinned']);
         $it['draft']       = !empty($sidecar['draft']);
         $it['order']       = $sidecar['order'];
     }

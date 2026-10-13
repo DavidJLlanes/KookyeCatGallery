@@ -72,6 +72,7 @@ return [
     'text_b5c772cf5b14f84e' => ['group' => 'Inicio y galería', 'default' => 'tu región'],
     'text_ff1de97302308752' => ['group' => 'Inicio y galería', 'default' => 'mi tierra'],
     'text_4577bab0d9627af1' => ['group' => 'Inicio y galería', 'default' => '@KookyeCatGallery'],
+    'text_f0c3a1b97d2e4586' => ['group' => 'Inicio y galería · accesibilidad', 'default' => 'Fotografía destacada'],
     'text_6ba397681d3ee9c1' => ['group' => 'Inicio y galería · accesibilidad', 'default' => 'Perfil verificado'],
     'text_2e2b80d871481edc' => ['group' => 'Inicio y galería', 'default' => 'Fotografía de autor, historias visuales y pequeños detalles.'],
     'text_54b7645201863e32' => ['group' => 'Inicio y galería', 'default' => 'Una colección de imágenes y proyectos fotográficos.'],

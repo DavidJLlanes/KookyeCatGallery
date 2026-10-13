@@ -58,7 +58,7 @@ if ($premiumKey !== null) {
             $aspect    = max(0.01, (float) ($item['aspect'] ?? 1.5));
             ?>
             <article
-                class="card<?= $hasTitle ? ' card--has-title' : '' ?>"
+                class="card<?= $hasTitle ? ' card--has-title' : '' ?><?= !empty($item['pinned']) ? ' card--pinned' : '' ?><?= !empty($item['featured']) ? ' card--featured' : '' ?>"
                 style="--aspect: <?= number_format($aspect, 4, '.', '') ?>"
                 data-template-atlas-photo-label="<?= site_text_html('template_atlas_photo_label') ?>"
                 data-reveal
@@ -70,6 +70,8 @@ if ($premiumKey !== null) {
                 data-lat="<?= $item['latitude'] ?? 0 ?>"
                 data-lng="<?= $item['longitude'] ?? 0 ?>"
                 data-slug="<?= safe($item['slug'] ?? '') ?>"
+                <?= !empty($item['pinned']) ? 'data-pinned="true"' : '' ?>
+                <?= !empty($item['featured']) ? 'data-featured="true"' : '' ?>
                 data-num-global="<?= $numGlobal ?>"
                 data-num-cat="<?= $numCat ?>"
                 data-cat-total="<?= $catTotal ?>"
@@ -91,6 +93,12 @@ if ($premiumKey !== null) {
                         >
                     </picture>
 
+                    <?php if (!empty($item['pinned'])): ?>
+                    <span class="card__frame" aria-hidden="true"></span>
+                    <?php endif; ?>
+                    <?php if (!empty($item['featured'])): ?>
+                    <span class="card__badge" role="img" aria-label="<?= site_text_html('text_f0c3a1b97d2e4586') ?>"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.2l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6-4.4-4.2 6-.8z"/></svg></span>
+                    <?php endif; ?>
                     <?php if (!empty($item['slug'])): ?>
                     <span class="card__heart-count" data-heart-display="<?= safe($item['slug']) ?>" aria-label="Corazones">♡ <span data-heart-count>0</span></span>
                     <?php endif; ?>

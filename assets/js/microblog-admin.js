@@ -10,7 +10,7 @@
 (() => {
     'use strict';
 
-    const MAX_SIDE = 1500; // igual que el servidor: lado mayor máximo
+    const MAX_SIDE = 1800; // igual que el servidor: lado mayor máximo
     const MAX_TOTAL_BYTES = 18 * 1024 * 1024;
 
     document.querySelectorAll('[data-mb-admin-form]').forEach(form => {

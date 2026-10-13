@@ -21,12 +21,6 @@
 
 @media (max-width: 768px) {
     .mobile-profile__name { display: flex; align-items: center; gap: .42rem; }
-    .mobile-profile__verified {
-        display: inline-grid; place-items: center; width: 15px; height: 15px;
-        border-radius: 50%; color: #17120d; background: var(--accent);
-        font: 700 10px/1 var(--sans); letter-spacing: 0;
-        box-shadow: 0 0 0 2px rgba(212,165,116,.15);
-    }
 }
 
 

@@ -31,7 +31,7 @@ Feed de notas cortas estilo Tumblr / Threads en la portada. Solo el propietario 
 | **Imágenes** (separadas de la galería) | `/microblog/` (ignorada por git y por el despliegue) |
 | **Datos** (`microblog.sqlite`) | `/davidjimenezllanes.es/microblog/` en el VPS; `data/microblog/` si no existe. Se puede forzar con `MICROBLOG_DATA_DIR` |
 
-**Imágenes:** el servidor las convierte siempre a WebP con calidad 80 y reduce su lado mayor a 1500 px conservando la proporción (nunca amplía las pequeñas), lo que además elimina EXIF y GPS. El navegador las reduce a la misma medida antes de enviarlas para no pasar el límite de la petición (~20 MB). Las imágenes subidas antes de este cambio se quedan como estaban.
+**Imágenes:** el servidor las convierte siempre a WebP con calidad 80 y reduce su lado mayor a 1800 px conservando la proporción (nunca amplía las pequeñas), lo que además elimina EXIF y GPS. El navegador las reduce a la misma medida antes de enviarlas para no pasar el límite de la petición (~20 MB). Las imágenes subidas antes de este cambio se quedan como estaban.
 
 **Lightbox:** al pulsar una imagen se abre a pantalla completa de la ventana, con contador, texto alternativo, flechas, teclado (← → Esc), deslizar en móvil y un botón de pantalla completa del navegador (tecla F).
 

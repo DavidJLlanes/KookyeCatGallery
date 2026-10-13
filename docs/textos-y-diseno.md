@@ -31,3 +31,25 @@ Las webs que tenían el título en dos líneas o un «Título de la web» propio
 ## Imágenes de la web
 
 En **Ajustes → Contenido** se suben cuatro imágenes (foto de perfil, logo, icono de la aplicación y favicon, y la imagen para compartir en redes). Junto a cada campo aparece la imagen que hay ahora. Si el hosting limita el tamaño de la subida (`post_max_size`), el panel avisa y no guarda nada: sube las imágenes de una en una o pide subir el límite.
+
+El logo y la foto de perfil tienen su proporción de recorte (logo 1:1, perfil 4:5): si la imagen elegida no la tiene se abre un recortador (`assets/js/image-cropper.js`). El logo se muestra siempre redondo (cabecera móvil, hero de escritorio, precarga) y en la cabecera móvil va **al lado** de la foto de perfil, nunca encima, en todas las plantillas (`tests/logo-layout.cjs`). Si se sube un logo propio, también aparece en la marca del panel.
+
+## Título y rótulo de «El proyecto»
+
+En **Ajustes → Textos → Sección «El proyecto»** hay un campo para el rótulo pequeño y otro para el título de la sección (un solo texto cada uno; la migración 0005 une las dos líneas antiguas del título). El contenido de la sección se edita en «Páginas de texto».
+
+## El editor de las páginas de texto
+
+Las páginas de texto (aviso legal, privacidad, cookies y «El proyecto») se editan con [Quill](https://github.com/slab/quill) 2, servido en local desde `assets/vendor/quill/` (BSD-3, sin CDN). Los botones aplican el formato a la selección, lo quitan al pulsar de nuevo y marcan su estado activo, también en pantallas táctiles. Estilos de párrafo, negrita, cursiva, subrayado, tachado, cita, listas, alineación (como `text-align`) y enlaces (https, mailto y rutas internas `/…`). El resultado se vuelve a sanear en el servidor (`site_sanitize_page_html()`), que decide qué se guarda. Comportamiento en `assets/js/admin-settings.js`; prueba: `node tests/page-editor.cjs`.
+
+## Insignia de verificación
+
+**Ajustes → Diseño → Insignia de verificación**: interruptor para mostrarla u ocultarla junto al nombre (cabecera de perfil del móvil) y 13 insignias para elegir (círculo, sello, escudo, estrella, destello, diamante, corona, corazón, rayo, cámara, medalla, hoja y solo la marca). Cada una es un archivo de `themes/badges/<id>.php` con su SVG y toma los colores de la paleta (`assets/css/components/verified-badge.css`); añadir una nueva es crear un archivo.
+
+## Fotos fijadas y destacadas
+
+En el .txt de cada foto: `# Fijada: 1` y `# Destacada: 1` (casillas en la subida, la edición y la edición rápida de **Gestionar fotos**, que además filtra por «Fijadas»). Las **fijadas** van arriba del todo de la galería, en su orden relativo, con un marco muy fino (dos filetes) del color de acento de la paleta. Las **destacadas** no se mueven: llevan un distintivo de esquina (triángulo con estrella) con los colores de la paleta. Estilos en `assets/css/components/photo-highlights.css`; prueba: `php tests/photo-highlights.php`.
+
+## El mapa
+
+La sección del mapa, su marco y los puntos de localización usan la paleta elegida: relleno con el acento y borde con el fondo de la paleta; si la paleta cambia con la página abierta, los puntos se repintan.

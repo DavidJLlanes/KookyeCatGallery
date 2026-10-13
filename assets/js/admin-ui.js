@@ -14,8 +14,21 @@
         const title = value.trim().slice(0, 80);
         document.querySelectorAll('.admin-brand__text strong').forEach(node => { node.textContent = title; });
         const initial = Array.from(title)[0]?.toLocaleUpperCase() || '';
-        document.querySelectorAll('.admin-brand__mark').forEach(node => { node.textContent = initial; });
+        // La inicial solo sustituye a la marca de letra; si hay logo propio (imagen) se deja como está.
+        document.querySelectorAll('.admin-brand__mark:not(.admin-brand__mark--logo)').forEach(node => { node.textContent = initial; });
     };
+    // El nombre de la web tiene un único dueño (Ajustes → Textos o la edición en la propia página). Al guardarlo desde el panel se avisa
+    // a las demás pestañas (la web abierta en modo edición) para que lo muestren ya.
+    if (new URLSearchParams(location.search).get('saved') === '1') {
+        const name = document.querySelector('.admin-brand__text strong')?.textContent?.trim();
+        if (name) {
+            const update = { value: name, updatedAt: Date.now(), source: 'panel' };
+            try { localStorage.setItem('gallery-admin-site-title', JSON.stringify(update)); } catch (_) {}
+            if ('BroadcastChannel' in window) {
+                try { const channel = new BroadcastChannel('gallery-admin-site-title'); channel.postMessage(update); channel.close(); } catch (_) {}
+            }
+        }
+    }
     const readSiteTitleUpdate = raw => {
         try { applySiteTitle(JSON.parse(raw)?.value); } catch (_) {}
     };

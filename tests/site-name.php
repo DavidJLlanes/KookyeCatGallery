@@ -48,7 +48,7 @@ echo json_encode(['title' => site_title(), 'text' => site_text('text_52179dc42df
     'h1Count' => substr_count($h1[1] ?? '', '<span class="hero__title-line'), 'editableKey' => str_contains($editable, 'data-inline-edit-key="text_52179dc42df7efe5"'),
     'editableFull' => str_contains($editable, 'data-inline-edit-value="' . htmlspecialchars(site_text('text_52179dc42df7efe5')) . '"'),
     'texts' => site_settings_load()['texts'] ?? [], 'version' => site_settings_load()['settings_version'] ?? null,
-    'editableKeys' => site_editable_text_keys()], JSON_UNESCAPED_UNICODE);
+    'settings' => site_settings_load(), 'editableKeys' => site_editable_text_keys()], JSON_UNESCAPED_UNICODE);
 PHP;
 
 // 1. Un nombre de varias palabras: primera palabra arriba y el resto debajo, igual en pie y panel.
@@ -79,6 +79,8 @@ $r = probe(['texts' => ['text_cbbba360eb60dd04' => 'Solo'], 'site_title' => 'Ign
 check($r['title'] === 'Solo Cat Gallery' || str_starts_with($r['title'], 'Solo '), 'Si solo se cambió una línea, la otra es la de siempre.');
 $r = probe(['site_title' => 'Título de la web antiguo'], $show);
 check($r['title'] === 'Título de la web antiguo' && $r['texts']['text_52179dc42df7efe5'] === 'Título de la web antiguo', 'El «Título de la web» antiguo pasa a ser el nombre.');
+$r = probe(['site_title' => 'Antiguo', 'texts' => ['text_52179dc42df7efe5' => 'Nombre vigente']], $show);
+check($r['title'] === 'Nombre vigente' && !array_key_exists('site_title', $r['settings']), 'El ajuste antiguo se retira y el nombre vigente manda.');
 $r = probe(['texts' => ['text_52179dc42df7efe5' => 'Ya tenía nombre', 'text_cbbba360eb60dd04' => 'Otro']], $show);
 check($r['title'] === 'Ya tenía nombre', 'Un nombre ya guardado no se pisa al migrar.');
 

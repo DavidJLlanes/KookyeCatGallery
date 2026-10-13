@@ -4,6 +4,14 @@ import { $, $$, CARDS, galleryRoot } from './helpers.js';
 /* ---------- Mapa interactivo ---------- */
 let photoMap = null;
 
+/** Colores de los puntos: el acento de la paleta elegida y su fondo como borde (se leen del <body>, donde viven las variables de la paleta). */
+const pinColors = () => {
+    const style = getComputedStyle(document.body);
+    return { accent: style.getPropertyValue('--accent').trim() || '#d4a574', ring: style.getPropertyValue('--bg').trim() || '#0a0a0a' };
+};
+const PIN_ACTIVE = { opacity: 1, fillOpacity: 0.92 };
+const PIN_DIMMED = { opacity: 0.3, fillOpacity: 0.18 };
+
 export const initMap = () => {
     const mapEl = $('#map');
     if (!mapEl) return;
@@ -57,13 +65,13 @@ export const initMap = () => {
 
         // Añade marcadores
         locationList.forEach(loc => {
+            const { accent, ring } = pinColors();
             const marker = L.circleMarker([loc.lat, loc.lng], {
-                radius: 20,
-                fillColor: getComputedStyle(document.body).getPropertyValue('--accent').trim(),
-                color: getComputedStyle(document.body).getPropertyValue('--accent').trim(),
-                weight: 2,
-                opacity: 0.9,
-                fillOpacity: 0.85,
+                radius: 16,
+                fillColor: accent,
+                color: ring,
+                weight: 3,
+                ...PIN_ACTIVE,
             }).addTo(photoMap);
 
             marker._photoCount = loc.count;
@@ -103,6 +111,12 @@ export const initMap = () => {
             photoMap.fitBounds(bounds, { padding: [32, 32], maxZoom: 9 });
         }
 
+        // Si la paleta cambia con la página abierta, los puntos se repintan con los colores nuevos.
+        new MutationObserver(() => {
+            const { accent, ring } = pinColors();
+            photoMap.eachLayer(layer => { if (layer._photoCount !== undefined) layer.setStyle({ fillColor: accent, color: ring }); });
+        }).observe(document.body, { attributes: true, attributeFilter: ['data-palette'] });
+
         window.photoMap = photoMap;
     } catch (e) {
         console.error('Error inicializando mapa:', e);
@@ -114,10 +128,7 @@ export const updateMapForCategory = (category) => {
     photoMap.eachLayer(layer => {
         if (layer._photoCount !== undefined) {
             const hasCategory = category === '' || layer._categories[category];
-            layer.setStyle({
-                opacity: hasCategory ? 0.9 : 0.2,
-                fillOpacity: hasCategory ? 0.85 : 0.1,
-            });
+            layer.setStyle(hasCategory ? PIN_ACTIVE : PIN_DIMMED);
         }
     });
 };

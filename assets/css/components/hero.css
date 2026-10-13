@@ -151,6 +151,9 @@
     display: block;
     width: 100%;
     height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 50%; /* el logo siempre redondo */
     filter:
         drop-shadow(0 12px 28px rgba(0, 0, 0, 0.5))
         drop-shadow(0 0 22px rgba(212, 165, 116, 0.22));

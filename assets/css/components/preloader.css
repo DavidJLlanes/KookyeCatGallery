@@ -34,6 +34,9 @@
 .preloader__crest {
     width: clamp(58px, 12vw, 92px);
     height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 50%; /* el logo siempre redondo */
     filter: drop-shadow(0 0 22px rgba(212, 165, 116, 0.3));
     opacity: 0;
     transform: translateY(10px) scale(0.9);

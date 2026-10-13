@@ -44,7 +44,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     }
     // Las etiquetas salen del esquema de ajustes (core/Settings/Schema.php).
     $labels = [];
-    foreach (['palette', 'grid', 'header_mobile', 'header_desktop', 'gallery_mobile', 'gallery_desktop', 'hover', 'pagination_shape', 'gallery_premium'] as $labelKey) {
+    foreach (['palette', 'verified_badge', 'grid', 'header_mobile', 'header_desktop', 'gallery_mobile', 'gallery_desktop', 'hover', 'pagination_shape', 'gallery_premium'] as $labelKey) {
         $labels[$labelKey] = Schema::label($labelKey);
     }
     $choices = site_design_choices();
@@ -113,6 +113,15 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     $html .= $card('Cabecera', 'Elige el estilo y decide si se muestra en cada tipo de pantalla.',
         '<div class="admin-fields">' . $select('header_mobile', $labels['header_mobile'], $choices['header_mobile'], $settings['header_mobile']) . $select('header_desktop', $labels['header_desktop'], $choices['header_desktop'], $settings['header_desktop']) . '</div>'
         . '<div class="admin-switches">' . $switch('show_header_mobile', 'Mostrar la cabecera en móvil', !empty($settings['show_header_mobile'])) . $switch('show_header_desktop', 'Mostrar la cabecera en escritorio', !empty($settings['show_header_desktop'])) . '</div>');
+    // Tarjeta «Insignia de verificación»: mostrarla u ocultarla y elegir entre las de themes/badges.
+    $badgeCards = '<div class="admin-switches">' . $switch('show_verified_badge', 'Mostrar la insignia junto al nombre', !empty($settings['show_verified_badge'])) . '</div>'
+        . '<fieldset class="badge-picker"><legend class="sr-only">' . $escape($labels['verified_badge']) . '</legend>';
+    foreach ($choices['verified_badge'] as $badgeId => $badgeName) {
+        $badgeCards .= '<label class="badge-card"><input type="radio" name="verified_badge" value="' . $escape($badgeId) . '"' . ($settings['verified_badge'] === $badgeId ? ' checked' : '') . '>'
+            . '<span class="badge-card__preview">' . site_verified_badge_preview($badgeId) . '</span><span class="badge-card__name">' . $escape($badgeName) . '</span></label>';
+    }
+    $badgeCards .= '</fieldset><link rel="stylesheet" href="/assets/css/components/verified-badge.css?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/css/components/verified-badge.css'), 0, 12) . '">';
+    $html .= $card('Insignia de verificación', 'La marca junto al nombre en la cabecera de perfil del móvil. Toma los colores de la paleta.', $badgeCards);
     // Tarjeta «Galería premium»: diseños completos que sustituyen a la galería estándar (inc/premium-galleries.php).
     // El orden del JS (assets/js/admin-ui.js) desactiva los campos de la tarjeta siguiente al elegir una.
     $premiumList = '';
@@ -250,7 +259,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     $html .= '<input type="hidden" name="profile_image" value="' . $escape((string) $settings['profile_image']) . '">'
         . '<input type="hidden" name="logo_image" value="' . $escape((string) $settings['logo_image']) . '">'
         . '<div class="upload-field"><label for="profile-image">Foto de perfil</label>'
-        . '<input id="profile-image" name="profile_image_file" type="file" data-crop-ratio="0.8" data-crop-label="4:5 (vertical)" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
+        . '<input id="profile-image" name="profile_image_file" type="file" data-camera="user" data-crop-ratio="0.8" data-crop-label="4:5 (vertical)" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
         . $current($profileUrl, $isOwn($profileUrl) ? 'Imagen actual' : 'Sin foto propia: se usa la predeterminada')
         . '<small class="upload-help"><strong>Proporción 4:5 (vertical)</strong>, la del marco de la sección «El proyecto»; por ejemplo 800 × 1000 px. Si la imagen no la tiene, se abre un recortador. JPG, PNG o WebP. Máximo 15 MB.</small></div>'
         . '<div class="upload-field"><label for="logo-image">Logo</label>'
@@ -267,6 +276,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . '<small class="upload-help"><strong>Proporción 1,91:1 (apaisada)</strong>, la que usan Facebook, WhatsApp, X o LinkedIn al compartir; tamaño final 1200 × 630 px (mínimo 600 × 315). Si no la tiene, se abre un recortador. JPG, PNG o WebP. Máximo 15 MB.</small></div></div></section></div>';
     // Recortador: si la imagen elegida no tiene la proporción del hueco (cuadrada, o 1,91:1 la de redes), se encuadra antes de enviarla.
     $html .= '<link rel="stylesheet" href="/assets/css/image-cropper.css?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/css/image-cropper.css'), 0, 12) . '">'
+        . '<script src="/assets/js/camera-input.js?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/js/camera-input.js'), 0, 12) . '" defer></script>'
         . '<script src="/assets/js/image-cropper.js?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/js/image-cropper.js'), 0, 12) . '" defer></script>';
     }
     $html .= '<div class="admin-savebar"><span class="admin-savebar__hint">Los cambios se aplican a la web al guardar.</span><button class="upload-submit" type="submit">Guardar configuración</button></div></form>';
@@ -289,33 +299,31 @@ function site_page_editor_form(string $csrf, string $page): string
         . '<input type="hidden" name="action" value="save_site_page"><input type="hidden" name="csrf" value="' . $escape($csrf) . '">'
         . '<input type="hidden" name="page" value="' . $escape($page) . '">'
         . '<p class="upload-help">Edita el contenido y usa la vista previa para revisar el resultado antes de guardar.</p>'
+        // Editor Quill (assets/vendor/quill): la barra son controles Quill (clases ql-*) y se ve el estado activo de cada formato.
         . '<div class="page-editor-toolbar" role="toolbar" aria-label="Formato del texto" data-editor-toolbar>'
-        . '<div class="page-editor-tool-group" role="group" aria-label="Estilos"><select data-editor-block aria-label="Estilo de párrafo"><option value="">Párrafo</option><option value="h2">Título</option><option value="h3">Subtítulo</option><option value="h4">Encabezado pequeño</option><option value="blockquote">Cita</option></select>'
-        . '<button type="button" data-editor-command="bold" title="Negrita" aria-label="Negrita"><strong>N</strong></button>'
-        . '<button type="button" data-editor-command="italic" title="Cursiva" aria-label="Cursiva"><em>C</em></button>'
-        . '<button type="button" data-editor-command="underline" title="Subrayado" aria-label="Subrayado"><u>S</u></button>'
-        . '<button type="button" data-editor-command="strikeThrough" title="Tachado" aria-label="Tachado"><s>T</s></button></div>'
-        . '<div class="page-editor-tool-group" role="group" aria-label="Listas y sangría">'
-        . '<button type="button" data-editor-command="insertUnorderedList" title="Lista con viñetas" aria-label="Lista con viñetas">• Lista</button>'
-        . '<button type="button" data-editor-command="insertOrderedList" title="Lista numerada" aria-label="Lista numerada">1. Lista</button>'
-        . '<button type="button" data-editor-command="outdent" title="Reducir sangría" aria-label="Reducir sangría">←</button>'
-        . '<button type="button" data-editor-command="indent" title="Aumentar sangría" aria-label="Aumentar sangría">→</button></div>'
+        . '<div class="page-editor-tool-group" role="group" aria-label="Estilos"><select class="ql-header" aria-label="Estilo de párrafo"><option value="" selected>Párrafo</option><option value="2">Título</option><option value="3">Subtítulo</option><option value="4">Encabezado pequeño</option></select>'
+        . '<button type="button" class="ql-blockquote" title="Cita" aria-label="Cita">❝ Cita</button>'
+        . '<button type="button" class="ql-bold" title="Negrita" aria-label="Negrita"><strong>N</strong></button>'
+        . '<button type="button" class="ql-italic" title="Cursiva" aria-label="Cursiva"><em>C</em></button>'
+        . '<button type="button" class="ql-underline" title="Subrayado" aria-label="Subrayado"><u>S</u></button>'
+        . '<button type="button" class="ql-strike" title="Tachado" aria-label="Tachado"><s>T</s></button></div>'
+        . '<div class="page-editor-tool-group" role="group" aria-label="Listas">'
+        . '<button type="button" class="ql-list" value="bullet" title="Lista con viñetas" aria-label="Lista con viñetas">• Lista</button>'
+        . '<button type="button" class="ql-list" value="ordered" title="Lista numerada" aria-label="Lista numerada">1. Lista</button></div>'
         . '<div class="page-editor-tool-group" role="group" aria-label="Alineación">'
-        . '<button type="button" data-editor-command="justifyLeft" title="Alinear a la izquierda" aria-label="Alinear a la izquierda">Izquierda</button>'
-        . '<button type="button" data-editor-command="justifyCenter" title="Centrar" aria-label="Centrar">Centrar</button>'
-        . '<button type="button" data-editor-command="justifyRight" title="Alinear a la derecha" aria-label="Alinear a la derecha">Derecha</button></div>'
+        . '<button type="button" class="ql-align" value="" title="Alinear a la izquierda" aria-label="Alinear a la izquierda">Izquierda</button>'
+        . '<button type="button" class="ql-align" value="center" title="Centrar" aria-label="Centrar">Centrar</button>'
+        . '<button type="button" class="ql-align" value="right" title="Alinear a la derecha" aria-label="Alinear a la derecha">Derecha</button></div>'
         . '<div class="page-editor-tool-group" role="group" aria-label="Edición">'
-        . '<button type="button" data-editor-command="createLink" title="Insertar enlace" aria-label="Insertar enlace">Enlace</button>'
-        . '<button type="button" data-editor-command="unlink" title="Quitar enlace" aria-label="Quitar enlace">Quitar enlace</button>'
-        . '<button type="button" data-editor-command="undo" title="Deshacer" aria-label="Deshacer">↶</button>'
-        . '<button type="button" data-editor-command="redo" title="Rehacer" aria-label="Rehacer">↷</button>'
-        . '<button type="button" data-editor-command="removeFormat" title="Quitar formato" aria-label="Quitar formato">Limpiar</button></div>'
+        . '<button type="button" class="ql-link" title="Enlace (pulsa de nuevo para quitarlo)" aria-label="Enlace">Enlace</button>'
+        . '<button type="button" data-editor-history="undo" title="Deshacer" aria-label="Deshacer">↶</button>'
+        . '<button type="button" data-editor-history="redo" title="Rehacer" aria-label="Rehacer">↷</button>'
+        . '<button type="button" class="ql-clean" title="Quitar formato" aria-label="Quitar formato">Limpiar</button></div>'
         . '<button type="button" class="page-editor-preview-toggle" data-editor-preview aria-pressed="false">Vista previa</button></div>'
         . '<div class="page-editor-link" data-link-panel hidden><label for="page-link-url">Dirección del enlace</label><input id="page-link-url" type="text" inputmode="url" placeholder="https://… o /ruta-interna" data-link-url><button type="button" data-link-apply>Insertar enlace</button><button type="button" data-link-cancel>Cancelar</button></div>'
-        . '<div class="page-editor-surface" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-label="Contenido editable" data-page-editor>'
-        . site_page_content($page) . '</div><div class="page-editor-status"><span data-editor-count aria-live="polite"></span><span>Los enlaces y el formato se revisan al guardar.</span></div>'
+        . '<div class="page-editor-surface" spellcheck="true" aria-label="Contenido editable" data-page-editor></div><div class="page-editor-status"><span data-editor-count aria-live="polite"></span><span>Los enlaces y el formato se revisan al guardar.</span></div>'
         . '<textarea name="content" data-page-content hidden>' . $escape(site_page_content($page)) . '</textarea>'
         . '<div class="upload-actions"><button class="upload-submit" type="submit">Guardar página</button><a class="upload-logout" href="/admin.php?settings=1&amp;section=texts">Volver a Textos</a></div>'
-        . '</form><link rel="stylesheet" href="/assets/css/admin-page-editor.css?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/css/admin-page-editor.css'), 0, 12) . '"><script src="/assets/js/admin-settings.js?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/js/admin-settings.js'), 0, 12) . '" defer></script>';
+        . '</form><link rel="stylesheet" href="/assets/css/admin-page-editor.css?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/css/admin-page-editor.css'), 0, 12) . '"><link rel="stylesheet" href="/assets/vendor/quill/quill.core.css?v=2.0.3"><script src="/assets/vendor/quill/quill.js?v=2.0.3" defer></script><script src="/assets/js/admin-settings.js?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/js/admin-settings.js'), 0, 12) . '" defer></script>';
     return $html;
 }

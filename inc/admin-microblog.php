@@ -162,7 +162,7 @@ function admin_microblog_form(string $csrf, ?array $post, array $values = [], st
         $html .= '</div>';
     }
     $html .= '<div class="upload-field"><label for="mb-images-' . $e($uid) . '">' . ($existing ? 'Añadir imágenes' : 'Imágenes') . '</label>'
-        . '<input id="mb-images-' . $e($uid) . '" name="images[]" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple data-mb-images data-mb-max="' . (MICROBLOG_MAX_IMAGES - count($existing)) . '">'
+        . '<input id="mb-images-' . $e($uid) . '" name="images[]" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple data-camera data-mb-images data-mb-max="' . (MICROBLOG_MAX_IMAGES - count($existing)) . '">'
         . '<small class="upload-help">Hasta ' . MICROBLOG_MAX_IMAGES . ' por post · JPG, PNG o WebP · máximo 15 MB cada una. Se guardan aparte de la galería, reducidas y sin datos de ubicación.</small></div>'
         . '<div class="mb-previews" data-mb-previews></div></div></details>';
 

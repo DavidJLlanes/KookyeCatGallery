@@ -11,8 +11,44 @@ function uploadJson(int $status, array $payload): void
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
-    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $body = (string) json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    header('Content-Length: ' . strlen($body)); // con la longitud, el navegador da la respuesta por completa aunque queden tareas (uploadAfterResponse)
+    echo $body;
     exit;
+}
+
+/** Redirección 303 sin cuerpo. Como uploadJson(), deja que el navegador termine antes que las tareas de uploadAfterResponse(). */
+function uploadRedirect(string $url): never
+{
+    http_response_code(303);
+    header('Location: ' . $url);
+    header('Content-Length: 0');
+    exit;
+}
+
+/**
+ * Ejecuta una tarea lenta (p. ej. pedir una descripción a la IA) después de responder al navegador: quien sube la foto no espera.
+ * Se llama antes de uploadJson()/uploadRedirect(); la tarea corre al terminar el script. Sin PHP-FPM, el navegador ya tiene la
+ * respuesta completa por su Content-Length.
+ */
+function uploadAfterResponse(callable $task): void
+{
+    register_shutdown_function(static function () use ($task): void {
+        ignore_user_abort(true);
+        @set_time_limit(180);
+        if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        } else {
+            while (ob_get_level() > 0) @ob_end_flush();
+            @flush();
+        }
+        try {
+            $task();
+        } catch (Throwable $error) {
+            error_log('Tarea posterior a la respuesta: ' . $error->getMessage());
+        }
+    });
 }
 
 function gpsRationalToFloat(mixed $value): float

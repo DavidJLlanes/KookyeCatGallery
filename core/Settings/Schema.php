@@ -48,7 +48,8 @@ final class Schema
         static $definitions;
         if ($definitions !== null) return $definitions;
 
-        $headerToggles = ['show_header_mobile', 'show_header_desktop'];
+        // Interruptores que no son de un bloque de la portada (cabeceras e insignia de verificación): van en Diseño.
+        $headerToggles = ['show_header_mobile', 'show_header_desktop', 'show_verified_badge'];
         $sectionToggles = array_values(array_diff(\site_toggle_keys(), $headerToggles));
         $registry = static fn(string $type): \Closure => static fn(): array => Registry::for($type)->choices();
         $galleries = static fn(string $device): \Closure => static fn(): array => Registry::for('galleries')->choices(
@@ -65,13 +66,13 @@ final class Schema
             'photos_mobile' => ['type' => 'int-choice', 'default' => 12, 'section' => 'design', 'label' => 'Fotos visibles a la vez en móvil', 'error' => 'Selecciona un número válido de fotos visibles.', 'options' => static fn(): array => \site_photos_per_view_choices(), 'gallery' => 7],
             'photos_desktop' => ['type' => 'int-choice', 'default' => 20, 'section' => 'design', 'label' => 'Fotos visibles a la vez en escritorio', 'error' => 'Selecciona un número válido de fotos visibles.', 'options' => static fn(): array => \site_photos_per_view_choices(), 'gallery' => 8],
             'header_mobile' => ['type' => 'choice', 'default' => 'current', 'section' => 'design', 'label' => 'Cabecera móvil', 'choices' => $registry('headers-mobile'), 'body' => 'data'],
+            'verified_badge' => ['type' => 'choice', 'default' => 'check', 'section' => 'design', 'label' => 'Insignia de verificación', 'choices' => $registry('badges'), 'body' => 'data'],
             'header_desktop' => ['type' => 'choice', 'default' => 'current', 'section' => 'design', 'label' => 'Cabecera de escritorio', 'choices' => $registry('headers-desktop'), 'body' => 'data'],
             'gallery_mobile' => ['type' => 'choice', 'default' => 'standard', 'section' => 'design', 'label' => 'Galería móvil', 'choices' => $galleries('mobile'), 'body' => 'data', 'gallery' => 2, 'premium_mark' => true],
             'gallery_desktop' => ['type' => 'choice', 'default' => 'standard', 'section' => 'design', 'label' => 'Galería de escritorio', 'choices' => $galleries('desktop'), 'body' => 'data', 'gallery' => 3, 'premium_mark' => true],
             'hover' => ['type' => 'choice', 'default' => 'soft', 'section' => 'design', 'label' => 'Efecto Hover', 'choices' => $registry('hover'), 'body' => 'data'],
             'pagination_shape' => ['type' => 'choice', 'default' => 'circle', 'section' => 'design', 'label' => 'Forma de la paginación', 'choices' => $registry('pagination-shapes'), 'body' => 'data', 'gallery' => 4],
             'gallery_premium' => ['type' => 'choice', 'default' => 'none', 'section' => 'design', 'label' => 'Galería premium', 'choices' => static fn(): array => \site_premium_gallery_choices(), 'body' => 'data'],
-            'site_title' => ['type' => 'title', 'default' => '', 'section' => 'texts', 'label' => 'Título de la web'],
             'section_order' => ['type' => 'order', 'default' => static fn(): array => array_keys(\site_section_labels()), 'section' => 'content', 'label' => 'Orden de los bloques'],
         ];
         foreach (array_merge($headerToggles, $sectionToggles) as $key) {

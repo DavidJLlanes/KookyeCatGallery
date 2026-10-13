@@ -12,7 +12,7 @@
 <p align="center">
   <a href="LICENSE"><img alt="Licencia PolyForm Noncommercial 1.0.0" src="https://img.shields.io/badge/LICENCIA-PolyForm_Noncommercial-d4a574?style=for-the-badge"></a>
   <a href="#requisitos"><img alt="PHP 8.1 o posterior" src="https://img.shields.io/badge/PHP-8.1%2B-777bb4?style=for-the-badge&logo=php&logoColor=white"></a>
-  <a href="manifest.json"><img alt="PWA instalable" src="https://img.shields.io/badge/PWA-INSTALABLE-6366f1?style=for-the-badge&logo=pwa&logoColor=white"></a>
+  <a href="app-manifest.php"><img alt="PWA instalable" src="https://img.shields.io/badge/PWA-INSTALABLE-6366f1?style=for-the-badge&logo=pwa&logoColor=white"></a>
   <a href="#opciones-de-galería"><img alt="18 diseños de galería" src="https://img.shields.io/badge/GALERÍA-18_DISEÑOS-52796f?style=for-the-badge"></a>
 </p>
 
@@ -60,6 +60,11 @@ KookyeCatGallery es una web de fotografía que se instala en tu propio alojamien
 - **Aplicación instalable (PWA):** experiencia adaptable e instalación desde navegadores compatibles.
 - **Asistencia de escritura con IA opcional:** pestaña **Inteligencia artificial** en el panel para activarla o desactivarla, guardar las claves de Gemini y OpenRouter y definir el estilo de los textos que se generan. Viene desactivada y sin claves en el repositorio.
 - **Instalador y actualizaciones:** `install.php` deja la web lista (acceso, ajustes, carpetas y microblog) y `scripts/update.php` actualiza el núcleo con copia previa y vuelta atrás, sin tocar tus fotos ni tus datos.
+- **Cámara en el móvil:** «Usar cámara» en todos los campos de fotografías (subida, lotes, microblog, perfil), en Android e iPhone.
+- **Fotos fijadas y destacadas:** las fijadas van arriba de la galería con un marco muy fino y las destacadas llevan un distintivo de esquina, ambos con los colores de la paleta elegida.
+- **Insignia de verificación a tu gusto:** mostrarla u ocultarla y elegir entre 13 insignias; el logo siempre redondo y sin tapar la foto de perfil, y el mapa con los colores de la paleta.
+- **Editor de páginas con Quill:** formato con botones que aplican, alternan y marcan su estado, también en pantallas táctiles.
+- **Imágenes ligeras:** fotos de galería y de microblog en WebP al 80 % con el lado mayor en 1800 px, generadas al publicar.
 - **Fotografías por el panel o por FTP:** súbelas desde el navegador o deja JPG y PNG en `img/`; la web los procesa sola en la siguiente visita.
 
 ## Instalación y uso
@@ -200,7 +205,7 @@ Feed de notas cortas en la portada, con aspecto de Tumblr / Threads y una column
 - **Enlaces dentro del texto:** escribe `[texto](https://…)` para que «texto» sea el enlace, o usa el botón **Enlace** (también Ctrl+K), que lo inserta por ti usando como texto lo que tengas seleccionado. Las URLs sueltas se enlazan solas. Solo se admiten `http` y `https`; el resto del texto se escapa.
 - **Una cita** con su fuente y un enlace opcional.
 - **Hasta 4 enlaces** con tarjeta (título opcional).
-- **Hasta 4 imágenes**, con texto alternativo opcional. Se convierten siempre a **WebP con calidad 80** y su **lado mayor se reduce a 1500 px** manteniendo la proporción (nunca se amplían las pequeñas), y se eliminan los metadatos EXIF y GPS. El navegador las reduce a la misma medida antes de enviarlas. Se guardan en `/microblog/`, separadas de la galería.
+- **Hasta 4 imágenes**, con texto alternativo opcional. Se convierten siempre a **WebP con calidad 80** y su **lado mayor se reduce a 1800 px** manteniendo la proporción (nunca se amplían las pequeñas), y se eliminan los metadatos EXIF y GPS. El navegador las reduce a la misma medida antes de enviarlas. Se guardan en `/microblog/`, separadas de la galería.
 
 ### Niveles, fijado y programación
 

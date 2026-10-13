@@ -15,13 +15,13 @@
     data-template-orbit-label="<?= site_text_html('template_orbit_label') ?>"
     data-template-scrapbook-label="<?= site_text_html('template_scrapbook_label') ?>">
     <div class="mobile-profile__masthead">
-        <a class="mobile-profile__brand" href="/" aria-label="<?= site_text_html('text_84f085942c2a2aa1') ?>"><?= site_inline_setting_html('site_title') ?></a>
+        <a class="mobile-profile__brand" href="/" aria-label="<?= site_text_html('text_84f085942c2a2aa1') ?>"><?= site_name_part_html(site_title()) ?></a>
         <span class="mobile-profile__edition"><?= site_inline_text_html('text_8aa8595771f39463') ?></span>
     </div>
     <div class="mobile-profile__identity">
         <div class="mobile-profile__portraits">
             <a class="mobile-profile__avatar-link" href="/" aria-label="<?= site_text_html('text_84f085942c2a2aa1') ?>"><img class="mobile-profile__avatar" src="<?= safe(site_media_src('profile_image')) ?>" width="88" height="88" alt="<?= site_text_html('text_30170303c506cf6c') ?>"></a>
-            <span class="mobile-profile__crest-wrap"><img src="<?= safe(site_media_src('logo_image')) ?>" width="500" height="640" alt="<?= site_text_html('text_125ff372f2933b34') ?>"></span>
+            <span class="mobile-profile__crest-wrap"><img src="<?= safe(site_media_src('logo_image')) ?>" width="512" height="512" alt="<?= site_text_html('text_125ff372f2933b34') ?>"></span>
         </div>
         <div class="mobile-profile__stats" aria-label="<?= site_text_html('text_7f9488ff977b7f67') ?>">
             <div><strong><?= $totalFotos ?></strong><span><?= site_text_html('text_577e559428a23438') ?></span></div>
@@ -30,7 +30,7 @@
         </div>
     </div>
     <div class="mobile-profile__bio">
-        <strong class="mobile-profile__name"><?= site_inline_text_html('text_4577bab0d9627af1') ?> <span class="mobile-profile__verified" role="img" aria-label="<?= site_text_html('text_6ba397681d3ee9c1') ?>" title="<?= site_text_html('text_30170303c506cf6c') ?>">✓</span></strong>
+        <strong class="mobile-profile__name"><?= site_inline_text_html('text_4577bab0d9627af1') ?> <?= site_verified_badge_html(null, null, site_text('text_30170303c506cf6c')) ?></strong>
         <p><?= site_inline_text_html('text_2e2b80d871481edc') ?></p>
         <p><?= site_inline_text_html('text_54b7645201863e32') ?></p>
         <?php if (!empty($siteSettings['profile_website_url'])): ?>
