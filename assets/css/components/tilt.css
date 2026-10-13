@@ -1,0 +1,39 @@
+/* =========================================================
+   TILT 3D + REFLEJO en tarjetas (escritorio)
+   ========================================================= */
+.masonry { perspective: 800px; }
+
+.card {
+    perspective: 800px;
+}
+
+.card__btn {
+    transform-style: preserve-3d;
+    will-change: transform;
+    transition: transform 0.5s var(--ease-out);
+}
+
+.card.is-tilting .card__btn {
+    transition: transform 0.08s linear;
+}
+
+/* Reflejo de luz que recorre la foto al inclinar (usa ::after del botón, libre) */
+.card__btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    border-radius: 4px;
+    background: radial-gradient(
+        circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
+        rgba(255, 250, 240, 0.55) 0%,
+        rgba(255, 250, 240, 0.15) 25%,
+        transparent 50%);
+    opacity: 0;
+    transition: opacity 0.3s var(--ease-out);
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
+.card.is-tilting .card__btn::after { opacity: 1; }
+

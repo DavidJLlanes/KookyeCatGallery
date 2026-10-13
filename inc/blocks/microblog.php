@@ -12,8 +12,7 @@
 ?>
 <!-- MICROBLOG -->
 <?php if ($siteSettings['show_microblog']):
-    $microblogPosts = microblog_load_public();
-    $microblogPage = microblog_render_feed_page($microblogPosts, 0);
+    $microblogPage = microblog_feed(0);
     if ($microblogPage['html'] !== ''): ?>
 <section class="mb-section" id="microblog" data-site-section="microblog" aria-labelledby="microblog-title">
     <div class="mb-section__inner">

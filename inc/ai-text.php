@@ -19,6 +19,19 @@ declare(strict_types=1);
  */
 function ai_text_config(array $local = [], string $siteName = 'Galería fotográfica', string $siteUrl = ''): array
 {
+    // Ajustes del panel (pestaña «IA», core/Ai/Settings.php): sustituyen a los del config.php antiguo; las variables de entorno mandan sobre ambos.
+    if (class_exists(\Kcg\Core\Ai\Settings::class) && \Kcg\Core\Ai\Settings::exists()) {
+        $panel = \Kcg\Core\Ai\Settings::load();
+        $local['ai_enabled'] = $panel['enabled'];
+        foreach (['gemini_api_key', 'openrouter_api_key'] as $key) {
+            if ($panel[$key] !== '') $local[$key] = $panel[$key];
+        }
+        $other = $panel['first'] === 'gemini' ? 'openrouter' : 'gemini';
+        $local['cascade'] = [[$panel['first'], $panel[$panel['first'] . '_model']], [$other, $panel[$other . '_model']]];
+        $local['ai_max_per_request'] = $panel['max_per_request'];
+        $local['site_context'] = $panel['context'];
+        $local['style'] = $panel['style'];
+    }
     $enabled = getenv('GALLERY_AI_ENABLED');
     $local['ai_enabled'] = $enabled === false || $enabled === ''
         ? (bool) ($local['ai_enabled'] ?? false)
@@ -52,6 +65,7 @@ function ai_text_config(array $local = [], string $siteName = 'Galería fotográ
     $context = getenv('GALLERY_AI_CONTEXT');
     $local['site_context'] = is_string($context) && $context !== ''
         ? trim($context) : trim((string) ($local['site_context'] ?? ''));
+    $local['style'] = trim((string) ($local['style'] ?? ''));
 
     return $local;
 }
@@ -377,6 +391,34 @@ class AiTextGenerator
         @file_put_contents($path, $content);
     }
 
+    /** Prompt que se envía al proveedor para un nombre de archivo (público para poder mostrarlo y probarlo en el panel). */
+    public function promptFor(string $filename): string
+    {
+        return $this->buildPrompt($filename);
+    }
+
+    /**
+     * Prueba un proveedor con un nombre de archivo de ejemplo, sin escribir nada. Devuelve ok y un mensaje para el panel.
+     *
+     * @return array{ok: bool, message: string}
+     */
+    public function probe(string $provider, string $model): array
+    {
+        $key = (string) ($this->config[$provider . '_api_key'] ?? '');
+        if ($key === '' || str_starts_with($key, 'PEGA_')) return ['ok' => false, 'message' => 'No hay clave guardada.'];
+        $this->lastHttpCode = 0;
+        $result = $this->callProvider($provider, $model, 'atardecer-en-la-playa.jpg');
+        if ($result !== null && !empty($result['title'])) return ['ok' => true, 'message' => 'Funciona. Respuesta de ejemplo: «' . $result['title'] . '».'];
+        $code = $this->lastHttpCode;
+        return ['ok' => false, 'message' => match (true) {
+            $code === 401 || $code === 403 => 'El proveedor rechaza la clave (error ' . $code . ').',
+            $code === 404 => 'El modelo «' . $model . '» no existe para este proveedor (error 404).',
+            $code === 429 => 'El proveedor limita las peticiones (error 429): la clave es válida, prueba más tarde.',
+            $code === 0 => 'No se pudo conectar con el proveedor. Comprueba que el servidor tiene salida a Internet.',
+            default => 'El proveedor respondió con error ' . $code . '.',
+        }];
+    }
+
     private function buildPrompt(string $filename): string
     {
         $base = pathinfo($filename, PATHINFO_FILENAME);
@@ -384,13 +426,15 @@ class AiTextGenerator
         $siteName = trim((string) ($this->config['site_name'] ?? 'Galería fotográfica'));
         $context = trim((string) ($this->config['site_context'] ?? ''));
         $subject = $context !== '' ? "Contexto de la galería: {$context}." : 'Galería fotográfica de temática libre.';
+        $style = trim((string) ($this->config['style'] ?? ''));
+        $styleRule = $style !== '' ? "\nESTILO DE REDACCIÓN (síguelo en el título y la descripción, sin salirte de las reglas):\n{$style}\n" : '';
 
         return <<<PROMPT
 Escribes títulos y descripciones para "{$siteName}". {$subject}
 
 NOMBRE DEL ARCHIVO DE LA FOTO: "{$filename}"
 NOMBRE LEGIBLE: "{$readable}"
-
+{$styleRule}
 Tu tarea:
 1. Si el nombre describe un lugar o tema concreto, genera un título breve y evocador (3-7 palabras) y una descripción de 1-2 frases en español.
 2. Si el nombre no es descriptivo (por ejemplo IMG_4521), crea un título y una descripción generales, sin inventar lugares, personas ni contenido que no se pueda deducir del nombre.

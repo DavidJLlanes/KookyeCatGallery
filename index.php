@@ -18,19 +18,24 @@ require __DIR__ . '/inc/microblog-composer.php';
 
 $appVersion = app_version();
 
-$siteUrl  = gallery_public_url();
+$siteUrl  = \Kcg\Core\Installation::siteUrl();
+$place    = \Kcg\Core\Installation::place(); // lugar de la web (installation.php); vacío = sin etiquetas geográficas
 $siteName = site_text('text_52179dc42df7efe5');
 $author   = site_text('text_30170303c506cf6c');
 $siteSettings = site_settings_load();
 
+// Claves de IA desde fuera del document root, si la instalación declara un archivo (installation.php, «ai_config_file»).
+$externalConfigPath = \Kcg\Core\Installation::aiConfigFile();
+$config = $externalConfigPath !== '' && is_file($externalConfigPath) ? require $externalConfigPath : [];
+$config = ai_text_config($config, $siteName, $siteUrl);
 
 $processor = new ImageProcessor(__DIR__);
 $items     = $processor->processAll();
 
-$aiConfig = ai_text_config([], $siteName, $siteUrl);
-if ($aiConfig['ai_enabled']) {
-    $ai = new AiTextGenerator(__DIR__, $aiConfig);
-    $ai->processMissing($items, $aiConfig['ai_max_per_request']);
+// Generar textos con IA (cascada de proveedores) para fotos sin sidecar .txt
+if (!empty($config['ai_enabled'])) {
+    $ai = new AiTextGenerator(__DIR__, $config);
+    $ai->processMissing($items, (int) ($config['ai_max_per_request'] ?? 5));
 }
 
 $items = enrich_with_sidecar($items);
@@ -96,15 +101,9 @@ $featuredItems = array_values(array_filter($items, static fn(array $item): bool 
 $heroItem = $featuredItems[0] ?? ($items[0] ?? null);
 
 // Detecta categorías automáticamente del título + descripción
-$categoryKeywords = [
-    'Paisajes' => ['paisaje', 'montaña', 'valle', 'horizonte'],
-    'Retratos' => ['retrato', 'mirada', 'primer plano'],
-    'Naturaleza' => ['naturaleza', 'bosque', 'flora', 'fauna'],
-    'Arquitectura' => ['arquitectura', 'edificio', 'fachada', 'monumento'],
-    'Calle' => ['calle', 'ciudad', 'urbano', 'plaza'],
-    'Viajes' => ['viaje', 'destino', 'ruta', 'escapada'],
-    'Blanco y negro' => ['blanco y negro', 'monocromo'],
-];
+$categoryKeywords = \Kcg\Core\Installation::categoryKeywords();
+$locationCoords = \Kcg\Core\Installation::locationCoords();
+$defaultCoordinates = \Kcg\Core\Installation::defaultCoordinates();
 
 foreach ($items as &$item) {
     $combined = strtolower(($item['title'] ?? '') . ' ' . ($item['description'] ?? ''));
@@ -122,6 +121,16 @@ foreach ($items as &$item) {
         }
     }
 
+    // Si NO hay coordenadas manuales (en el .txt o nombre), la instalación puede asignarlas por palabras clave (installation.php)
+    if ($defaultCoordinates !== null && empty($item['latitude']) && empty($item['longitude'])) {
+        [$item['latitude'], $item['longitude']] = $defaultCoordinates;
+        foreach ($locationCoords as $place => $coords) {
+            if (strpos($combined, strtolower($place)) !== false) {
+                [$item['latitude'], $item['longitude']] = $coords;
+                break;
+            }
+        }
+    }
 }
 unset($item);
 
@@ -146,7 +155,8 @@ foreach ($categories as $categoryName) {
 
 
 // Genera slug para fotos con título pero sin # Slug: en el .txt
-// Conserva los títulos editados manualmente.
+// Incluye: IA real (# auto-gemini/...) y editados a mano (sin marca # auto-)
+// Excluye solo el fallback de nombre de archivo (# auto-filename)
 foreach ($items as &$item) {
     if ($item['slug'] === '' && $item['title'] !== '' && !empty($item['sidecar']) && is_file($item['sidecar'])) {
         $raw = file_get_contents($item['sidecar']) ?: '';
@@ -180,12 +190,12 @@ $photoNeighbors = $fotoItem !== null ? photo_neighbors($items, (string) $fotoIte
 
 $isSiteAdmin = false;
 $inlineEditorCsrf = '';
-if (!empty($_COOKIE['kookye_gallery_admin']) && is_string($_COOKIE['kookye_gallery_admin'])) {
+if (!empty($_COOKIE[\Kcg\Core\Installation::sessionName()]) && is_string($_COOKIE[\Kcg\Core\Installation::sessionName()])) {
     ini_set('session.use_strict_mode', '1');
     ini_set('session.cookie_httponly', '1');
     ini_set('session.cookie_secure', '1');
     ini_set('session.cookie_samesite', 'Strict');
-    session_name('kookye_gallery_admin');
+    session_name(\Kcg\Core\Installation::sessionName());
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',
@@ -213,17 +223,17 @@ $pageDesc     = str_replace('{count}', (string) $totalFotos, site_text('text_506
 $pageKeywords = str_replace('{count}', (string) $totalFotos, site_text('text_570bd4204e3d077b'));
 $pageCanonical = $siteUrl . '/';
 $customOgImage = site_brand_og_url();
-$pageOgImage = $customOgImage !== '' ? $siteUrl . $customOgImage : $siteUrl . '/assets/img/kookyecatgallery-photographers-cover.png';
-$pageOgWidth = $customOgImage !== '' ? 1200 : 1730;
-$pageOgHeight = $customOgImage !== '' ? 630 : 909;
+$pageOgImage = $customOgImage !== '' ? $siteUrl . $customOgImage : ($heroItem ? $siteUrl . photo_asset_url($heroItem['desktop'], __DIR__) : '');
+$pageOgWidth = $customOgImage !== '' ? 1200 : 1600;
+$pageOgHeight = $customOgImage !== '' ? 630 : 1067;
 
 if ($fotoItem !== null) {
     $pageTitle    = safe($fotoItem['title']) . site_text('text_0ad82954c86eec7c');
     $pageDesc     = $fotoItem['description'] ?: $fotoItem['title'] . site_text('text_5f894de21770ce4f') . $author;
     $pageCanonical = $siteUrl . '/foto/' . $fotoItem['slug'];
     $pageOgImage   = $siteUrl . photo_asset_url($fotoItem['desktop'], __DIR__);
-    $pageOgWidth   = (int) ($fotoItem['desktop_w'] ?? 1200);
-    $pageOgHeight  = (int) ($fotoItem['desktop_h'] ?? 630);
+    $pageOgWidth = (int) ($fotoItem['desktop_w'] ?? 1200);
+    $pageOgHeight = (int) ($fotoItem['desktop_h'] ?? 630);
 }
 ?>
 <!DOCTYPE html>
@@ -246,6 +256,14 @@ if ($fotoItem !== null) {
     <link rel="canonical" href="<?= safe($pageCanonical) ?>">
     <meta name="robots" content="index, follow, max-image-preview:large">
 
+<?php if ($place): ?>
+    <!-- Etiquetas geográficas del lugar de la web (installation.php) -->
+    <meta name="geo.region" content="<?= safe($place['geo_region']) ?>">
+    <meta name="geo.placename" content="<?= safe($place['name']) ?>">
+    <meta name="geo.position" content="<?= safe($place['latitude'] . ';' . $place['longitude']) ?>">
+    <meta name="ICBM" content="<?= safe($place['latitude'] . ', ' . $place['longitude']) ?>">
+<?php endif; ?>
+
     <!-- Open Graph -->
     <meta property="og:type" content="<?= $fotoItem ? 'article' : 'website' ?>">
     <meta property="og:locale" content="es_ES">
@@ -255,9 +273,9 @@ if ($fotoItem !== null) {
     <meta property="og:url" content="<?= safe($pageCanonical) ?>">
     <?php if ($pageOgImage): ?>
     <meta property="og:image" content="<?= safe($pageOgImage) ?>">
+    <meta property="og:image:alt" content="<?= $fotoItem ? safe($fotoItem['title']) : site_text('text_c7ea52a379d46ca5') . safe($author) ?>">
     <meta property="og:image:width" content="<?= $pageOgWidth ?>">
     <meta property="og:image:height" content="<?= $pageOgHeight ?>">
-    <meta property="og:image:alt" content="<?= $fotoItem ? safe($fotoItem['title']) : 'KookyeCatGallery — portfolio web para fotógrafos' ?>">
     <?php endif; ?>
 
     <!-- Twitter / X Card -->
@@ -269,19 +287,17 @@ if ($fotoItem !== null) {
     <?php endif; ?>
 
     <!-- Favicon -->
-    <?php if (is_file(__DIR__ . '/assets/icons/site-app-icon-32.png')): ?>
-    <link rel="icon" type="image/png" sizes="32x32" href="<?= safe(site_brand_icon_url(32)) ?>">
-    <link rel="icon" type="image/png" sizes="192x192" href="<?= safe(site_brand_icon_url(192)) ?>">
+    <link rel="icon" type="<?= safe(site_brand_icon_type(site_brand_icon_url(32))) ?>" sizes="32x32" href="<?= safe(site_brand_icon_url(32)) ?>">
+    <link rel="icon" type="<?= safe(site_brand_icon_type(site_brand_icon_url(192))) ?>" sizes="192x192" href="<?= safe(site_brand_icon_url(192)) ?>">
     <link rel="apple-touch-icon" sizes="180x180" href="<?= safe(site_brand_icon_url(180)) ?>">
-    <?php else: ?>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <?php endif; ?>
 
-    <link rel="stylesheet" href="/assets/css/style.css?v=<?= safe($appVersion) ?>">
+    <?= site_style_tags('full') ?>
 
-    <!-- Leaflet: Mapa interactivo -->
+    <?php if (!empty($siteSettings['show_map'])): ?>
+    <!-- Leaflet: Mapa interactivo (solo si el bloque del mapa está activo) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" onerror="this.onerror=null;this.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';">
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js" onerror="this.onerror=null;var fallback=document.createElement('script');fallback.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';fallback.onload=function(){window.dispatchEvent(new Event('leaflet:ready'));};fallback.onerror=function(){window.dispatchEvent(new Event('leaflet:failed'));};document.head.appendChild(fallback);"></script>
+    <?php endif; ?>
 
     <!-- Schema.org JSON-LD: ImageGallery + Person (+ ImageObject si es página de foto) -->
     <?php
@@ -313,13 +329,28 @@ if ($fotoItem !== null) {
             '@type' => 'ImageGallery',
             '@id'   => $siteUrl . '/#gallery',
             'name'  => $siteName,
-            'description' => 'Galería fotográfica y portfolio de autor.',
+            'description' => $place['gallery_description'] ?? 'Galería fotográfica y portfolio de autor.',
             'url'   => $siteUrl . '/',
             'inLanguage' => 'es-ES',
             'isPartOf' => ['@id' => $siteUrl . '/#website'],
             'creator' => ['@id' => $siteUrl . '/#person'],
             'numberOfItems' => $totalFotos,
-            'associatedMedia' => array_map(function($item) use ($siteUrl, $author) {
+            'contentLocation' => $place ? [
+                '@type' => 'Place',
+                'name'  => $place['name'],
+                'address' => [
+                    '@type' => 'PostalAddress',
+                    'addressLocality' => $place['locality'],
+                    'addressRegion' => $place['region'],
+                    'addressCountry' => $place['country'],
+                ],
+                'geo' => [
+                    '@type' => 'GeoCoordinates',
+                    'latitude' => $place['latitude'],
+                    'longitude' => $place['longitude'],
+                ],
+            ] : null,
+            'associatedMedia' => array_map(function($item) use ($siteUrl, $author, $place) {
                 return [
                     '@type' => 'ImageObject',
                     'contentUrl' => $siteUrl . photo_asset_url($item['desktop'], __DIR__),
@@ -329,6 +360,7 @@ if ($fotoItem !== null) {
                     'creator' => ['@id' => $siteUrl . '/#person'],
                     'copyrightHolder' => ['@id' => $siteUrl . '/#person'],
                     'datePublished' => isset($item['mtime']) ? date('c', $item['mtime']) : null,
+                    'contentLocation' => $place['name'] ?? null,
                 ];
             }, array_slice($galleryItems, 0, 50)),
         ];
@@ -352,6 +384,15 @@ if ($fotoItem !== null) {
             'width'  => !empty($fotoItem['desktop_w']) ? (int) $fotoItem['desktop_w'] : null,
             'height' => !empty($fotoItem['desktop_h']) ? (int) $fotoItem['desktop_h'] : null,
             'isPartOf' => ['@id' => $siteUrl . '/#gallery'],
+            'contentLocation' => !empty($fotoItem['latitude']) && !empty($fotoItem['longitude']) ? [
+                '@type' => 'Place',
+                'name'  => $place['name'] ?? $author,
+                'geo'   => [
+                    '@type' => 'GeoCoordinates',
+                    'latitude'  => (float) $fotoItem['latitude'],
+                    'longitude' => (float) $fotoItem['longitude'],
+                ],
+            ] : null,
         ];
         $schemaGraph[] = [
             '@type' => 'BreadcrumbList',
@@ -365,15 +406,19 @@ if ($fotoItem !== null) {
     <script type="application/ld+json">
     <?= json_encode(['@context' => 'https://schema.org', '@graph' => $schemaGraph], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) ?>
     </script>
+    <?= site_palette_style_tag() ?>
     <link rel="stylesheet" href="/assets/css/site-design.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/site-design.css')) ?>">
     <link rel="stylesheet" href="/assets/css/photo-navigation.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/photo-navigation.css')) ?>">
     <noscript><style>html.viewer-pending body > * { visibility: visible !important; }</style></noscript>
-    <link rel="stylesheet" href="/assets/css/interface-worlds.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/interface-worlds.css')) ?>">
+    <?= site_option_css_tags($siteSettings) ?>
     <link rel="stylesheet" href="/assets/css/gallery-layout.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/gallery-layout.css')) ?>">
-    <link rel="stylesheet" href="/assets/css/microblog.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/microblog.css')) ?>">
+    <?php if (!empty($siteSettings['show_microblog'])): ?><link rel="stylesheet" href="/assets/css/microblog.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/microblog.css')) ?>"><?php endif; ?>
+    <link rel="stylesheet" href="/assets/css/fab-menu.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/fab-menu.css')) ?>">
     <?php if ($isSiteAdmin): ?><link rel="stylesheet" href="/assets/css/inline-editor.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/inline-editor.css')) ?>"><link rel="stylesheet" href="/assets/css/microblog-composer.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/microblog-composer.css')) ?>"><?php endif; ?>
     <?php if ($fotoItem === null) echo premium_gallery_head_tags(); // Estilos de la galería premium activa (ver inc/premium-galleries.php). ?>
+    <?= site_fonts_style_tag() ?>
     <link rel="stylesheet" href="/assets/css/typography.css?v=<?= safe(asset_ver(__DIR__ . '/assets/css/typography.css')) ?>">
+    <?= site_module_head_tags('assets/js/main.js') ?>
 </head>
 <?php
 // Datos compartidos por los bloques de la portada (inc/blocks/*.php).
@@ -395,7 +440,7 @@ $pageContext = ['author' => $author, 'categories' => $categories, 'galleryItems'
 <!-- PRELOADER cinematográfico (solo en la home) -->
 <div class="preloader" id="preloader" aria-hidden="true">
     <div class="preloader__inner">
-        <img class="preloader__crest" src="<?= safe(site_media_url('logo_image')) ?>" width="500" height="640" alt="">
+        <img class="preloader__crest" src="<?= safe(site_media_src('logo_image')) ?>" width="500" height="640" alt="">
         <span class="preloader__title"><?= site_text_html('text_2c6b326536186079') ?></span>
         <span class="preloader__bar"><span class="preloader__bar-fill"></span></span>
     </div>
@@ -580,7 +625,7 @@ echo page_blocks_render_home($pageContext, $siteSettings['section_order'] ?? nul
 <?php if ($fotoItem !== null) echo page_block_render('social', $pageContext); // En la home lo coloca page_blocks_render_home(). ?>
 
 <footer class="site-footer">
-    <p>&copy; <?= date('Y') ?> <?= site_inline_text_html('text_318bb1fc64a6e036') ?></p>
+    <p>&copy; <?= date('Y') ?> <?= site_name_part_html(site_title()) ?></p>
     <nav class="site-footer__nav">
         <a href="/aviso-legal.php"><?= site_text_html('text_7664bd753da07ad5') ?></a>
         <a href="/politica-privacidad.php"><?= site_text_html('text_52233e2c4d6b2e9a') ?></a>
@@ -602,8 +647,8 @@ echo page_blocks_render_home($pageContext, $siteSettings['section_order'] ?? nul
 <script src="/assets/js/fab-menu.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/fab-menu.js')) ?>" defer></script>
 <?php if ($fotoItem === null && !empty($siteSettings['show_microblog'])): ?><script src="/assets/js/microblog.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/microblog.js')) ?>" defer></script><?php endif; ?>
 <script src="/assets/js/gallery-layout.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/gallery-layout.js')) ?>" defer></script>
-<script src="/assets/js/main.js?v=<?= safe($appVersion) ?>" defer></script>
+<?= site_module_script_tag('assets/js/main.js') ?>
 <?php if ($fotoItem === null) echo premium_gallery_script_tags(); // Comportamiento de la galería premium activa. ?>
-<script type="module" src="/assets/js/interface-worlds.js?v=<?= safe(asset_ver(__DIR__ . '/assets/js/interface-worlds.js')) ?>"></script>
+<?= site_option_js_tags($siteSettings) ?>
 </body>
 </html>

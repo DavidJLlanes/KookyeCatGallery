@@ -3,8 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert/strict');
 const root = path.join(__dirname, '..');
-const css = ['style', 'site-design', 'interface-worlds', 'gallery-layout'].map(n => fs.readFileSync(path.join(root, `assets/css/${n}.css`), 'utf8')).join('\n');
-const scripts = ['gallery-layout', 'main'].map(n => fs.readFileSync(path.join(root, `assets/js/${n}.js`), 'utf8'));
+const { mainJs, readScript } = require('./support/main-bundle.cjs');
+const {cssFile} = require('./support/theme-css.cjs');
+const css = ['style', 'site-design', 'interface-worlds', 'gallery-layout'].map(n => cssFile(root, n)).join('\n');
+const scripts = ['gallery-layout', 'main'].map(n => readScript(root, n));
 const designs = ['standard', 'grid', 'mosaic', 'asymmetric', 'scattered', 'category-rails', 'exhibition', 'contact-sheet', 'narrative', 'triptych'];
 const ratios = [.67, 1.8, 1.33, .8, 2.2, 1];
 const cards = Array.from({length: 67}, (_, i) => {

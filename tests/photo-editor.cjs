@@ -3,8 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 const root = path.join(__dirname, '..');
-const admin = fs.readFileSync(path.join(root, 'admin.php'), 'utf8');
-const template = admin.match(/\$formTemplate = <<<'HTML'\n([\s\S]*?)\nHTML;/)[1];
+// La plantilla del formulario de subida vive en core/Admin/templates/ (antes era un heredoc dentro de admin.php).
+const template = fs.readFileSync(path.join(root, 'core/Admin/templates/photo-form.html'), 'utf8');
 const form = template.replace(/__[A-Z_]+__/g, token => ({__CSRF__:'test',__ACTION__:'complete',__FILE_REQUIRED__:'required'}[token] || ''));
 const scripts = ['photo-filter-engine.js','photo-editor-presets.js','photo-editor.js'];
 // This uses the real administration form without PHP auth or a live server.

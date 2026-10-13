@@ -1,0 +1,20 @@
+/* Cabecera «orbit» (mobile): Orbit / celestial glass. Se carga solo si es la elegida (themes/headers-mobile/orbit.php). */
+@media(max-width:768px){
+/* 04 · Orbit / celestial glass */
+body[data-header-mobile="orbit"][data-palette="current"]{--bg:#070d25;--bg-soft:#121d44;--bg-card:#162a53;--fg:#f1f5ff;--fg-soft:#c5d2f0;--accent:#77e6ff;--line:#a3d8ff44;background:var(--bg);color:var(--fg)}
+body[data-header-mobile="orbit"] .mobile-profile{position:relative;isolation:isolate;overflow:hidden;min-height:380px;padding:1.5rem 1.2rem 2.5rem;background:radial-gradient(circle at 80% 35%,var(--bg-card),var(--bg-soft) 58%,var(--bg));border:0;border-radius:0 0 38px 38px}
+body[data-header-mobile="orbit"] .mobile-profile:before{content:attr(data-template-orbit-label);position:relative;z-index:1;display:block;color:var(--accent);letter-spacing:.3em;font-size:.55rem;margin-bottom:1.4rem}
+body[data-header-mobile="orbit"] .mobile-profile__masthead,body[data-header-mobile="orbit"] .mobile-profile__identity,body[data-header-mobile="orbit"] .mobile-profile__bio{position:relative;z-index:1}
+body[data-header-mobile="orbit"] .mobile-profile__masthead{border:0}
+body[data-header-mobile="orbit"] .mobile-profile__brand{font:400 clamp(2.7rem,11vw,4rem)/.9 Georgia,serif;color:var(--fg);text-shadow:0 0 30px #77e6ff6b}
+body[data-header-mobile="orbit"] .mobile-profile__edition{color:var(--accent)}
+body[data-header-mobile="orbit"] .mobile-profile__identity{padding:1.6rem 0;grid-template-columns:90px 1fr}
+body[data-header-mobile="orbit"] .mobile-profile__avatar{border:3px solid var(--accent);box-shadow:0 0 0 8px #77e6ff12,0 0 35px #77e6ff77}
+body[data-header-mobile="orbit"] .mobile-profile__bio{border-top:1px solid var(--line);padding-top:.8rem}
+body[data-header-mobile="orbit"] .gallery-section{padding:1.3rem .8rem 2rem;background:var(--bg)}
+body[data-header-mobile="orbit"] #masonry{--col-gap:.85rem}
+body[data-header-mobile="orbit"] #masonry .card{overflow:visible;padding:.24rem!important;border:1px solid var(--line);border-radius:21px!important;background:linear-gradient(145deg,var(--bg-card),var(--bg-soft))}
+body[data-header-mobile="orbit"] #masonry .card__btn,body[data-header-mobile="orbit"] #masonry .card__picture,body[data-header-mobile="orbit"] #masonry .card__img{border-radius:16px!important}
+body[data-header-mobile="orbit"] .project{background:linear-gradient(145deg,var(--bg-soft),var(--bg))}
+body[data-header-mobile="orbit"] .upload-fab{background:var(--accent);color:var(--bg)}
+}

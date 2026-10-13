@@ -117,7 +117,7 @@ function testImage(width = 640, height = 400) {
         assert.notEqual(baseAfter, baseBefore, 'La foto base del visor debe ser la nueva');
         assert.match(baseAfter, /last/, 'La foto del visor es la de la nueva ficha');
         assert.equal(await desktop.page.locator('.lightbox__nav--next').isDisabled(), true, 'En la última foto, «siguiente» se desactiva');
-        assert.equal(await desktop.page.locator('link[rel="canonical"]').getAttribute('href'), 'https://example.com/foto/last', 'Se actualiza la dirección canónica');
+        assert.equal(await desktop.page.locator('link[rel="canonical"]').getAttribute('href'), 'https://davidjimenezllanes.es/foto/last', 'Se actualiza la dirección canónica');
         assert.equal(await desktop.page.title().then(t => t.includes('last')), true, 'Se actualiza el título de la pestaña');
 
         // 2. Varias pulsaciones seguidas con el teclado: terminan en la foto correcta, sin recargar y sin huecos.

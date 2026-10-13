@@ -1,0 +1,36 @@
+/* =========================================================
+   TÍTULO HERO — brillo dorado que recorre las letras
+   ========================================================= */
+.hero__title-line--accent {
+    background-image: linear-gradient(
+        100deg,
+        var(--accent) 0%,
+        var(--accent) 38%,
+        #fff3e0 50%,
+        var(--accent) 62%,
+        var(--accent) 100%);
+    background-size: 220% 100%;
+    background-position: 180% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+/* Solo hacemos el texto transparente si el navegador soporta el recorte (si no, queda color sólido) */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    .hero__title-line--accent {
+        -webkit-text-fill-color: transparent;
+        color: transparent;
+    }
+}
+
+.hero__title-line--accent.is-revealed {
+    animation: titleShine 6.5s ease-in-out 1.6s infinite;
+}
+
+@keyframes titleShine {
+    0%, 100% { background-position: 180% 0; }
+    /* el brillo cruza y luego descansa */
+    18%      { background-position: -80% 0; }
+    40%      { background-position: -80% 0; }
+}
+

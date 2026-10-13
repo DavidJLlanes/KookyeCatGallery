@@ -36,7 +36,7 @@ function microblog_composer_html(string $csrf): string
         . '<div class="mbc__scrim" data-mbc-close></div>'
         . '<section class="mbc__panel" role="dialog" aria-modal="true" aria-labelledby="mbc-title" tabindex="-1">'
         . '<div class="mbc__grip" data-mbc-grip aria-hidden="true"></div>'
-        . '<header class="mbc__head"><img class="mbc__avatar" src="' . $e(site_media_url('profile_image')) . '" alt="" width="44" height="44">'
+        . '<header class="mbc__head"><img class="mbc__avatar" src="' . $e(site_media_src('profile_image')) . '" alt="" width="44" height="44">'
         . '<div class="mbc__titles"><h2 id="mbc-title">Nuevo post</h2><p>' . $e(site_text('text_4577bab0d9627af1')) . ' · se publica en el microblog</p></div>'
         . '<button type="button" class="mbc__close" data-mbc-close aria-label="Cerrar">' . $icon('<path d="M6 6l12 12M18 6L6 18"/>') . '</button></header>'
 
@@ -80,7 +80,7 @@ function microblog_composer_html(string $csrf): string
         . '<fieldset class="mbc-levels"><legend>Destacado</legend><div class="mbc-levels__grid">' . $levels . '</div></fieldset>'
         . '<div class="mbc-options">'
         . '<label class="mbc-switch"><input type="checkbox" name="pinned" value="1"><span class="mbc-switch__track" aria-hidden="true"></span><span>Fijar arriba del feed</span></label>'
-        . '<label class="mbc-field mbc-field--schedule"><span>Programar publicación (opcional)</span><input name="publish_at" type="datetime-local"><small>Hora del sitio (' . $e(microblog_timezone()->getName()) . '). Vacío = publicar ahora.</small></label>'
+        . '<label class="mbc-field mbc-field--schedule"><span>Programar publicación (opcional)</span><input name="publish_at" type="datetime-local"><small>Hora de España. Vacío = publicar ahora.</small></label>'
         . '</div>'
         . '</div>'
 

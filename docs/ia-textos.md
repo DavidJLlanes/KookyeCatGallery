@@ -2,6 +2,21 @@
 
 Ambas instalaciones usan `inc/ai-text.php` para proponer títulos y descripciones. La función está desactivada por defecto. Los textos manuales se conservan; las propuestas automáticas se marcan con `# auto-gemini/...`, `# auto-openrouter/...` o `# auto-filename`.
 
+## Desde el panel
+
+La pestaña **Inteligencia artificial** del panel (`/admin.php?ai=1`) reúne todo lo de la IA, sin tocar archivos:
+
+- **Activar o desactivar** la generación con un interruptor. Desactivada no se envía nada a ningún proveedor.
+- **Claves de API** de Gemini y de OpenRouter, cada una con su **modelo**. Las claves se guardan en `ai-settings.json`, dentro de la carpeta privada (fuera de la web, permisos 0640), y no se vuelven a mostrar: solo los últimos cuatro caracteres. Una clave vacía conserva la guardada; «Borrar la clave guardada» la elimina.
+- **Probar la conexión** con cada proveedor (con la clave y el modelo guardados): dice si la clave es válida, si el modelo existe o si hay límite de peticiones.
+- **Proveedor que se prueba primero** y **fotos por visita** (1 a 10).
+- **Estilo de los textos**: un campo de texto (máx. 600 caracteres) que describe cómo deben sonar los títulos y descripciones (tono, longitud, persona, palabras que evitar). Se añade a la petición como «ESTILO DE REDACCIÓN», antes de las reglas, que siguen mandando (no inventar datos, devolver JSON…). Junto a él, el **contexto de la galería**.
+- Un desplegable muestra la petición exacta que se enviaría con un nombre de ejemplo.
+
+Para activarla hace falta al menos una clave. Prioridad cuando hay varias fuentes: variables de entorno > panel > `config.php` antiguo > valores por defecto; lo que fija una variable de entorno aparece bloqueado en el panel.
+
+## Con variables de entorno
+
 Configura estas variables en el entorno de PHP, fuera del repositorio:
 
 | Variable | Uso |

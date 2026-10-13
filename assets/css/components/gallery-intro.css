@@ -1,0 +1,37 @@
+/* =========================================================
+   GALERÍA - INTRO
+   ========================================================= */
+.gallery-section {
+    padding: 6rem 2rem 4rem;
+    max-width: 2200px;
+    margin: 0 auto;
+}
+
+@media (max-width: 600px) {
+    .gallery-section { padding: 4rem 1rem 3rem; }
+}
+
+.gallery-intro {
+    text-align: center;
+    margin-bottom: 5rem;
+    padding: 0 1rem;
+}
+
+.gallery-intro__title {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-style: italic;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    letter-spacing: -0.01em;
+    color: var(--fg);
+    margin-bottom: 1rem;
+}
+
+.gallery-intro__text {
+    color: var(--fg-soft);
+    font-size: 0.95rem;
+    max-width: 32em;
+    margin: 0 auto;
+    letter-spacing: 0.02em;
+}
+

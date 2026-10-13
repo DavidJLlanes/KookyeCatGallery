@@ -1,0 +1,7 @@
+/* Reglas comunes a todas las cabeceras especiales de mobile (usan :is() con la lista completa). Se carga junto con la cabecera elegida si no es una de las básicas. */
+@media(max-width:768px){
+/* A fixed-ratio grid owns the full tile; ornamental framing never changes its geometry. */
+body:is([data-header-mobile="reel"],[data-header-mobile="atlas"],[data-header-mobile="studio"],[data-header-mobile="orbit"],[data-header-mobile="scrapbook"]):is([data-grid="square"],[data-grid="landscape"],[data-grid="portrait"]) #masonry .card{padding:0!important;border:0!important;overflow:hidden}
+body:is([data-header-mobile="reel"],[data-header-mobile="atlas"],[data-header-mobile="studio"],[data-header-mobile="orbit"],[data-header-mobile="scrapbook"]):is([data-grid="square"],[data-grid="landscape"],[data-grid="portrait"]) #masonry .card::before,
+body:is([data-header-mobile="reel"],[data-header-mobile="atlas"],[data-header-mobile="studio"],[data-header-mobile="orbit"],[data-header-mobile="scrapbook"]):is([data-grid="square"],[data-grid="landscape"],[data-grid="portrait"]) #masonry .card::after{display:none}
+}

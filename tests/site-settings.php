@@ -20,30 +20,31 @@ check($defaults['font_pair'] === 'classic', 'Existing installations must keep th
 foreach (site_font_pairs() as $pair) {
     foreach (['heading', 'body'] as $role) {
         check($pair[$role] !== '', 'A font pair is missing a family.');
-        check(str_contains((string) file_get_contents(dirname(__DIR__) . '/assets/css/typography.css'), "font-family:'" . $pair[$role] . "'"), 'A pair references a font that is not self-hosted.');
+        check(str_contains(\Kcg\Themes\Fonts::fontFaceCss(), "font-family:'" . $pair[$role] . "'"), 'A pair references a font that is not self-hosted.');
     }
 }
 rejects(array_replace($defaults, ['font_pair' => 'url(https://example.com/font.woff2)']));
 check(isset(site_social_networks()['instagram'], site_social_networks()['threads']), 'Instagram and Threads must be available networks.');
 check(!in_array('social_threads_user', site_editable_text_keys(), true) && !in_array('text_3b20084d3d94b4ee', site_editable_text_keys(), true), 'Network handles must not be editable text fields.');
 $inlineKeys = site_inline_editable_text_keys();
-check(in_array('text_cbbba360eb60dd04', $inlineKeys, true), 'Visible template copy must be available to inline editing.');
+check(in_array('text_b6b50664e231e202', $inlineKeys, true), 'Visible template copy must be available to inline editing.');
 check(in_array('text_bdd8f61b94c52379', $inlineKeys, true) && in_array('text_49a006d539216e16', $inlineKeys, true) && in_array('text_ab3ceef210237f9d', $inlineKeys, true), 'Social section copy must be available in inline editing.');
 $GLOBALS['siteInlineEditorEnabled'] = false;
-check(!str_contains(site_inline_text_html('text_cbbba360eb60dd04'), 'data-inline-edit-key'), 'Inline controls must stay hidden for visitors.');
+check(!str_contains(site_inline_text_html('text_b6b50664e231e202'), 'data-inline-edit-key'), 'Inline controls must stay hidden for visitors.');
 $GLOBALS['siteInlineEditorEnabled'] = true;
-check(str_contains(site_inline_text_html('text_cbbba360eb60dd04'), 'data-inline-edit-key'), 'Inline controls must be available for an authenticated editor.');
+check(str_contains(site_inline_text_html('text_b6b50664e231e202'), 'data-inline-edit-key'), 'Inline controls must be available for an authenticated editor.');
 check(str_contains(site_inline_text_html('text_bdd8f61b94c52379'), 'data-inline-edit-key'), 'Social copy must be editable in inline mode.');
 
 unset($GLOBALS['siteInlineEditorEnabled']);
-$inlineSaved = site_settings_validate(array_replace($defaults, ['texts' => ['text_cbbba360eb60dd04' => 'Un título editado']]));
-check(($inlineSaved['texts']['text_cbbba360eb60dd04'] ?? '') === 'Un título editado', 'Inline text changes must pass through normal settings validation.');
+$inlineSaved = site_settings_validate(array_replace($defaults, ['texts' => ['text_b6b50664e231e202' => 'Un título editado']]));
+check(($inlineSaved['texts']['text_b6b50664e231e202'] ?? '') === 'Un título editado', 'Inline text changes must pass through normal settings validation.');
 $profileLinks = array_replace($defaults, ['social_links' => [
     ['network'=>'instagram', 'url'=>'https://instagram.com/example', 'handle'=>'@example'],
     ['network'=>'threads', 'url'=>'https://threads.net/@example', 'handle'=>'@example'],
 ]]);
 check(count(site_settings_validate($profileLinks)['social_links']) === 2, 'Instagram and Threads must validate in the shared network list.');
-$legacyProfiles = array_replace($defaults, [
+$legacyDefaults = array_replace($defaults, ['social_links'=>[]]);
+$legacyProfiles = array_replace($legacyDefaults, [
     'instagram_url'=>'https://instagram.com/legacy',
     'threads_url'=>'https://threads.net/@legacy',
     'texts'=>['text_3b20084d3d94b4ee'=>'@legacy_ig', 'social_threads_user'=>'@legacy_threads'],
@@ -203,7 +204,7 @@ $custom = array_replace($defaults, [
     'header_mobile' => 'compact', 'header_desktop' => 'editorial',
     'gallery_mobile' => 'category-rails', 'gallery_desktop' => 'mosaic',
     'show_categories' => false, 'show_map' => true, 'show_project' => false, 'show_social' => true,
-    'texts' => [$key => '<script>alert("test")</script> 日本語 Kookye'],
+    'texts' => [$key => '<script>alert("test")</script> 日本語 León'],
 ]);
 check(site_settings_validate($custom)['show_categories'] === false, 'Section visibility toggle did not persist.');
 check(site_settings_validate($custom)['gallery_desktop'] === 'mosaic', 'Desktop gallery template was not preserved.');

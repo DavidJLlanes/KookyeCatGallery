@@ -1,0 +1,16 @@
+/* =========================================================
+   BARRA DE PROGRESO DE SCROLL
+   ========================================================= */
+.scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(212, 165, 116, 0.5), var(--accent));
+    z-index: 1500;
+    pointer-events: none;
+    box-shadow: 0 0 12px rgba(212, 165, 116, 0.5);
+    transition: width 0.1s linear;
+}
+

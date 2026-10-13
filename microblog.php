@@ -13,10 +13,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/inc/helpers.php';
 require_once __DIR__ . '/inc/site-settings.php';
-require_once __DIR__ . '/inc/private-storage.php';
 require_once __DIR__ . '/inc/microblog.php';
 
-$siteUrl = gallery_public_url();
+$siteUrl = \Kcg\Core\Installation::siteUrl();
 
 // Feed por AJAX.
 if (isset($_GET['feed'])) {
@@ -30,14 +29,14 @@ if (isset($_GET['feed'])) {
         exit;
     }
     $offset = filter_var($_GET['offset'] ?? 0, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 100000]]);
-    $page = microblog_render_feed_page(microblog_load_public(), $offset === false ? 0 : $offset);
+    $page = microblog_feed($offset === false ? 0 : $offset);
     echo json_encode(['ok' => true, 'html' => $page['html'], 'next' => $page['next']], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
 $id = (string) ($_GET['id'] ?? '');
-$posts = microblog_valid_id($id) ? microblog_load_public() : [];
-$post = $posts[$id] ?? null;
+$thread = microblog_thread($id);
+$post = $thread['post'] ?? null;
 $settings = site_settings_load();
 if ($post === null || empty($settings['show_microblog'])) {
     http_response_code(404);
@@ -47,9 +46,8 @@ if ($post === null || empty($settings['show_microblog'])) {
 
 $embed = isset($_GET['embed']);
 $version = static fn(string $file): string => substr(hash_file('sha256', __DIR__ . $file) ?: '0', 0, 12);
-$rootId = $post['parent'] ?? ($post['id'] ?? '');
-$root = $post !== null ? ($posts[$rootId] ?? $post) : null;
-$replies = $root !== null ? microblog_replies($posts, $root['id']) : [];
+$root = $thread['root'] ?? null;
+$replies = $thread['replies'] ?? [];
 $author = site_text('text_30170303c506cf6c');
 $pageTitle = $post !== null ? microblog_excerpt($post, 70) . ' · ' . $author : 'Post no encontrado · ' . $author;
 $pageDesc = $post !== null ? microblog_excerpt($post, 200) : '';
@@ -76,10 +74,12 @@ elseif ($post !== null) $ogImage = $siteUrl . site_media_url('profile_image');
     <meta name="twitter:card" content="summary_large_image">
     <?php endif; ?>
     <meta name="robots" content="<?= $embed || $post === null ? 'noindex, follow' : 'index, follow, max-image-preview:large' ?>">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="stylesheet" href="/assets/css/style.css?v=<?= safe($version('/assets/css/style.css')) ?>">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png">
+    <?= site_style_tags('full') ?>
+    <?= site_palette_style_tag() ?>
     <link rel="stylesheet" href="/assets/css/site-design.css?v=<?= safe($version('/assets/css/site-design.css')) ?>">
     <link rel="stylesheet" href="/assets/css/microblog.css?v=<?= safe($version('/assets/css/microblog.css')) ?>">
+    <?= site_fonts_style_tag() ?>
     <link rel="stylesheet" href="/assets/css/typography.css?v=<?= safe($version('/assets/css/typography.css')) ?>">
 </head>
 <body<?= site_design_attributes() ?> class="mb-page<?= $embed ? ' mb-page--embed' : '' ?>">
@@ -124,7 +124,7 @@ elseif ($post !== null) $ogImage = $siteUrl . site_media_url('profile_image');
     <?php endif; ?>
 </main>
 <footer class="site-footer">
-    <p>&copy; <?= date('Y') ?> <?= site_text_html('text_318bb1fc64a6e036') ?></p>
+    <p>&copy; <?= date('Y') ?> <?= site_text_html('text_52179dc42df7efe5') ?></p>
 </footer>
 <script src="/assets/js/microblog.js?v=<?= safe($version('/assets/js/microblog.js')) ?>" defer></script>
 <?php endif; ?>

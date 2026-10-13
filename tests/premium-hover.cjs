@@ -4,8 +4,9 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert/strict');
 const root = path.join(__dirname, '..');
+const {cssFile} = require('./support/theme-css.cjs');
 const base = ['style', 'site-design', 'interface-worlds', 'gallery-layout'].map(n =>
-    fs.readFileSync(path.join(root, `assets/css/${n}.css`), 'utf8')).join('\n');
+    cssFile(root, n)).join('\n');
 const standards = ['standard', 'grid', 'mosaic', 'asymmetric', 'category-rails', 'scattered', 'exhibition', 'contact-sheet', 'narrative', 'triptych'];
 const premiums = ['deck', 'coverflow', 'bubbles', 'squares', 'drum', 'cylinder', 'polaroid', 'swipe'];
 const effects = ['soft', 'zoom', 'lift', 'reveal', 'tint', 'frame', 'slide', 'tilt', 'focus', 'shine'];

@@ -1,0 +1,481 @@
+/* =========================================================
+   HERO TIPOGRÁFICO MAXIMALISTA
+   ========================================================= */
+.hero {
+    position: relative;
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    isolation: isolate;
+    background: #050505;
+}
+
+/* Fondo con gradientes radiales suaves */
+.hero__gradient {
+    position: absolute;
+    inset: 0;
+    z-index: -3;
+    background:
+        radial-gradient(ellipse 90% 58% at 22% 28%, rgba(212, 165, 116, 0.11) 0%, transparent 62%),
+        radial-gradient(ellipse 72% 50% at 78% 42%, rgba(109, 149, 188, 0.09) 0%, transparent 60%),
+        radial-gradient(ellipse 75% 52% at 52% 108%, rgba(0, 0, 0, 0.74) 0%, transparent 62%),
+        linear-gradient(160deg, #070707 0%, #101113 47%, #050505 100%);
+    background-size: 145% 145%, 135% 135%, 100% 100%, 100% 100%;
+    background-position: 0% 0%, 100% 0%, 50% 100%, 50% 50%;
+    animation: heroAurora 24s ease-in-out infinite alternate;
+    will-change: background-position, transform;
+}
+
+@keyframes heroAurora {
+    0% {
+        background-position: 0% 0%, 100% 0%, 50% 100%, 50% 50%;
+        transform: scale(1);
+    }
+    50% {
+        background-position: 12% 8%, 88% 6%, 50% 100%, 50% 50%;
+        transform: scale(1.02);
+    }
+    100% {
+        background-position: 8% 14%, 92% 16%, 50% 100%, 50% 50%;
+        transform: scale(1.03);
+    }
+}
+
+/* Resplandor dorado animado */
+.hero__glow {
+    position: absolute;
+    inset: -15%;
+    z-index: -2;
+    background:
+        radial-gradient(ellipse 45% 32% at 50% 42%, rgba(212, 165, 116, 0.13) 0%, transparent 60%),
+        radial-gradient(ellipse 30% 20% at 30% 70%, rgba(212, 165, 116, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 25% 18% at 75% 30%, rgba(212, 165, 116, 0.05) 0%, transparent 60%);
+    filter: blur(40px);
+    will-change: transform, opacity;
+    animation: heroGlow 18s ease-in-out infinite alternate;
+}
+
+@keyframes heroGlow {
+    0%   { opacity: 0.5; transform: translate(0, 0) scale(1) rotate(0deg); }
+    50%  { opacity: 1;   transform: translate(-3%, 2%) scale(1.08) rotate(2deg); }
+    100% { opacity: 0.6; transform: translate(3%, -1%) scale(1) rotate(-1deg); }
+}
+
+.hero__noise {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
+    background-image: none;
+    animation: none;
+}
+
+/* Adornos dorados en las esquinas (líneas decorativas finas) */
+.hero__ornament {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    opacity: 0;
+    animation: ornamentReveal 1.6s var(--ease-out) 1.4s forwards;
+}
+
+.hero__ornament--tl {
+    top: 2.5rem;
+    left: 2.5rem;
+    border-top: 1px solid rgba(212, 165, 116, 0.5);
+    border-left: 1px solid rgba(212, 165, 116, 0.5);
+}
+
+.hero__ornament--br {
+    bottom: 2.5rem;
+    right: 2.5rem;
+    border-bottom: 1px solid rgba(212, 165, 116, 0.5);
+    border-right: 1px solid rgba(212, 165, 116, 0.5);
+}
+
+@keyframes ornamentReveal {
+    to { opacity: 1; }
+}
+
+@media (max-width: 600px) {
+    .hero__ornament { width: 40px; height: 40px; }
+    .hero__ornament--tl { top: 1.2rem; left: 1.2rem; }
+    .hero__ornament--br { bottom: 1.2rem; right: 1.2rem; }
+}
+
+.hero__content {
+    position: relative;
+    text-align: center;
+    padding: 2rem 1.5rem;
+    width: min(100%, 1200px);
+    max-width: 100%;
+    z-index: 2;
+}
+
+/* Escudo (logotipo): emblema heráldico que corona el hero */
+.hero__crest {
+    display: block;
+    width: clamp(62px, 9.5vw, 116px);
+    margin: 0 auto 1.9rem;
+    position: relative;
+    z-index: 1;
+    opacity: 0;
+    transform: translateY(-16px) scale(0.84);
+    animation: crestReveal 1.5s var(--ease-out) 0.15s forwards;
+}
+
+/* Resplandor dorado tras el escudo */
+.hero__crest::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 44%;
+    width: 215%;
+    height: 215%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(ellipse at center,
+        rgba(212, 165, 116, 0.22) 0%,
+        rgba(212, 165, 116, 0.08) 42%,
+        rgba(212, 165, 116, 0) 70%);
+    filter: blur(8px);
+    z-index: -1;
+    pointer-events: none;
+    animation: crestGlowPulse 8s ease-in-out 1.6s infinite;
+}
+
+.hero__crest img {
+    display: block;
+    width: 100%;
+    height: auto;
+    filter:
+        drop-shadow(0 12px 28px rgba(0, 0, 0, 0.5))
+        drop-shadow(0 0 22px rgba(212, 165, 116, 0.22));
+    animation: crestFloat 7s ease-in-out 1.6s infinite;
+}
+
+@keyframes crestReveal {
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes crestFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-7px); }
+}
+
+@keyframes crestGlowPulse {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 0.95; }
+}
+
+@media (max-width: 600px) {
+    .hero__crest {
+        width: clamp(58px, 17vw, 84px);
+        margin-bottom: 1.5rem;
+    }
+}
+
+.hero__eyebrow {
+    display: block;
+    font-family: var(--sans);
+    font-size: clamp(0.65rem, 2.5vw, 0.75rem);
+    text-transform: uppercase;
+    letter-spacing: clamp(0.08em, 1.2vw, 0.22em);
+    color: var(--accent);
+    width: 100%;
+    max-width: 52ch;
+    margin: 0 auto 1.5rem;
+    padding-left: 0;
+    line-height: 1.45;
+    text-wrap: balance;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 1s var(--ease-out) 0.2s forwards;
+}
+
+@media (max-width: 768px) {
+    .hero__content {
+        min-height: 100svh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        /* Centrado real (alto y ancho): padding simétrico, sin desplazamientos */
+        padding: 1rem;
+    }
+    /* SOLO el escudo un poco más arriba en móvil.
+       position:relative + top negativo lo desplaza sin mover el texto. */
+    .hero__crest {
+        position: relative;
+        top: -6rem;
+    }
+    .hero__eyebrow {
+        width: auto;
+        max-width: min(92vw, 34ch);
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+        text-transform: none;
+        letter-spacing: 0.02em;
+        overflow: visible;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero__eyebrow {
+        font-size: 0.68rem;
+        letter-spacing: 0.01em;
+        line-height: 1.5;
+    }
+}
+
+.hero__title {
+    position: relative;
+    z-index: 1;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(4.5rem, 17vw, 14rem);
+    line-height: 0.85;
+    letter-spacing: -0.028em;
+    margin: 0;
+    text-shadow: 0 0 80px rgba(212, 165, 116, 0.15);
+}
+
+.hero__title::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 56%;
+    width: min(78vw, 980px);
+    height: min(42vw, 430px);
+    transform: translate(-50%, -50%);
+    background:
+        radial-gradient(ellipse at center,
+        rgba(212, 165, 116, 0.22) 0%,
+        rgba(212, 165, 116, 0.11) 34%,
+        rgba(212, 165, 116, 0.05) 58%,
+        rgba(212, 165, 116, 0) 78%);
+    filter: blur(18px);
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: -1;
+    animation: heroHaloPulse 8.5s ease-in-out infinite;
+}
+
+@keyframes heroHaloPulse {
+    0%, 100% {
+        opacity: 0.58;
+        transform: translate(-50%, -50%) scale(0.96);
+    }
+    50% {
+        opacity: 0.86;
+        transform: translate(-50%, -50%) scale(1.04);
+    }
+}
+
+@media (max-width: 768px) {
+    .hero__title::before {
+        width: 92vw;
+        height: 56vw;
+        filter: blur(12px);
+        opacity: 0.62;
+    }
+}
+
+.hero--typography .hero__title {
+    /* Limitado por ancho Y por alto de pantalla: garantiza que todo el hero
+       (escudo, título, datos e indicador de scroll) entre en el viewport */
+    font-size: min(clamp(4.25rem, 16vw, 14rem), 22vh);
+}
+
+/* Divisor dorado decorativo entre título y subtítulo */
+.hero__divider {
+    display: block;
+    width: 60px;
+    height: 1px;
+    background: var(--accent);
+    margin: 2.8rem auto 2.5rem;
+    opacity: 0;
+    transform: scaleX(0);
+    transform-origin: center;
+    animation: dividerReveal 1.2s var(--ease-out) 1.1s forwards;
+}
+
+@keyframes dividerReveal {
+    to { opacity: 0.7; transform: scaleX(1); }
+}
+
+.hero__title-line {
+    position: relative;
+    display: block;
+    line-height: 1;
+    overflow: visible;
+    padding-inline: 0;
+    margin-inline: 0;
+}
+
+.hero__title-line > * { display: block; }
+
+/* Reveal por línea: el JS añade .is-revealed */
+.hero__title-line {
+    opacity: 0;
+    transform: translateY(100%);
+    transition: opacity 0.05s, transform 1.1s var(--ease-out);
+}
+
+.hero__title-line.is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.4s;
+}
+
+.hero__title-line--accent {
+    font-style: italic;
+    color: var(--accent);
+    transition-delay: 0.3s;
+}
+
+.hero__title-line--accent.is-revealed { transition-delay: 0.55s; }
+
+.hero__subtitle {
+    font-family: var(--sans);
+    font-weight: 300;
+    font-size: clamp(1rem, 2.2vw, 1.35rem);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--fg-soft);
+    margin: 0;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.9s var(--ease-out);
+}
+
+.hero__subtitle.is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 1.4s;
+}
+
+.hero__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-top: 2.2rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.9s var(--ease-out);
+}
+
+.hero__meta.is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 1.7s;
+}
+
+.hero__meta-sep { color: var(--accent); }
+
+.hero__scroll {
+    position: absolute;
+    bottom: 2.5rem;
+    left: 50%;
+    z-index: 3;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    text-decoration: none;
+    color: var(--fg-soft);
+    font-size: 0.7rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeUp 1s var(--ease-out) 1.5s forwards;
+    transition: color 0.3s;
+}
+
+.hero__scroll:hover { color: var(--accent); }
+
+.hero__scroll-line {
+    width: 1px;
+    height: 50px;
+    background: linear-gradient(180deg, transparent, var(--fg-soft) 50%, transparent);
+    animation: scrollPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes scrollPulse {
+    0%, 100% { transform: scaleY(0.3); transform-origin: top; }
+    50%      { transform: scaleY(1);   transform-origin: top; }
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px) translateX(-50%); }
+    to   { opacity: 1; transform: translateY(0)    translateX(-50%); }
+}
+
+/* Escritorio: compacta el bloque para que todo el hero entre en el viewport
+   y reserva sitio para el indicador de scroll inferior */
+@media (min-width: 769px) {
+    .hero--typography {
+        padding-bottom: 3.5rem;
+    }
+    .hero__crest {
+        width: clamp(54px, 7vw, 92px);
+        margin-bottom: 1.3rem;
+    }
+    .hero__eyebrow {
+        margin-bottom: 1.1rem;
+    }
+    .hero__divider {
+        margin-top: 2.3rem;
+        margin-bottom: 1.8rem;
+    }
+    .hero__meta {
+        margin-top: 1.9rem;
+    }
+    .hero__scroll {
+        bottom: 2rem;
+        gap: 0.8rem;
+        font-size: 0.66rem;
+        letter-spacing: 0.4em;
+    }
+    .hero__scroll-line {
+        height: 40px;
+    }
+}
+
+.hero__empty-note {
+    margin-top: 2rem;
+    font-size: 0.95rem;
+    color: var(--fg-dim);
+    max-width: 30em;
+    margin-left: auto;
+    margin-right: auto;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.9s var(--ease-out);
+}
+
+.hero__empty-note.is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 1.7s;
+}
+
+.hero__empty-note code {
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--accent-soft);
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+}
+

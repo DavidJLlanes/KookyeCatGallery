@@ -8,6 +8,8 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert/strict');
 const root = path.join(__dirname, '..');
+const { mainJs, readScript } = require('./support/main-bundle.cjs');
+const {cssFile} = require('./support/theme-css.cjs');
 
 const SQUARE = process.env.BUBBLES_SHAPE === 'square';   // Mismo marcado, estilos y JS: solo cambia la forma.
 const GALLERY = SQUARE ? 'squares' : 'bubbles';
@@ -24,10 +26,10 @@ for ($i = 0; $i < ${TOTAL}; $i++) {
 include 'inc/premium/bubbles.php';
 `;
 const markup = execFileSync('php', ['-r', fixture], {cwd: root, encoding: 'utf8'});
-const css = ['style', 'site-design', 'gallery-layout'].map(n => fs.readFileSync(path.join(root, `assets/css/${n}.css`), 'utf8')).join('\n')
+const css = ['style', 'site-design', 'gallery-layout'].map(n => cssFile(root, n)).join('\n')
     + fs.readFileSync(path.join(root, 'assets/premium/bubbles/bubbles.css'), 'utf8');
 const scripts = [fs.readFileSync(path.join(root, 'assets/js/site-texts.js'), 'utf8'),
-    fs.readFileSync(path.join(root, 'assets/js/main.js'), 'utf8'),
+    mainJs(root),
     fs.readFileSync(path.join(root, 'assets/premium/bubbles/bubbles.js'), 'utf8')];
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
 const pageHtml = (palette, desktop = 20, mobile = 12) => `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>

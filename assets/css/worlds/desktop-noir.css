@@ -1,0 +1,18 @@
+/* Cabecera «noir» (desktop): Noir / dramatic film premiere. Se carga solo si es la elegida (themes/headers-desktop/noir.php). */
+@media(min-width:769px){
+/* 09 · Noir / dramatic film premiere */
+body[data-header-desktop="noir"][data-palette="current"]{--bg:#0c080a;--bg-soft:#1c1012;--bg-card:#29191d;--fg:#fbf1e7;--fg-dim:#cfbab7;--fg-soft:#d2c0b9;--accent:#fa4a50;--line:#fa4a5050;background:var(--bg);color:var(--fg)}
+body[data-header-desktop="noir"] .hero{min-height:90vh;background:radial-gradient(ellipse at 50% 0,var(--accent-soft),var(--bg) 65%)!important;border-bottom:7px solid var(--accent)}
+body[data-header-desktop="noir"] .hero__content{width:min(90vw,1400px);text-align:center;position:relative;z-index:1}
+body[data-header-desktop="noir"] .hero__title{font:italic 400 clamp(6rem,10vw,12rem)/.85 Georgia,serif;letter-spacing:-.07em;text-shadow:0 15px 35px #000}
+body[data-header-desktop="noir"] .hero__title-line--accent{color:var(--accent)!important;-webkit-text-fill-color:var(--accent)!important}
+body[data-header-desktop="noir"] .hero:before,body[data-header-desktop="noir"] .hero:after{content:"";position:absolute;width:25vw;height:100%;top:0;background:linear-gradient(90deg,#050304ee,transparent);pointer-events:none;z-index:1}
+body[data-header-desktop="noir"] .hero:before{left:0}
+body[data-header-desktop="noir"] .hero:after{right:0;transform:scaleX(-1)}
+body[data-header-desktop="noir"] .gallery-section{background:var(--bg);padding:7rem 5vw}
+body[data-header-desktop="noir"] .gallery-intro__title{font:italic 400 clamp(4rem,7vw,8rem) Georgia,serif}
+body[data-header-desktop="noir"] #masonry{--col-gap:2rem}
+body[data-header-desktop="noir"] #masonry .card{overflow:visible;padding:18px 18px 32px!important;background:var(--bg-card);border-top:3px solid var(--accent);box-shadow:0 35px 65px #000}
+body[data-header-desktop="noir"] #masonry .card__picture{border-radius:0!important}
+body[data-header-desktop="noir"] .project{background:var(--bg-soft)!important}
+}

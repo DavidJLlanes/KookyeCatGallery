@@ -11,21 +11,37 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="Licencia PolyForm Noncommercial 1.0.0" src="https://img.shields.io/badge/LICENCIA-PolyForm_Noncommercial-d4a574?style=for-the-badge"></a>
-  <a href="manifest.json"><img alt="PWA instalable" src="https://img.shields.io/badge/PWA-INSTALABLE-6366f1?style=for-the-badge&logo=pwa&logoColor=white"></a>
+  <a href="#requisitos"><img alt="PHP 8.1 o posterior" src="https://img.shields.io/badge/PHP-8.1%2B-777bb4?style=for-the-badge&logo=php&logoColor=white"></a>
+  <a href="app-manifest.php"><img alt="PWA instalable" src="https://img.shields.io/badge/PWA-INSTALABLE-6366f1?style=for-the-badge&logo=pwa&logoColor=white"></a>
   <a href="#opciones-de-galería"><img alt="18 diseños de galería" src="https://img.shields.io/badge/GALERÍA-18_DISEÑOS-52796f?style=for-the-badge"></a>
 </p>
 
 <p align="center">
-  <a href="#instalación-y-uso">PHP 8.1+</a> ·
+  <a href="docs/tipografias.md"><img alt="30 parejas tipográficas locales" src="https://img.shields.io/badge/TIPOGRAFÍAS-30_PAREJAS-b9855a?style=for-the-badge"></a>
+  <a href="#microblog"><img alt="Microblog opcional" src="https://img.shields.io/badge/MICROBLOG-OPCIONAL-e07a5f?style=for-the-badge"></a>
+  <a href="#ia-opcional"><img alt="IA opcional con Gemini y OpenRouter" src="https://img.shields.io/badge/IA-GEMINI_·_OPENROUTER-4285f4?style=for-the-badge&logo=googlegemini&logoColor=white"></a>
+  <a href="#actualizar-una-instalación"><img alt="Actualizaciones con copia y vuelta atrás" src="https://img.shields.io/badge/ACTUALIZACIONES-CON_ROLLBACK-2a9d8f?style=for-the-badge"></a>
+</p>
+
+<p align="center">
+  <img alt="Sin servidor de base de datos" src="https://img.shields.io/badge/BASE_DE_DATOS-NO_NECESARIA-555?style=for-the-badge">
+  <img alt="Sin compilación ni dependencias para servir la web" src="https://img.shields.io/badge/BUILD-SIN_COMPILAR-555?style=for-the-badge">
+  <img alt="Panel y web en español" src="https://img.shields.io/badge/IDIOMA-ESPAÑOL-c1121f?style=for-the-badge">
+  <a href=".github/workflows/validate.yml"><img alt="Validación automática con GitHub Actions" src="https://img.shields.io/github/actions/workflow/status/DavidJLlanes/KookyeCatGallery/validate.yml?branch=main&style=for-the-badge&label=PRUEBAS"></a>
+</p>
+
+<p align="center">
   <a href="#instalación-y-uso">Instalación</a> ·
+  <a href="#desplegar-en-el-hosting">Despliegue</a> ·
   <a href="#actualizar-una-instalación">Actualizaciones</a> ·
   <a href="docs/subida-fotografias.md">Subir fotografías</a> ·
-  <a href="docs/opciones-galeria.md">Opciones de galería</a>
+  <a href="docs/opciones-galeria.md">Opciones de galería</a> ·
+  <a href="#guías">Guías</a>
 </p>
 
 ---
 
-KookyeCatGallery es una web de fotografía que se instala en tu propio alojamiento. No necesita base de datos, servicios externos ni un proceso de compilación. Después de instalarla, puedes gestionar las fotografías, el diseño y el contenido desde un panel privado.
+KookyeCatGallery es una web de fotografía que se instala en tu propio alojamiento. No necesita un servidor de base de datos, servicios externos ni un proceso de compilación (el microblog usa un archivo SQLite incluido en PHP). Después de instalarla, puedes gestionar las fotografías, el diseño y el contenido desde un panel privado.
 
 ## Funciones principales
 
@@ -37,31 +53,51 @@ KookyeCatGallery es una web de fotografía que se instala en tu propio alojamien
 - **Tipografías locales:** 30 parejas de fuentes para títulos y texto, con ejemplos reales en el panel. Los archivos y sus licencias se distribuyen con la web.
 - **18 composiciones de galería:** diez diseños estándar y ocho premium. Los controles que no corresponden a un diseño se desactivan; la misma regla se aplica al guardar en el servidor.
 - **Efectos hover accesibles:** diez efectos compartidos por los diseños, también disponibles al enfocar con teclado y respetando la preferencia de movimiento reducido.
-- **Identidad visual:** sube el icono de la app (también usado como favicon) y la imagen para compartir en redes. El icono se adapta automáticamente a los tamaños necesarios.
+- **Identidad visual con recortador:** sube la foto de perfil, el logo, el icono de la app (también usado como favicon) y la imagen para compartir en redes. Si una imagen no tiene la proporción de su hueco, un recortador integrado te deja encuadrarla antes de enviarla. Cada campo indica su proporción. El icono se adapta automáticamente a los tamaños necesarios y el logo aparece también en la marca del panel.
+- **Un solo nombre de web:** el nombre se escribe en un único campo (**Ajustes → Textos**, o con «Editar página») y es a la vez el título grande de la portada, el crédito del pie y el nombre del panel.
 - **Microblog opcional:** feed estilo Tumblr / Threads con texto y enlaces (`[texto](url)`), citas, imágenes en WebP, tres niveles de destacado, post fijado, publicación programada, hilos de respuestas del propietario, corazones y código para incrustar cada post. Se crea desde el panel o desde un panel flotante en la propia web, abierto con el botón «+». Está desactivado inicialmente. [Ver la sección](#microblog).
 - **Mapa opcional:** representa las fotografías con coordenadas y permite abrir sus fichas. Está desactivado inicialmente.
 - **Aplicación instalable (PWA):** experiencia adaptable e instalación desde navegadores compatibles.
-- **Asistencia de escritura con IA opcional:** integración preparada para Gemini y OpenRouter, desactivada de inicio y sin claves en el repositorio.
+- **Asistencia de escritura con IA opcional:** pestaña **Inteligencia artificial** en el panel para activarla o desactivarla, guardar las claves de Gemini y OpenRouter y definir el estilo de los textos que se generan. Viene desactivada y sin claves en el repositorio.
+- **Instalador y actualizaciones:** `install.php` deja la web lista (acceso, ajustes, carpetas y microblog) y `scripts/update.php` actualiza el núcleo con copia previa y vuelta atrás, sin tocar tus fotos ni tus datos.
+- **Fotografías por el panel o por FTP:** súbelas desde el navegador o deja JPG y PNG en `img/`; la web los procesa sola en la siguiente visita.
 
 ## Instalación y uso
 
 ### Requisitos
 
 - Hosting con **PHP 8.1 o posterior**.
-- Extensiones PHP **GD** con JPEG, PNG y WebP, y **Fileinfo**.
+- Extensiones PHP **GD** con JPEG, PNG y WebP, **Fileinfo** y **pdo_sqlite** (para el microblog; sin ella funciona con un archivo JSON).
 - HTTPS y permisos de escritura para PHP en las carpetas de datos y cargas.
 - Apache con soporte para `.htaccess`, o Nginx configurado por el proveedor para las rutas de la aplicación y el bloqueo de carpetas privadas.
 
 No funciona en alojamiento exclusivamente estático. No necesita MySQL, Composer, npm ni Node.js para servir la web. Node.js y Playwright solo se usan para desarrollo y comprobaciones automatizadas.
 
-### Instalar en un hosting compartido
+### Desplegar en el hosting
 
-1. Añade el dominio o subdominio en el panel del hosting y activa HTTPS.
-2. Descarga el repositorio y copia **todo su contenido** en la raíz pública del sitio, normalmente `public_html`. Incluye los archivos ocultos, en especial `.htaccess`.
-3. Comprueba que el dominio abre por HTTPS y que el alojamiento tiene PHP 8.1+, GD con WebP y Fileinfo.
-4. Cuando estés preparado para completar la instalación de inmediato, abre `https://tu-dominio/install.php`. Indica la URL HTTPS del sitio, un nombre de usuario y una contraseña única de al menos 12 caracteres.
-5. Confirma en el gestor de archivos que `install.php` se ha eliminado. Si sigue ahí, bórralo manualmente antes de continuar.
-6. Entra en `https://tu-dominio/admin.php`, inicia sesión y personaliza la web.
+El repositorio contiene también pruebas, documentación y herramientas de mantenimiento que **no deben subirse al hosting**. Hay dos formas de llevar solo lo necesario:
+
+**A. Paquete de producción (recomendada).** Necesita PHP en tu ordenador solo para generarlo:
+
+```sh
+git clone https://github.com/DavidJLlanes/KookyeCatGallery.git
+cd KookyeCatGallery
+php scripts/export-core.php ../kcg-hosting --produccion
+```
+
+La carpeta `kcg-hosting/` es lo que se sube: la web sin `tests/`, `docs/`, `.github/` ni herramientas de desarrollo, con las carpetas de datos vacías y protegidas, `install.php` y `scripts/update.php` para actualizar más adelante.
+
+**B. Copia manual.** Descarga el repositorio (o el ZIP de GitHub) y sube todo **menos** `tests/`, `docs/`, `.github/`, `scripts/defaults/`, `scripts/export-core.php`, `scripts/build-catalogs.php`, `scripts/core-files.json` y `pendiente.md`. Conserva los archivos ocultos, en especial `.htaccess`.
+
+#### Pasos en el hosting
+
+1. Añade el dominio o subdominio en el panel del hosting y **activa HTTPS**. Comprueba que usa **PHP 8.1+** con GD (JPEG, PNG y WebP), Fileinfo y pdo_sqlite.
+2. Sube el contenido del paquete a la raíz pública del sitio, normalmente `public_html` (por FTP, SFTP o el gestor de archivos). Incluye `.htaccess`: algunos programas FTP ocultan los archivos que empiezan por punto.
+3. Comprueba que PHP puede escribir en `data/`, `img/`, `imagenes/`, `microblog/` y `var/` (el instalador te avisa si algo falla).
+4. Abre `https://tu-dominio/install.php`. Indica la URL HTTPS del sitio, un usuario y una contraseña única de al menos 12 caracteres. El instalador deja la web lista: guarda el acceso y la URL, crea los ajustes iniciales, las carpetas de fotos y la base del microblog, y te dice qué ha preparado y qué conviene revisar. Si ya hay un administrador registrado, no deja registrar otro.
+5. **Borra `install.php`.** El instalador intenta borrarse solo, pero comprueba en el gestor de archivos que ha desaparecido y, si sigue ahí, bórralo: es mejor no tenerlo nunca publicado una vez instalada la web.
+6. Entra en `https://tu-dominio/admin.php`, inicia sesión y personaliza la web: en **Ajustes → Contenido** sube tu foto de perfil, logo, icono e imagen para redes (el recortador te ayuda con las proporciones) y en **Ajustes → Textos** escribe el nombre de la web.
+7. Sube fotografías desde **Subir foto** o deja JPG y PNG en `img/` por FTP y abre la portada.
 
 El instalador prepara una carpeta privada `config/` fuera de la raíz pública cuando los permisos del hosting lo permiten. La estructura habitual queda así:
 
@@ -79,20 +115,20 @@ Las rutas de las fichas, como `/foto/slug`, requieren las reglas de reescritura 
 
 ### Actualizar una instalación
 
-No hay base de datos ni migraciones. Para actualizar, descarga la versión nueva y **copia los archivos del repositorio sobre los existentes**, aceptando sobrescribir los archivos de la aplicación. No borres primero toda la web ni reemplaces las carpetas de datos por las del repositorio.
+El núcleo (código, estilos, scripts y archivos genéricos) se separa de lo propio de tu web: `installation.php`, las fotografías, los datos y la carpeta privada `config/`. Una actualización solo cambia el núcleo y deja una copia de seguridad para volver atrás.
 
-Antes de actualizar, guarda una copia de seguridad de las fotografías y de la carpeta privada `config/` (o `var/` si tu instalación usa esa alternativa). Al copiar:
+1. Descarga la versión nueva (un paquete del núcleo para producción, con `core-manifest.json`; no hace falta subir `tests/` ni la documentación de desarrollo) y descomprímela en una carpeta **fuera** de la raíz pública.
+2. Desde la raíz de tu web, mira qué cambiaría: `php scripts/update.php /ruta/a/la-version-nueva --plan`.
+3. Aplícala: `php scripts/update.php /ruta/a/la-version-nueva`. Antes de tocar nada guarda en `config/backups/` los archivos que se van a cambiar y tus ajustes, y al terminar comprueba la sintaxis; si algo falla, se deshace sola.
+4. Si algo no va bien después: `php scripts/update.php --rollback` (restaura la última copia; `--list` las enumera).
+5. Si has modificado a mano archivos del núcleo, la actualización se detiene y los nombra: tus personalizaciones van en `installation.php`. Con `--overwrite-modified` se pisan (quedan en la copia).
+6. **No dejes `install.php` accesible**: el paquete no lo incluye en una instalación que ya tiene acceso configurado; si lo ves en la raíz pública, bórralo. Conserva solo el archivo de ejemplo `reset-admin-access.php.example`.
 
-1. Sobrescribe los archivos de código y recursos con la versión nueva; incluye los archivos ocultos actualizados, como `.htaccess`.
-2. Conserva `config/`, `var/`, las fotografías y los datos generados por tu instalación. No publiques esos datos en GitHub.
-3. **No vuelvas a dejar `install.php` accesible tras la actualización.** Si la copia de la nueva versión lo ha vuelto a colocar en la raíz pública, elimínalo inmediatamente. No copies un archivo activo `reset-admin-access.php`; conserva solo el archivo de ejemplo con extensión `.example`.
-4. Abre la web y el panel. Si el navegador conserva recursos antiguos, recarga la página o limpia la caché.
-
-Así se actualiza la aplicación sin sobrescribir el usuario, la contraseña, los textos guardados ni la configuración privada. Los cambios hechos directamente en archivos de código se reemplazarán: guarda esas personalizaciones aparte y reaplícalas después de actualizar.
+Sin SSH ni PHP de línea de comandos, copia los archivos del paquete sobre los existentes (nunca sobre `installation.php`, `config/`, `var/`, `data/` ni las fotografías) y guarda antes una copia de `config/`.
 
 ### Copias de seguridad y cambio de dominio
 
-Guarda una copia de `config/` (o `var/`, según tu instalación), de las fotografías y de cualquier archivo propio que hayas añadido. No hay base de datos que exportar. Antes de restaurar, conserva la estructura y los permisos de escritura para PHP. Si cambias de dominio, actualiza la URL pública guardada (`public-url.txt`) o establece `GALLERY_PUBLIC_URL` en la configuración del hosting. Consulta [instalación](docs/instalacion.md) para los detalles.
+Guarda una copia de `config/` (o `var/`, según tu instalación), de las fotografías y de cualquier archivo propio que hayas añadido. El microblog es un único archivo `microblog.sqlite` dentro de la carpeta privada. Antes de restaurar, conserva la estructura y los permisos de escritura para PHP. Si cambias de dominio, actualiza la URL pública guardada (`public-url.txt`) o establece `GALLERY_PUBLIC_URL` en la configuración del hosting. Consulta [instalación](docs/instalacion.md) para los detalles.
 
 ## Administración y personalización
 
@@ -101,13 +137,22 @@ El panel está en `/admin.php`. Sus áreas separan **Contenido**, **Diseño**, *
 - **Contenido:** sube una foto, edita una existente, utiliza la biblioteca visual o carga un lote.
 - **Categorías:** administra colecciones por separado y asigna las fotos desde el editor o la carga por lotes.
 - **Diseño:** elige cabeceras, galería móvil y de escritorio, paleta, efectos, estructura de la página e identidad gráfica.
-- **Textos:** cambia el nombre del sitio, la identidad del autor, textos de presentación, crédito y páginas de texto.
+- **Textos:** cambia el nombre de la web (único: portada, pie y panel), la identidad del autor, el rótulo y título de «El proyecto», textos de presentación y las páginas de texto.
 - **Redes sociales:** elige los perfiles, enlaces y nombres visibles; configura también los textos de esa sección.
 - **Publicación:** ajusta opciones para mostrar y compartir la web.
 
 Al iniciar sesión, el botón redondo **Editar página** activa la edición contextual de los textos disponibles. Pulsa un texto editable, realiza el cambio y guárdalo. Esta edición no reemplaza las herramientas del panel para fotografías, redes sociales o páginas legales.
 
-El icono de la app debe ser cuadrado; se recomienda PNG, JPG o WebP de **512 × 512 px como mínimo**. Se generan las variantes para favicon, Apple Touch y PWA. Para compartir en redes se recomienda una imagen horizontal de **1200 × 630 px**. Los límites de archivo y los formatos aceptados aparecen junto a los controles de carga del panel.
+Las cuatro imágenes de identidad se suben en **Ajustes → Contenido**. Si la que eliges no tiene la proporción del hueco, se abre un recortador para encuadrarla (arrastrar y zoom) antes de enviarla:
+
+| Imagen | Proporción | Tamaño recomendado | Dónde se usa |
+| --- | --- | --- | --- |
+| **Foto de perfil** | 4:5 vertical | 800 × 1000 px | Retrato de «El proyecto», cabecera y avatar del microblog |
+| **Logo** | 1:1 cuadrada | 512 × 512 px | Portada, cabecera móvil y marca del panel |
+| **Icono de la app** | 1:1 cuadrada | 512 × 512 px como mínimo | Favicon, Apple Touch e icono de la PWA (se generan 32, 180, 192 y 512 px) |
+| **Imagen para redes (Open Graph)** | 1,91:1 apaisada | 1200 × 630 px (mínimo 600 × 315) | Vista previa al compartir en redes y mensajería |
+
+Los formatos aceptados son JPG, PNG y WebP, con un máximo de 15 MB por imagen. Si el hosting limita el tamaño total de la subida (`post_max_size`), el panel lo explica y puedes subirlas de una en una.
 
 ### Opciones de galería
 
@@ -192,7 +237,7 @@ Feed de notas cortas en la portada, con aspecto de Tumblr / Threads y una column
 | Qué | Dónde |
 | --- | --- |
 | Imágenes | `/microblog/` (no se versiona; se crea al subir la primera imagen). |
-| Posts (`posts.json`) | La carpeta privada de la instalación (`../config/microblog/`, o `var/microblog/` si no se puede escribir fuera de la raíz pública); se puede forzar con `MICROBLOG_DATA_DIR`. |
+| Posts (`microblog.sqlite`) | La carpeta privada de la instalación (`../config/microblog/`, o `var/microblog/` si no se puede escribir fuera de la raíz pública); se puede forzar con `MICROBLOG_DATA_DIR`. Un `posts.json` de una versión anterior se importa solo la primera vez y queda como copia. |
 
 Detalles de arquitectura y archivos en [docs/microblog.md](docs/microblog.md). Para probarlo: `php tests/microblog.php` (las comprobaciones de imágenes necesitan la extensión GD con WebP).
 
@@ -206,7 +251,7 @@ No guardes en este repositorio contraseñas, claves de API, fotografías privada
 
 ## IA opcional
 
-La generación de títulos y descripciones con Gemini u OpenRouter viene desactivada. El repositorio público no contiene claves API. Para activarla, configura las variables necesarias en el entorno del servidor y consulta [la guía de IA](docs/ia-textos.md). No introduzcas claves en archivos que vayas a publicar en GitHub.
+La generación de títulos y descripciones con Gemini u OpenRouter viene desactivada y el repositorio público no contiene claves API. Se gestiona desde la pestaña **Inteligencia artificial** del panel (`/admin.php?ai=1`): activar o desactivar la función, guardar las claves y el modelo de cada proveedor y escribir un texto que defina el estilo de lo que se genera. Las claves se guardan en la carpeta privada, fuera de la web, y no se vuelven a mostrar. También pueden fijarse con variables de entorno, que tienen prioridad sobre el panel. Más detalles en [la guía de IA](docs/ia-textos.md). No introduzcas claves en archivos que vayas a publicar en GitHub.
 
 ## Guías
 
@@ -231,6 +276,8 @@ La aplicación está construida con PHP, JavaScript, HTML y CSS. Para servir el 
 ```sh
 php -S 127.0.0.1:8000
 ```
+
+Lo que distingue a tu web (dirección, rutas privadas, lugar, textos y ajustes iniciales) va en `installation.php`; copia `installation.example.php` y deja solo lo que necesites. Cómo se organiza el código y cómo añadir opciones: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
 
 Abre `http://127.0.0.1:8000`. Este servidor es solo para desarrollo: no aplica las reglas de `.htaccess` ni reproduce las protecciones de un hosting configurado para producción.
 

@@ -1,0 +1,19 @@
+{
+  "descripcion": "Pruebas que ya fallaban ANTES de la reestructuración (línea base de la Fase 1). La puerta de cada fase exige que no falle ninguna prueba fuera de esta lista y avisa si alguna de ellas pasa a funcionar. Cuando una se arregle, se quita de aquí.",
+  "fecha": "2026-10-12",
+  "entorno": "Windows 11, PHP 8.2 (XAMPP) y Chromium 1243 de Playwright",
+  "lentas": {
+    "tests/premium-deck.cjs": "Pasa, pero tarda ~3 min (3 dispositivos × muchos pasos). Ejecútala cuando se toque la galería Baraja/Cover Flow, las paletas o main.js: node tests/run-all.cjs --only=premium-deck"
+  },
+  "pruebas": {
+    "tests/site-design.cjs": "El héroe de escritorio queda desplazado 25,6 px en la prueba (setContent). Falla igual en KookyeCatGallery antes del microblog, y en la web real el héroe empieza en 0.",
+    "tests/photo-navigation.cjs": "La carga de /foto/... no termina (intermitente) en este entorno. Falla igual en KookyeCatGallery antes del microblog.",
+    "tests/photo-transition.cjs": "Misma causa que photo-navigation.cjs.",
+    "tests/premium-bubbles.cjs": "Falla una comprobación de scroll/posición de la galería premium (pendiente de diagnosticar).",
+    "tests/premium-squares.cjs": "Usa premium-bubbles.cjs; misma causa.",
+    "tests/premium-cylinder.cjs": "«Salir hacia arriba» no sube una pantalla (pendiente de diagnosticar).",
+    "tests/premium-drum.cjs": "Misma familia de fallo que premium-cylinder.cjs.",
+    "tests/premium-polaroid.cjs": "Misma familia de fallo que premium-cylinder.cjs.",
+    "tests/premium-swipe.cjs": "La navegación a /foto/... no termina; misma familia que photo-navigation.cjs."
+  }
+}

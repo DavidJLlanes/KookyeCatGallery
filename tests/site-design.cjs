@@ -3,12 +3,13 @@ const fs=require('fs');
 const path=require('path');
 const {execFileSync}=require('child_process');
 const root=path.join(__dirname,'..');
+const {cssFile}=require('./support/theme-css.cjs');
 (async()=>{
   const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
   const page=await browser.newPage();
   await page.route('**/*',route=>route.abort());
   const rendered=execFileSync('php',['index.php'],{cwd:root,encoding:'utf8'});
-  const css=fs.readFileSync(path.join(root,'assets/css/style.css'),'utf8')+'\n'+fs.readFileSync(path.join(root,'assets/css/site-design.css'),'utf8')+'\n'+fs.readFileSync(path.join(root,'assets/css/interface-worlds.css'),'utf8');
+  const css=cssFile(root,'style')+'\n'+fs.readFileSync(path.join(root,'assets/css/site-design.css'),'utf8')+'\n'+cssFile(root,'interface-worlds')+'\n'+fs.readFileSync(path.join(root,'assets/css/microblog.css'),'utf8');
   const cards=Array.from({length:12},(_,i)=>`<article class="card is-revealed" style="--aspect:${i%2?0.7:1.8}"><button class="card__btn"><picture class="card__picture"><img class="card__img" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='100'%3E%3Crect width='180' height='100' fill='%239b7862'/%3E%3C/svg%3E"></picture></button></article>`).join('');
   await page.setContent(rendered.replace('</head>',`<style>${css}</style></head>`));
   await page.addStyleTag({content:'*,*::before,*::after{transition:none!important;animation:none!important}'});
@@ -64,12 +65,8 @@ const root=path.join(__dirname,'..');
   };
   await page.evaluate(()=>{
     document.querySelectorAll('#masonry .card__btn').forEach((button,i)=>{
-      if(i%4!==0)button.insertAdjacentHTML('beforeend','<div class="card__title-base"><h3 class="card__title">Luz y paisaje felino</h3></div>');
+      if(i%4!==0)button.insertAdjacentHTML('beforeend','<div class="card__title-base"><h3 class="card__title">León: luz sobre la ciudad y la montaña</h3></div>');
     });
-    const map=document.createElement('section');
-    map.className='map-section';
-    map.innerHTML='<div class="map-section__head"><h2 class="map-section__title">Mapa de prueba</h2><label class="map-filter"><select id="mapCategory"><option>Todas</option></select></label></div><div class="map-container"><div id="map" class="map"></div></div>';
-    document.querySelector('.gallery-section').after(map);
   });
   const rgb=value=>value.match(/[0-9.]+/g).slice(0,3).map(Number).map(n=>{
     n/=255;return n<=.04045?n/12.92:((n+.055)/1.055)**2.4;

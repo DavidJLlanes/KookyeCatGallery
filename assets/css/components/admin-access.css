@@ -1,0 +1,32 @@
+/* Acceso discreto al panel privado de subida */
+.upload-fab {
+    position: fixed; right: clamp(16px, 3vw, 38px);
+    bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 950;
+    display: inline-flex; align-items: center; justify-content: center; gap: .65rem;
+    min-width: 54px; height: 54px; padding: 0 1.05rem;
+    border: 1px solid rgba(212,165,116,.8); border-radius: 999px;
+    color: #120f0b; background: linear-gradient(135deg,#e8c59e,#c18e5d);
+    box-shadow: 0 8px 28px #0008, 0 0 22px rgba(212,165,116,.18);
+    text-decoration: none; transition: transform .25s var(--ease-out), box-shadow .25s var(--ease-out);
+}
+.upload-fab:hover { transform: translateY(-3px); box-shadow: 0 12px 32px #000a, 0 0 28px rgba(212,165,116,.3); }
+.upload-fab:focus-visible { outline: 2px solid var(--fg); outline-offset: 4px; }
+.upload-fab svg { width: 23px; height: 23px; flex: 0 0 auto; }
+.upload-fab__label { font-size: .76rem; font-weight: 500; letter-spacing: .04em; }
+@media (max-width: 768px) {
+    .top-btn { right: 16px; }
+    .upload-fab { right: 16px; bottom: calc(18px + env(safe-area-inset-bottom)); width: 56px; min-width: 56px; height: 56px; padding: 0; }
+    .upload-fab__label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+}
+
+@media (max-width: 768px) {
+    .mobile-profile__name { display: flex; align-items: center; gap: .42rem; }
+    .mobile-profile__verified {
+        display: inline-grid; place-items: center; width: 15px; height: 15px;
+        border-radius: 50%; color: #17120d; background: var(--accent);
+        font: 700 10px/1 var(--sans); letter-spacing: 0;
+        box-shadow: 0 0 0 2px rgba(212,165,116,.15);
+    }
+}
+
+

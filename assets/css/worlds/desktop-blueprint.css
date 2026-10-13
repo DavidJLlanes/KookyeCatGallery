@@ -1,0 +1,23 @@
+/* Cabecera «blueprint» (desktop): Blueprint / technical drawing. Se carga solo si es la elegida (themes/headers-desktop/blueprint.php). */
+@media(min-width:769px){
+/* 10 · Blueprint / technical drawing */
+body[data-header-desktop="blueprint"][data-palette="current"]{--bg:#0a2851;--bg-soft:#0c3765;--bg-card:#16436e;--fg:#edf8ff;--fg-dim:#d0ebf5;--fg-soft:#c4e7f7;--accent:#84e4ff;--line:#a0dfff55;--serif:Arial,sans-serif;background:var(--bg);color:var(--fg)}
+body[data-header-desktop="blueprint"] .hero{min-height:78vh;height:auto;padding:7rem 6vw;background:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px),var(--bg)!important;background-size:30px 30px,30px 30px,auto!important;border-bottom:1px solid var(--accent)}
+body[data-header-desktop="blueprint"] .hero__content{width:100%;text-align:left}
+body[data-header-desktop="blueprint"] .hero__eyebrow{font:700 .75rem monospace;letter-spacing:.35em}
+body[data-header-desktop="blueprint"] .hero__title{font:300 clamp(5rem,11vw,12rem)/.85 Arial,sans-serif;letter-spacing:-.09em;text-transform:uppercase}
+body[data-header-desktop="blueprint"] .hero__title-line{display:block;color:var(--fg)!important;-webkit-text-fill-color:var(--fg)!important}
+body[data-header-desktop="blueprint"] .hero__title-line--accent{color:var(--accent)!important;-webkit-text-fill-color:var(--accent)!important}
+body[data-header-desktop="blueprint"] .hero__crest{position:absolute;right:4vw;top:5vw;opacity:.45;filter:grayscale(1)}
+body[data-header-desktop="blueprint"] .hero__ornament{border-color:var(--accent);opacity:1}
+body[data-header-desktop="blueprint"] .hero__glow{display:none}
+body[data-header-desktop="blueprint"] .hero__meta{justify-content:flex-start;font:700 .85rem monospace}
+body[data-header-desktop="blueprint"] .gallery-section{background:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px),var(--bg);background-size:30px 30px;padding:5rem 4vw}
+body[data-header-desktop="blueprint"] .gallery-intro{text-align:left}
+body[data-header-desktop="blueprint"] .gallery-intro__title{font:300 clamp(3rem,5vw,6rem) Arial,sans-serif;text-transform:uppercase;letter-spacing:-.06em}
+body[data-header-desktop="blueprint"] #masonry{--col-gap:1rem}
+body[data-header-desktop="blueprint"] #masonry .card{overflow:visible;padding:9px!important;border:1px solid var(--accent);position:relative}
+body[data-header-desktop="blueprint"] #masonry .card:before{content:"+";position:absolute;top:-15px;left:-8px;color:var(--accent);font:20px monospace}
+body[data-header-desktop="blueprint"] #masonry .card__picture{border-radius:0!important;filter:saturate(.45) contrast(1.2)}
+body[data-header-desktop="blueprint"] .project{background:var(--bg-soft)!important;border-top:1px solid var(--accent)}
+}

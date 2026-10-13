@@ -1,29 +1,5 @@
 /* Public design settings. Loaded after style.css. */
-body[data-palette="black"] {
-    --bg:#000; --bg-soft:#0d0d0d; --bg-card:#181818; --fg:#fff;
-    --fg-soft:#ccc; --fg-dim:#999; --accent:#fff; --accent-soft:#ffffff14; --line:#ffffff30;
-}
-body[data-palette="white"] {
-    --bg:#fff; --bg-soft:#f5f5f5; --bg-card:#eee; --fg:#181818;
-    --fg-soft:#505050; --fg-dim:#666; --accent:#79512b; --accent-soft:#79512b14; --line:#18181825;
-}
-body[data-palette="cyberpunk"] {
-    --bg:#090619; --bg-soft:#140c2a; --bg-card:#201237; --fg:#f5f3ff;
-    --fg-soft:#d0c3f0; --fg-dim:#b7a8d4; --accent:#00f5dc; --accent-soft:#00f5dc20; --line:#ff3ac84d;
-    --serif:var(--sans);
-}
-body[data-palette="japanese"] {
-    --bg:#f7f2e8; --bg-soft:#eee7da; --bg-card:#e7dfd1; --fg:#252824;
-    --fg-soft:#50564b; --fg-dim:#666c60; --accent:#a22c35; --accent-soft:#a22c3515; --line:#25282426;
-}
-body[data-palette="forest"] {
-    --bg:#edf2e8; --bg-soft:#e1eadc; --bg-card:#d6e1d1; --fg:#20372e;
-    --fg-soft:#40594c; --fg-dim:#617568; --accent:#397653; --accent-soft:#3976531c; --line:#20372e2b;
-}
-body[data-palette="ocean"] {
-    --bg:#102737; --bg-soft:#17394b; --bg-card:#1e4658; --fg:#f2f5ec;
-    --fg-soft:#d0e1dd; --fg-dim:#a7c3c1; --accent:#70d5c5; --accent-soft:#70d5c520; --line:#a5e9dc38;
-}
+/* Colores y reglas propias de cada paleta: themes/palettes/<id>.php (se inyectan antes de este archivo). Aquí solo lo común a todas. */
 body[data-palette]:not([data-palette="current"]) .preloader,
 body[data-palette]:not([data-palette="current"]) .pwa-install-help,
 body[data-palette]:not([data-palette="current"]) .site-footer,
@@ -47,27 +23,11 @@ body[data-palette]:not([data-palette="current"]) .hero__glow,
 body[data-palette]:not([data-palette="current"]) .contact__glow { background:var(--accent-soft); }
 body[data-palette]:not([data-palette="current"]) .mobile-profile__crest-wrap,
 body[data-palette]:not([data-palette="current"]) .card__picture { background:var(--bg-card); }
-body[data-palette="white"] .hero__noise,
-body[data-palette="japanese"] .hero__noise,
-body[data-palette="forest"] .hero__noise { opacity:.025; }
-body[data-palette="cyberpunk"] .hero__title { text-shadow:3px 0 #ff3ac8,-3px 0 #00f5dc; }
-body[data-palette="cyberpunk"] .hero__ornament { border-color:#ff3ac8; }
-body[data-palette="japanese"] .hero__title { font-weight:500; letter-spacing:.02em; }
-body[data-palette="japanese"] .hero__ornament { border-color:var(--accent); border-radius:50%; }
-body[data-palette="white"] .contact,
-body[data-palette="japanese"] .contact,
-body[data-palette="forest"] .contact { background:var(--bg-soft); }
-body[data-palette="white"] .categories-filter__chip,
-body[data-palette="japanese"] .categories-filter__chip,
-body[data-palette="forest"] .categories-filter__chip { color:var(--fg); }
 body[data-palette]:not([data-palette="current"]) .pwa-install-button,
 body[data-palette]:not([data-palette="current"]) .upload-fab,
 body[data-palette]:not([data-palette="current"]) .mobile-profile__verified {
     color:var(--bg); background:var(--accent);
 }
-body[data-palette="white"] .lightbox,
-body[data-palette="japanese"] .lightbox,
-body[data-palette="forest"] .lightbox { background:var(--bg); color:var(--fg); }
 
 /* The map keeps its original dark/gold appearance regardless of theme selectors. */
 .map-section {

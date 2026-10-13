@@ -24,6 +24,7 @@ function generate_sitemap(string $baseDir, string $siteUrl, array $items, array 
 
     $previousSig = is_file($signaturePath) ? file_get_contents($signaturePath) : '';
     if ($previousSig === $signature && is_file($sitemapPath)) {
+        sitemap_announce_in_robots($baseDir, $siteUrl);
         return;
     }
 
@@ -32,13 +33,14 @@ function generate_sitemap(string $baseDir, string $siteUrl, array $items, array 
     $esc = fn($s) => htmlspecialchars((string) $s, ENT_QUOTES);
     $imgXml = function (array $it) use ($siteUrl, $esc): string {
         $loc     = $esc($siteUrl . '/' . url_path($it['desktop']));
-        $title   = $esc($it['title']       ?: 'Fotografía');
-        $caption = $esc($it['description'] ?: 'Fotografía de Kookye Cat Gallery');
+        $title   = $esc($it['title']       ?: site_text('text_400a7f33d431611c'));
+        $caption = $esc($it['description'] ?: site_text('text_c7ea52a379d46ca5') . site_text('text_30170303c506cf6c'));
+        $place   = \Kcg\Core\Installation::place()['name'] ?? '';
         return "      <image:image>\n"
              . "        <image:loc>{$loc}</image:loc>\n"
              . "        <image:title>{$title}</image:title>\n"
              . "        <image:caption>{$caption}</image:caption>\n"
-             . "        <image:geo_location>la escena</image:geo_location>\n"
+             . ($place !== '' ? "        <image:geo_location>" . $esc($place) . "</image:geo_location>\n" : '')
              . "      </image:image>\n";
     };
 
@@ -86,5 +88,19 @@ function generate_sitemap(string $baseDir, string $siteUrl, array $items, array 
 
     if (@file_put_contents($sitemapPath, $xml) !== false) {
         @file_put_contents($signaturePath, $signature);
+        sitemap_announce_in_robots($baseDir, $siteUrl);
     }
+}
+
+/**
+ * Añade a robots.txt la línea «Sitemap:» con la dirección de esta instalación si todavía no la tiene
+ * (robots.txt del núcleo no lleva ninguna: la dirección es propia de cada web).
+ */
+function sitemap_announce_in_robots(string $baseDir, string $siteUrl): void
+{
+    $robots = $baseDir . '/robots.txt';
+    if (!is_file($robots) || !is_writable($robots)) return;
+    $text = (string) @file_get_contents($robots);
+    if ($text === '' || preg_match('/^\s*Sitemap:/mi', $text) === 1) return;
+    @file_put_contents($robots, rtrim($text) . "\n\nSitemap: " . $siteUrl . "/sitemap.xml\n");
 }

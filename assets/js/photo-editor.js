@@ -146,7 +146,7 @@
     const updateGpsSummary=()=>{
         const latitude=$('photoLatitude').value.trim(),longitude=$('photoLongitude').value.trim();
         $('photoGpsSummary').textContent=latitude&&longitude?'Ubicación · '+latitude+', '+longitude
-            :latitude||longitude?'Completa ambas coordenadas':'Sin ubicación GPS';
+            :latitude||longitude?'Completa ambas coordenadas':'Ubicación opcional';
     };
     $('photoLatitude').addEventListener('input',updateGpsSummary);
     $('photoLongitude').addEventListener('input',updateGpsSummary);
@@ -911,17 +911,17 @@ const solvePerspectiveAffine = (src,dst) => {
             image=new Image();image.src=sourceUrl;await image.decode();
             backdrop.style.backgroundImage='url("'+sourceUrl+'")';
             resetControls();editor.hidden=false;$('fileSourceField').hidden=true;$('gpsStatus').hidden=true;
-            $('gpsFields').hidden=false;
-            $('photoLatitude').required=false;$('photoLongitude').required=false;
+            $('gpsFields').hidden=false;$('photoLatitude').required=false;$('photoLongitude').required=false;
             const detectedGps=data.gps||originalGps;
-            $('photoLatitude').value=detectedGps?.latitude??'';
-            $('photoLongitude').value=detectedGps?.longitude??'';
             if(detectedGps){
-                $('gpsStatusReview').textContent='GPS detectado. Puedes editar las coordenadas o borrar ambos campos para no compartir la ubicación.';
+                $('photoLatitude').value=String(detectedGps.latitude);
+                $('photoLongitude').value=String(detectedGps.longitude);
+                $('gpsStatusReview').textContent='GPS detectado. Puedes editar las coordenadas o borrar ambos valores para no compartir la ubicación.';
                 $('photoGpsSummary').textContent='Ubicación · '+detectedGps.latitude+', '+detectedGps.longitude;
             }else{
-                $('gpsStatusReview').textContent='Sin GPS. La ubicación es opcional; completa ambas coordenadas solo si quieres mostrar la foto en el mapa.';
-                $('photoGpsSummary').textContent='Sin ubicación GPS';
+                $('photoLatitude').value='';$('photoLongitude').value='';
+                $('gpsStatusReview').textContent='La ubicación es opcional. Deja ambas coordenadas vacías para no añadirla.';
+                $('photoGpsSummary').textContent='Ubicación opcional';
             }
             ready=true;submitButton.disabled=false;saving=false;scheduleRender();editor.scrollIntoView({behavior:'smooth',block:'start'});
         }catch(error){
@@ -953,7 +953,7 @@ const solvePerspectiveAffine = (src,dst) => {
         try{
             const blob=await renderEditedPhoto();
             const inputName=$('photoTitle').value.trim()||selectedUploadFile?.name?.replace(/\.[^.]+$/,'')||'foto-editada';
-            const safeName=inputName.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/[. -]+$/,'').trim()||'foto-editada';
+            const safeName=inputName.normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/[. -]+$/,'').trim()||'foto-editada';
             const filename=safeName.toLowerCase().endsWith('.jpg')?safeName:safeName+'.jpg';
             const file=new File([blob],filename,{type:'image/jpeg',lastModified:Date.now()});
             const mobileDevice=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);

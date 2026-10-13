@@ -1,0 +1,31 @@
+/* =========================================================
+   FOOTER
+   ========================================================= */
+.site-footer {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    border-top: 1px solid var(--line);
+    color: var(--fg-dim);
+    font-size: 0.78rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.site-footer__nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-top: 1.2rem;
+}
+
+.site-footer__nav a {
+    color: var(--fg-dim);
+    text-decoration: none;
+    font-size: 0.72rem;
+    letter-spacing: 0.25em;
+    transition: color 0.3s;
+}
+
+.site-footer__nav a:hover { color: var(--accent); }
+

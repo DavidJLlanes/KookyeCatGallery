@@ -3,8 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert/strict');
 const root = path.join(__dirname, '..');
-const css = ['style', 'site-design', 'interface-worlds', 'gallery-layout'].map(n => fs.readFileSync(path.join(root, `assets/css/${n}.css`), 'utf8')).join('\n');
-const scripts = ['gallery-layout', 'main'].map(n => fs.readFileSync(path.join(root, `assets/js/${n}.js`), 'utf8'));
+const { mainJs, readScript } = require('./support/main-bundle.cjs');
+const {cssFile} = require('./support/theme-css.cjs');
+const css = ['style', 'site-design', 'interface-worlds', 'gallery-layout'].map(n => cssFile(root, n)).join('\n');
+const scripts = ['gallery-layout', 'main'].map(n => readScript(root, n));
 const svg = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="red"/></svg>');
 const cards = Array.from({ length: 43 }, (_, i) => `<article class="card" data-slug="foto-${i}" data-title="Foto ${i}" data-full="${svg}" data-lat="${(i % 4).toFixed(4)}" data-lng="1.0000" data-num-global="${i + 1}"
     data-category="${i % 2 ? 'B' : 'A'}" style="--aspect:${i % 2 ? .67 : 1.5}"><button class="card__btn" type="button"><picture class="card__picture"><img class="card__img" src="${svg}" alt="Foto ${i}"></picture></button></article>`).join('');

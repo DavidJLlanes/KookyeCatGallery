@@ -1,0 +1,94 @@
+<?php
+declare(strict_types=1);
+
+/*
+ * ADVERTENCIA DE SEGURIDAD:
+ * Mientras este archivo esté en el servidor, cualquier persona que conozca su URL puede cambiar
+ * el único usuario y la contraseña del panel. Súbelo solo cuando vayas a usarlo y bórralo
+ * inmediatamente después de guardar. No lo dejes publicado.
+ */
+
+require_once __DIR__ . '/inc/private-storage.php';
+$privateDirectory = gallery_private_directory(true);
+$authPath = $privateDirectory . '/upload-auth.php';
+
+ini_set('session.use_strict_mode', '1');
+ini_set('session.cookie_httponly', '1');
+ini_set('session.cookie_secure', '1');
+ini_set('session.cookie_samesite', 'Strict');
+session_name('admin_recovery_session');
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'secure' => true,
+    'httponly' => true,
+    'samesite' => 'Strict',
+]);
+session_start();
+
+header('Cache-Control: no-store, private');
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-Robots-Tag: noindex, nofollow');
+header('Referrer-Policy: no-referrer');
+
+function recoveryEscape(string $value): string
+{
+    return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+function recoveryPage(string $message = '', bool $success = false, int $status = 200): never
+{
+    http_response_code($status);
+    $messageHtml = $message === '' ? '' : '<p class="message' . ($success ? ' success' : ' error') . '" role="' . ($success ? 'status' : 'alert') . '">' . recoveryEscape($message) . '</p>';
+    echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Configurar acceso</title><style>body{margin:0;background:#101010;color:#f4f1ed;font:16px system-ui,sans-serif;min-height:100vh;display:grid;place-items:center}.card{width:min(480px,calc(100% - 32px));box-sizing:border-box;padding:28px;background:#1b1b1b;border:1px solid #383838;border-radius:18px}h1{font-size:1.45rem;margin:0 0 18px}.warning{padding:15px;border:2px solid #ff4b4b;border-radius:10px;background:#401919;color:#fff;font-weight:750;line-height:1.5;margin-bottom:22px}.warning strong{display:block;font-size:1.08rem;margin-bottom:5px}label{display:block;margin:18px 0 7px;font-weight:600}input{box-sizing:border-box;width:100%;padding:12px;border-radius:9px;border:1px solid #555;background:#111;color:#fff;font:inherit}button{margin-top:24px;width:100%;padding:13px;border:0;border-radius:999px;background:#f4f1ed;color:#111;font:700 1rem system-ui;cursor:pointer}.message{padding:13px;border-radius:9px;line-height:1.5}.error{background:#482323;color:#ffd7d7}.success{background:#1e3d2b;color:#d6ffe3}</style></head><body><main class="card"><div class="warning"><strong>⚠ ADVERTENCIA: BORRA ESTE ARCHIVO</strong>Mientras esté en el servidor, cualquiera que conozca su dirección puede cambiar el usuario y la contraseña del panel. Úsalo solo ahora y bórralo inmediatamente después.</div><h1>Crear o cambiar el acceso</h1>' . $messageHtml;
+    if (!$success) {
+        $csrf = (string) ($_SESSION['recovery_csrf'] ?? '');
+        echo '<form method="post" action=""><input type="hidden" name="csrf" value="' . recoveryEscape($csrf) . '"><label for="new-username">Usuario</label><input id="new-username" name="username" type="text" minlength="3" maxlength="64" autocomplete="username" required><label for="new-password">Contraseña (mínimo 12 caracteres)</label><input id="new-password" name="password" type="password" minlength="12" maxlength="1024" autocomplete="new-password" required><button type="submit">Guardar usuario y contraseña</button></form>';
+    }
+    echo '</main></body></html>';
+}
+
+if (empty($_SESSION['recovery_csrf'])) $_SESSION['recovery_csrf'] = bin2hex(random_bytes(32));
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') recoveryPage();
+
+$csrf = $_POST['csrf'] ?? null;
+if (!is_string($csrf) || !hash_equals((string) $_SESSION['recovery_csrf'], $csrf)) {
+    recoveryPage('La sesión caducó. Recarga la página e inténtalo de nuevo.', false, 403);
+}
+$username = trim((string) ($_POST['username'] ?? ''));
+$password = (string) ($_POST['password'] ?? '');
+if (!preg_match('/^[a-zA-Z0-9._-]{3,64}$/D', $username)) {
+    recoveryPage('El usuario debe tener entre 3 y 64 caracteres: letras, números, punto, guion o guion bajo.', false, 422);
+}
+if (strlen($password) < 12 || strlen($password) > 1024) {
+    recoveryPage('La contraseña debe tener entre 12 y 1024 caracteres.', false, 422);
+}
+if (!is_dir($privateDirectory) && !@mkdir($privateDirectory, 0750, true) && !is_dir($privateDirectory)) {
+    recoveryPage('No se pudo preparar la carpeta privada de configuración. Revisa los permisos del alojamiento.', false, 500);
+}
+
+$hash = password_hash($password, PASSWORD_DEFAULT);
+if (!is_string($hash) || $hash === '') {
+    recoveryPage('No se pudo generar el hash de la contraseña.', false, 500);
+}
+$config = "<?php\nreturn " . var_export(['username' => $username, 'password_hash' => $hash], true) . ";\n";
+$temporary = tempnam($privateDirectory, '.upload-auth-');
+if ($temporary === false) {
+    recoveryPage('No se pudo preparar el archivo privado de acceso. Revisa los permisos del alojamiento.', false, 500);
+}
+try {
+    if (file_put_contents($temporary, $config, LOCK_EX) === false || !@chmod($temporary, 0640) || !@rename($temporary, $authPath)) {
+        throw new RuntimeException('No se pudo guardar el acceso. Revisa los permisos de la carpeta privada.');
+    }
+} catch (RuntimeException $error) {
+    if (is_file($temporary)) @unlink($temporary);
+    recoveryPage($error->getMessage(), false, 500);
+}
+if (is_file($temporary)) @unlink($temporary);
+
+$removed = @unlink(__FILE__);
+$message = $removed
+    ? 'El usuario y la contraseña se guardaron y este archivo se eliminó del servidor. Ya puedes iniciar sesión.'
+    : 'El usuario y la contraseña se guardaron, pero el borrado automático falló. Borra ahora reset-admin-access.php desde el alojamiento.';
+recoveryPage($message, true);

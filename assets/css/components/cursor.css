@@ -1,0 +1,39 @@
+/* =========================================================
+   CURSOR PERSONALIZADO (escritorio)
+   ========================================================= */
+.cursor-dot,
+.cursor-ring {
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9999;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.3s, transform 0.18s var(--ease-out);
+    opacity: 0;
+}
+
+.cursor-dot {
+    width: 6px; height: 6px;
+    background: var(--accent);
+}
+
+.cursor-ring {
+    width: 36px; height: 36px;
+    border: 1px solid rgba(212, 165, 116, 0.5);
+    transition: transform 0.4s var(--ease-out), width 0.3s, height 0.3s, opacity 0.3s;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    body.cursor-ready .cursor-dot,
+    body.cursor-ready .cursor-ring { opacity: 1; }
+    body.cursor-ready { cursor: none; }
+    body.cursor-ready a, body.cursor-ready button { cursor: none; }
+
+    .cursor-ring.is-hover {
+        width: 64px; height: 64px;
+        background: var(--accent-soft);
+        border-color: transparent;
+    }
+}
+

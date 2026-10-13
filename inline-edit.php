@@ -12,11 +12,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+require_once __DIR__ . '/core/bootstrap.php';
+
 ini_set('session.use_strict_mode', '1');
 ini_set('session.cookie_httponly', '1');
 ini_set('session.cookie_secure', '1');
 ini_set('session.cookie_samesite', 'Strict');
-session_name('kookye_gallery_admin');
+session_name(\Kcg\Core\Installation::sessionName());
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
@@ -68,7 +70,7 @@ try {
         $savedValue = $value;
     }
     site_settings_save($settings);
-    echo json_encode(['ok' => true, 'value' => $savedValue, 'siteTitle' => site_title()], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['ok' => true, 'value' => $savedValue, 'siteTitle' => site_title(), 'reload' => $key === 'text_52179dc42df7efe5'], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $error) {
     error_log('Inline text save failed: ' . $error->getMessage());
     $fail(500, 'No se pudo guardar el texto. Vuelve a intentarlo.');

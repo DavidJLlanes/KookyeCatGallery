@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+use Kcg\Core\Settings\Schema;
+
 /**
  * Formularios del panel de administración para la configuración del sitio.
  *
@@ -40,7 +42,11 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         $settingsNav .= '</nav>';
         $html .= $settingsNav;
     }
-    $labels = ['palette' => 'Paleta de colores', 'grid' => 'Proporción de las fotos', 'header_mobile' => 'Cabecera móvil', 'header_desktop' => 'Cabecera de escritorio', 'gallery_mobile' => 'Galería móvil', 'gallery_desktop' => 'Galería de escritorio', 'hover' => 'Efecto Hover', 'pagination_shape' => 'Forma de la paginación', 'gallery_premium' => 'Galería premium'];
+    // Las etiquetas salen del esquema de ajustes (core/Settings/Schema.php).
+    $labels = [];
+    foreach (['palette', 'grid', 'header_mobile', 'header_desktop', 'gallery_mobile', 'gallery_desktop', 'hover', 'pagination_shape', 'gallery_premium'] as $labelKey) {
+        $labels[$labelKey] = Schema::label($labelKey);
+    }
     $choices = site_design_choices();
     // Las capacidades del diseño determinan qué controles se pueden usar.
     $premiumOn = site_premium_gallery_active($settings) !== null;
@@ -74,13 +80,21 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     // ── Diseño ────────────────────────────────────────────────────────────
     $html .= '<div class="settings-design">';
     // Tarjeta «Apariencia»: paleta y efecto hover.
+    $paletteCards = '<fieldset class="palette-picker"><legend>' . $escape($labels['palette']) . '</legend>';
+    foreach ($choices['palette'] as $key => $name) {
+        [$swatchBg, $swatchFg, $swatchAccent] = \Kcg\Themes\Palettes::swatch($key);
+        $paletteCards .= '<label class="palette-card"><input type="radio" name="palette" value="' . $escape($key) . '"' . ($settings['palette'] === $key ? ' checked' : '') . '>'
+            . '<span class="palette-card__swatch" style="--sw-bg:' . $escape($swatchBg) . ';--sw-fg:' . $escape($swatchFg) . ';--sw-accent:' . $escape($swatchAccent) . '" aria-hidden="true"><i></i><i></i><i></i></span>'
+            . '<span class="palette-card__name">' . $escape($name) . '</span></label>';
+    }
+    $paletteCards .= '</fieldset>';
     $html .= $card('Apariencia', 'Colores y efecto al pasar el ratón por las fotos.',
-        '<div class="admin-fields">' . $select('palette', $labels['palette'], $choices['palette'], $settings['palette']) . $select('hover', $labels['hover'], $choices['hover'], $settings['hover']) . '</div>');
+        $paletteCards . '<div class="admin-fields">' . $select('hover', $labels['hover'], $choices['hover'], $settings['hover']) . '</div>');
     $fontCards = '<div class="font-picker" data-font-picker><div class="font-picker__filters" role="group" aria-label="Filtrar combinaciones">';
-    foreach (['all' => 'Todas', 'editorial' => 'Editoriales', 'modern' => 'Modernas', 'experimental' => 'Expresivas'] as $group => $label) {
+    foreach (['all' => 'Todas'] + \Kcg\Themes\Fonts::GROUPS as $group => $label) {
         $fontCards .= '<button type="button" data-font-filter="' . $group . '"' . ($group === 'all' ? ' class="is-active" aria-pressed="true"' : ' aria-pressed="false"') . '>' . $escape($label) . '</button>';
     }
-    $fontCards .= '</div><div class="font-picker__status"><p class="font-picker__count" data-font-count aria-live="polite">30 combinaciones disponibles</p>'
+    $fontCards .= '</div><div class="font-picker__status"><p class="font-picker__count" data-font-count aria-live="polite">' . count(site_font_pairs()) . ' combinaciones disponibles</p>'
         . '<p class="font-picker__selected" data-font-selected>Elegida: ' . $escape(site_font_pair($settings['font_pair'])['name']) . '</p></div>'
         . '<fieldset class="font-picker__grid"><legend class="sr-only">Pareja de tipografías de la web</legend>';
     foreach (site_font_pairs() as $key => $pair) {
@@ -116,10 +130,10 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         . $select('gallery_mobile', $labels['gallery_mobile'], $choices['gallery_mobile'], $settings['gallery_mobile'], true)
         . $select('gallery_desktop', $labels['gallery_desktop'], $choices['gallery_desktop'], $settings['gallery_desktop'], true)
         . $select('pagination_shape', $labels['pagination_shape'], $choices['pagination_shape'], $settings['pagination_shape'], true)
-        . $range('columns_mobile', 'Columnas en móvil', $columnsMobile, $settings['columns_mobile'], '', true)
-        . $range('columns_desktop', 'Columnas en escritorio', $columnsDesktop, $settings['columns_desktop'], '', true)
-        . $range('photos_mobile', 'Fotos visibles a la vez en móvil', site_photos_per_view_choices(), $settings['photos_mobile'], 'Todas', true)
-        . $range('photos_desktop', 'Fotos visibles a la vez en escritorio', site_photos_per_view_choices(), $settings['photos_desktop'], 'Todas', true) . '</div>'
+        . $range('columns_mobile', Schema::label('columns_mobile'), $columnsMobile, $settings['columns_mobile'], '', true)
+        . $range('columns_desktop', Schema::label('columns_desktop'), $columnsDesktop, $settings['columns_desktop'], '', true)
+        . $range('photos_mobile', Schema::label('photos_mobile'), site_photos_per_view_choices(), $settings['photos_mobile'], 'Todas', true)
+        . $range('photos_desktop', Schema::label('photos_desktop'), site_photos_per_view_choices(), $settings['photos_desktop'], 'Todas', true) . '</div>'
         . '<p class="upload-help" data-grid-help' . (site_grid_setting_is_used($settings) ? ' hidden' : '') . '>La proporción solo se aplica a Cuadrícula y Hoja de contactos. Los demás diseños conservan sus proporciones propias.</p>'
         . '<p class="upload-help admin-grid-explanation">Las fotos visibles a la vez no dependen de las columnas: si hay más fotos, se paginan. Elige «Todas» para mostrarlas juntas. Masonry conserva las proporciones originales; para fotos cuadradas, horizontales o verticales, elige la galería «Cuadrícula» y su tipo de cuadrícula.</p>');
 
@@ -200,6 +214,20 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         $adminAreaField = '<div class="upload-field"><label for="admin-area-name">Nombre visible</label>'
             . '<input id="admin-area-name" name="texts[admin_area_name]" type="text" maxlength="120" autocomplete="organization" value="' . $escape($adminAreaName) . '">'
             . '<small class="upload-help">Aparece después de «Área privada ·» en el panel de administración.</small></div>';
+        $siteName = site_title();
+        $siteNameField = '<div class="upload-field"><label for="site-name">Nombre de la web</label>'
+            . '<input id="site-name" name="texts[text_52179dc42df7efe5]" type="text" maxlength="80" autocomplete="off" value="' . $escape($siteName) . '">'
+            . '<small class="upload-help">Es uno solo y se ve en el título grande de la portada (la primera palabra arriba y el resto debajo), en el pie de página, en el panel de administración y en el título de las pestañas. Puedes cambiarlo aquí o pulsándolo en la propia web con «Editar página»: se actualiza en todos los sitios.</small></div>';
+        $html .= $card('Nombre de la web', 'El nombre que identifica a tu web en todas partes.', $siteNameField);
+        $projectKey = 'text_c9248cc61aa75376';
+        $projectField = '<div class="upload-field"><label for="project-label">Rótulo de la sección</label>'
+            . '<input id="project-label" name="texts[' . $projectKey . ']" type="text" maxlength="80" autocomplete="off" value="' . $escape((string) ($settings['texts'][$projectKey] ?? site_text_catalog()[$projectKey]['default'])) . '">'
+            . '<small class="upload-help">El texto pequeño «El proyecto» que encabeza esa sección de la portada. También puedes cambiarlo pulsando sobre él en la propia web con el lápiz de «Editar página».</small></div>';
+        $titleKey = 'text_6636c29ab23b6ec8';
+        $projectField .= '<div class="upload-field"><label for="project-title">Título de la sección</label>'
+            . '<input id="project-title" name="texts[' . $titleKey . ']" type="text" maxlength="120" autocomplete="off" value="' . $escape((string) ($settings['texts'][$titleKey] ?? site_text_catalog()[$titleKey]['default'])) . '">'
+            . '<small class="upload-help">El título grande de esa sección. Es un solo texto; también se cambia desde la web con el lápiz.</small></div>';
+        $html .= $card('Sección «El proyecto»', 'El rótulo y el título de la sección; el contenido se edita en «Páginas de texto».', $projectField);
         $html .= $card('Identidad del área privada', 'Personaliza el nombre del propietario, fotógrafo o estudio.', $adminAreaField);
         $html .= $card('Páginas de texto', 'Edita el contenido de «El proyecto», aviso legal, privacidad y cookies.', $pages . '</div>');
     }
@@ -207,21 +235,39 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     $html = str_replace('<form method="post"', '<form method="post" enctype="multipart/form-data"', $html);
     if ($section === 'content') {
     // ── Contenido: imágenes de marca ───────────────────────────────────────
-    $html .= '<div class="settings-content"><section class="admin-card"><header class="admin-card__head"><h2>Imágenes</h2><p>Foto de perfil y logo de la web.</p></header><div class="admin-card__body">';
+    $html .= '<div class="settings-content"><section class="admin-card"><header class="admin-card__head"><h2>Imágenes</h2><p>Foto de perfil, logo, icono y imagen para redes. Cada una indica su proporción de recorte.</p></header><div class="admin-card__body">';
+    // Imagen que hay ahora en cada hueco (la subida sustituye a la actual; sin subir nada se conserva).
+    $current = static function (string $url, string $caption, bool $wide = false) use ($escape): string {
+        return '<div class="settings-image-current' . ($wide ? ' settings-image-current--wide' : '') . '">'
+            . ($url !== '' ? '<img src="' . $escape($url) . '" alt="" loading="lazy">' : '<span class="settings-image-current__empty" aria-hidden="true">—</span>')
+            . '<span>' . $escape($caption) . '</span></div>';
+    };
+    $isOwn = static fn(string $url): bool => $url !== '' && !in_array($url, ['/profile-placeholder.svg', '/favicon.svg'], true) && is_file(dirname(__DIR__) . strtok($url, '?'));
+    $profileUrl = site_media_src('profile_image');
+    $logoUrl = site_media_src('logo_image');
+    $iconCustom = is_file(dirname(__DIR__) . '/assets/icons/site-app-icon-192.png');
+    $ogUrl = site_brand_og_url();
     $html .= '<input type="hidden" name="profile_image" value="' . $escape((string) $settings['profile_image']) . '">'
         . '<input type="hidden" name="logo_image" value="' . $escape((string) $settings['logo_image']) . '">'
         . '<div class="upload-field"><label for="profile-image">Foto de perfil</label>'
-        . '<input id="profile-image" name="profile_image_file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
-        . '<small class="upload-help">JPG, PNG o WebP. Máximo 15 MB.</small></div>'
+        . '<input id="profile-image" name="profile_image_file" type="file" data-crop-ratio="0.8" data-crop-label="4:5 (vertical)" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
+        . $current($profileUrl, $isOwn($profileUrl) ? 'Imagen actual' : 'Sin foto propia: se usa la predeterminada')
+        . '<small class="upload-help"><strong>Proporción 4:5 (vertical)</strong>, la del marco de la sección «El proyecto»; por ejemplo 800 × 1000 px. Si la imagen no la tiene, se abre un recortador. JPG, PNG o WebP. Máximo 15 MB.</small></div>'
         . '<div class="upload-field"><label for="logo-image">Logo</label>'
-        . '<input id="logo-image" name="logo_image_file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
-        . '<small class="upload-help">JPG, PNG o WebP. Máximo 15 MB.</small></div>'
+        . '<input id="logo-image" name="logo_image_file" type="file" data-crop-ratio="1" data-crop-label="1:1 (cuadrada)" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
+        . $current($logoUrl, $isOwn($logoUrl) ? 'Imagen actual' : 'Sin logo propio: se usa el predeterminado')
+        . '<small class="upload-help"><strong>Proporción 1:1 (cuadrada)</strong>; por ejemplo 512 × 512 px. Si la imagen no es cuadrada, se abre un recortador. JPG, PNG o WebP. Máximo 15 MB.</small></div>'
         . '<div class="upload-field"><label for="app-icon-file">Icono de la aplicación y favicon</label>'
-        . '<input id="app-icon-file" name="app_icon_file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
-        . '<small class="upload-help">PNG, JPG o WebP. Cuadrado, 512 × 512 px recomendado (mínimo). Se adapta automáticamente a 32, 180, 192 y 512 px para favicon, Apple Touch y la app instalable. Máximo 15 MB.</small></div>'
+        . '<input id="app-icon-file" name="app_icon_file" type="file" data-crop-ratio="1" data-crop-min="512" data-crop-label="1:1 (cuadrada)" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
+        . $current(site_brand_icon_url(192), $iconCustom ? 'Icono actual' : 'Sin icono propio: se usa el predeterminado')
+        . '<small class="upload-help"><strong>Proporción 1:1 (cuadrada)</strong>, mínimo 512 × 512 px. Si no es cuadrada, se abre un recortador. Se usa también como favicon y se adapta automáticamente a 32, 180, 192 y 512 px para favicon, Apple Touch y la app instalable. Máximo 15 MB.</small></div>'
         . '<div class="upload-field"><label for="og-image-file">Imagen para compartir en redes sociales (Open Graph)</label>'
-        . '<input id="og-image-file" name="og_image_file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
-        . '<small class="upload-help">JPG, PNG o WebP. Recomendado 1200 × 630 px (relación 1,91:1; mínimo 600 × 315). Se recorta y adapta a 1200 × 630 px. Máximo 15 MB.</small></div></div></section></div>';
+        . '<input id="og-image-file" name="og_image_file" type="file" data-crop-ratio="1.905" data-crop-label="1,91:1 (apaisada, 1200 × 630)" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">'
+        . $current($ogUrl, $ogUrl !== '' ? 'Imagen actual' : 'Sin imagen propia: se usa la primera foto de la galería', true)
+        . '<small class="upload-help"><strong>Proporción 1,91:1 (apaisada)</strong>, la que usan Facebook, WhatsApp, X o LinkedIn al compartir; tamaño final 1200 × 630 px (mínimo 600 × 315). Si no la tiene, se abre un recortador. JPG, PNG o WebP. Máximo 15 MB.</small></div></div></section></div>';
+    // Recortador: si la imagen elegida no tiene la proporción del hueco (cuadrada, o 1,91:1 la de redes), se encuadra antes de enviarla.
+    $html .= '<link rel="stylesheet" href="/assets/css/image-cropper.css?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/css/image-cropper.css'), 0, 12) . '">'
+        . '<script src="/assets/js/image-cropper.js?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/js/image-cropper.js'), 0, 12) . '" defer></script>';
     }
     $html .= '<div class="admin-savebar"><span class="admin-savebar__hint">Los cambios se aplican a la web al guardar.</span><button class="upload-submit" type="submit">Guardar configuración</button></div></form>';
     if ($section === 'design') {

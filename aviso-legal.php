@@ -13,13 +13,15 @@ $pageH1 = site_text('text_7664bd753da07ad5');
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="<?= site_text_html('text_52179dc42df7efe5') ?>">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/app-manifest.php">
     <meta name="robots" content="noindex, follow">
     <title><?= htmlspecialchars($pageTitle) ?></title>
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.svg">
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.svg">
-    <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/assets/css/style.css') ?: time() ?>">
+    <link rel="icon" type="<?= htmlspecialchars(site_brand_icon_type(site_brand_icon_url(32))) ?>" sizes="32x32" href="<?= htmlspecialchars(site_brand_icon_url(32)) ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= htmlspecialchars(site_brand_icon_url(180)) ?>">
+    <?= site_style_tags('legal') ?>
+    <?= site_palette_style_tag() ?>
     <link rel="stylesheet" href="/assets/css/site-design.css?v=<?= filemtime(__DIR__ . '/assets/css/site-design.css') ?>">
+    <?= site_fonts_style_tag() ?>
     <link rel="stylesheet" href="/assets/css/typography.css?v=<?= filemtime(__DIR__ . '/assets/css/typography.css') ?>">
 </head>
 <body<?= site_design_attributes() ?> class="legal-page">

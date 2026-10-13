@@ -1,0 +1,22 @@
+/* Cabecera «observatory» (desktop): Observatory / 3D constellation. Se carga solo si es la elegida (themes/headers-desktop/observatory.php). */
+@media(min-width:769px){
+/* 07 · Observatory / 3D constellation */
+body[data-header-desktop="observatory"][data-palette="current"]{--bg:#040b21;--bg-soft:#101e3d;--bg-card:#102447;--fg:#eef7ff;--fg-dim:#b8d0e3;--fg-soft:#bed0e7;--accent:#9fe8ef;--line:#9fe8ef33;background:var(--bg);color:var(--fg)}
+body[data-header-desktop="observatory"] .hero{min-height:92vh;background:radial-gradient(circle at 70% 50%,var(--bg-card),var(--bg) 65%)!important}
+body[data-header-desktop="observatory"] .hero__content{position:relative;z-index:1;text-align:left;width:min(85vw,1450px)}
+body[data-header-desktop="observatory"] .hero__title{font:400 clamp(5rem,10vw,11rem)/.84 Georgia,serif;max-width:9ch}
+body[data-header-desktop="observatory"] .hero__title-line--accent{color:var(--accent)!important;-webkit-text-fill-color:var(--accent)!important;text-shadow:0 0 50px #75cfe399}
+body[data-header-desktop="observatory"] .hero__crest{margin:0 0 2rem;filter:drop-shadow(0 0 20px #7fe7efaa)}
+body[data-header-desktop="observatory"] .hero__divider{margin:2rem 0}
+body[data-header-desktop="observatory"] .hero__meta{justify-content:flex-start}
+body[data-header-desktop="observatory"] .gallery-section{background:var(--bg);padding:7rem 4vw}
+body[data-header-desktop="observatory"] .gallery-intro__title{font:400 clamp(3rem,6vw,7rem) Georgia,serif}
+body[data-header-desktop="observatory"] #masonry{--col-gap:2rem}
+body[data-header-desktop="observatory"] #masonry .card{align-self:start;overflow:visible;padding:.55rem!important;border:1px solid var(--line);border-radius:20px!important;background:linear-gradient(155deg,var(--bg-card),var(--bg-soft));box-shadow:0 18px 40px #0005;transition:border-color .25s,box-shadow .25s}
+body[data-header-desktop="observatory"] #masonry .card:hover{border-color:var(--accent);box-shadow:0 20px 50px #57bde035}
+body[data-header-desktop="observatory"] #masonry .card__picture{border-radius:15px!important}
+body[data-header-desktop="observatory"] #masonry .card__title-base{position:static;padding:.8rem .55rem .6rem;text-align:left}
+body[data-header-desktop="observatory"] #masonry .card__title{font:500 clamp(.9rem,1vw,1.12rem)/1.3 var(--sans);color:#fff;opacity:1;transform:none;text-shadow:0 1px 3px #000}
+body[data-header-desktop="observatory"] #masonry .card__title:after{display:none}
+body[data-header-desktop="observatory"] .project{background:var(--bg-soft)!important}
+}

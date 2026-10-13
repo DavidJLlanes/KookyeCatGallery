@@ -5,6 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert/strict');
 const root = path.join(__dirname, '..');
+const { mainJs, readScript } = require('./support/main-bundle.cjs');
+const {cssFile} = require('./support/theme-css.cjs');
 const fixture = String.raw`
 require_once 'inc/helpers.php';
 require_once 'inc/site-settings.php';
@@ -18,10 +20,10 @@ include 'inc/premium/deck.php';
 const markup = execFileSync('php', ['-r', fixture], { cwd: root, encoding: 'utf8' });
 assert.match(markup, /data-premium-gallery="coverflow"/);
 assert.match(markup, /data-layout="coverflow"/);
-const css = ['style', 'site-design', 'gallery-layout'].map(n => fs.readFileSync(path.join(root, `assets/css/${n}.css`), 'utf8')).join('\n')
+const css = ['style', 'site-design', 'gallery-layout'].map(n => cssFile(root, n)).join('\n')
     + fs.readFileSync(path.join(root, 'assets/premium/deck/deck.css'), 'utf8')
     + fs.readFileSync(path.join(root, 'assets/premium/coverflow/coverflow.css'), 'utf8');
-const scripts = ['assets/js/site-texts.js', 'assets/js/main.js', 'assets/premium/deck/deck.js'].map(p => fs.readFileSync(path.join(root, p), 'utf8'));
+const scripts = ['assets/js/site-texts.js', 'assets/js/main.js', 'assets/premium/deck/deck.js'].map(p => readScript(root, p));
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
 (async () => {
     const browser = await chromium.launch({ headless: true, executablePath: process.env.TEST_BROWSER || undefined, args: ['--no-sandbox'] });

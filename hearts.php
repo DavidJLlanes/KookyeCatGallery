@@ -6,9 +6,10 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');
 
-$privateDir = getenv('GALLERY_PRIVATE_DIR') ?: __DIR__ . '/var';
-define('HEARTS_FILE', rtrim($privateDir, '/\\') . '/hearts.json');
-const HEARTS_COOKIE = 'kookye_gallery_hearts';
+require_once __DIR__ . '/core/bootstrap.php';
+
+define('HEARTS_FILE', \Kcg\Core\Installation::heartsFile());
+define('HEARTS_COOKIE', \Kcg\Core\Installation::heartsCookie());
 
 function hearts_reply(int $status, array $payload): never
 {

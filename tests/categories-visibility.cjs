@@ -4,7 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert/strict');
 const root = path.join(__dirname, '..');
-const css = ['style', 'site-design'].map(n => fs.readFileSync(path.join(root, `assets/css/${n}.css`), 'utf8')).join('\n');
+const {cssFile} = require('./support/theme-css.cjs');
+const css = ['style', 'site-design'].map(n => cssFile(root, n)).join('\n');
 const page = show => `<body data-grid="adaptive" data-palette="current" data-header-mobile="current" data-header-desktop="current" data-gallery-mobile="standard" data-gallery-desktop="standard" data-show-categories="${show}" style="--columns-mobile:3;--columns-desktop:3">
 <section class="categories-block"><div class="categories-filter" id="categoriesFilter" data-site-section="categories"><div class="categories-filter__inner">
 <button class="categories-filter__chip is-active">Todas</button><button class="categories-filter__chip">Naturaleza</button></div></div></section>

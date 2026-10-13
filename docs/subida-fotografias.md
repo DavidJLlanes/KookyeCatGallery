@@ -1,10 +1,10 @@
-# Habilitar la subida de fotografías en el servidor PHP
+# Habilitar la subida de fotografías en el VPS
 
 El panel acepta imágenes de hasta 15 MiB y envía dos peticiones independientes (original y copia editada). Nginx y PHP deben permitir un poco más que ese máximo.
 
 ## Nginx
 
-En el bloque HTTPS (`server { ... }`) del sitio `tu-dominio.example` añade:
+En el bloque HTTPS (`server { ... }`) del sitio `davidjimenezllanes.es` añade:
 
 ```nginx
 client_max_body_size 20m;

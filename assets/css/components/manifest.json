@@ -1,0 +1,226 @@
+{
+  "descripcion": "Componentes de assets/css/components/ en orden de cascada y los perfiles de página que los cargan. full = portada, página de foto, microblog y panel. legal = páginas legales (solo lo que dibujan). Ver inc/site-assets.php.",
+  "components": [
+    {
+      "id": "base",
+      "title": "Variables, reinicio y tipografía base",
+      "profiles": [
+        "full",
+        "legal"
+      ]
+    },
+    {
+      "id": "cursor",
+      "title": "Cursor personalizado (escritorio)",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "hero",
+      "title": "Hero tipográfico",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "gallery-intro",
+      "title": "Introducción de la galería",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "masonry",
+      "title": "Masonry (columnas CSS)",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "lightbox",
+      "title": "Lightbox",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "top-button",
+      "title": "Botón volver arriba",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "pagination",
+      "title": "Paginación",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "footer",
+      "title": "Pie de página",
+      "profiles": [
+        "full",
+        "legal"
+      ]
+    },
+    {
+      "id": "legal",
+      "title": "Páginas legales",
+      "profiles": [
+        "full",
+        "legal"
+      ]
+    },
+    {
+      "id": "preloader",
+      "title": "Movimiento reducido y preloader",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "scroll-progress",
+      "title": "Barra de progreso de scroll",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "cursor-label",
+      "title": "Etiqueta «Ver» del cursor",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "hero-shine",
+      "title": "Brillo del título del hero",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "project",
+      "title": "Sección «El proyecto»",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "tilt",
+      "title": "Tilt 3D y reflejo",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "filter-transition",
+      "title": "Transiciones de filtrado",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "categories",
+      "title": "Selector de categorías",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "map",
+      "title": "Mapa interactivo",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "lightbox-flip",
+      "title": "Lightbox FLIP",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "photo-detail",
+      "title": "Detalle de foto (/foto/slug)",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "share",
+      "title": "Botones de compartir",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "related",
+      "title": "Fotos relacionadas",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "contact",
+      "title": "Contacto y redes",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "mobile-profile",
+      "title": "Cabecera de perfil y galería móvil",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "admin-access",
+      "title": "Acceso discreto al panel privado",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "mobile-links",
+      "title": "Accesos de la cabecera móvil",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "pwa",
+      "title": "Opciones PWA y avisos",
+      "profiles": [
+        "full",
+        "legal"
+      ]
+    },
+    {
+      "id": "photo-actions",
+      "title": "Acciones de fotografía y favoritos",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "narrow-mobile",
+      "title": "Ajustes para móviles estrechos",
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "collections",
+      "title": "Colecciones fotográficas",
+      "profiles": [
+        "full"
+      ]
+    }
+  ]
+}

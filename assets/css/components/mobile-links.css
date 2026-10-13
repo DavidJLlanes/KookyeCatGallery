@@ -1,0 +1,31 @@
+/* Accesos de la cabecera móvil a la portada */
+@media (max-width: 768px) {
+    .mobile-profile__brand,
+    .mobile-profile__avatar-link {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .mobile-profile__brand {
+        text-decoration: none;
+        transition: color .2s ease;
+    }
+
+    .mobile-profile__brand:hover,
+    .mobile-profile__brand:focus-visible {
+        color: var(--accent);
+    }
+
+    .mobile-profile__avatar-link {
+        display: block;
+        border-radius: 50%;
+        line-height: 0;
+    }
+
+    .mobile-profile__avatar-link:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 4px;
+    }
+}
+
+

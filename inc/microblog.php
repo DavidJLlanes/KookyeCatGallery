@@ -17,10 +17,8 @@ declare(strict_types=1);
  *     `created` es la fecha de publicación y, si está en el futuro, el post sigue oculto al público.
  *   - Una respuesta es un post con `parent` = id del post raíz (hilo plano, como en Threads).
  *   - Los corazones reutilizan hearts.php con el identificador «mb-{id}».
- *   - Las imágenes viven en /microblog/, separadas de la galería (/img/). Los datos, fuera del document root.
+ *   - Las imágenes viven en /microblog/, separadas de la galería (/img/). Los datos (microblog.sqlite), fuera del document root.
  */
-
-require_once __DIR__ . '/private-storage.php';
 
 const MICROBLOG_MAX_TEXT = 2000;
 const MICROBLOG_MAX_QUOTE = 800;
@@ -43,18 +41,14 @@ function microblog_levels(): array
 // =============================================================================
 
 /**
- * Carpeta privada de los datos. Orden: variable MICROBLOG_DATA_DIR, la carpeta privada de la instalación
- * (gallery_private_directory(), junto a los corazones) y, como último recurso, data/microblog dentro del proyecto.
+ * Carpeta privada de los datos: la primera utilizable de Installation::microblogDirs() (variable MICROBLOG_DATA_DIR,
+ * `microblog_dir` de installation.php, «microblog» dentro de la carpeta privada y, como último recurso, data/microblog).
  */
 function microblog_data_dir(): string
 {
     static $dir = null;
     if ($dir !== null) return $dir;
-    $candidates = [];
-    $env = trim((string) getenv('MICROBLOG_DATA_DIR'));
-    if ($env !== '') $candidates[] = $env;
-    $candidates[] = gallery_private_directory(true) . '/microblog';
-    $candidates[] = dirname(__DIR__) . '/data/microblog';
+    $candidates = \Kcg\Core\Installation::microblogDirs();
     foreach ($candidates as $candidate) {
         $candidate = rtrim($candidate, '/\\');
         if ((is_dir($candidate) || @mkdir($candidate, 0750, true)) && is_writable($candidate)) return $dir = $candidate;
@@ -74,20 +68,11 @@ function microblog_image_url(string $file): string
     return '/microblog/' . rawurlencode($file);
 }
 
-function microblog_file(): string
-{
-    return microblog_data_dir() . '/posts.json';
-}
-
-/** Zona horaria del sitio (variable MICROBLOG_TIMEZONE o la del servidor): fechas mostradas y hora de programación. */
+/** Zona horaria del sitio: fechas mostradas y hora de programación del panel. */
 function microblog_timezone(): DateTimeZone
 {
     static $timezone = null;
-    if ($timezone === null) {
-        $name = trim((string) getenv('MICROBLOG_TIMEZONE')) ?: date_default_timezone_get();
-        try { $timezone = new DateTimeZone($name); } catch (Exception) { $timezone = new DateTimeZone('UTC'); }
-    }
-    return $timezone;
+    return $timezone ??= new DateTimeZone('Europe/Madrid');
 }
 
 /** Formatea un timestamp en la zona horaria del sitio. */
@@ -147,69 +132,34 @@ function microblog_normalize(mixed $raw): ?array
     ];
 }
 
-/** Lee todos los posts (sin bloqueo; para lectura pública). */
+/** El almacén de posts (SQLite; ver modules/Microblog/). */
+function microblog_repository(): \Kcg\Modules\Microblog\PostRepository
+{
+    return \Kcg\Modules\Microblog\Repositories::current();
+}
+
+/** Todos los posts, también los programados (id => post). Para el panel y las operaciones de escritura; la web pública usa microblog_feed() y microblog_thread(). */
 function microblog_load(): array
 {
-    $path = microblog_file();
-    if (!is_file($path)) return [];
-    $decoded = json_decode((string) @file_get_contents($path), true);
-    if (!is_array($decoded)) return [];
-    $posts = [];
-    foreach (is_array($decoded['posts'] ?? null) ? $decoded['posts'] : [] as $raw) {
-        $post = microblog_normalize($raw);
-        if ($post !== null) $posts[$post['id']] = $post;
-    }
-    return $posts;
+    return microblog_repository()->all();
 }
 
 /** Un post programado (con fecha futura) aún no es público. */
 function microblog_is_scheduled(array $post, ?int $now = null): bool
 {
-    return $post['created'] > ($now ?? time());
+    return \Kcg\Modules\Microblog\Posts::isScheduled($post, $now ?? time());
 }
 
 /** Posts que ve el público: sin los programados ni las respuestas de un post que todavía no se ha publicado. */
 function microblog_visible(array $posts, ?int $now = null): array
 {
-    $now ??= time();
-    return array_filter($posts, static fn(array $post): bool => !microblog_is_scheduled($post, $now)
-        && ($post['parent'] === null || (isset($posts[$post['parent']]) && !microblog_is_scheduled($posts[$post['parent']], $now))));
+    return \Kcg\Modules\Microblog\Posts::visible($posts, $now ?? time());
 }
 
-function microblog_load_public(): array
-{
-    return microblog_visible(microblog_load());
-}
-
-/**
- * Lee, modifica y guarda los posts bajo un bloqueo exclusivo. `$change` recibe la lista por referencia y
- * devuelve el resultado de la operación.
- */
+/** Lee, modifica y guarda los posts como una operación indivisible (`$change` recibe la lista por referencia). */
 function microblog_mutate(callable $change): mixed
 {
-    $dir = microblog_data_dir();
-    if (!is_dir($dir) && !@mkdir($dir, 0750, true)) throw new RuntimeException('No se pudo crear la carpeta de datos del microblog.');
-    $lock = @fopen($dir . '/posts.lock', 'c+');
-    if ($lock === false || !flock($lock, LOCK_EX)) throw new RuntimeException('El microblog está ocupado. Inténtalo de nuevo.');
-    try {
-        $posts = microblog_load();
-        $result = $change($posts);
-        $json = json_encode(['posts' => array_values($posts)], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-        $temporary = @tempnam($dir, '.posts-');
-        if ($json === false || $temporary === false || @file_put_contents($temporary, $json) !== strlen($json)) {
-            if (is_string($temporary)) @unlink($temporary);
-            throw new RuntimeException('No se pudo guardar el microblog.');
-        }
-        @chmod($temporary, 0640);
-        if (!@rename($temporary, microblog_file())) {
-            @unlink($temporary);
-            throw new RuntimeException('No se pudo guardar el microblog.');
-        }
-        return $result;
-    } finally {
-        flock($lock, LOCK_UN);
-        fclose($lock);
-    }
+    return microblog_repository()->mutate($change);
 }
 
 // =============================================================================
@@ -494,33 +444,46 @@ function microblog_delete(string $id): int
 
 function microblog_find(string $id): ?array
 {
-    return microblog_load()[$id] ?? null;
+    return microblog_repository()->find($id);
 }
 
 /** Posts raíz: el fijado primero y después del más reciente al más antiguo. */
 function microblog_roots(array $posts): array
 {
-    // Se invierte antes de ordenar: usort es estable, así que con la misma hora gana el último creado.
-    $roots = array_reverse(array_values(array_filter($posts, static fn(array $post): bool => $post['parent'] === null)));
-    usort($roots, static fn(array $a, array $b): int => ($b['pinned'] <=> $a['pinned']) ?: ($b['created'] <=> $a['created']));
-    return $roots;
+    return \Kcg\Modules\Microblog\Posts::roots($posts);
 }
 
 /** Respuestas de un post raíz, en orden cronológico (el hilo se lee de arriba abajo). */
 function microblog_replies(array $posts, string $rootId): array
 {
-    $replies = array_values(array_filter($posts, static fn(array $post): bool => $post['parent'] === $rootId));
-    usort($replies, static fn(array $a, array $b): int => $a['created'] <=> $b['created']);
-    return $replies;
+    return \Kcg\Modules\Microblog\Posts::replies($posts, $rootId);
+}
+
+/** Una página de la portada ya pintada, leída de la base de datos: ['html', 'next', 'total']. */
+function microblog_feed(int $offset = 0, int $size = MICROBLOG_PAGE_SIZE): array
+{
+    $offset = max(0, $offset);
+    $feed = microblog_repository()->publicFeed($offset, $size, time());
+    $html = '';
+    foreach ($feed['roots'] as $root) {
+        $html .= microblog_render_thread($root, $feed['replies'][$root['id']] ?? [], ['replyLimit' => MICROBLOG_FEED_REPLIES]);
+    }
+    return ['html' => $html, 'next' => $offset + $size < $feed['total'] ? $offset + $size : null, 'total' => $feed['total']];
+}
+
+/** Hilo público a partir del id de cualquiera de sus posts: ['post', 'root', 'replies'] o null. */
+function microblog_thread(string $id): ?array
+{
+    return microblog_valid_id($id) ? microblog_repository()->publicThread($id, time()) : null;
 }
 
 /** Entradas para sitemap.xml: los posts raíz públicos, cada uno con su hilo. */
 function microblog_sitemap_entries(string $siteUrl): array
 {
-    $posts = microblog_load_public();
+    $feed = microblog_repository()->publicFeed(0, PHP_INT_MAX, time());
     $entries = [];
-    foreach (microblog_roots($posts) as $root) {
-        $last = max(array_merge([$root['updated'], $root['created']], array_column(microblog_replies($posts, $root['id']), 'created')));
+    foreach ($feed['roots'] as $root) {
+        $last = max(array_merge([$root['updated'], $root['created']], array_column($feed['replies'][$root['id']] ?? [], 'created')));
         $entries[] = ['loc' => $siteUrl . microblog_permalink($root), 'lastmod' => microblog_format_time('c', $last)];
     }
     return $entries;
@@ -675,7 +638,7 @@ function microblog_render_entry(array $post, array $options = []): string
     if (!$isReply && $post['level'] === 2) $label = ['spark', 'Súper destacado'];
 
     $html = '<div class="mb-entry' . ($isReply ? ' mb-entry--reply' : '') . (!empty($options['last']) ? ' is-last' : '') . '" id="mb-' . $post['id'] . '">'
-        . '<div class="mb-rail"><img class="mb-avatar" src="' . microblog_e(site_media_url('profile_image')) . '" alt="" width="44" height="44" loading="lazy"></div>'
+        . '<div class="mb-rail"><img class="mb-avatar" src="' . microblog_e(site_media_src('profile_image')) . '" alt="" width="44" height="44" loading="lazy"></div>'
         . '<div class="mb-main"><header class="mb-head"><strong class="mb-name">' . microblog_e($name) . '</strong>'
         . '<span class="mb-handle">' . microblog_e($handle) . '</span>'
         . '<a class="mb-date" href="' . microblog_e($permalink) . '"><time datetime="' . microblog_format_time('c', $post['created']) . '">' . microblog_e(microblog_date($post['created'])) . '</time></a>'
@@ -720,7 +683,7 @@ function microblog_render_thread(array $root, array $replies, array $options = [
     return $html . '</article>';
 }
 
-/** HTML de una página de la portada: los hilos desde `$offset` y el siguiente desplazamiento (o null). */
+/** HTML de una página de la portada a partir de una lista de posts en memoria (la web usa microblog_feed(), que lee solo la página). */
 function microblog_render_feed_page(array $posts, int $offset, int $size = MICROBLOG_PAGE_SIZE): array
 {
     $roots = microblog_roots($posts);

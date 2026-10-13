@@ -1,0 +1,79 @@
+/* =========================================================
+   Galería fotográfica de autor
+   Diseño masonry oscuro cinematográfico
+   ========================================================= */
+
+:root {
+    --bg: #0a0a0a;
+    --bg-soft: #131313;
+    --bg-card: #181818;
+    --fg: #f3f0ea;
+    --fg-soft: rgba(243, 240, 234, 0.65);
+    --fg-dim: rgba(243, 240, 234, 0.35);
+    --accent: #d4a574;
+    --accent-soft: rgba(212, 165, 116, 0.15);
+    --line: rgba(243, 240, 234, 0.08);
+
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans:  'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+    --col-gap: 1rem;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    touch-action: pan-x pan-y;
+    width: 100%;
+    max-width: 100%;
+}
+
+body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--sans);
+    font-weight: 300;
+    line-height: 1.6;
+    overflow-x: hidden;
+    touch-action: pan-x pan-y;
+    width: 100%;
+    max-width: 100%;
+    min-width: 320px;
+    overscroll-behavior-x: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    /* Disuasión de descarga: sin menú al mantener pulsado (iOS), sin arrastrar, sin selección */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+}
+
+::selection {
+    background: var(--accent);
+    color: var(--bg);
+}
+

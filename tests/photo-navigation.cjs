@@ -70,7 +70,7 @@ function testImage() {
         };
         const title = async (page, expected) => {
             assert.equal(await page.locator('.photo-detail__title').textContent(), expected);
-            assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), `https://example.com/foto/${expected}`);
+            assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), `https://davidjimenezllanes.es/foto/${expected}`);
             assert.equal(await page.locator('.photo-detail__desc').textContent(), `Description ${expected}`);
         };
         const waitPhoto = async (page, slug) => {

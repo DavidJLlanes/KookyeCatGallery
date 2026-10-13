@@ -1,0 +1,21 @@
+/* Cabecera «newsroom» (desktop): Newsroom / typographic newspaper. Se carga solo si es la elegida (themes/headers-desktop/newsroom.php). */
+@media(min-width:769px){
+/* 08 · Newsroom / typographic newspaper */
+body[data-header-desktop="newsroom"][data-palette="current"]{--bg:#f3eddc;--bg-soft:#fff8e8;--bg-card:#e5dcc8;--fg:#181a17;--fg-dim:#4f4b43;--fg-soft:#484945;--accent:#de3f1e;--line:#181a1750;--serif:Georgia,serif;background:var(--bg);color:var(--fg)}
+body[data-header-desktop="newsroom"] .hero{min-height:70vh;height:auto;padding:7rem 3vw 5rem;background:var(--bg)!important;border-top:16px solid var(--accent);border-bottom:5px double var(--fg)}
+body[data-header-desktop="newsroom"] .hero__content{width:100%;max-width:none;text-align:left}
+body[data-header-desktop="newsroom"] .hero__eyebrow{display:block;border-block:2px solid var(--fg);padding:.6rem 0;font:700 .8rem var(--sans);letter-spacing:.22em}
+body[data-header-desktop="newsroom"] .hero__title{font:900 clamp(6rem,13vw,16rem)/.73 Georgia,serif;letter-spacing:-.105em;text-transform:uppercase;margin:3rem 0}
+body[data-header-desktop="newsroom"] .hero__title-line{display:block;color:var(--fg)!important;-webkit-text-fill-color:var(--fg)!important}
+body[data-header-desktop="newsroom"] .hero__title-line--accent{color:var(--accent)!important;-webkit-text-fill-color:var(--accent)!important}
+body[data-header-desktop="newsroom"] .hero__crest{position:absolute;right:3vw;top:6rem;filter:grayscale(1)}
+body[data-header-desktop="newsroom"] .hero__divider,body[data-header-desktop="newsroom"] .hero__ornament,body[data-header-desktop="newsroom"] .hero__glow{display:none}
+body[data-header-desktop="newsroom"] .hero__meta{justify-content:flex-start;font-weight:700}
+body[data-header-desktop="newsroom"] .gallery-section{background:var(--bg);padding:3rem 3vw}
+body[data-header-desktop="newsroom"] .gallery-intro{text-align:left;margin-bottom:2rem;padding-bottom:1rem;border-bottom:4px double var(--fg)}
+body[data-header-desktop="newsroom"] .gallery-intro__title{font:900 clamp(3rem,6vw,6rem)/.9 Georgia,serif;text-transform:uppercase;color:var(--fg)}
+body[data-header-desktop="newsroom"] #masonry{--col-gap:1.4rem}
+body[data-header-desktop="newsroom"] #masonry .card{overflow:visible;padding:0 0 1.2rem!important;border-bottom:3px solid var(--fg)}
+body[data-header-desktop="newsroom"] #masonry .card__picture{border-radius:0!important;filter:contrast(1.08)}
+body[data-header-desktop="newsroom"] .project{background:var(--bg-soft)!important;color:var(--fg);border-top:5px double var(--fg)}
+}

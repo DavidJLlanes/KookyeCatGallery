@@ -1,223 +1,61 @@
 <?php
 declare(strict_types=1);
 
+use Kcg\Core\Settings\Schema;
+use Kcg\Core\Settings\Store;
+use Kcg\Core\Settings\Validator;
+
 /**
- * Configuración del sitio: ajustes de diseño, bloques de la portada, textos y páginas editables.
+ * Ajustes del sitio. La lógica vive en core/Settings/ (esquema, validación, almacén y migraciones); este archivo
+ * conserva las funciones de siempre como puerta de entrada, más lo que aún es específico de la web pública
+ * (atributos del <body>, CSS de la paleta, textos para el JS).
  *
- * Índice:
- *   1. Almacenamiento y opciones de diseño
- *   2. Bloques de la portada (orden y visibilidad)
- *   3. Valores por defecto y textos editables
- *   4. Validación y guardado
- *   5. Textos del sitio
- *   6. Páginas de texto editables
- *   7. Salida para la web pública
- *   (formularios del panel: inc/site-settings-form.php)
- *   (galerías premium: inc/premium-galleries.php)
+ * Archivos hermanos (todos se cargan desde aquí):
+ *   inc/site-sections.php       bloques de la portada: definiciones, interruptores y orden
+ *   inc/site-text-api.php       textos editables: catálogo y lectura por clave
+ *   inc/site-pages.php          páginas de texto editables
+ *   inc/gallery-collections.php colecciones de la galería
+ *   inc/site-settings-form.php  formularios del panel
+ *   inc/premium-galleries.php   galerías premium
  */
 
-require_once __DIR__ . '/private-storage.php';
+require_once dirname(__DIR__) . '/core/bootstrap.php';
 require_once __DIR__ . '/premium-galleries.php';
 require_once __DIR__ . '/gallery-capabilities.php';
 require_once __DIR__ . '/template-texts.php';
 require_once __DIR__ . '/site-brand-assets.php';
 require_once __DIR__ . '/site-typography.php';
-
-// =============================================================================
-// 1. ALMACENAMIENTO Y OPCIONES DE DISEÑO
-// =============================================================================
+require_once __DIR__ . '/site-sections.php';
+require_once __DIR__ . '/site-text-api.php';
+require_once __DIR__ . '/site-pages.php';
+require_once __DIR__ . '/gallery-collections.php';
+require_once __DIR__ . '/site-assets.php';
 
 /**
- * Ruta del JSON de configuración. Está fuera del directorio público y de los archivos desplegados
- * (como upload-auth.php), así que un despliegue no la pisa.
+ * Carpeta de la configuración privada (variable SITE_CONFIG_DIR; sin ella, la del VPS). Ver Store::configDir().
+ */
+function site_config_dir(): string
+{
+    return Store::configDir();
+}
+
+/**
+ * Ruta del JSON de configuración.
  */
 function site_settings_path(): string
 {
-    return rtrim(gallery_private_directory(), '/\\') . DIRECTORY_SEPARATOR . 'site-settings.json';
-}
-
-/**
- * Metadatos públicos de colecciones, almacenados en la configuración privada.
- */
-function gallery_collections_path(): string
-{
-    return rtrim(gallery_private_directory(), '/\\') . DIRECTORY_SEPARATOR . 'collections.json';
-}
-
-function gallery_collections_load(): array
-{
-    $path = gallery_collections_path();
-    if (!is_file($path)) return [];
-    $raw = @file_get_contents($path);
-    $decoded = is_string($raw) ? json_decode($raw, true) : null;
-    if (!is_array($decoded)) return [];
-    $out = [];
-    foreach ($decoded as $name => $data) {
-        if (!is_string($name) || !is_array($data)) continue;
-        $name = trim($name);
-        $description = trim((string) ($data['description'] ?? ''));
-        $cover = trim((string) ($data['cover'] ?? ''));
-        if ($name === '' || mb_strlen($name, 'UTF-8') > 64
-            || mb_strlen($description, 'UTF-8') > 280
-            || preg_match('/[\\x00-\\x1F\\x7F]/u', $name . $description)
-            || ($cover !== '' && (basename($cover) !== $cover || !preg_match('/\\.(?:jpe?g|png)$/i', $cover)))) { continue; }
-        $out[$name] = ['description' => $description, 'cover' => $cover, 'manual' => !empty($data['manual'])];
-    }
-    return $out;
-}
-
-function gallery_collection_save(string $name, string $description, string $cover, array $photos): void
-{
-    $name = trim($name);
-    $description = trim($description);
-    $cover = trim($cover);
-    if ($name === '' || mb_strlen($name, 'UTF-8') > 64
-        || mb_strlen($description, 'UTF-8') > 280
-        || preg_match('/[\\x00-\\x1F\\x7F]/u', $name . $description)) {
-        throw new RuntimeException('Revisa el nombre y la descripción de la colección.');
-    }
-    if ($cover !== '') {
-        $validCover = false;
-        foreach ($photos as $photo) {
-            $photoCategory = trim((string) ($photo['category'] ?? ''));
-            if (($photoCategory !== '' ? $photoCategory : 'Sin categoría') === $name
-                && hash_equals((string) ($photo['filename'] ?? ''), $cover)) {
-                $validCover = managedPhotoPath($cover) !== null;
-                break;
-            }
-        }
-        if (!$validCover) throw new RuntimeException('La portada debe ser una fotografía de esta colección.');
-    }
-    $collections = gallery_collections_load();
-    $manual = !empty($collections[$name]['manual']);
-    $collections[$name] = ['description' => $description, 'cover' => $cover, 'manual' => $manual];
-    gallery_collections_write($collections);
-}
-
-function gallery_collection_create(string $name): void
-{
-    $name = trim($name);
-    if ($name === '' || mb_strlen($name, 'UTF-8') > 64 || preg_match('/[\\x00-\\x1F\\x7F]/u', $name)) {
-        throw new RuntimeException('Escribe un nombre de categoría válido (hasta 64 caracteres).');
-    }
-    $collections = gallery_collections_load();
-    if (isset($collections[$name])) throw new RuntimeException('Ya existe una categoría con ese nombre.');
-    $collections[$name] = ['description' => '', 'cover' => '', 'manual' => true];
-    gallery_collections_write($collections);
-}
-
-function gallery_collection_delete_empty(string $name, array $photos): void
-{
-    $name = trim($name);
-    foreach ($photos as $photo) {
-        $category = trim((string) ($photo['category'] ?? ''));
-        if (($category !== '' ? $category : 'Sin categoría') === $name) {
-            throw new RuntimeException('La categoría ya tiene fotografías y no se puede eliminar desde aquí.');
-        }
-    }
-    $collections = gallery_collections_load();
-    if (!isset($collections[$name]) || empty($collections[$name]['manual'])) {
-        throw new RuntimeException('No se encontró una categoría vacía para eliminar.');
-    }
-    unset($collections[$name]);
-    gallery_collections_write($collections);
-}
-
-function gallery_collections_write(array $collections): void
-{
-    $path = gallery_collections_path();
-    $directory = dirname($path);
-    if (!is_dir($directory) && !@mkdir($directory, 0750, true) && !is_dir($directory)) {
-        throw new RuntimeException('No se pudo crear la carpeta privada de configuración.');
-    }
-    $json = json_encode($collections, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
-    $temporary = tempnam($directory, '.collections-');
-    if ($temporary === false) throw new RuntimeException('No se pudo preparar el guardado de colecciones.');
-    try {
-        if (file_put_contents($temporary, $json . "\n", LOCK_EX) === false || !@chmod($temporary, 0640) || is_link($path) || !@rename($temporary, $path)) {
-            throw new RuntimeException('No se pudieron guardar los datos de las colecciones.');
-        }
-    } finally {
-        if (is_file($temporary)) @unlink($temporary);
-    }
-}
-
-/**
- * Conserva metadatos válidos tras renombrar o eliminar una categoría.
- */
-function gallery_collections_sync_categories(array $photos): void
-{
-    $present = [];
-    foreach ($photos as $photo) {
-        $name = trim((string) ($photo['category'] ?? ''));
-        $present[$name !== '' ? $name : 'Sin categoría'] = true;
-    }
-    $collections = gallery_collections_load();
-    $changed = false;
-    foreach ($collections as $name => $data) {
-        if (!isset($present[$name])) {
-            if (empty($data['manual'])) {
-                unset($collections[$name]);
-                $changed = true;
-            } elseif (($data['cover'] ?? '') !== '') {
-                $collections[$name]['cover'] = '';
-                $changed = true;
-            }
-            continue;
-        }
-        if (($data['cover'] ?? '') !== '') {
-            $coverFound = false;
-            foreach ($photos as $photo) {
-                $photoCategory = trim((string) ($photo['category'] ?? ''));
-                if (($photoCategory !== '' ? $photoCategory : 'Sin categoría') === $name
-                    && ($photo['filename'] ?? '') === $data['cover']) {
-                    $coverFound = true;
-                    break;
-                }
-            }
-            if (!$coverFound) {
-                $collections[$name]['cover'] = '';
-                $changed = true;
-            }
-        }
-    }
-    foreach (array_keys($present) as $name) {
-        if (!isset($collections[$name])) {
-            $collections[$name] = ['description' => '', 'cover' => ''];
-            $changed = true;
-        }
-    }
-    if ($changed) gallery_collections_write($collections);
+    return Store::path();
 }
 
 /**
  * Opciones permitidas para cada ajuste de diseño: clave => [valor => etiqueta]. Es la lista blanca
- * que usa site_settings_validate().
+ * que usa site_settings_validate(). Sale del esquema (core/Settings/Schema.php).
  */
 function site_design_choices(): array
 {
-    return [
-        'font_pair' => array_map(static fn(array $pair): string => $pair['name'], site_font_pairs()),
-        'palette' => ['current' => 'Elegante', 'black' => 'Noche · negro y blanco', 'white' => 'Luz · blanco y tinta', 'cyberpunk' => 'Cyberpunk · neón', 'japanese' => 'Japón · papel y carmesí', 'forest' => 'Bosque · verde y marfil', 'ocean' => 'Océano · azul profundo y turquesa'],
-        'grid' => ['adaptive' => 'Según el diseño', 'square' => 'Cuadrada', 'landscape' => 'Horizontal · 4:3', 'portrait' => 'Vertical · 3:4'],
-        'header_mobile' => ['current' => 'Perfil social', 'centered' => 'Retrato centrado', 'compact' => 'Compacta', 'editorial' => 'Editorial',
-            'reel' => 'Cine · tira de película', 'atlas' => 'Atlas · cuaderno cartográfico', 'studio' => 'Estudio · retícula suiza',
-            'orbit' => 'Órbita · cielo 3D', 'scrapbook' => 'Álbum · recortes y postales'],
-        'header_desktop' => ['current' => 'Tipográfica', 'centered' => 'Retrato centrado', 'compact' => 'Compacta', 'editorial' => 'Editorial',
-            'museum' => 'Museo · galería blanca', 'observatory' => 'Observatorio · constelación 3D', 'newsroom' => 'Periódico · portada de autor',
-            'noir' => 'Noir · estreno de cine', 'blueprint' => 'Plano · archivo técnico'],
-        'gallery_mobile' => ['standard' => 'Masonry · alturas naturales', 'grid' => 'Cuadrícula', 'mosaic' => 'Mosaico cromático', 'asymmetric' => 'Editorial asimétrica', 'category-rails' => 'Filas por categoría', 'scattered' => 'Álbum desordenado', 'exhibition' => 'Sala de exposición', 'contact-sheet' => 'Hoja de contactos', 'narrative' => 'Secuencia narrativa', 'triptych' => 'Trípticos'],
-        'gallery_desktop' => ['standard' => 'Masonry · alturas naturales', 'grid' => 'Cuadrícula', 'mosaic' => 'Mosaico cromático', 'asymmetric' => 'Editorial asimétrica', 'category-rails' => 'Filas por categoría', 'scattered' => 'Álbum desordenado', 'exhibition' => 'Sala de exposición', 'contact-sheet' => 'Hoja de contactos', 'narrative' => 'Secuencia narrativa', 'triptych' => 'Trípticos'],
-        'pagination_shape' => ['circle' => 'Círculos', 'square' => 'Cuadrados'],
-        'gallery_premium' => site_premium_gallery_choices(),
-        'hover' => ['soft' => 'Suave', 'zoom' => 'Acercamiento', 'lift' => 'Elevación', 'reveal' => 'Revelado', 'tint' => 'Virado de color', 'frame' => 'Marco luminoso', 'slide' => 'Desplazamiento', 'tilt' => 'Perspectiva', 'focus' => 'Enfoque', 'shine' => 'Destello'],
-    ];
+    return Schema::choices();
 }
 
-/**
- * Fotos visibles a la vez por pantalla (0 = todas). Es independiente del número de columnas; main.js
- * pagina con este valor.
- */
 /**
  * Diseños estándar que aplican la proporción elegida en «Tipo de cuadrícula».
  * Las dos galerías (móvil y escritorio) comparten el mismo ajuste, por eso basta
@@ -233,68 +71,14 @@ function site_grid_setting_is_used(array $settings): bool
     return site_gallery_control_enabled('grid', $settings);
 }
 
+/**
+ * Fotos visibles a la vez por pantalla (0 = todas). Es independiente del número de columnas; main.js
+ * pagina con este valor.
+ */
 function site_photos_per_view_choices(): array
 {
     return [6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 36, 40, 50, 60, 100, 0];
 }
-
-// =============================================================================
-// 2. BLOQUES DE LA PORTADA
-// =============================================================================
-
-/**
- * Bloques reordenables de la portada, en su orden por defecto. Cada uno tiene su archivo en
- * inc/blocks/ (ver inc/page-blocks.php).
- * label: nombre en el panel · hint: ayuda · toggle: ajuste `show_*` que lo activa (null = siempre visible).
- */
-function site_section_definitions(): array
-{
-    return [
-        'categories' => ['label' => 'Categorías', 'hint' => 'Filtro por categorías', 'toggle' => 'show_categories'],
-        'gallery' => ['label' => 'Bloque de galería', 'hint' => 'Fotos, buscador y presentación', 'toggle' => null],
-        'map' => ['label' => 'Mapa', 'hint' => 'Mapa de ubicaciones', 'toggle' => 'show_map'],
-        'project' => ['label' => '«El proyecto»', 'hint' => 'Texto y retrato del proyecto', 'toggle' => 'show_project'],
-        'microblog' => ['label' => 'Microblog', 'hint' => 'Feed de notas, citas, enlaces e imágenes', 'toggle' => 'show_microblog'],
-        'social' => ['label' => 'Redes Sociales', 'hint' => 'Perfiles y enlaces sociales', 'toggle' => 'show_social'],
-    ];
-}
-
-/**
- * Nombres de los bloques reordenables (clave => etiqueta).
- */
-function site_section_labels(): array
-{
-    return array_map(static fn(array $definition): string => $definition['label'], site_section_definitions());
-}
-
-/**
- * Ajustes de tipo interruptor (true/false): el de cada bloque que se puede ocultar más los de las
- * dos cabeceras. Los usan la validación y los atributos del <body>, así que añadir un bloque nuevo
- * con `toggle` en site_section_definitions() basta para que se valide y llegue al CSS.
- */
-function site_toggle_keys(): array
-{
-    $keys = array_values(array_filter(array_column(site_section_definitions(), 'toggle')));
-    return array_merge($keys, ['show_header_mobile', 'show_header_desktop']);
-}
-
-/**
- * Normaliza `section_order`: descarta claves desconocidas o repetidas y añade al final las que
- * falten, para que siempre estén todos los bloques.
- */
-function site_section_order_normalize(mixed $order): array
-{
-    $known = array_keys(site_section_labels());
-    $result = [];
-    foreach (is_array($order) ? $order : [] as $key) {
-        if (is_string($key) && in_array($key, $known, true) && !in_array($key, $result, true)) $result[] = $key;
-    }
-    return array_merge($result, array_values(array_diff($known, $result)));
-}
-
-// =============================================================================
-// 3. VALORES POR DEFECTO Y TEXTOS EDITABLES
-// =============================================================================
 
 /**
  * Redes disponibles en el editor y en la portada. Instagram y Threads conservan sus marcas CSS actuales.
@@ -307,95 +91,13 @@ function site_social_networks(): array
 }
 
 /**
- * Valores iniciales de todos los ajustes. Un archivo antiguo al que le falte una clave hereda estos
- * valores.
+ * Valores iniciales de todos los ajustes. Un archivo antiguo al que le falte una clave hereda estos valores.
  */
 function site_settings_defaults(): array
 {
-    return ['palette' => 'current', 'font_pair' => 'classic', 'grid' => 'adaptive', 'columns_mobile' => 3,
-        'columns_desktop' => 3, 'photos_mobile' => 12, 'photos_desktop' => 20, 'header_mobile' => 'current', 'header_desktop' => 'current',
-        'gallery_mobile' => 'standard', 'gallery_desktop' => 'standard', 'hover' => 'soft', 'pagination_shape' => 'circle', 'gallery_premium' => 'none', 'site_title' => '',
-        'section_order' => array_keys(site_section_labels()), 'show_header_mobile' => true, 'show_header_desktop' => true,
-        'show_categories' => true, 'show_map' => false, 'show_project' => true, 'show_microblog' => false, 'show_social' => false,
-        'texts' => [], 'pages' => [], 'profile_image' => '/profile-placeholder.svg', 'logo_image' => '/favicon.svg',
-        'profile_website_url' => 'https://example.com',
-        'social_links' => []];
+    return Schema::defaults();
 }
 
-/**
- * Claves de texto que se editan en «Textos» o pertenecen a las plantillas elegidas.
- */
-function site_editable_text_keys(): array
-{
-    $keys = [
-        'admin_area_name',
-        'text_30170303c506cf6c',
-        'text_318bb1fc64a6e036',
-        'text_4577bab0d9627af1',
-        'text_2e2b80d871481edc',
-        'text_54b7645201863e32',
-        'text_7e6debbd1dab03b1',
-        'text_bdd8f61b94c52379',
-        'text_49a006d539216e16',
-        'text_ab3ceef210237f9d',
-        'text_6d1f0b7e2a4c9853',
-        'text_b3e82f5a7c10d946',
-    ];
-    foreach (site_template_text_groups() as $group) {
-        array_push($keys, ...array_keys($group['fields']));
-    }
-    return array_values(array_unique($keys));
-}
-
-/**
- * Etiqueta que se muestra en el panel para cada texto editable.
- */
-function site_admin_text_labels(): array
-{
-    return [
-        'admin_area_name' => 'Nombre que aparece en el área privada',
-        'text_30170303c506cf6c' => 'Nombre del fotógrafo o estudio',
-        'text_318bb1fc64a6e036' => 'Crédito del pie de página (después del año)',
-        'text_4577bab0d9627af1' => 'Nombre de usuario del perfil',
-        'text_2e2b80d871481edc' => 'Descripción principal',
-        'text_54b7645201863e32' => 'Descripción secundaria',
-        'text_7e6debbd1dab03b1' => 'Web de usuario',
-        'text_bdd8f61b94c52379' => 'Título de Redes Sociales',
-        'text_49a006d539216e16' => 'Subtítulo de Redes Sociales',
-        'text_ab3ceef210237f9d' => 'Texto de Redes Sociales',
-        'text_6d1f0b7e2a4c9853' => 'Rótulo pequeño del Microblog',
-        'text_b3e82f5a7c10d946' => 'Título del Microblog',
-    ];
-}
-
-/**
- * URL local de la imagen de perfil o del logo; si la ruta no es válida, devuelve la imagen por defecto.
- */
-function site_media_url(string $key): string
-{
-    $settings = site_settings_load();
-    $default = $key === 'logo_image' ? '/favicon.svg' : '/profile-placeholder.svg';
-    $value = (string) ($settings[$key] ?? $default);
-    return preg_match('~^/[a-zA-Z0-9._/-]+$~', $value) ? $value : $default;
-}
-
-/**
- * Catálogo de textos con su valor por defecto (inc/site-texts.php).
- */
-function site_text_catalog(): array
-{
-    static $catalog;
-    return $catalog ??= require __DIR__ . '/site-texts.php';
-}
-
-// =============================================================================
-// 4. VALIDACIÓN Y GUARDADO
-// =============================================================================
-
-/**
- * Valida y normaliza los ajustes recibidos (formulario o JSON). Lanza InvalidArgumentException si
- * algo no es válido; devuelve siempre un conjunto completo de ajustes.
- */
 /**
  * Cuenta caracteres UTF-8 sin exigir que mbstring esté instalado en el hosting.
  */
@@ -406,106 +108,13 @@ function site_utf8_length(string $value): int
     return $length === false ? PHP_INT_MAX : $length;
 }
 
+/**
+ * Valida y normaliza los ajustes recibidos (formulario o JSON). Lanza InvalidArgumentException si
+ * algo no es válido; devuelve siempre un conjunto completo de ajustes. Ver Validator.
+ */
 function site_settings_validate(array $input): array
 {
-    // The retired ratio name duplicated the Masonry gallery selector. Migrate saved configurations.
-    if (($input['grid'] ?? null) === 'masonry') $input['grid'] = 'adaptive';
-    $out = site_settings_defaults();
-    // Con una galería premium activa, sus campos ignorados llegan desactivados (no se envían): se dejan como estén.
-    $premiumOn = isset($input['gallery_premium']) && is_string($input['gallery_premium']) && $input['gallery_premium'] !== 'none';
-    $ignored = $premiumOn ? site_premium_ignored_settings($input['gallery_premium']) : [];
-    foreach (site_design_choices() as $key => $choices) {
-        if (in_array($key, $ignored, true) && !isset($input[$key])) continue;
-        if (!isset($input[$key]) || !is_string($input[$key]) || !isset($choices[$input[$key]])) {
-            throw new InvalidArgumentException('Selecciona una opción válida para ' . $key . '.');
-        }
-        $out[$key] = $input[$key];
-    }
-    foreach (site_toggle_keys() as $key) {
-        $out[$key] = filter_var($input[$key] ?? false, FILTER_VALIDATE_BOOLEAN);
-    }
-    $out['section_order'] = site_section_order_normalize($input['section_order'] ?? null);
-    foreach (['columns_mobile' => 4, 'columns_desktop' => 10] as $key => $max) {
-        if (in_array($key, $ignored, true) && !isset($input[$key])) continue;
-        $value = filter_var($input[$key] ?? null, FILTER_VALIDATE_INT);
-        if ($value === false || $value < 1 || $value > $max) {
-            throw new InvalidArgumentException('El número de columnas debe estar entre 1 y ' . $max . '.');
-        }
-        $out[$key] = $value;
-    }
-    foreach (['photos_mobile', 'photos_desktop'] as $key) {
-        if (in_array($key, $ignored, true) && !isset($input[$key])) continue;
-        $value = filter_var($input[$key] ?? $out[$key], FILTER_VALIDATE_INT);
-        if ($value === false || !in_array($value, site_photos_per_view_choices(), true)) {
-            throw new InvalidArgumentException('Selecciona un número válido de fotos visibles.');
-        }
-        $out[$key] = $value;
-    }
-    // Título de la web: vacío = el de por defecto del catálogo de textos.
-    $title = trim((string) ($input['site_title'] ?? ''));
-    if (!preg_match('//u', $title) || preg_match('/[\x00-\x1F\x7F]/', $title) || site_utf8_length($title) > 80) {
-        throw new InvalidArgumentException('El título de la web no es válido (máximo 80 caracteres y sin saltos de línea).');
-    }
-    $out['site_title'] = $title === site_title_default() ? '' : $title;
-    if (!isset($input['texts']) || !is_array($input['texts'])) {
-        throw new InvalidArgumentException('Los textos no tienen un formato válido.');
-    }
-    foreach (site_editable_text_keys() as $key) {
-        $entry = site_text_catalog()[$key];
-        $value = $input['texts'][$key] ?? $entry['default'];
-        if (!is_string($value) || strlen($value) > 20000 || !preg_match('//u', $value)) {
-            throw new InvalidArgumentException('Hay un texto inválido o demasiado largo.');
-        }
-        if ($key === 'admin_area_name' && (site_utf8_length($value) > 120 || preg_match('/[\\x00-\\x1F\\x7F]/u', $value))) {
-            throw new InvalidArgumentException('El nombre del área privada no puede superar 120 caracteres.');
-        }
-        if ($value !== $entry['default']) $out['texts'][$key] = $value;
-    }
-    $pages = $input['pages'] ?? [];
-    if (!is_array($pages)) throw new InvalidArgumentException('El contenido de las páginas no tiene un formato válido.');
-    foreach (site_editable_page_keys() as $key) {
-        if (!array_key_exists($key, $pages)) continue;
-        if (!is_string($pages[$key])) throw new InvalidArgumentException('El contenido de una página no es válido.');
-        $out['pages'][$key] = site_sanitize_page_html($pages[$key]);
-    }
-    foreach (['profile_image' => '/profile-placeholder.svg', 'logo_image' => '/favicon.svg'] as $key => $default) {
-        $value = (string) ($input[$key] ?? $default);
-        if (!preg_match('~^/[a-zA-Z0-9._/-]+$~', $value)) {
-            throw new InvalidArgumentException('La ruta de imagen no es válida.');
-        }
-        $out[$key] = $value;
-    }
-    $website = trim((string) ($input['profile_website_url'] ?? $out['profile_website_url']));
-    if ($website !== '' && (!filter_var($website, FILTER_VALIDATE_URL) || !preg_match('~^https://~i', $website))) {
-        throw new InvalidArgumentException('La dirección de la web personal debe empezar por https://.');
-    }
-    $out['profile_website_url'] = $website;
-    $allowedSocials = array_keys(site_social_networks());
-    $socialLinks = $input['social_links'] ?? [];
-    if (!is_array($socialLinks)) throw new InvalidArgumentException('Las redes sociales no tienen un formato válido.');
-    // Migra perfiles guardados antes del editor unificado. Las URLs de ejemplo no son perfiles reales.
-    $legacyProfiles = [
-        ['network'=>'instagram', 'url'=>(string) ($input['instagram_url'] ?? ''), 'handle'=>trim((string) ($input['texts']['text_3b20084d3d94b4ee'] ?? '')) ?: site_text_catalog()['text_3b20084d3d94b4ee']['default']],
-        ['network'=>'threads', 'url'=>(string) ($input['threads_url'] ?? ''), 'handle'=>trim((string) ($input['texts']['social_threads_user'] ?? '')) ?: site_text_catalog()['social_threads_user']['default']],
-    ];
-    $existingNetworks = array_map(static fn($row) => is_array($row) ? strtolower((string) ($row['network'] ?? '')) : '', $socialLinks);
-    $legacyProfiles = array_values(array_filter($legacyProfiles, static fn($row) =>
-        trim($row['url']) !== '' && trim($row['url']) !== 'https://example.com' && !in_array($row['network'], $existingNetworks, true)));
-    $socialLinks = array_merge($legacyProfiles, $socialLinks);
-    $out['social_links'] = [];
-    foreach ($socialLinks as $row) {
-        if (!is_array($row)) continue;
-        $network = strtolower(trim((string) ($row['network'] ?? '')));
-        $url = trim((string) ($row['url'] ?? ''));
-        $handle = trim((string) ($row['handle'] ?? ''));
-        if ($network === '' && $url === '' && $handle === '') continue;
-        if (!in_array($network, $allowedSocials, true)) throw new InvalidArgumentException('Selecciona una red social válida.');
-        if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('~^https://~i', $url)) throw new InvalidArgumentException('La URL de una red social no es válida.');
-        if (strlen($handle) > 120 || !preg_match('//u', $handle)) throw new InvalidArgumentException('El usuario de una red social no es válido.');
-        $out['social_links'][] = ['network' => $network, 'url' => $url, 'handle' => $handle];
-        if (count($out['social_links']) >= 12) break;
-    }
-    return $out;
+    return Validator::validate($input);
 }
 
 /**
@@ -513,21 +122,7 @@ function site_settings_validate(array $input): array
  */
 function site_settings_load(?string $path = null): array
 {
-    $path ??= site_settings_path();
-    $settings = site_settings_defaults();
-    if (!is_file($path)) return $settings;
-    $raw = @file_get_contents($path);
-    $decoded = is_string($raw) ? json_decode($raw, true) : null;
-    if (!is_array($decoded)) return $settings;
-    foreach (['gallery_mobile', 'gallery_desktop'] as $key) {
-        if (in_array($decoded[$key] ?? '', ['immersive', 'art-walk'], true)) $decoded[$key] = 'standard';
-    }
-    try {
-        $settings = site_settings_validate(array_replace($settings, $decoded));
-    } catch (InvalidArgumentException $error) {
-        error_log('Invalid site settings: ' . $error->getMessage());
-    }
-    return $settings;
+    return Store::load($path);
 }
 
 /**
@@ -536,218 +131,12 @@ function site_settings_load(?string $path = null): array
  */
 function site_settings_save(array $input, ?string $path = null): void
 {
-    $path ??= site_settings_path();
-    if (is_file($path)) $input = site_gallery_preserve_inactive($input, site_settings_load($path));
-    $settings = site_settings_validate($input);
-    $directory = dirname($path);
-    if (!is_dir($directory) && !@mkdir($directory, 0750, true) && !is_dir($directory)) {
-        throw new RuntimeException('No se pudo crear la carpeta de configuración.');
-    }
-    $json = json_encode($settings, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
-    $temporary = tempnam($directory, '.site-settings-');
-    if ($temporary === false) throw new RuntimeException('No se pudo preparar el guardado.');
-    try {
-        if (file_put_contents($temporary, $json . "\n", LOCK_EX) === false || !chmod($temporary, 0640) || !rename($temporary, $path)) {
-            throw new RuntimeException('No se pudo guardar la configuración. Comprueba los permisos de la carpeta config.');
-        }
-    } finally {
-        if (is_file($temporary)) unlink($temporary);
-    }
+    Store::save($input, $path);
 }
-
-// =============================================================================
-// 5. TEXTOS DEL SITIO
-// =============================================================================
-
-/**
- * Texto editable por clave: el guardado en los ajustes o, si no hay, el valor por defecto del catálogo.
- */
-function site_text(string $key): string
-{
-    static $settings;
-    $settings ??= site_settings_load();
-    if (isset($settings['texts'][$key])) return $settings['texts'][$key];
-    // El nombre público sigue el mismo resolver que el panel y la marca móvil.
-    if ($key === 'text_52179dc42df7efe5') return site_title();
-    $default = site_text_catalog()[$key]['default'] ?? '';
-    // Los textos por defecto que mencionan el título siguen el nombre actual del sitio.
-    return str_replace(site_title_default(), site_title(), $default);
-}
-
-/**
- * Título original de la web: el valor por defecto del texto «nombre del sitio» del catálogo.
- */
-function site_title_default(): string
-{
-    return site_text_catalog()['text_52179dc42df7efe5']['default'];
-}
-
-/**
- * Título actual de la web (ajuste «Título de la web»). Se usa en cabeceras, pie, <title>, textos
- * accesibles y en el panel.
- */
-function site_title(): string
-{
-    $settings = site_settings_load();
-    $catalog = site_text_catalog();
-    $storedTitle = trim((string) ($settings['site_title'] ?? ''));
-    $customName = trim((string) ($settings['texts']['text_52179dc42df7efe5'] ?? ''));
-    if ($customName !== '') return $customName;
-
-    // Si se personalizó el encabezado en dos líneas, úsalo también como nombre de marca.
-    // Lee los valores directamente para evitar una dependencia circular.
-    $textValues = is_array($settings['texts'] ?? null) ? $settings['texts'] : [];
-    $firstLine = trim((string) ($textValues['text_cbbba360eb60dd04'] ?? $catalog['text_cbbba360eb60dd04']['default'] ?? ''));
-    $secondLine = trim((string) ($textValues['text_2c1ac3057629f681'] ?? $catalog['text_2c1ac3057629f681']['default'] ?? ''));
-    $headline = trim($firstLine . ' ' . $secondLine);
-    $defaultHeadline = trim(
-        (string) ($catalog['text_cbbba360eb60dd04']['default'] ?? '') . ' ' .
-        (string) ($catalog['text_2c1ac3057629f681']['default'] ?? '')
-    );
-    if ($headline !== '' && $headline !== $defaultHeadline
-        && ($storedTitle === '' || $storedTitle === site_title_default())) {
-        return $headline;
-    }
-
-    return $storedTitle !== '' ? $storedTitle : site_title_default();
-}
-
-/**
- * Igual que site_text(), escapado para usarlo dentro de HTML.
- */
-function site_text_html(string $key): string
-{
-    return htmlspecialchars(site_text($key), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-}
-
-/** Textos que se pueden editar desde la web por el administrador autenticado. */
-function site_inline_editable_text_keys(): array
-{
-    return site_editable_text_keys();
-}
-
-/** Valores autorizados para localizar también los textos de plantilla sin cambiar su marcado. */
-function site_inline_text_values(): array
-{
-    $values = [];
-    foreach (site_inline_editable_text_keys() as $key) {
-        $values[$key] = ['value' => site_text($key), 'label' => site_inline_text_label($key)];
-    }
-    return $values;
-}
-
-/** Rótulo editable del nombre de la web, guardado como ajuste de marca y no como texto suelto. */
-function site_inline_setting_html(string $key): string
-{
-    if ($key !== 'site_title') return '';
-    $value = site_title();
-    $escape = static fn(string $text): string => htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    if (empty($GLOBALS['siteInlineEditorEnabled'])) return $escape($value);
-    return '<span class="inline-edit-text" data-inline-edit-key="site_title" data-inline-edit-label="Título de la web">' . $escape($value) . '</span>';
-}
-
-function site_inline_text_label(string $key): string
-{
-    $labels = site_admin_text_labels();
-    if (isset($labels[$key])) return $labels[$key];
-    foreach (site_template_text_groups() as $group) {
-        if (isset($group['fields'][$key])) return $group['fields'][$key];
-    }
-    return (string) (site_text_catalog()[$key]['group'] ?? 'Texto');
-}
-
-function site_inline_text_html(string $key, bool $preserveLineBreaks = false): string
-{
-    $raw = site_text($key);
-    $escape = static fn(string $text): string => htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    $value = $preserveLineBreaks ? nl2br($escape($raw), false) : $escape($raw);
-    if (empty($GLOBALS['siteInlineEditorEnabled']) || !in_array($key, site_inline_editable_text_keys(), true)) return $value;
-    return '<span class="inline-edit-text" data-inline-edit-key="' . $escape($key) . '" data-inline-edit-label="' . $escape(site_inline_text_label($key)) . '">' . $value . '</span>';
-}
-
-// =============================================================================
-// 6. PÁGINAS DE TEXTO EDITABLES
-// =============================================================================
-
-/**
- * Páginas cuyo contenido se edita en el panel.
- */
-function site_editable_page_keys(): array
-{
-    return ['legal_notice', 'privacy_policy', 'cookies_policy', 'project'];
-}
-
-/**
- * Nombre de cada página editable.
- */
-function site_page_labels(): array
-{
-    return ['legal_notice' => 'Aviso legal', 'privacy_policy' => 'Política de privacidad',
-        'cookies_policy' => 'Política de cookies', 'project' => 'El Proyecto'];
-}
-
-/**
- * Contenido por defecto de una página, construido con los textos del catálogo.
- */
-function site_page_default_html(string $page): string
-{
-    $content = [
-        'legal_notice' => '<h2>Información legal</h2><p>Configura aquí la identidad y los datos de contacto del responsable antes de publicar el sitio. Este texto es una plantilla de ejemplo y no constituye asesoramiento legal.</p>',
-        'privacy_policy' => '<h2>Privacidad</h2><p>Completa esta política con el responsable del tratamiento, los datos que recopila el sitio, sus finalidades, bases legales, conservación y derechos de las personas usuarias antes de publicarla.</p>',
-        'cookies_policy' => '<h2>Cookies y almacenamiento</h2><p>Describe aquí las cookies y tecnologías de almacenamiento que utiliza tu instalación, su finalidad, duración y cómo gestionar el consentimiento. Revisa este contenido antes de publicar.</p>',
-        'project' => '<p>Presenta aquí la galería, sus fotografías y las personas que la crean.</p>',
-    ];
-    return $content[$page] ?? '';
-}
-
-/**
- * Deja solo las etiquetas y atributos permitidos en el contenido de una página.
- */
-function site_sanitize_page_html(string $html): string
-{
-    if (strlen($html) > 100000 || !preg_match('//u', $html)) {
-        throw new InvalidArgumentException('El contenido de la página es demasiado largo o no es válido.');
-    }
-    $html = preg_replace('~<(script|style|iframe|object|svg|math)\b[^>]*>.*?(?:</\1\s*>|$)~is', '', $html) ?? '';
-    $allowed = ['p', 'div', 'br', 'h2', 'h3', 'h4', 'strong', 'b', 'em', 'i', 'u', 's', 'del', 'sub', 'sup', 'ul', 'ol', 'li', 'blockquote', 'a'];
-    return preg_replace_callback('~<\\s*(/?)\\s*([a-z][a-z0-9]*)\\b([^>]*)>~i', static function(array $match) use ($allowed): string {
-        $tag = strtolower($match[2]);
-        if (!in_array($tag, $allowed, true)) return '';
-        if ($match[1] === '/') return in_array($tag, ['br'], true) ? '' : '</' . $tag . '>';
-        if ($tag === 'br') return '<br>';
-        if ($tag === 'a') {
-            if (!preg_match('/\\bhref\\s*=\\s*(["\'])(.*?)\\1/is', $match[3], $href)) return '<a>';
-            $url = trim(html_entity_decode($href[2], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-            if (!preg_match('~^(?:https?://|mailto:|/(?!/))~i', $url)) return '<a>';
-            return '<a href="' . htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '" rel="noopener noreferrer">';
-        }
-        $alignment = '';
-        if (in_array($tag, ['p', 'div', 'h2', 'h3', 'h4', 'blockquote'], true)
-            && preg_match('/\\bstyle\\s*=\\s*(["\'])(.*?)\\1/is', $match[3], $style)
-            && preg_match('/(?:^|;)\\s*text-align\\s*:\\s*(left|center|right|justify)\\s*(?:;|$)/i', trim($style[2]), $align)) {
-            $alignment = ' style="text-align:' . strtolower($align[1]) . '"';
-        }
-        return '<' . $tag . $alignment . '>';
-    }, $html) ?? '';
-}
-
-/**
- * Contenido actual de una página: el guardado o el de por defecto.
- */
-function site_page_content(string $page): string
-{
-    if (!in_array($page, site_editable_page_keys(), true)) return '';
-    $settings = site_settings_load();
-    return $settings['pages'][$page] ?? site_page_default_html($page);
-}
-
-// =============================================================================
-// 7. SALIDA PARA LA WEB PÚBLICA
-// =============================================================================
 
 /**
  * Atributos del <body> (data-* y variables CSS) que activan en el CSS y el JS los ajustes de diseño,
- * de visibilidad y de columnas.
+ * de visibilidad y de columnas. Los ajustes con `body` en el esquema llegan solos.
  */
 function site_design_attributes(): string
 {
@@ -755,11 +144,11 @@ function site_design_attributes(): string
     $attributes = '';
     // Con una galería premium activa los ajustes estándar de galería no se aplican: el <body> los marca como «premium».
     $premium = site_premium_gallery_active($settings);
-    foreach (['palette', 'font_pair', 'grid', 'header_mobile', 'header_desktop', 'gallery_mobile', 'gallery_desktop', 'hover', 'pagination_shape', 'gallery_premium'] as $key) {
-        $value = $premium !== null && in_array($key, ['grid', 'gallery_mobile', 'gallery_desktop'], true) ? 'premium' : $settings[$key];
+    foreach (Schema::bodyChoiceKeys() as $key) {
+        $value = $premium !== null && !empty(Schema::definitions()[$key]['premium_mark']) ? 'premium' : $settings[$key];
         $attributes .= ' data-' . str_replace('_', '-', $key) . '="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '"';
     }
-    foreach (site_toggle_keys() as $key) {
+    foreach (Schema::toggleKeys() as $key) {
         $attributes .= ' data-' . str_replace('_', '-', $key) . '="' . ($settings[$key] ? 'true' : 'false') . '"';
     }
     $attributes .= ' data-photos-mobile="' . (int) $settings['photos_mobile'] . '" data-photos-desktop="' . (int) $settings['photos_desktop'] . '"';
@@ -772,12 +161,22 @@ function site_design_attributes(): string
 }
 
 /**
+ * <style> con el CSS de la paleta elegida (themes/palettes/). Va justo antes de assets/css/site-design.css.
+ */
+function site_palette_style_tag(): string
+{
+    return \Kcg\Themes\Palettes::styleTag(site_settings_load()['palette']);
+}
+
+/**
  * Textos editables para el JS: JSON incrustado más site-texts.js.
  */
 function site_client_texts(): string
 {
     $texts = [];
     foreach (site_text_catalog() as $key => $entry) $texts[$entry['default']] = site_text($key);
+    // El JavaScript del núcleo lleva los textos por defecto del núcleo: se traducen también al texto de esta instalación.
+    foreach (site_text_core_catalog() as $key => $entry) $texts[$entry['default']] ??= site_text($key);
     return '<script id="siteTexts" type="application/json">'
         . json_encode($texts, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE)
         . '</script><script src="/assets/js/site-texts.js?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/js/site-texts.js'), 0, 12) . '"></script>';

@@ -1,0 +1,21 @@
+/* Cabecera «museum» (desktop): Museum / restrained white gallery. Se carga solo si es la elegida (themes/headers-desktop/museum.php). */
+@media(min-width:769px){
+/* 06 · Museum / restrained white gallery */
+body[data-header-desktop="museum"][data-palette="current"]{--bg:#edeae3;--bg-soft:#f9f7f1;--bg-card:#e4e1d7;--fg:#262a29;--fg-dim:#58615d;--fg-soft:#555d5a;--accent:#9a6246;--line:#262a292e;background:var(--bg);color:var(--fg)}
+body[data-header-desktop="museum"] .hero{min-height:76vh;height:auto;padding:8vw;background:var(--bg)!important;border-bottom:1px solid var(--fg)}
+body[data-header-desktop="museum"] .hero__content{width:100%;max-width:1500px;text-align:left;display:grid;grid-template-columns:1fr 170px;align-items:end}
+body[data-header-desktop="museum"] .hero__title{font:400 clamp(5rem,11vw,12rem)/.73 Georgia,serif;letter-spacing:-.09em;grid-column:1}
+body[data-header-desktop="museum"] .hero__title-line{display:block;color:var(--fg)!important;-webkit-text-fill-color:var(--fg)!important}
+body[data-header-desktop="museum"] .hero__title-line--accent{font-style:italic;color:var(--accent)!important;-webkit-text-fill-color:var(--accent)!important}
+body[data-header-desktop="museum"] .hero__crest{grid-column:2;grid-row:1/4;align-self:start;justify-self:end;filter:grayscale(1)}
+body[data-header-desktop="museum"] .hero__eyebrow,body[data-header-desktop="museum"] .hero__subtitle,body[data-header-desktop="museum"] .hero__meta{grid-column:1;justify-content:flex-start}
+body[data-header-desktop="museum"] .hero__divider,body[data-header-desktop="museum"] .hero__ornament,body[data-header-desktop="museum"] .hero__glow{display:none}
+body[data-header-desktop="museum"] .hero__scroll{color:var(--fg)}
+body[data-header-desktop="museum"] .gallery-section{background:var(--bg);padding:7rem 5vw}
+body[data-header-desktop="museum"] .gallery-intro{text-align:left;border-bottom:1px solid var(--fg);padding:0 0 1.5rem}
+body[data-header-desktop="museum"] .gallery-intro__title{font:italic 400 clamp(3rem,6vw,6rem) Georgia,serif;color:var(--fg)}
+body[data-header-desktop="museum"] #masonry{--col-gap:4vw}
+body[data-header-desktop="museum"] #masonry .card{overflow:visible;align-self:center;padding:1.2rem!important;background:var(--bg-soft);box-shadow:0 12px 35px #28302b24}
+body[data-header-desktop="museum"] .project{background:var(--bg-soft)!important;color:var(--fg)}
+body[data-header-desktop="museum"] .site-footer{background:var(--bg);color:var(--fg)}
+}

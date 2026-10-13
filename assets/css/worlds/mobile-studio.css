@@ -1,0 +1,22 @@
+/* Cabecera «studio» (mobile): Studio / high-contrast Swiss contact sheet. Se carga solo si es la elegida (themes/headers-mobile/studio.php). */
+@media(max-width:768px){
+/* 03 · Studio / high-contrast Swiss contact sheet */
+body[data-header-mobile="studio"][data-palette="current"]{--bg:#f3f3ee;--bg-soft:#fff;--bg-card:#e7e7e2;--fg:#0f1719;--fg-soft:#3a4749;--accent:#ff431e;--line:#0f17193d;--serif:Arial,sans-serif;background:var(--bg);color:var(--fg)}
+body[data-header-mobile="studio"] .mobile-profile{background:var(--bg);padding:1.4rem 1rem 1rem;border:0}
+body[data-header-mobile="studio"] .mobile-profile__masthead{border-top:6px solid var(--fg);border-bottom:2px solid var(--fg);padding:.7rem 0;align-items:end}
+body[data-header-mobile="studio"] .mobile-profile__brand{font:900 clamp(2.7rem,11vw,5.5rem)/.8 Arial,sans-serif;text-transform:uppercase;letter-spacing:-.11em;max-width:8ch}
+body[data-header-mobile="studio"] .mobile-profile__edition{font:700 .65rem var(--sans);color:var(--accent)}
+body[data-header-mobile="studio"] .mobile-profile__identity{grid-template-columns:70px 1fr;gap:.6rem;border-bottom:2px solid var(--fg)}
+body[data-header-mobile="studio"] .mobile-profile__portraits,body[data-header-mobile="studio"] .mobile-profile__avatar{width:60px;height:60px}
+body[data-header-mobile="studio"] .mobile-profile__avatar{padding:0;border:0;border-radius:0;filter:grayscale(1)}
+body[data-header-mobile="studio"] .mobile-profile__crest-wrap{display:none}
+body[data-header-mobile="studio"] .mobile-profile__stats strong{font:800 1.3rem Arial,sans-serif}
+body[data-header-mobile="studio"] .mobile-profile__bio{padding:.7rem 0 0}
+body[data-header-mobile="studio"] .gallery-section{background:var(--bg);padding:.3rem .7rem 2rem}
+body[data-header-mobile="studio"] #masonry{--col-gap:.45rem}
+body[data-header-mobile="studio"] #masonry .card{overflow:visible;background:var(--bg-soft);padding:.2rem!important;border:1px solid var(--fg)}
+body[data-header-mobile="studio"] #masonry .card__img{filter:grayscale(.55)!important}
+body[data-header-mobile="studio"] .project{background:var(--bg);color:var(--fg);border-top:6px solid var(--fg)}
+body[data-header-mobile="studio"] .project__title{font:900 2rem/.94 Arial,sans-serif;text-transform:uppercase;letter-spacing:-.07em;color:var(--fg)}
+body[data-header-mobile="studio"] .upload-fab{background:var(--accent);color:var(--bg);border:0}
+}

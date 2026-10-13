@@ -6,6 +6,8 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert/strict');
 const root = path.join(__dirname, '..');
+const { mainJs, readScript } = require('./support/main-bundle.cjs');
+const {cssFile} = require('./support/theme-css.cjs');
 
 const fixture = String.raw`
 require_once 'inc/helpers.php';
@@ -19,10 +21,10 @@ foreach ($aspects as $i => $aspect) {
 include 'inc/premium/deck.php';
 `;
 const markup = execFileSync('php', ['-r', fixture], {cwd: root, encoding: 'utf8'});
-const css = ['style', 'site-design', 'gallery-layout'].map(n => fs.readFileSync(path.join(root, `assets/css/${n}.css`), 'utf8')).join('\n')
+const css = ['style', 'site-design', 'gallery-layout'].map(n => cssFile(root, n)).join('\n')
     + fs.readFileSync(path.join(root, 'assets/premium/deck/deck.css'), 'utf8');
 const scripts = [fs.readFileSync(path.join(root, 'assets/js/site-texts.js'), 'utf8'),
-    fs.readFileSync(path.join(root, 'assets/js/main.js'), 'utf8'),
+    mainJs(root),
     fs.readFileSync(path.join(root, 'assets/premium/deck/deck.js'), 'utf8')];
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
 const pageHtml = palette => `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>

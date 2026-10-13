@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert/strict');
 const root = path.join(__dirname,'..');
+const {cssFile} = require('./support/theme-css.cjs');
 // Render the real PHP shell and settings form without loading auth, sessions or private config.
 const fixture = String.raw`
 require_once 'inc/helpers.php';
@@ -25,7 +26,7 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
         const page=await browser.newPage({viewport:{width,height:900}});
         await page.route('**/*',route=>route.abort());
         await page.setContent(html);
-        for(const name of ['style','photo-editor','photo-manager','admin']) await page.addStyleTag({content:fs.readFileSync(path.join(root,`assets/css/${name}.css`),'utf8')});
+        for(const name of ['style','photo-editor','photo-manager','admin']) await page.addStyleTag({content:cssFile(root,name)});
         await page.addScriptTag({content:fs.readFileSync(path.join(root,'assets/js/admin-ui.js'),'utf8')});
         for(const installed of [true,false]) {
           const result=await page.evaluate(installed=>{
@@ -45,7 +46,7 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
               order:[...document.querySelectorAll('input[name="section_order[]"]')].map(i=>i.value)};
           },installed);
           assert.equal(result.subnav, !['design', 'texts'].includes(section), 'Only Ajustes has its own subsection navigation');
-          assert.deepEqual(result.navLabels,['Subir foto','Gestionar fotos','Categorías','Microblog','Ajustes','Diseño','Textos'],'Menu entries');
+          assert.deepEqual(result.navLabels,['Subir foto','Gestionar fotos','Categorías','Microblog','Inteligencia artificial','Ajustes','Diseño','Textos'],'Menu entries');
           assert.deepEqual(result.active,[section==='design'?'Diseño':(section==='texts'?'Textos':'Ajustes')],'Active menu entry');
           assert(!result.overflow,`Admin overflow ${width}`);
           assert(result.installInTopbar,'Install belongs in the top bar');
@@ -55,7 +56,7 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
           if(width<960) assert(Math.abs(result.tabbarBox.bottom-900)<=1,'Tab bar must be pinned to the bottom');
           assert(result.savebar.height>0,'Save bar missing');
           for(const f of result.fields) assert(f.right<=width+1&&f.left>=-1,`Control clipped at ${width}`);
-          if(section==='design') assert.deepEqual(result.order,['social','gallery','categories','map','project'],'Saved order must reach the form');
+          if(section==='design') assert.deepEqual(result.order,['social','gallery','categories','map','project','microblog'],'Saved order must reach the form');
           if(section==='design') {
             const socialSettings=await page.evaluate(()=>{
               const structure=[...document.querySelectorAll('.settings-design .admin-card')].find(card=>card.querySelector('h2')?.textContent.trim()==='Estructura de la página');
@@ -144,13 +145,13 @@ uploadPage($section === 'design' ? 'Diseño' : ($section === 'texts' ? 'Textos' 
           // Reordering moves the DOM rows (which is what gets submitted) and disables the edge buttons.
           await page.click('.section-order__item[data-section-key="gallery"] [data-move="up"]');
           const order=await page.evaluate(()=>[...document.querySelectorAll('input[name="section_order[]"]')].map(i=>i.value));
-          assert.deepEqual(order,['gallery','social','categories','map','project'],'Move up failed');
+          assert.deepEqual(order,['gallery','social','categories','map','project','microblog'],'Move up failed');
           await page.click('.section-order__item[data-section-key="gallery"] [data-move="down"]');
           await page.click('.section-order__item[data-section-key="project"] [data-move="up"]');
           const after=await page.evaluate(()=>({order:[...document.querySelectorAll('input[name="section_order[]"]')].map(i=>i.value),
             firstUp:document.querySelector('.section-order__item:first-child [data-move="up"]').disabled,
             lastDown:document.querySelector('.section-order__item:last-child [data-move="down"]').disabled}));
-          assert.deepEqual(after.order,['social','gallery','categories','project','map'],'Move down/up failed');
+          assert.deepEqual(after.order,['social','gallery','categories','project','map','microblog'],'Move down/up failed');
           assert(after.firstUp&&after.lastDown,'Edge buttons must be disabled');
         }
         if(process.env.GALLERY_SCREENSHOTS) await page.screenshot({path:path.join(process.env.GALLERY_SCREENSHOTS,`admin-${section}-${width}.png`),fullPage:true});

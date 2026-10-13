@@ -1,0 +1,46 @@
+/* =========================================================
+   SELECTOR DE CATEGORÍAS
+   ========================================================= */
+.categories-filter {
+    padding: 2.5rem 1.5rem;
+    background: linear-gradient(180deg, transparent 0%, rgba(212, 165, 116, 0.03) 50%, transparent 100%);
+    border-bottom: 1px solid rgba(212, 165, 116, 0.1);
+}
+
+.categories-filter__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.categories-filter__chip {
+    padding: 0.65rem 1.4rem;
+    background: rgba(212, 165, 116, 0.08);
+    border: 1px solid rgba(212, 165, 116, 0.25);
+    border-radius: 24px;
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--fg-soft);
+    cursor: pointer;
+    transition: all 0.3s var(--ease-out);
+}
+
+.categories-filter__chip:hover {
+    background: rgba(212, 165, 116, 0.15);
+    border-color: rgba(212, 165, 116, 0.5);
+    color: var(--accent);
+}
+
+.categories-filter__chip.is-active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+}
+

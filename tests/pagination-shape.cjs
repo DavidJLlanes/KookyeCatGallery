@@ -4,7 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert/strict');
 const root = path.join(__dirname, '..');
-const css = ['style', 'site-design'].map(n => fs.readFileSync(path.join(root, `assets/css/${n}.css`), 'utf8')).join('\n');
+const {cssFile} = require('./support/theme-css.cjs');
+const css = ['style', 'site-design'].map(n => cssFile(root, n)).join('\n');
 const pages = [1, 2, 3, 9, 10, 11, 25, 99].map(n => `<button class="pagination__page${n === 10 ? ' is-current' : ''}">${n}</button>`).join('');
 const html = shape => `<body data-pagination-shape="${shape}" data-palette="current" data-grid="adaptive"><nav class="pagination"><div class="pagination__controls">
 <button class="pagination__nav pagination__nav--prev"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>Anterior</span></button>

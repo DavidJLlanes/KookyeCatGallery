@@ -1,0 +1,380 @@
+/* =========================================================
+    LIGHTBOX
+    ========================================================= */
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background:
+        radial-gradient(ellipse 92% 70% at 50% 34%, rgba(212, 165, 116, 0.09) 0%, rgba(212, 165, 116, 0.02) 42%, rgba(8, 8, 8, 0) 70%),
+        linear-gradient(180deg, rgba(4, 4, 4, 0.96) 0%, rgba(7, 7, 7, 0.98) 100%);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 5rem 3.5rem;
+    gap: 2.5rem;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.4s var(--ease-out), visibility 0.4s;
+}
+
+/* MODO INMERSIVO: solo la foto ocupando toda la pantalla + la X encima.
+   Se activa al "Ver a pantalla completa" en la página de foto. Funciona en
+   cualquier dispositivo (con pantalla completa nativa o sin ella, p.ej. iPhone). */
+.lightbox--immersive {
+    padding: 0;
+    gap: 0;
+    background: #000;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    cursor: default;
+}
+.lightbox--immersive::before { display: none; }
+.lightbox--immersive .lightbox__caption,
+.lightbox--immersive .lightbox__fullscreen { display: none !important; }
+.lightbox--immersive .lightbox__stage {
+    max-width: none;
+    width: 100%;
+    height: 100%;
+}
+.lightbox--immersive .lightbox__img {
+    max-width: 100vw;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border-radius: 0;
+    box-shadow: none;
+}
+.lightbox--immersive .lightbox__close {
+    top: calc(10px + env(safe-area-inset-top));
+    right: calc(10px + env(safe-area-inset-right));
+    width: 44px;
+    height: 44px;
+    z-index: 10;
+    cursor: pointer;
+    color: rgba(255, 255, 255, .82);
+    background: rgba(0, 0, 0, .12);
+    border-color: rgba(255, 255, 255, .12);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    opacity: .72;
+}
+.lightbox--immersive .lightbox__close:hover,
+.lightbox--immersive .lightbox__close:focus-visible {
+    color: #fff;
+    background: rgba(0, 0, 0, .45);
+    border-color: rgba(255, 255, 255, .4);
+    opacity: 1;
+}
+body.photo-immersive-open .cursor-dot,
+body.photo-immersive-open .cursor-ring { display: none !important; }
+
+.lightbox::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 72% 58% at 50% 40%, rgba(0, 0, 0, 0) 38%, rgba(0, 0, 0, 0.3) 100%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.36) 100%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.45s var(--ease-out);
+}
+
+.lightbox.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.lightbox.is-open::before {
+    opacity: 1;
+}
+
+.lightbox__stage {
+    position: relative;
+    width: 100%;
+    max-width: min(96vw, 1700px);
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.lightbox__img {
+    /* Siempre centrada en el escenario con posición absoluta: la foto base y la que entra (.lightbox__img--incoming) comparten exactamente
+       la misma geometría, así que al deslizar de una a otra nunca hay saltos de tamaño ni franjas. */
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    opacity: 0;
+    transform: scale(0.96);
+    transition: opacity 0.5s var(--ease-out), transform 0.6s var(--ease-out);
+    box-shadow:
+        0 44px 110px rgba(0, 0, 0, 0.76),
+        0 0 0 1px rgba(243, 240, 234, 0.12),
+        0 0 0 12px rgba(0, 0, 0, 0.14);
+    border-radius: 6px;
+}
+
+.lightbox__img.is-shown {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.lightbox__close,
+.lightbox__nav {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 1px solid rgba(243, 240, 234, 0.18);
+    color: var(--fg);
+    background: rgba(14, 14, 14, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: transform 0.3s var(--ease-out), background 0.3s var(--ease-out), border-color 0.3s var(--ease-out), color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
+}
+
+.lightbox__close svg,
+.lightbox__nav svg {
+    width: 22px;
+    height: 22px;
+}
+
+.lightbox__close:hover,
+.lightbox__nav:hover {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.45);
+    transform: scale(1.05);
+}
+
+.lightbox__close:focus-visible,
+.lightbox__nav:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+
+.lightbox__close {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+}
+
+.lightbox__fullscreen {
+    position: absolute;
+    top: 1.5rem;
+    right: calc(1.5rem + 64px);
+    z-index: 3;
+    min-height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    padding: 0 .9rem;
+    border: 1px solid rgba(243, 240, 234, .2);
+    border-radius: 999px;
+    background: rgba(14, 14, 14, .58);
+    color: var(--fg);
+    font: 500 .73rem var(--sans);
+    letter-spacing: .03em;
+    cursor: pointer;
+}
+.lightbox__fullscreen svg { width: 19px; height: 19px; }
+.lightbox__fullscreen:hover { background: rgba(14, 14, 14, .82); border-color: var(--accent); }
+.lightbox__fullscreen:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.lightbox__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.lightbox__nav--prev { left: 0; }
+.lightbox__nav--next { right: 0; }
+.lightbox__nav--prev:hover { transform: translateY(-50%) scale(1.05); }
+.lightbox__nav--next:hover { transform: translateY(-50%) scale(1.05); }
+
+/* ===== Caption editorial debajo de la foto ===== */
+.lightbox__caption {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 38rem;
+    text-align: center;
+    pointer-events: none;
+    flex-shrink: 0;
+    padding: 1rem 1.2rem 0;
+    border-top: 1px solid rgba(243, 240, 234, 0.12);
+    background: linear-gradient(180deg, rgba(8, 8, 8, 0.14) 0%, rgba(8, 8, 8, 0) 100%);
+    z-index: 1;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.45s var(--ease-out), transform 0.45s var(--ease-out);
+}
+
+.lightbox.is-open .lightbox__caption {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.lightbox__counter {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding-left: 0.5em;
+    margin-bottom: 1.1rem;
+}
+
+.lightbox__title {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-style: italic;
+    font-size: clamp(1.5rem, 3vw, 2.3rem);
+    line-height: 1.2;
+    letter-spacing: -0.005em;
+    color: var(--fg);
+    margin: 0;
+    max-width: 24ch;
+}
+
+.lightbox__title:empty { display: none; }
+
+.lightbox__title:not(:empty)::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 1px;
+    background: var(--accent);
+    margin: 1.3rem auto 0;
+    opacity: 0.75;
+}
+
+.lightbox__description {
+    font-family: var(--sans);
+    font-size: clamp(0.88rem, 1.1vw, 1rem);
+    font-weight: 300;
+    line-height: 1.75;
+    color: var(--fg-soft);
+    letter-spacing: 0.005em;
+    max-width: 38rem;
+    margin: 0;
+}
+
+.lightbox__title:not(:empty) ~ .lightbox__description:not(:empty) {
+    margin-top: 1.3rem;
+}
+
+.lightbox__description:empty { display: none; }
+
+/* Si no hay counter (no debería pasar, pero por si acaso), no espacio extra */
+.lightbox__counter:empty { display: none; }
+
+/* Coordenadas GPS (enlace a Google Maps) bajo la descripción */
+.lightbox__coords {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.4rem;
+    padding: 0.42rem 0.95rem;
+    border: 1px solid rgba(212, 165, 116, 0.3);
+    border-radius: 20px;
+    background: rgba(212, 165, 116, 0.06);
+    font-family: var(--sans);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--fg-soft);
+    text-decoration: none;
+    white-space: nowrap;
+    pointer-events: auto; /* el caption es pointer-events:none; este enlace sí es clicable */
+    transition: background 0.3s var(--ease-out), border-color 0.3s var(--ease-out), color 0.3s var(--ease-out);
+}
+
+.lightbox__coords svg {
+    width: 15px;
+    height: 15px;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.lightbox__coords:hover {
+    background: rgba(212, 165, 116, 0.16);
+    border-color: rgba(212, 165, 116, 0.55);
+    color: var(--fg);
+}
+
+.lightbox__coords[hidden] { display: none; }
+
+@media (max-width: 768px) {
+    .lightbox {
+        padding: 3rem 1rem 2rem;
+        gap: 1.5rem;
+    }
+    .lightbox__stage {
+        max-width: 100%;
+    }
+    .lightbox__close {
+        top: 1rem;
+        right: 1rem;
+        width: 44px;
+        height: 44px;
+    }
+    .lightbox__fullscreen { top: 1rem; right: calc(1rem + 52px); min-height: 44px; padding: 0 .65rem; font-size: .68rem; }
+    .lightbox__nav {
+        width: 44px;
+        height: 44px;
+    }
+    .lightbox__nav--prev { left: 0; }
+    .lightbox__nav--next { right: 0; }
+    .lightbox__counter {
+        font-size: 0.65rem;
+        letter-spacing: 0.4em;
+        margin-bottom: 0.8rem;
+    }
+    .lightbox__title {
+        font-size: 1.35rem;
+    }
+    .lightbox__title:not(:empty)::after {
+        margin-top: 1rem;
+        width: 32px;
+    }
+    .lightbox__title:not(:empty) ~ .lightbox__description:not(:empty) {
+        margin-top: 1rem;
+    }
+    .lightbox__description {
+        font-size: 0.88rem;
+        line-height: 1.65;
+    }
+    .lightbox__coords {
+        margin-top: 1rem;
+        padding: 0.38rem 0.8rem;
+        font-size: 0.68rem;
+    }
+    .lightbox__coords svg { width: 13px; height: 13px; }
+    .lightbox__caption {
+        padding: 0.8rem 0.7rem 0;
+    }
+}
+

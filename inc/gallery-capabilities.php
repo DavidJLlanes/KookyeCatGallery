@@ -2,23 +2,11 @@
 declare(strict_types=1);
 
 /** One contract for the admin controls and the server's save operation.
- * Geometry lives in gallery-layout.js; every new layout must declare its options here.
+ * Each standard layout declares its options in themes/galleries/<id>.php; geometry lives in gallery-layout.js.
  */
 function site_gallery_capabilities(): array
 {
-    $paged = ['columns' => true, 'photos' => true, 'grid' => false, 'pagination' => true];
-    return [
-        'standard' => $paged,
-        'grid' => array_replace($paged, ['grid' => true]),
-        'mosaic' => $paged,
-        'asymmetric' => $paged,
-        'category-rails' => ['columns' => false, 'photos' => false, 'grid' => false, 'pagination' => false],
-        'scattered' => $paged,
-        'exhibition' => array_replace($paged, ['columns' => false]),
-        'contact-sheet' => array_replace($paged, ['grid' => true]),
-        'narrative' => $paged,
-        'triptych' => array_replace($paged, ['columns' => false]),
-    ];
+    return array_map(static fn(array $gallery): array => $gallery['capabilities'], \Kcg\Core\Registry::for('galleries')->all());
 }
 
 function site_gallery_control_keys(): array

@@ -1,11 +1,13 @@
 <?php
 declare(strict_types=1);
 
+use Kcg\Core\Admin\Router;
+
 /**
  * Armazón (layout) del panel de administración.
  *
  * Solo define funciones: no tiene efectos secundarios al cargarse, por lo que los tests pueden
- * incluirlo directamente. Las acciones y las páginas del panel están en admin.php.
+ * incluirlo directamente. Las acciones y las páginas del panel están en los módulos de core/Admin/Modules/.
  *
  *   uploadEscape()         escapado HTML
  *   adminNavigation()      activa el armazón con menú
@@ -35,6 +37,7 @@ function adminIcon(string $name): string
         'profile' => '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>',
         'design' => '<path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="17" cy="18" r="2.2"/>',
         'texts' => '<path d="M5 6h14M5 12h14M5 18h9"/>',
+        'ai' => '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>',
         'microblog' => '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h7M8.5 14.5h4"/>',
         'external' => '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
         'logout' => '<path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/>',
@@ -43,24 +46,12 @@ function adminIcon(string $name): string
 }
 
 /**
- * Entrada del menú que se resalta: upload, library, categories, profile, design o texts.
+ * Entrada del menú que se resalta (la decide el módulo del panel que atiende la petición; por defecto «upload»).
  * Se deduce de la URL (GET) o de la acción enviada (POST), para que también sea correcta tras un error de formulario.
  */
 function adminActiveSection(): string
 {
-    $action = (string) ($_POST['action'] ?? '');
-    if ($action === 'save_site_page') return 'texts';
-    if (isset($_GET['microblog']) || $action === 'microblog_save' || $action === 'microblog_delete') return 'microblog';
-    if (isset($_GET['settings']) || $action === 'save_site_settings') {
-        $section = (string) ($_POST['section'] ?? $_GET['section'] ?? 'profile');
-        if ($section === 'page') return 'texts';
-        if ($section === 'content' || $section === 'profile' || $section === 'social') return 'profile';
-        if ($section === 'publication') return 'profile';
-        return in_array($section, ['design', 'texts'], true) ? $section : 'profile';
-    }
-    if (isset($_GET['categories']) || $action === 'manage_category') return 'categories';
-    if (isset($_GET['library']) || isset($_GET['edit']) || $action === 'delete_existing') return 'library';
-    return 'upload';
+    return Router::activeMenu();
 }
 
 /**
@@ -70,15 +61,7 @@ function adminActiveSection(): string
 function adminShellHtml(string $title, string $content, bool $wide): string
 {
     $active = adminActiveSection();
-    $items = [
-        'upload' => ['/admin.php', 'Subir foto', 'Subir'],
-        'library' => ['/admin.php?library=1', 'Gestionar fotos', 'Fotos'],
-        'categories' => ['/admin.php?categories=1', 'Categorías', 'Temas'],
-        'microblog' => ['/admin.php?microblog=1', 'Microblog', 'Posts'],
-        'profile' => ['/admin.php?settings=1&amp;section=content', 'Ajustes', 'Ajustes'],
-        'design' => ['/admin.php?settings=1&amp;section=design', 'Diseño', 'Diseño'],
-        'texts' => ['/admin.php?settings=1&amp;section=texts', 'Textos', 'Textos'],
-    ];
+    $items = Router::menu();
     $links = static function (bool $short) use ($items, $active): string {
         $html = '';
         foreach ($items as $key => [$href, $label, $shortLabel]) {
@@ -89,14 +72,18 @@ function adminShellHtml(string $title, string $content, bool $wide): string
     };
     $csrf = uploadEscape((string) ($GLOBALS['adminShell']['csrf'] ?? ''));
     $brand = site_title();
-    $mark = uploadEscape(mb_strtoupper(mb_substr($brand, 0, 1)));
+    // Con logo propio subido (Ajustes → Contenido) la marca lo muestra; si no, la inicial del nombre.
+    $logoUrl = site_media_src('logo_image');
+    $hasLogo = is_file(dirname(__DIR__) . strtok($logoUrl, '?')) && !in_array(strtok($logoUrl, '?'), ['/favicon.svg', '/profile-placeholder.svg'], true);
+    $mark = $hasLogo ? '<img src="' . uploadEscape($logoUrl) . '" alt="">' : uploadEscape(mb_strtoupper(mb_substr($brand, 0, 1)));
+    $markClass = 'admin-brand__mark' . ($hasLogo ? ' admin-brand__mark--logo' : '');
     return '<body class="admin-body"><div class="admin-app">'
-        . '<aside class="admin-sidebar"><a class="admin-brand" href="/admin.php"><span class="admin-brand__mark" aria-hidden="true">' . $mark . '</span>'
+        . '<aside class="admin-sidebar"><a class="admin-brand" href="/admin.php"><span class="' . $markClass . '" aria-hidden="true">' . $mark . '</span>'
         . '<span class="admin-brand__text"><strong>' . uploadEscape($brand) . '</strong><small>Administración</small></span></a>'
         . '<nav class="admin-nav" aria-label="Administración">' . $links(false) . '</nav>'
         . '<p class="admin-sidebar__note">Área privada · ' . uploadEscape(site_text('admin_area_name')) . '</p></aside>'
         . '<div class="admin-main"><header class="admin-topbar">'
-        . '<a class="admin-brand" href="/admin.php"><span class="admin-brand__mark" aria-hidden="true">' . $mark . '</span>'
+        . '<a class="admin-brand" href="/admin.php"><span class="' . $markClass . '" aria-hidden="true">' . $mark . '</span>'
         . '<span class="admin-brand__text"><strong>' . uploadEscape($brand) . '</strong><small>Administración</small></span></a>'
         . '<span class="admin-topbar__title">' . uploadEscape($items[$active][1]) . '</span>'
         . '<div class="admin-topbar__actions"><button class="pwa-install-button" id="installAppButton" type="button" hidden>Instalar app</button>'
@@ -124,7 +111,7 @@ function uploadPage(string $title, string $content, int $status = 200, bool $wid
     $body = isset($GLOBALS['adminShell'])
         ? adminShellHtml($title, $content, $wide)
         : '<body class="admin-body"><main class="upload-page"><section class="upload-panel"><div class="upload-brand">' . uploadEscape(site_title()) . '</div><p class="upload-kicker">Área privada · ' . uploadEscape(site_text('admin_area_name')) . '</p><h1>' . uploadEscape($title) . '</h1>' . $content . '<button class="pwa-install-button" id="installAppButton" type="button" hidden>Instalar app</button></section></main></body>';
-    echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"><meta name="theme-color" content="#0a0a0a"><meta name="robots" content="noindex,nofollow"><meta name="app-version" content="' . uploadEscape(app_version()) . '"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="' . uploadEscape(site_title()) . '"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="manifest" href="/app-manifest.php?v=' . uploadEscape(app_version()) . '">' . (is_file(__DIR__ . '/assets/icons/site-app-icon-32.png') ? '<link rel="icon" type="image/png" sizes="32x32" href="' . uploadEscape(site_brand_icon_url(32)) . '"><link rel="apple-touch-icon" sizes="180x180" href="' . uploadEscape(site_brand_icon_url(180)) . '">' : '<link rel="icon" type="image/svg+xml" href="/favicon.svg">') . '<title>' . uploadEscape($title) . ' · ' . uploadEscape(site_title()) . '</title><link rel="stylesheet" href="/assets/css/style.css?v=' . uploadEscape(app_version()) . '"><link rel="stylesheet" href="/assets/css/photo-editor.css?v=' . uploadEscape(app_version()) . '"><link rel="stylesheet" href="/assets/css/photo-manager.css?v=' . uploadEscape(app_version()) . '"><script src="/assets/js/photo-filter-engine.js?v=' . uploadEscape(app_version()) . '" defer></script><script src="/assets/js/photo-editor-presets.js?v=' . uploadEscape(app_version()) . '" defer></script><script src="/assets/js/photo-editor.js?v=' . uploadEscape(app_version()) . '" defer></script><script src="/assets/js/photo-manager.js?v=' . uploadEscape(app_version()) . '" defer></script><link rel="stylesheet" href="/assets/css/typography.css?v=' . uploadEscape(asset_ver(__DIR__ . '/../assets/css/typography.css')) . '"><link rel="stylesheet" href="/assets/css/admin.css?v=' . uploadEscape(asset_ver(__DIR__ . '/../assets/css/admin.css')) . '"><script src="/assets/js/admin-ui.js?v=' . uploadEscape(asset_ver(__DIR__ . '/../assets/js/admin-ui.js')) . '" defer></script>' . site_client_texts() . '<script src="/assets/js/pwa.js?v=' . $version . '" defer></script></head>' . $body . '</html>';
+    echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"><meta name="theme-color" content="#0a0a0a"><meta name="robots" content="noindex,nofollow"><meta name="app-version" content="' . uploadEscape(app_version()) . '"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="' . uploadEscape(site_title()) . '"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="manifest" href="/app-manifest.php?v=' . uploadEscape(app_version()) . '">' . '<link rel="icon" type="' . uploadEscape(site_brand_icon_type(site_brand_icon_url(32))) . '" sizes="32x32" href="' . uploadEscape(site_brand_icon_url(32)) . '"><link rel="apple-touch-icon" sizes="180x180" href="' . uploadEscape(site_brand_icon_url(180)) . '">' . '<title>' . uploadEscape($title) . ' · ' . uploadEscape(site_title()) . '</title>' . site_style_tags('full') . '<link rel="stylesheet" href="/assets/css/photo-editor.css?v=' . uploadEscape(app_version()) . '"><link rel="stylesheet" href="/assets/css/photo-manager.css?v=' . uploadEscape(app_version()) . '"><script src="/assets/js/photo-filter-engine.js?v=' . uploadEscape(app_version()) . '" defer></script><script src="/assets/js/photo-editor-presets.js?v=' . uploadEscape(app_version()) . '" defer></script><script src="/assets/js/photo-editor.js?v=' . uploadEscape(app_version()) . '" defer></script><script src="/assets/js/photo-manager.js?v=' . uploadEscape(app_version()) . '" defer></script><style id="fonts-css">' . rtrim(\Kcg\Themes\Fonts::fontFaceCss()) . '</style><link rel="stylesheet" href="/assets/css/typography.css?v=' . uploadEscape(asset_ver(__DIR__ . '/../assets/css/typography.css')) . '"><link rel="stylesheet" href="/assets/css/admin.css?v=' . uploadEscape(asset_ver(__DIR__ . '/../assets/css/admin.css')) . '"><script src="/assets/js/admin-ui.js?v=' . uploadEscape(asset_ver(__DIR__ . '/../assets/js/admin-ui.js')) . '" defer></script>' . site_client_texts() . '<script src="/assets/js/pwa.js?v=' . $version . '" defer></script></head>' . $body . '</html>';
     exit;
 }
 
@@ -138,4 +125,12 @@ function adminNavigation(string $csrf): string
     // Activa el armazón con menú; uploadPage() lo dibuja alrededor del contenido.
     $GLOBALS['adminShell'] = ['csrf' => $csrf];
     return '';
+}
+
+/**
+ * Formulario de inicio de sesión.
+ */
+function loginForm(string $csrf): string
+{
+    return '<form class="upload-form" method="post" action="/admin.php"><input type="hidden" name="action" value="login"><input type="hidden" name="csrf" value="' . uploadEscape($csrf) . '"><div class="upload-field"><label for="username">Usuario</label><input id="username" name="username" type="text" autocomplete="username" required></div><div class="upload-field"><label for="password">Contraseña</label><input id="password" name="password" type="password" autocomplete="current-password" required></div><button class="upload-submit" type="submit">Iniciar sesión</button><a href="/" class="project__link">Volver a la web</a></form>';
 }

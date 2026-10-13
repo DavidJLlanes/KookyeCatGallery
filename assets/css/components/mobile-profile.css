@@ -1,0 +1,103 @@
+/* Cabecera de perfil y galería móvil: lenguaje visual editorial de la galería */
+.mobile-profile { display: none; }
+.map-section { padding: 4rem 5vw 4.5rem; background: linear-gradient(180deg, var(--bg), #11100e); border-top: 1px solid var(--line); }
+.map-section__head { max-width: 1200px; margin: 0 auto 1.25rem; }
+.map-section__eyebrow { color: var(--accent); font-size: .66rem; letter-spacing: .22em; text-transform: uppercase; }
+.map-section__title { margin: .35rem 0 1rem; font: 400 clamp(2rem, 4vw, 3.2rem)/1.05 var(--serif); }
+.map-filter { position: relative; display: none; color: var(--fg-soft); }
+.map-filter select { font: inherit; }
+.map-popup__view {
+    border: 0;
+    background: transparent;
+    color: #17120e;
+    font: 500 .85rem/1.35 var(--sans);
+    text-align: left;
+    cursor: pointer;
+}
+.map-popup__view small { opacity: .7; font-size: .75rem; }
+.map-popup__view:focus-visible { outline: 2px solid #a46935; outline-offset: 3px; }
+@media (max-width: 768px) {
+    .hero { display: none !important; }
+    .mobile-profile {
+        display: block; padding: max(.8rem, env(safe-area-inset-top)) 1rem 1rem;
+        background: linear-gradient(180deg, #11100e, var(--bg)); border-bottom: 1px solid var(--line);
+    }
+    .mobile-profile__masthead {
+        display: flex; align-items: baseline; justify-content: space-between;
+        padding: .25rem 0 .85rem; border-bottom: 1px solid var(--line);
+    }
+    .mobile-profile__brand { font: 1.55rem/1 var(--serif); color: var(--fg); letter-spacing: -.025em; }
+    .mobile-profile__edition { color: var(--accent); font-size: .57rem; letter-spacing: .13em; text-transform: uppercase; }
+    .mobile-profile__identity { display: grid; grid-template-columns: 104px 1fr; align-items: center; gap: 1rem; padding: .9rem 0 .55rem; }
+    .mobile-profile__portraits { position: relative; width: 92px; height: 92px; }
+    .mobile-profile__avatar {
+        width: 82px; height: 82px; object-fit: cover; border-radius: 50%; padding: 3px;
+        border: 1px solid rgba(212,165,116,.8); background: var(--bg); box-shadow: 0 4px 18px #0006;
+    }
+    .mobile-profile__crest-wrap {
+        position: absolute; right: 0; bottom: 0; width: 35px; height: 40px; display: grid; place-items: center;
+        padding: 4px; border-radius: 50%; background: #11100e; border: 1px solid var(--accent);
+    }
+    .mobile-profile__crest-wrap img { width: 19px; height: 28px; object-fit: contain; }
+    .mobile-profile__stats { display: flex; justify-content: space-around; gap: .25rem; }
+    .mobile-profile__stats div { display: flex; flex-direction: column; align-items: center; gap: .1rem; }
+    .mobile-profile__stats strong { color: var(--fg); font-size: .94rem; font-weight: 500; }
+    .mobile-profile__stats span { color: var(--fg-soft); font-size: .59rem; }
+    .mobile-profile__bio { font-size: .73rem; line-height: 1.5; }
+    .mobile-profile__bio strong { display: block; margin-bottom: .15rem; font-size: .78rem; font-weight: 500; }
+    .mobile-profile__bio p { color: var(--fg-soft); }
+    .mobile-profile__bio p:first-of-type { color: var(--fg); }
+    .mobile-profile__website { display: inline-block; margin-top: .3rem; color: var(--accent); font: 600 .76rem/1.5 var(--sans); text-decoration: none; overflow-wrap: anywhere; }
+    .mobile-profile__website:hover { text-decoration: underline; text-underline-offset: .2em; }
+    .mobile-profile__website:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .gallery-section { padding: 0; }
+    /* El texto de introducción se oculta en móvil; las categorías se muestran según el ajuste «Mostrar categorías». */
+    .gallery-intro { display: none !important; }
+    .masonry {
+        display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 2px !important; padding: 0 !important; margin: 0 !important; perspective: none !important;
+    }
+    .masonry .card {
+        width: 100% !important; min-width: 0; aspect-ratio: 1 / 1; margin: 0 !important;
+        padding: 0 !important; border-radius: 0 !important; overflow: hidden;
+    }
+    .masonry .card__btn, .masonry .card__picture {
+        display: block; width: 100%; height: 100%; aspect-ratio: 1 / 1;
+        border-radius: 0 !important; transform: none !important; box-shadow: none !important;
+    }
+    .masonry .card__picture::before, .masonry .card__title-base, .masonry .card__btn::after { display: none !important; }
+    .masonry .card__img {
+        width: 100%; height: 100%; aspect-ratio: 1 / 1; object-fit: cover;
+        opacity: 1; transform: none; filter: none; transition: none;
+    }
+    .pagination { padding: 1rem .7rem 1.35rem; margin: 0; }
+    .pagination__controls { gap: .4rem; }
+    .pagination__nav { min-height: 38px; padding: .45rem .65rem; font-size: .68rem; }
+    .pagination__nav span { display: none; }
+    .pagination__page { width: 38px; min-width: 38px; height: 38px; min-height: 38px; }
+    .pagination__info { margin-top: .55rem; font-size: .67rem; }
+    .map-section { padding: 2rem 1rem 2.2rem; }
+    .map-section__head { max-width: 38rem; margin: 0 auto 1rem; }
+    .map-section__eyebrow { font-size: .6rem; letter-spacing: .2em; }
+    .map-section__title { margin: .25rem 0 .9rem; font-size: 1.8rem; }
+    .map-filter { display: block; max-width: 24rem; font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; }
+    .map-filter select {
+        appearance: none; display: block; width: 100%; margin-top: .4rem; padding: .8rem 2.5rem .8rem .9rem;
+        border: 1px solid rgba(212,165,116,.36); border-radius: 3px; background: #151411; color: var(--fg);
+        font: 400 .82rem var(--sans); letter-spacing: .01em;
+    }
+    .map-filter__chevron { position: absolute; right: .9rem; bottom: .56rem; color: var(--accent); font-size: 1.2rem; pointer-events: none; }
+    .map-container {
+        height: min(62vw, 330px); min-height: 230px; max-width: 38rem; margin: 0 auto;
+        overflow: hidden; border: 1px solid rgba(212,165,116,.24); border-radius: 4px; box-shadow: 0 14px 38px #0005;
+    }
+    .map-container .map { width: 100%; height: 100%; }
+    .project { padding: 3rem 1.1rem; }
+    .project__inner { gap: 1.4rem; }
+    .project__media-frame { max-width: 170px; aspect-ratio: 1; border-radius: 50%; }
+    .project__title { font-size: 2.4rem; }
+    .project__body { font-size: .88rem; }
+}
+@media (min-width: 769px) { .mobile-profile { display: none; } }
+
+

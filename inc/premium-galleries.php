@@ -132,8 +132,7 @@ function site_premium_gallery_choices(): array
  */
 function site_standard_gallery_settings(): array
 {
-    return ['grid', 'gallery_mobile', 'gallery_desktop', 'pagination_shape',
-        'columns_mobile', 'columns_desktop', 'photos_mobile', 'photos_desktop'];
+    return \Kcg\Core\Settings\Schema::galleryKeys();
 }
 
 /**

@@ -132,6 +132,16 @@ function site_brand_assets_process(array $files, ?string $rootDir = null): void
     }
 }
 
+/** Tipo MIME de un icono según su extensión. */
+function site_brand_icon_type(string $url): string
+{
+    return match (strtolower(pathinfo(parse_url($url, PHP_URL_PATH) ?: '', PATHINFO_EXTENSION))) {
+        'svg' => 'image/svg+xml',
+        'webp' => 'image/webp',
+        default => 'image/png',
+    };
+}
+
 /** URL con versión de caché para una variante de icono personalizada o predeterminada. */
 function site_brand_icon_url(int $size): string
 {
@@ -144,6 +154,8 @@ function site_brand_icon_url(int $size): string
         512 => '/assets/icons/pwa-icon-512.webp',
     ];
     $path = is_file($custom) ? '/assets/icons/site-app-icon-' . $size . '.png' : ($fallbacks[$size] ?? $fallbacks[512]);
+    // Sin icono propio ni iconos predeterminados de la instalación, el del núcleo.
+    if (!is_file($root . $path)) $path = '/favicon.svg';
     $absolute = $root . $path;
     return $path . (is_file($absolute) ? '?v=' . (string) filemtime($absolute) : '');
 }

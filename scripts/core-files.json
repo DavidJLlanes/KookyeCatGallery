@@ -1,0 +1,52 @@
+{
+  "descripcion": "Qué es núcleo y qué es de esta web al exportar (scripts/export-core.php). «excluir»: rutas o prefijos («carpeta/», «*.ext») que no van en el núcleo. «sustituir»: ruta del núcleo => archivo genérico de este repositorio que ocupa su lugar. «carpetas»: carpetas vacías que debe traer el núcleo. «produccion_excluir»: además de «excluir», lo que no va en un paquete para hosting (export-core.php --produccion); una carpeta («docs/») deja fuera los archivos versionados, pero no los de «sustituir» salvo que se nombren exactos.",
+  "excluir": [
+    "installation.php",
+    "david.webp",
+    "escudoleon.webp",
+    "instagram.png",
+    "threads.png",
+    "plantilla.txt",
+    "assets/icons/",
+    ".github/workflows/deploy.yml",
+    "docs/refactor/",
+    "tests/visual/",
+    "tests/golden/"
+  ],
+  "sustituir": {
+    "README.md": "scripts/defaults/README.md",
+    "favicon.svg": "scripts/defaults/favicon.svg",
+    "apple-touch-icon.svg": "scripts/defaults/apple-touch-icon.svg",
+    ".htaccess": "scripts/defaults/htaccess",
+    "reset-admin-access.php.example": "scripts/defaults/reset-admin-access.php.example",
+    "site-design-preview.png": "scripts/defaults/site-design-preview.png",
+    "install.php": "scripts/defaults/install.php",
+    "LICENSE": "scripts/defaults/LICENSE",
+    "SECURITY.md": "scripts/defaults/SECURITY.md",
+    "CONTRIBUTING.md": "scripts/defaults/CONTRIBUTING.md",
+    "docs/instalacion.md": "scripts/defaults/instalacion.md",
+    "data/.htaccess": "scripts/defaults/data.htaccess",
+    "img/.htaccess": "scripts/defaults/img.htaccess",
+    "var/.htaccess": "scripts/defaults/var.htaccess",
+    ".gitattributes": "scripts/defaults/gitattributes",
+    "assets/img/kookyecatgallery-photographers-cover.png": "scripts/defaults/cover.png"
+  },
+  "carpetas": [
+    "img",
+    "imagenes/desktop",
+    "imagenes/mobile",
+    "microblog",
+    "data",
+    "var"
+  ],
+  "produccion_excluir": [
+    "tests/",
+    "docs/",
+    ".github/",
+    "scripts/defaults/",
+    "scripts/export-core.php",
+    "scripts/build-catalogs.php",
+    "scripts/core-files.json",
+    "pendiente.md"
+  ]
+}

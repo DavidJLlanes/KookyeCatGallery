@@ -18,14 +18,15 @@
     <div class="hero__ornament hero__ornament--br" aria-hidden="true"></div>
 
     <div class="hero__content">
-        <img class="hero__portrait" src="<?= safe(site_media_url('profile_image')) ?>" width="120" height="120" alt="<?= site_text_html('text_30170303c506cf6c') ?>" loading="lazy">
+        <img class="hero__portrait" src="<?= safe(site_media_src('profile_image')) ?>" width="120" height="120" alt="<?= site_text_html('text_30170303c506cf6c') ?>" loading="lazy">
         <a href="/" class="hero__crest" aria-label="<?= site_text_html('text_83f4e59e2da59d76') ?>">
-            <img src="<?= safe(site_media_url('logo_image')) ?>" width="500" height="640" alt="" loading="eager" decoding="async">
+            <img src="<?= safe(site_media_src('logo_image')) ?>" width="500" height="640" alt="" loading="eager" decoding="async">
         </a>
         <span class="hero__eyebrow"><?= site_inline_text_html('text_b6b50664e231e202') ?></span>
         <h1 class="hero__title">
-            <span class="hero__title-line" data-reveal><?= site_inline_text_html('text_cbbba360eb60dd04') ?></span>
-            <span class="hero__title-line hero__title-line--accent" data-reveal><?= site_inline_text_html('text_2c1ac3057629f681') ?></span>
+            <?php [$nameFirstLine, $nameSecondLine] = site_name_lines(site_title()); ?>
+            <span class="hero__title-line" data-reveal><?= site_name_part_html($nameFirstLine) ?></span>
+            <?php if ($nameSecondLine !== ''): ?><span class="hero__title-line hero__title-line--accent" data-reveal><?= site_name_part_html($nameSecondLine) ?></span><?php endif; ?>
         </h1>
         <span class="hero__divider" aria-hidden="true"></span>
         <p class="hero__subtitle" data-reveal><?= site_inline_text_html('text_30170303c506cf6c') ?></p>

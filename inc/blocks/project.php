@@ -9,7 +9,7 @@
  */
 ?>
 <?php
-// Retrato opcional del fotógrafo: sube uno de estos por FTP a la raíz si lo deseas
+// Retrato opcional del fotógrafo: el de «Imagen de perfil» en los ajustes, si existe
 $portrait = null;
 $profilePath = site_media_url('profile_image');
 if (is_file($rootDir . $profilePath)) $portrait = ltrim($profilePath, '/');
@@ -21,14 +21,14 @@ if (is_file($rootDir . $profilePath)) $portrait = ltrim($profilePath, '/');
         <?php if ($portrait): ?>
         <div class="project__media" data-reveal>
             <div class="project__media-frame">
-                <img src="/<?= safe($portrait) ?>" alt="<?= site_text_html('text_ee497220c8c386d8') ?>" loading="lazy" decoding="async">
+                <img src="<?= safe(site_media_src('profile_image')) ?>" alt="<?= site_text_html('text_ee497220c8c386d8') ?>" loading="lazy" decoding="async">
             </div>
         </div>
         <?php endif; ?>
 
         <div class="project__text">
             <span class="project__eyebrow" data-reveal><?= site_text_html('text_c9248cc61aa75376') ?></span>
-            <h2 class="project__title" data-reveal><?= site_text_html('text_6636c29ab23b6ec8') ?><br><?= site_text_html('text_3d9d76375e115725') ?></h2>
+            <h2 class="project__title" data-reveal><?= site_text_html('text_6636c29ab23b6ec8') ?></h2>
             <div class="project__body" data-reveal>
                 <?= site_page_content('project') ?>
             </div>

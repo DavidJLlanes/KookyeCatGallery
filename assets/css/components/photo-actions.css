@@ -1,0 +1,53 @@
+/* Web app: acciones de fotografía, favoritos y presentación */
+.photo-app-actions,.gallery-app-tools{display:flex;flex-wrap:wrap;gap:.65rem;align-items:center}
+.photo-app-actions{justify-content:center;width:100%;margin-top:1rem;pointer-events:auto}
+.gallery-app-tools{justify-content:center;margin:1.25rem auto 2rem;padding:0 1rem}
+.photo-app-action,.gallery-app-tool{appearance:none;border:1px solid rgba(212,165,116,.38);background:rgba(15,14,13,.72);color:var(--fg);border-radius:999px;padding:.62rem .95rem;font:500 .72rem/1 var(--sans);letter-spacing:.04em;cursor:pointer;backdrop-filter:blur(10px)}
+.photo-app-action:hover,.gallery-app-tool:hover,.gallery-app-tool[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.photo-app-action:disabled{opacity:.65;cursor:wait}
+.photo-like-error{flex-basis:100%;color:#f1a39f;text-align:center;font:.72rem/1.4 var(--sans)}
+.card.is-favorite .card__picture{box-shadow:inset 0 0 0 1px rgba(212,165,116,.55)}
+.card[hidden]{display:none!important}
+@media(max-width:768px){.photo-app-action,.gallery-app-tool{min-height:44px;padding:.72rem 1rem}.gallery-app-tools{position:relative;z-index:3;margin-top:.75rem}}
+
+@media(max-width:768px){.upload-form .upload-field input,.upload-form .upload-field textarea,.upload-form .upload-field select{font-size:16px}.upload-form{gap:1.1rem}.upload-submit{width:100%;position:sticky;bottom:max(.6rem,env(safe-area-inset-bottom));z-index:8}.upload-panel{padding:1rem}.upload-top{gap:.7rem}.upload-top__links{display:flex;gap:.45rem}.upload-top__links a,.upload-top__links button{min-height:44px;display:inline-flex;align-items:center}}
+
+.slideshow-open{overflow:hidden}
+.slideshow-viewer{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;background:#050505;color:#fff;touch-action:pan-y;user-select:none}
+.slideshow-viewer__img{max-width:100vw;max-height:100vh;width:auto;height:auto;object-fit:contain;opacity:.15;transition:opacity .35s ease}
+.slideshow-viewer__img.is-ready{opacity:1}
+.slideshow-viewer__close{position:absolute;z-index:2;top:max(1rem,env(safe-area-inset-top));right:max(1rem,env(safe-area-inset-right));width:46px;height:46px;border:1px solid #ffffff40;border-radius:50%;background:#0008;color:#fff;font-size:1.7rem;cursor:pointer}
+.slideshow-viewer__caption{position:absolute;left:50%;bottom:max(5rem,calc(env(safe-area-inset-bottom) + 4.5rem));transform:translateX(-50%);max-width:min(80vw,760px);padding:.55rem .85rem;border-radius:999px;background:#0008;text-align:center;font:500 .78rem var(--sans);letter-spacing:.03em}
+.slideshow-viewer__controls{position:absolute;left:50%;bottom:max(1rem,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:.5rem}
+.slideshow-viewer__controls button{width:48px;height:48px;border:1px solid #ffffff3d;border-radius:50%;background:#0009;color:#fff;font-size:1.15rem;cursor:pointer}
+
+.favorites-empty{margin:0 auto 1.5rem;padding:1rem;text-align:center;color:var(--fg-soft);font:.78rem/1.5 var(--sans)}
+
+.photo-heart{font-variant-numeric:tabular-nums}
+.photo-heart:not(:disabled):hover{transform:translateY(-1px)}
+.photo-heart:disabled{opacity:.72;cursor:wait}
+.photo-heart.is-heart-pulse{animation:heartPulse .34s ease}
+@keyframes heartPulse{50%{transform:scale(1.12)}}
+@media(prefers-reduced-motion:reduce){.photo-heart.is-heart-pulse{animation:none}}
+
+.card__heart-count{position:absolute;top:.65rem;right:.65rem;z-index:3;padding:.32rem .5rem;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(5,5,5,.62);backdrop-filter:blur(8px);color:#fff;font:600 .68rem/1 var(--sans);font-variant-numeric:tabular-nums;pointer-events:none}
+
+@media(max-width:768px){
+  .photo-detail .photo-app-actions,.lightbox .photo-app-actions{gap:.75rem}
+  .photo-detail .photo-app-action,.lightbox .photo-app-action{min-width:0}
+}
+
+.social-settings-list{display:grid;gap:.65rem}
+.social-settings-row{display:grid;grid-template-columns:160px minmax(220px,1fr) minmax(150px,.55fr);gap:.55rem}
+@media(max-width:700px){.social-settings-row{grid-template-columns:1fr}.contact__links{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:390px){.contact__links{grid-template-columns:1fr}}
+
+/* El corazón propio es rojo; la cifra pública se mantiene legible. */
+.photo-app-action.is-liked,
+.photo-app-action.is-liked:hover,
+.photo-app-action.is-liked[aria-pressed="true"]{color:#e53935;border-color:#e53935;background:rgba(229,57,53,.12)}
+.photo-heart.is-liked [data-heart-count]{color:var(--fg)}
+.card__heart-count.is-liked{color:#e53935;border-color:rgba(229,57,53,.7);background:rgba(5,5,5,.78)}
+.card__heart-count.is-liked [data-heart-count]{color:#fff}
+
+

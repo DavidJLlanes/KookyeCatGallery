@@ -1,0 +1,36 @@
+{
+    "ignorar": [
+        ".git",
+        "subirweb",
+        "node_modules",
+        "img",
+        "imagenes",
+        "microblog",
+        "log",
+        "data",
+        "tests",
+        "docs",
+        "scripts"
+    ],
+    "entradas": [
+        "admin.php",
+        "app-manifest.php",
+        "aviso-legal.php",
+        "gallery-version.php",
+        "hearts.php",
+        "index.php",
+        "inline-edit.php",
+        "microblog.php",
+        "politica-cookies.php",
+        "politica-privacidad.php",
+        "installation.php",
+        "installation.example.php"
+    ],
+    "dinamicos": [
+        "inc/blocks",
+        "inc/premium"
+    ],
+    "rutasVps": {
+        "maximo": 0
+    }
+}

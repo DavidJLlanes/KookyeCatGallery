@@ -1,0 +1,153 @@
+/* =========================================================
+   PAGINACIÓN
+   ========================================================= */
+.pagination {
+    margin-top: 5rem;
+    padding: 3rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.8rem;
+    border-top: 1px solid var(--line);
+}
+
+.pagination__controls {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.pagination__nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    color: var(--fg-soft);
+    text-decoration: none;
+    font-family: var(--sans);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    padding: 0.5rem 0.2rem;
+    transition: color 0.3s var(--ease-out);
+}
+
+.pagination__nav svg {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.4s var(--ease-out);
+}
+
+.pagination__nav:hover { color: var(--accent); }
+.pagination__nav--prev:hover svg { transform: translateX(-5px); }
+.pagination__nav--next:hover svg { transform: translateX(5px); }
+
+.pagination__nav--disabled {
+    opacity: 0.25;
+    cursor: default;
+    pointer-events: none;
+}
+
+.pagination__pages {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.pagination__page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* Siempre cuadrado (width = height) para que el círculo no se ovale con números de 2 cifras. */
+    box-sizing: border-box;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    padding: 0;
+    flex: 0 0 auto;
+    color: var(--fg-soft);
+    text-decoration: none;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    transition: color 0.3s, border-color 0.3s, background 0.3s, transform 0.3s var(--ease-out);
+}
+
+.pagination__page:hover {
+    color: var(--accent);
+    border-color: rgba(212, 165, 116, 0.35);
+    transform: translateY(-2px);
+}
+
+.pagination__page.is-current {
+    color: var(--bg);
+    background: var(--accent);
+    border-color: var(--accent);
+    font-weight: 600;
+    font-style: normal;
+}
+
+.pagination__ellipsis {
+    color: var(--fg-dim);
+    padding: 0 0.3rem;
+    letter-spacing: 0.1em;
+}
+
+.pagination__info {
+    font-family: var(--sans);
+    font-size: 0.75rem;
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+    margin: 0;
+}
+
+.pagination__info strong {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.pagination__sep {
+    color: var(--accent);
+    margin: 0 0.6rem;
+}
+
+@media (max-width: 600px) {
+    .pagination {
+        margin-top: 3rem;
+        padding: 2.5rem 1rem 0.5rem;
+        gap: 1.3rem;
+    }
+    .pagination__controls { gap: 1rem; }
+    .pagination__nav span { display: none; }
+    .pagination__nav {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: 1px solid var(--line);
+        justify-content: center;
+        gap: 0;
+        padding: 0;
+    }
+    .pagination__nav:hover {
+        border-color: var(--accent);
+    }
+    .pagination__pages { gap: 0.15rem; }
+    .pagination__page {
+        width: 36px;
+        min-width: 36px;
+        height: 36px;
+        font-size: 0.95rem;
+    }
+    .pagination__info {
+        font-size: 0.7rem;
+        letter-spacing: 0.2em;
+        text-align: center;
+    }
+}
+

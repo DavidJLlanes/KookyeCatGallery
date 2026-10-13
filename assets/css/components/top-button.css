@@ -1,0 +1,37 @@
+/* =========================================================
+   BOTÓN VOLVER ARRIBA
+   ========================================================= */
+.top-btn {
+    position: fixed;
+    bottom: calc(88px + env(safe-area-inset-bottom));
+    right: clamp(16px, 3vw, 38px);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out), background 0.3s;
+    z-index: 100;
+}
+
+.top-btn svg { width: 20px; height: 20px; }
+
+.top-btn.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.top-btn:hover {
+    background: var(--fg);
+    transform: translateY(-3px);
+}
+

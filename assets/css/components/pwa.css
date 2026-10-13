@@ -1,0 +1,23 @@
+/* Acceso al panel y opciones PWA */
+.site-footer__nav .pwa-install-button {
+    padding: 0; border: 0; color: var(--fg-dim); background: none;
+    font: inherit; font-size: .72rem; letter-spacing: .25em; text-transform: uppercase;
+    cursor: pointer; transition: color .3s;
+}
+.site-footer__nav .pwa-install-button:hover,
+.site-footer__nav .pwa-install-button:focus-visible { color: var(--accent); }
+.site-footer__nav .pwa-install-button[hidden] { display: none; }
+.pwa-install-help {
+    width: min(90vw, 420px); padding: 1.5rem; border: 1px solid rgba(212,165,116,.45);
+    color: var(--fg); background: #12110f; box-shadow: 0 20px 70px #000b;
+}
+.pwa-install-help::backdrop { background: rgba(0,0,0,.72); backdrop-filter: blur(5px); }
+.pwa-install-help h2 { margin: 0 0 .75rem; color: var(--accent); font: 400 1.8rem/1.1 var(--serif); }
+.pwa-install-help p { color: var(--fg-soft); font: .9rem/1.6 var(--sans); }
+.pwa-install-help button { margin-top: .5rem; padding: .65rem 1rem; border: 1px solid var(--accent); color: var(--fg); background: transparent; }
+
+
+/* Aviso no intrusivo: una versión nueva espera a que termine una subida sin guardar. */
+.app-update-notice{position:fixed;z-index:9999;right:max(1rem,env(safe-area-inset-right));bottom:max(1rem,env(safe-area-inset-bottom));width:min(28rem,calc(100vw - 2rem));padding:.9rem 1.1rem;border:1px solid rgba(212,165,116,.55);border-radius:4px;background:rgba(16,15,13,.96);box-shadow:0 12px 40px #0009;color:#f3f0ea;font:400 .78rem/1.5 var(--sans);backdrop-filter:blur(14px)}
+
+

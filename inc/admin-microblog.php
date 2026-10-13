@@ -123,7 +123,7 @@ function admin_microblog_form(string $csrf, ?array $post, array $values = [], st
         if ($showSchedule) {
             $html .= '<div class="upload-field"><label for="mb-publish-' . $e($uid) . '">Programar publicación (opcional)</label>'
                 . '<input id="mb-publish-' . $e($uid) . '" name="publish_at" type="datetime-local" value="' . $e($publishValue) . '">'
-                . '<small class="upload-help">Hora del sitio (' . $e(microblog_timezone()->getName()) . '). Vacío = publicar ahora. Hasta esa hora el post no se ve en la web.</small></div>';
+                . '<small class="upload-help">Hora de España. Vacío = publicar ahora. Hasta esa hora el post no se ve en la web.</small></div>';
         }
         $html .= '</div>';
     }
@@ -209,7 +209,6 @@ function admin_microblog_summary(array $post, string $csrf): string
 function admin_microblog_page(string $csrf, array $context = []): void
 {
     $e = 'uploadEscape';
-    $posts = microblog_load();
     $settings = site_settings_load();
     $edit = (string) ($context['edit'] ?? ($_GET['edit'] ?? ''));
     $reply = (string) ($context['reply'] ?? ($_GET['reply'] ?? ''));
@@ -225,24 +224,26 @@ function admin_microblog_page(string $csrf, array $context = []): void
     $status = empty($settings['show_microblog'])
         ? '<p class="upload-message">El microblog está <strong>oculto</strong> en la web. Actívalo en <a href="/admin.php?settings=1&amp;section=publication">Ajustes → Publicación</a>.</p>' : '';
 
-    if ($edit !== '' && isset($posts[$edit])) {
-        $content .= $status . '<section class="admin-card"><header class="admin-card__head"><h2>Editar ' . ($posts[$edit]['parent'] !== null ? 'respuesta' : 'post') . '</h2>'
-            . '<p>Los cambios se ven en la web al guardar.</p></header><div class="admin-card__body">' . admin_microblog_form($csrf, $posts[$edit], $values) . '</div></section>';
+    $editing = $edit !== '' ? microblog_find($edit) : null;
+    if ($editing !== null) {
+        $content .= $status . '<section class="admin-card"><header class="admin-card__head"><h2>Editar ' . ($editing['parent'] !== null ? 'respuesta' : 'post') . '</h2>'
+            . '<p>Los cambios se ven en la web al guardar.</p></header><div class="admin-card__body">' . admin_microblog_form($csrf, $editing, $values) . '</div></section>';
         uploadPage('Microblog', $content, empty($context['error']) ? 200 : 422, true);
     }
 
-    if ($reply !== '' && isset($posts[$reply]) && $posts[$reply]['parent'] === null) {
+    $replying = $reply !== '' ? microblog_find($reply) : null;
+    if ($replying !== null && $replying['parent'] === null) {
         $content .= $status . '<section class="admin-card"><header class="admin-card__head"><h2>Responder en el hilo</h2><p>Solo tú puedes responder; la respuesta se añade al final del hilo.</p></header>'
-            . '<div class="admin-card__body"><div class="mb-context">' . admin_microblog_summary($posts[$reply], $csrf) . '</div>'
+            . '<div class="admin-card__body"><div class="mb-context">' . admin_microblog_summary($replying, $csrf) . '</div>'
             . admin_microblog_form($csrf, null, $values, $reply, true) . '</div></section>';
         uploadPage('Microblog', $content, empty($context['error']) ? 200 : 422, true);
     }
 
     // Lista de hilos: cada raíz con sus respuestas debajo.
     $list = '';
-    foreach (array_slice(microblog_roots($posts), 0, 60) as $root) {
-        $list .= '<div class="mb-thread-admin">' . admin_microblog_summary($root, $csrf);
-        foreach (microblog_replies($posts, $root['id']) as $answer) $list .= admin_microblog_summary($answer, $csrf);
+    foreach (microblog_repository()->threads(60) as $thread) {
+        $list .= '<div class="mb-thread-admin">' . admin_microblog_summary($thread['root'], $csrf);
+        foreach ($thread['replies'] as $answer) $list .= admin_microblog_summary($answer, $csrf);
         $list .= '</div>';
     }
     $content .= $status

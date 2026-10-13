@@ -47,7 +47,8 @@
     const openEditor = element => {
         if (dirty() && !window.confirm('Descartar el texto que estás editando y abrir otro?')) return;
         activeText = element;
-        savedValue = element.textContent;
+        // Un texto que se muestra por partes (el nombre de la web, en dos líneas) trae su valor completo.
+        savedValue = element.dataset.inlineEditValue ?? element.textContent;
         label.textContent = element.dataset.inlineEditLabel || 'Texto';
         input.value = savedValue;
         panel.hidden = false;
@@ -152,6 +153,10 @@
             const result = await response.json();
             if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo guardar el texto.');
             const savedText = typeof result.value === 'string' ? result.value : input.value;
+            if (result.reload) { // el nombre de la web sale en varios sitios: se recarga para verlos todos al día
+                setStatus('Guardado. Actualizando la página…', 'success');
+                window.setTimeout(() => window.location.reload(), 500);
+            }
             const titleUpdate = {
                 value: typeof result.siteTitle === 'string' && result.siteTitle.trim() ? result.siteTitle : savedText,
                 updatedAt: Date.now()

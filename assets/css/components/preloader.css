@@ -1,0 +1,98 @@
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+/* =========================================================
+   PRELOADER cinematográfico
+   ========================================================= */
+.preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: #050505;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    transition: opacity 0.8s var(--ease-out), visibility 0.8s;
+    will-change: opacity;
+}
+
+.preloader.is-done {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.preloader__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.6rem;
+    padding: 2rem;
+}
+
+.preloader__crest {
+    width: clamp(58px, 12vw, 92px);
+    height: auto;
+    filter: drop-shadow(0 0 22px rgba(212, 165, 116, 0.3));
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+    animation: preCrest 1s var(--ease-out) 0.1s forwards;
+}
+
+.preloader__crest::after { content: none; }
+
+.preloader__title {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: clamp(1.3rem, 4vw, 1.9rem);
+    letter-spacing: 0.02em;
+    color: var(--fg);
+    opacity: 0;
+    animation: preTitle 1s var(--ease-out) 0.5s forwards;
+}
+
+.preloader__bar {
+    position: relative;
+    width: clamp(120px, 30vw, 200px);
+    height: 1.5px;
+    background: rgba(243, 240, 234, 0.12);
+    overflow: hidden;
+    border-radius: 2px;
+}
+
+.preloader__bar-fill {
+    position: absolute;
+    inset: 0;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(212, 165, 116, 0.4), var(--accent));
+    transition: width 0.3s var(--ease-out);
+    /* Fallback sin JS: se rellena solo */
+    animation: preBarFallback 2.4s ease-out 0.2s forwards;
+}
+
+/* La barra dirigida por JS sobreescribe el ancho con estilo inline; el fallback sólo actúa si JS no llega */
+.preloader__bar-fill[style] { animation: none; }
+
+@keyframes preCrest {
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes preTitle {
+    to { opacity: 1; }
+}
+@keyframes preBarFallback {
+    0%   { width: 0%; }
+    70%  { width: 82%; }
+    100% { width: 100%; }
+}
+
+/* Auto-dismiss de seguridad si JS no se ejecuta */
+.preloader {
+    animation: preSafetyHide 0.8s ease 3.4s forwards;
+}
+@keyframes preSafetyHide {
+    to { opacity: 0; visibility: hidden; }
+}
+
+html.is-loading { overflow: hidden; }
+

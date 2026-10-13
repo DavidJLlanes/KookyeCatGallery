@@ -90,7 +90,6 @@ return [
     'text_ee497220c8c386d8' => ['group' => 'Inicio y galería · accesibilidad', 'default' => 'Imagen de perfil de Kookye Cat Gallery'],
     'text_c9248cc61aa75376' => ['group' => 'Inicio y galería', 'default' => 'El proyecto'],
     'text_6636c29ab23b6ec8' => ['group' => 'Inicio y galería', 'default' => 'Mirar el mundo despacio'],
-    'text_3d9d76375e115725' => ['group' => 'Inicio y galería', 'default' => 'despacio'],
     'text_9b9e0ce956198ed6' => ['group' => 'Inicio y galería', 'default' => 'es una colección fotográfica en crecimiento, dedicada a una mirada personal y a los momentos que merece la pena recordar.'],
     'text_ded2b00dd9f9aee9' => ['group' => 'Inicio y galería', 'default' => 'Cada imagen captura una mirada de'],
     'text_5b20d476495c8ab2' => ['group' => 'Inicio y galería', 'default' => '.

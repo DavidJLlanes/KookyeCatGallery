@@ -2,9 +2,11 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 const assert = require('node:assert/strict');
+const { cssFile } = require('./support/theme-css.cjs');
 
 (async () => {
     const root = path.join(__dirname, '..');
+    const { mainJs, readScript } = require('./support/main-bundle.cjs');
     const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
     let count = 0;
     let liked = false;
@@ -26,7 +28,7 @@ const assert = require('node:assert/strict');
             await route.fulfill({ status: 200, contentType: 'application/json',
                 body: JSON.stringify({ ok: true, counts: { 'test-photo': count }, liked: { 'test-photo': liked } }) });
         });
-        await page.route('https://example.com/foto/test-photo', route => route.fulfill({
+        await page.route('https://davidjimenezllanes.es/foto/test-photo', route => route.fulfill({
             status: 200, contentType: 'text/html',
             body: '<!doctype html><html lang="es"><head><meta charset="utf-8"></head><body>' +
                 '<section class="photo-detail"><div class="photo-detail__info"><div class="photo-app-actions">' +
@@ -36,10 +38,10 @@ const assert = require('node:assert/strict');
                 '<span class="card__heart-count" data-heart-display="test-photo">♡ <span data-heart-count>0</span></span>' +
                 '</body></html>'
         }));
-        await page.goto('https://example.com/foto/test-photo');
-        await page.addStyleTag({ content: fs.readFileSync(path.join(root, 'assets/css/style.css'), 'utf8') });
+        await page.goto('https://davidjimenezllanes.es/foto/test-photo');
+        await page.addStyleTag({ content: cssFile(root, 'style') });
         const initialCounts = page.waitForResponse(response => response.url().includes('/hearts.php?slugs='));
-        await page.addScriptTag({ content: fs.readFileSync(path.join(root, 'assets/js/main.js'), 'utf8') });
+        await page.addScriptTag({ content: mainJs(root) });
         await initialCounts;
         await page.waitForFunction(() => document.querySelector('[data-heart-photo] [data-heart-count]')?.textContent === '0');
         await page.locator('[data-favorite-photo]').click();

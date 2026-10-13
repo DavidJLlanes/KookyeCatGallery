@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 
 (async () => {
     const root = path.join(__dirname, '..');
+    const { mainJs, readScript } = require('./support/main-bundle.cjs');
     const browser = await chromium.launch({ headless: true, executablePath: process.env.TEST_BROWSER || undefined, args: ['--no-sandbox'] });
     try {
         const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -25,7 +26,7 @@ const assert = require('node:assert/strict');
         });
         await page.goto('https://example.test/');
         await page.addScriptTag({ content: fs.readFileSync(path.join(root, 'assets/js/site-texts.js'), 'utf8') });
-        await page.addScriptTag({ content: fs.readFileSync(path.join(root, 'assets/js/main.js'), 'utf8') });
+        await page.addScriptTag({ content: mainJs(root) });
         await page.locator('#slideshowStart').click();
         await page.waitForSelector('.slideshow-viewer__img');
         assert.match(await page.locator('.slideshow-viewer__img').getAttribute('src'), /foto-1\.jpg$/, 'The slideshow must show the first photo');

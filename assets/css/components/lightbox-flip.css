@@ -1,0 +1,57 @@
+/* =========================================================
+   LIGHTBOX FLIP — la foto que vuela desde el grid
+   ========================================================= */
+.lightbox__flyer {
+    position: fixed;
+    z-index: 1001;
+    margin: 0;
+    object-fit: cover;
+    border-radius: 4px;
+    pointer-events: none;
+    opacity: 0;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+    transition:
+        top 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+        left 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+        width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+        height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.3s ease;
+    will-change: top, left, width, height;
+}
+
+.lightbox__flyer.is-active { opacity: 1; }
+
+/* Con FLIP activo la imagen real aparece por crossfade más suave */
+.lightbox__img {
+    transition: opacity 0.45s var(--ease-out), transform 0.6s var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+    .hero__bg { animation: none; }
+    .hero__gradient,
+    .hero__noise,
+    .hero__title::before,
+    .hero__title-line--accent,
+    .preloader,
+    .preloader__crest,
+    .preloader__title,
+    .preloader__bar-fill {
+        animation: none !important;
+    }
+    .hero__title-line {
+        line-height: 1;
+    }
+    /* Sin animación, deja el acento en color sólido legible */
+    .hero__title-line--accent {
+        background-image: none;
+        -webkit-text-fill-color: var(--accent);
+        color: var(--accent);
+    }
+    .preloader { display: none; }
+    html.is-loading { overflow: auto; }
+}
+
