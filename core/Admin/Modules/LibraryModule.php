@@ -72,9 +72,9 @@ final class LibraryModule extends AbstractModule
     {
         $items = (new ImageProcessor(Router::root()))->processAll();
         // Fotos dejadas por FTP, sin descripción: la IA (si está activada) las describe aquí, en el panel, y no en la web pública.
-        $siteConfigPath = KcgCoreInstallation::aiConfigFile();
+        $siteConfigPath = \Kcg\Core\Installation::aiConfigFile();
         $siteConfig = $siteConfigPath !== '' && is_file($siteConfigPath) ? require $siteConfigPath : [];
-        $siteConfig = ai_text_config($siteConfig, site_text('text_52179dc42df7efe5'), KcgCoreInstallation::siteUrl());
+        $siteConfig = ai_text_config($siteConfig, site_text('text_52179dc42df7efe5'), \Kcg\Core\Installation::siteUrl());
         if (!empty($siteConfig['ai_enabled'])) {
             (new AiTextGenerator(Router::root(), $siteConfig))->processMissing($items, (int) ($siteConfig['ai_max_per_request'] ?? 5));
         }

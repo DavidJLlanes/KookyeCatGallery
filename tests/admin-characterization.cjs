@@ -115,6 +115,8 @@ function pretty(html) {
 const results = [];
 let step = 0;
 function record(name, response, { raw = false } = {}) {
+    // Un error del servidor nunca es un resultado válido (ni siquiera al actualizar los archivos dorados).
+    if (response.status >= 500) throw new Error('El panel respondió ' + response.status + ' en «' + name + '»: ' + String(response.text).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 200));
     const number = String(++step).padStart(2, '0');
     let body;
     if (raw) body = 'sha256:' + crypto.createHash('sha256').update(response.bytes).digest('hex') + ' bytes:' + response.bytes.length;
