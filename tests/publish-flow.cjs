@@ -89,6 +89,19 @@ const phpErrors = () => (fs.existsSync(errorLog) ? fs.readFileSync(errorLog, 'ut
         assert.ok(slug, 'La portada enlaza a la ficha.');
         const detail = await send('/foto/' + slug);
         assert.equal(detail.status, 200, 'La ficha abre.');
+        // Todas las pantallas del panel abren y todo lo que enlazan (scripts, estilos) existe en el paquete.
+        const firstPhoto = fs.readdirSync(path.join(site, 'img')).find(f => f.endsWith('.jpg'));
+        const pages = ['', '?settings=1', '?settings=1&section=content', '?settings=1&section=design', '?settings=1&section=texts', '?settings=1&section=social',
+            '?settings=1&section=publication', '?settings=1&section=page&doc=project', '?settings=1&section=page&doc=legal_notice', '?ai=1', '?library=1', '?categories=1',
+            '?microblog=1', '?edit=' + encodeURIComponent(firstPhoto)];
+        const assets = new Set();
+        for (const query of pages) {
+            const screen = await send('/admin.php' + query);
+            assert.equal(screen.status, 200, 'La pantalla del panel «' + (query || 'inicio') + '» debe abrir (salió ' + screen.status + ').');
+            for (const match of screen.text.matchAll(/(?:src|href)="(\/assets\/[^"?#]+)/g)) assets.add(match[1]);
+        }
+        for (const match of home.text.matchAll(/(?:src|href)="(\/assets\/[^"?#]+)/g)) assets.add(match[1]);
+        for (const asset of assets) assert.ok(fs.existsSync(path.join(site, asset)), 'El paquete no incluye ' + asset + ' y alguna pantalla lo enlaza.');
         assert.equal(phpErrors(), '', 'Sin errores de PHP en el registro:\n' + phpErrors());
     } finally {
         if (server) server.kill();
