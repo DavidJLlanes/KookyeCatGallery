@@ -10,6 +10,8 @@
     "assets/icons/",
     ".github/workflows/deploy.yml",
     "docs/refactor/",
+    "docs/migracion-vps.md",
+    "docs/instalacion-limpia-vps.md",
     "tests/visual/",
     "tests/golden/"
   ],
@@ -28,6 +30,7 @@
     "data/.htaccess": "scripts/defaults/data.htaccess",
     "img/.htaccess": "scripts/defaults/img.htaccess",
     "var/.htaccess": "scripts/defaults/var.htaccess",
+    "uploads/.htaccess": "scripts/defaults/uploads.htaccess",
     ".gitattributes": "scripts/defaults/gitattributes",
     "assets/img/kookyecatgallery-photographers-cover.png": "scripts/defaults/cover.png"
   },
@@ -36,6 +39,7 @@
     "imagenes/desktop",
     "imagenes/mobile",
     "microblog",
+    "uploads",
     "data",
     "var"
   ],

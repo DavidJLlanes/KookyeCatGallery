@@ -49,3 +49,9 @@ Los campos de fotografías (subir foto, carga por lotes, imágenes del microblog
 ## Resolución con la que se publican
 
 Las fotos de la galería y de la ficha se publican en **WebP al 80 %** con el lado mayor en **1800 px** como máximo (versión móvil: 800 px de ancho y 1200 de alto como máximo); las imágenes del microblog, igual: WebP al 80 % y 1800 px. Nunca se amplían. Se generan **al publicar** o editar la foto, no en la primera visita, y las descripciones con IA se piden después de responder, de modo que ni quien sube la foto ni quien visita la web esperan. Si cambia la receta, las fotos ya publicadas se rehacen poco a poco (4 por llamada). Prueba: `php tests/image-processor.php`.
+
+**Rehacerlas desde el panel.** En **Ajustes → Publicación → Imágenes de la galería** el botón **Rehacer imágenes** rehace las versiones WebP pendientes (de 20 en 20; si quedan más, el panel lo dice y se pulsa otra vez). Es lo mismo que `php scripts/regenerate-images.php`, que solo se puede ejecutar por línea de comandos (por la web da 404 a propósito, igual que el resto de `scripts/`).
+
+## Fotos muy grandes
+
+La web publica siempre 1800 px aunque subas más, pero el original se guarda tal cual en `img/`. El servidor admite originales de hasta 15 MB: una foto mayor (por ejemplo, de 48 megapíxeles) se **reduce en el propio dispositivo** antes de enviarla, a 4096 px de lado mayor y en JPEG, tanto en «Subir foto» como en la carga por lotes (`assets/js/image-fit.js`). La copia reducida pierde los metadatos EXIF (fecha y GPS): en «Subir foto» el GPS se lee antes de reducirla, pero en la carga por lotes no se conserva.

@@ -82,14 +82,10 @@ function site_photos_per_view_choices(): array
     return [6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 36, 40, 50, 60, 100, 0];
 }
 
-/**
- * Redes disponibles en el editor y en la portada. Instagram y Threads conservan sus marcas CSS actuales.
- */
+/** Redes disponibles en el editor y en la portada: una por archivo en themes/socials/ (id => nombre). */
 function site_social_networks(): array
 {
-    return ['instagram'=>'Instagram', 'threads'=>'Threads', 'facebook'=>'Facebook', 'x'=>'X', 'youtube'=>'YouTube',
-        'tiktok'=>'TikTok', 'flickr'=>'Flickr', 'linkedin'=>'LinkedIn', 'pinterest'=>'Pinterest', '500px'=>'500px',
-        'bluesky'=>'Bluesky', 'mastodon'=>'Mastodon'];
+    return \Kcg\Core\Registry::for('socials')->choices();
 }
 
 /**

@@ -99,31 +99,6 @@
     color: var(--bg);
 }
 
-/* Logos PNG (negro/transparente) recoloreados a dorado con máscara CSS */
-.contact__logo {
-    width: 26px;
-    height: 26px;
-    background-color: var(--accent);
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    mask-position: center;
-    -webkit-mask-size: contain;
-    mask-size: contain;
-    transition: background-color 0.4s var(--ease-out);
-}
-.contact__logo--ig {
-    -webkit-mask-image: url(/instagram.png);
-    mask-image: url(/instagram.png);
-}
-.contact__logo--threads {
-    -webkit-mask-image: url(/threads.png);
-    mask-image: url(/threads.png);
-}
-/* Al pasar el ratón, el círculo se vuelve dorado y el logo oscuro */
-.contact__link:hover .contact__logo {
-    background-color: var(--bg);
-}
 .contact__net {
     font-family: var(--sans);
     font-size: 0.68rem;

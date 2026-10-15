@@ -15,13 +15,13 @@ final class Manifest
 
     /** Rutas (desde la raíz) que no pertenecen al núcleo: datos y archivos propios de cada instalación. */
     private const INSTALLATION = [
-        'installation.php', 'install.php', 'img/', 'imagenes/', 'microblog/', 'data/', 'var/', 'log/', 'config/', 'version.json', 'sitemap.xml',
+        'installation.php', 'install.php', 'img/', 'imagenes/', 'uploads/', 'microblog/', 'data/', 'var/', 'log/', 'config/', 'version.json', 'sitemap.xml',
         'core-manifest.json', '.git/', 'node_modules/', 'debug.log',
     ];
 
     /** Dentro de las carpetas de datos, lo que sí viene en el núcleo. */
     private const CORE_EXCEPTIONS = ['data/.htaccess', 'data/.gitkeep', 'img/.htaccess', 'img/.gitkeep', 'imagenes/desktop/.gitkeep', 'imagenes/mobile/.gitkeep',
-        'microblog/.gitkeep', 'var/.htaccess', 'var/.gitkeep'];
+        'microblog/.gitkeep', 'var/.htaccess', 'var/.gitkeep', 'uploads/.htaccess', 'uploads/.gitkeep'];
 
     public static function hash(string $file): string
     {

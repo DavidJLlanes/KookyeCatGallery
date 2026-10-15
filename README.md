@@ -94,15 +94,47 @@ La carpeta `kcg-hosting/` es lo que se sube: la web sin `tests/`, `docs/`, `.git
 
 **B. Copia manual.** Descarga el repositorio (o el ZIP de GitHub) y sube todo **menos** `tests/`, `docs/`, `.github/`, `scripts/defaults/`, `scripts/export-core.php`, `scripts/build-catalogs.php`, `scripts/core-files.json` y `pendiente.md`. Conserva los archivos ocultos, en especial `.htaccess`.
 
-#### Pasos en el hosting
+#### Elige cómo instalar
+
+| Tu servidor | Cómo se instala | Qué tienes que hacer |
+| --- | --- | --- |
+| **Hosting compartido** (cPanel, Plesk, IONOS, Hostinger…) | Instalador web `install.php` | Subir los archivos y abrir `install.php` en el navegador |
+| **VPS o servidor dedicado** (Linux con acceso SSH y `sudo`) | Instalador `instalar.sh` | Subir los archivos y ejecutar **una** orden por SSH |
+
+Los dos usan la misma lógica (`core/Installer.php`): comprueban el servidor, te explican con su solución lo que falte, crean el administrador y dejan la web lista. El motivo de que haya dos es que un script PHP que corre dentro del servidor web no puede darse a sí mismo permisos de escritura: en un hosting compartido el servidor ya se los da (PHP corre con tu usuario), pero en un VPS hay que asignarlos una vez con `sudo`, y eso lo hace `instalar.sh`.
+
+#### A. Hosting compartido (instalador web)
 
 1. Añade el dominio o subdominio en el panel del hosting y **activa HTTPS**. Comprueba que usa **PHP 8.1+** con GD (JPEG, PNG y WebP), Fileinfo y pdo_sqlite.
 2. Sube el contenido del paquete a la raíz pública del sitio, normalmente `public_html` (por FTP, SFTP o el gestor de archivos). Incluye `.htaccess`: algunos programas FTP ocultan los archivos que empiezan por punto.
-3. Comprueba que PHP puede escribir en `data/`, `img/`, `imagenes/`, `microblog/` y `var/` (el instalador te avisa si algo falla).
-4. Abre `https://tu-dominio/install.php`. Indica la URL HTTPS del sitio, un usuario y una contraseña única de al menos 12 caracteres. El instalador deja la web lista: guarda el acceso y la URL, crea los ajustes iniciales, las carpetas de fotos y la base del microblog, y te dice qué ha preparado y qué conviene revisar. Si ya hay un administrador registrado, no deja registrar otro.
+3. Abre `https://tu-dominio/install.php`. Verás la **comprobación del servidor** (✔ bien, ! aviso, ✖ impide instalar), cada punto con su explicación y cómo arreglarlo. Si todo está bien, indica la URL HTTPS del sitio, un usuario y una contraseña única de al menos 12 caracteres. El instalador deja la web lista: guarda el acceso y la URL, crea los ajustes iniciales, las carpetas de fotos y la base del microblog, y te dice qué ha preparado y qué conviene revisar. Si ya hay un administrador registrado, no deja registrar otro.
+4. Si la comprobación marca carpetas sin permiso de escritura, pon permisos 755 (o 775) a `data/`, `img/`, `imagenes/`, `microblog/` y `uploads/` desde el gestor de archivos, o pide al proveedor que las asigne al usuario de PHP, y recarga la página.
 5. **Borra `install.php`.** El instalador intenta borrarse solo, pero comprueba en el gestor de archivos que ha desaparecido y, si sigue ahí, bórralo: es mejor no tenerlo nunca publicado una vez instalada la web.
 6. Entra en `https://tu-dominio/admin.php`, inicia sesión y personaliza la web: en **Ajustes → Contenido** sube tu foto de perfil, logo, icono e imagen para redes (el recortador te ayuda con las proporciones) y en **Ajustes → Textos** escribe el nombre de la web.
 7. Sube fotografías desde **Subir foto** o deja JPG y PNG en `img/` por FTP y abre la portada.
+
+#### B. VPS o servidor dedicado (`instalar.sh`)
+
+Requisitos: Linux, acceso SSH con `sudo`, PHP 8.1+ (CLI y FPM) con `php-gd`, `php-sqlite3` y `php-mbstring`, y Nginx o Apache con HTTPS ya configurado para tu dominio.
+
+1. Sube el contenido del paquete a la carpeta de la web (por ejemplo `/var/www/tu-dominio`), con `scp`, `rsync` o SFTP.
+2. Entra por SSH y ejecuta, desde esa carpeta:
+
+   ```sh
+   cd /var/www/tu-dominio
+   sudo sh instalar.sh tu-dominio.com
+   ```
+
+   Te pregunta el usuario administrador y la contraseña (mínimo 12 caracteres; no se ve al escribir). Puedes darle el usuario con `--admin nombre`.
+3. El script hace, en orden y explicando cada paso: comprueba PHP 8.1+, **detecta el usuario con el que corre PHP** (o usa el de `--web-user`), crea las carpetas con sus permisos (`scripts/preparar-servidor.sh`), comprueba extensiones y carpetas con ese usuario, **crea el administrador y deja la web lista** (`scripts/install-cli.php`), borra `install.php` y te muestra el bloque de Nginx que necesitas.
+4. Si usas Nginx, copia ese bloque en el `server` de tu dominio y recarga: `sudo nginx -t && sudo systemctl reload nginx`. Con Apache no hace falta nada más: el `.htaccess` ya protege las carpetas privadas.
+5. Entra en `https://tu-dominio.com/admin.php` y sigue desde el paso 6 de la opción A.
+
+Opciones útiles: `--web-user USUARIO` si PHP no corre como `www-data`; `--privada /ruta` para elegir la carpeta privada (por defecto `config`, junto a la carpeta de la web); `--ayuda` muestra todo. La contraseña no queda en ningún archivo ni en el historial: se pasa al instalador por la entrada estándar. Para automatizarlo: `export KCG_ADMIN_PASSWORD=...` y `sudo --preserve-env=KCG_ADMIN_PASSWORD sh instalar.sh tu-dominio.com --admin nombre`. El script se puede repetir sin riesgo: si ya hay administrador, no crea otro.
+
+Si ya instalaste y solo necesitas arreglar permisos (por ejemplo, tras copiar archivos como `root`): `sudo sh scripts/preparar-servidor.sh`.
+
+> **Servidor propio, copiar archivos y permisos.** Copiar los archivos con `sudo` los deja como propiedad de `root`: está bien para el código (PHP no puede modificarlo, que es más seguro), y por eso `instalar.sh` solo da permiso de escritura a PHP sobre sus siete carpetas (`img/`, `data/`, `imagenes/desktop/`, `imagenes/mobile/`, `microblog/`, `uploads/` y la carpeta privada).
 
 El instalador prepara una carpeta privada `config/` fuera de la raíz pública cuando los permisos del hosting lo permiten. La estructura habitual queda así:
 

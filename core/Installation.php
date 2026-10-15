@@ -57,6 +57,33 @@ final class Installation
         self::$file = null;
     }
 
+    /**
+     * Carpetas (desde la raíz) donde PHP necesita escribir. Las crea el instalador y las deja con sus permisos
+     * `scripts/preparar-servidor.sh`; un test comprueba que ese script y esta lista dicen lo mismo.
+     */
+    public const WRITABLE_DIRECTORIES = ['img', 'data', 'imagenes/desktop', 'imagenes/mobile', 'microblog', 'uploads', 'uploads/icons'];
+
+    /**
+     * Comprueba todas las carpetas escribibles de una vez (intentando crear las que falten) y devuelve las que fallan:
+     * carpeta relativa => qué le pasa. Vacío = todo en orden. Así el instalador puede dar una única lista y un único comando.
+     *
+     * @return array<string, string>
+     */
+    public static function unwritableDirectories(?string $root = null): array
+    {
+        $root = self::clean($root ?? self::root());
+        $problems = [];
+        foreach (self::WRITABLE_DIRECTORIES as $relative) {
+            $directory = $root . '/' . $relative;
+            if (!is_dir($directory) && !@mkdir($directory, 0755, true) && !is_dir($directory)) {
+                $problems[$relative] = 'no existe y PHP no puede crearla';
+            } elseif (!is_writable($directory)) {
+                $problems[$relative] = 'PHP no tiene permiso de escritura';
+            }
+        }
+        return $problems;
+    }
+
     private static function env(string ...$names): string
     {
         foreach ($names as $name) {

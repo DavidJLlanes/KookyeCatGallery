@@ -86,6 +86,7 @@ $hexProd = $tmp . '/core-hex';
 exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/scripts/export-core.php') . ' ' . escapeshellarg($hexProd) . ' abc1234 --produccion 2>&1');
 check(is_file($hexProd . '/version.json') && json_decode((string) file_get_contents($hexProd . '/version.json'), true)['version'] === 'abc1234' && !isset(Manifest::read($hexProd)['files']['version.json']),
     'Con una versión hexadecimal el paquete trae version.json (la web lo consulta) y no lo lista en el manifiesto.');
+check(str_contains((string) file_get_contents($hexProd . '/service-worker.js'), "const BUILD_VERSION = 'abc1234';"), 'El service worker lleva la versión del paquete (así los navegadores renuevan sus cachés).');
 check(count(Manifest::read($prod)['files']) < count($manifest['files']) && !isset(Manifest::read($prod)['files']['tests/release.php']), 'El manifiesto de producción no lista las pruebas.');
 
 // El núcleo no menciona ninguna web concreta en su código (el README sí enlaza al repositorio del proyecto).

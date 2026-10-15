@@ -83,7 +83,11 @@ class ImageProcessor
         );
     }
 
-    public function processAll(): array
+    /**
+     * Procesa lo nuevo o modificado. $staleBudget limita cuántas fotos ya generadas con una receta anterior se rehacen en esta
+     * llamada (por defecto STALE_PER_CALL, para no frenar una visita; scripts/regenerate-images.php pasa PHP_INT_MAX).
+     */
+    public function processAll(?int $staleBudget = null): array
     {
         if (!is_dir($this->sourceDir)) {
             return [];
@@ -92,7 +96,7 @@ class ImageProcessor
         $items = [];
         $cacheDirty = false;
         $foundOriginals = [];
-        $staleBudget = self::STALE_PER_CALL;
+        $staleBudget ??= self::STALE_PER_CALL;
 
         $files = scandir($this->sourceDir) ?: [];
 
@@ -119,15 +123,9 @@ class ImageProcessor
             $mtime = filemtime($originalPath) ?: 0;
             $editMtime = $hasEditedVersion ? (filemtime($editedPath) ?: 0) : 0;
             $editSize = $hasEditedVersion ? (filesize($editedPath) ?: 0) : 0;
-            $cached = $this->cache[$file] ?? null;
-
-            $missing = !$cached
-                || ($cached['mtime'] ?? 0) !== $mtime
-                || ($cached['edit_mtime'] ?? 0) !== $editMtime
-                || ($cached['edit_size'] ?? 0) !== $editSize
-                || !is_file($desktopFile)
-                || !is_file($mobileFile);
-            $stale = !$missing && ($cached['recipe'] ?? '') !== self::RECIPE;
+            $state = $this->state($file, $originalPath, $editedPath, $desktopFile, $mobileFile);
+            $missing = $state === 'missing';
+            $stale = $state === 'stale';
             $needsProcess = $missing || ($stale && $staleBudget > 0);
             if ($stale && $needsProcess) $staleBudget--;
 
@@ -190,6 +188,38 @@ class ImageProcessor
         }
 
         return $items;
+    }
+
+    /** Estado de la versión WebP de un original: «ok», «missing» (nueva, modificada o sin archivos) o «stale» (receta anterior). */
+    private function state(string $file, string $originalPath, string $editedPath, string $desktopFile, string $mobileFile): string
+    {
+        $hasEditedVersion = is_file($editedPath);
+        $cached = $this->cache[$file] ?? null;
+        $missing = !$cached
+            || ($cached['mtime'] ?? 0) !== (filemtime($originalPath) ?: 0)
+            || ($cached['edit_mtime'] ?? 0) !== ($hasEditedVersion ? (filemtime($editedPath) ?: 0) : 0)
+            || ($cached['edit_size'] ?? 0) !== ($hasEditedVersion ? (filesize($editedPath) ?: 0) : 0)
+            || !is_file($desktopFile)
+            || !is_file($mobileFile);
+        if ($missing) return 'missing';
+        return ($cached['recipe'] ?? '') !== self::RECIPE ? 'stale' : 'ok';
+    }
+
+    /** Cuántas fotos tienen pendiente su versión WebP (nuevas, modificadas o con una receta anterior), sin procesar nada. */
+    public function pendingCount(): int
+    {
+        if (!is_dir($this->sourceDir)) return 0;
+        $pending = 0;
+        foreach (scandir($this->sourceDir) ?: [] as $file) {
+            if (str_ends_with(strtolower($file), '.edit.jpg')) continue;
+            if (!in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), self::SUPPORTED_EXT, true)) continue;
+            $originalPath = $this->sourceDir . '/' . $file;
+            if (!is_file($originalPath)) continue;
+            $base = pathinfo($file, PATHINFO_FILENAME);
+            $state = $this->state($file, $originalPath, $this->sourceDir . '/' . $base . '.edit.jpg', $this->desktopDir . '/' . $base . '.webp', $this->mobileDir . '/' . $base . '.webp');
+            if ($state !== 'ok') $pending++;
+        }
+        return $pending;
     }
 
     private function generate(string $source, string $desktopOut, string $mobileOut, ?string $metadataSource = null): ?array

@@ -28,7 +28,7 @@ final class SettingsModule extends AbstractModule
             ['id' => 'texts', 'href' => '/admin.php?settings=1&amp;section=texts', 'label' => 'Textos', 'short' => 'Textos', 'order' => 70],
         ];
     }
-    public function actions(): array { return ['save_site_page' => 'saveSitePage', 'save_site_settings' => 'saveSiteSettings']; }
+    public function actions(): array { return ['save_site_page' => 'saveSitePage', 'save_site_settings' => 'saveSiteSettings', 'regenerate_images' => 'regenerateImages']; }
     public function wantsPage(): bool { return isset($_GET['settings']) || isset($_GET['mobile_preview']); }
     public function page(): void
     {
@@ -39,7 +39,7 @@ final class SettingsModule extends AbstractModule
     {
         $action = (string) ($_POST['action'] ?? '');
         if ($action === 'save_site_page') return 'texts';
-        if (isset($_GET['settings']) || $action === 'save_site_settings') {
+        if (isset($_GET['settings']) || $action === 'save_site_settings' || $action === 'regenerate_images') {
             $section = (string) ($_POST['section'] ?? $_GET['section'] ?? 'profile');
             if ($section === 'page') return 'texts';
             if ($section === 'content' || $section === 'profile' || $section === 'social' || $section === 'publication') return 'profile';
@@ -84,33 +84,18 @@ final class SettingsModule extends AbstractModule
                 $settingsInput['texts'] = $currentSettings['texts'] ?? [];
             }
             $settingsInput = site_gallery_preserve_inactive($settingsInput, $currentSettings);
-            foreach (['profile_image_file' => 'profile_image', 'logo_image_file' => 'logo_image'] as $fileKey => $settingKey) {
+            // Foto de perfil y logo: se reducen, se pasan a WebP y se guardan en uploads/ (nunca en la carpeta del código).
+            $brandImages = [
+                'profile_image_file' => ['profile_image', 'profile-photo-custom', SITE_BRAND_PROFILE_MAX_SIDE, 'la foto de perfil'],
+                'logo_image_file' => ['logo_image', 'site-logo-custom', SITE_BRAND_LOGO_MAX_SIDE, 'el logo'],
+            ];
+            foreach ($brandImages as $fileKey => [$settingKey, $stem, $maxSide, $label]) {
                 $settingsInput[$settingKey] = $currentSettings[$settingKey] ?? \Kcg\Core\Settings\Schema::defaults()[$settingKey];
                 $file = $_FILES[$fileKey] ?? null;
                 if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) continue;
                 $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
                 if ($error !== UPLOAD_ERR_OK) throw new RuntimeException(uploadIniErrorMessage($error));
-                if ((int) ($file['size'] ?? 0) < 1 || (int) $file['size'] > MAX_IMAGE_BYTES) {
-                    throw new RuntimeException('La imagen debe pesar como máximo 15 MB.');
-                }
-                $finfo = new finfo(FILEINFO_MIME_TYPE);
-                $mime = $finfo->file((string) $file['tmp_name']);
-                $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-                if (!isset($extensions[$mime]) || !@getimagesize((string) $file['tmp_name'])) {
-                    throw new RuntimeException('Formato de imagen no admitido. Usa JPG, PNG o WebP.');
-                }
-                $stem = $settingKey === 'logo_image' ? 'site-logo-custom' : 'profile-photo-custom';
-                foreach (['jpg', 'png', 'webp'] as $ext) {
-                    $oldPath = Router::root() . '/' . $stem . '.' . $ext;
-                    if (is_file($oldPath)) @unlink($oldPath);
-                }
-                $filename = $stem . '.' . $extensions[$mime];
-                $destination = Router::root() . '/' . $filename;
-                if (!move_uploaded_file((string) $file['tmp_name'], $destination)) {
-                    throw new RuntimeException('No se pudo guardar la imagen. Revisa los permisos del servidor.');
-                }
-                @chmod($destination, 0644);
-                $settingsInput[$settingKey] = '/' . $filename;
+                $settingsInput[$settingKey] = site_brand_store_image($file, $stem, $maxSide, $label, Router::root());
             }
             site_brand_assets_process($_FILES);
             site_settings_save($settingsInput);
@@ -133,10 +118,28 @@ final class SettingsModule extends AbstractModule
         }
     }
 
+    /** Fotos que se rehacen en cada pulsación de «Rehacer imágenes»: el servidor web corta las peticiones largas. */
+    private const REGENERATE_BATCH = 20;
+
+    /** Ajustes → Publicación: rehace las versiones WebP de las fotos con la receta actual (por tandas) sin entrar por SSH. */
+    protected function regenerateImages(): void
+    {
+        @set_time_limit(300);
+        $processor = new ImageProcessor(Router::root());
+        $processor->processAll(self::REGENERATE_BATCH);
+        $remaining = (new ImageProcessor(Router::root()))->pendingCount();
+        header('Location: /admin.php?settings=1&section=publication&images=' . $remaining, true, 303);
+        exit;
+    }
+
     /** Ajustes organizados en Contenido, Diseño, Textos, Redes y Publicación. */
     protected function settingsPage(): void
     {
         $status = isset($_GET['saved']) ? '<p class="upload-message" role="status">Configuración guardada.</p>' : '';
+        if (isset($_GET['images'])) {
+            $remaining = max(0, (int) $_GET['images']);
+            $status = '<p class="upload-message" role="status">' . ($remaining === 0 ? 'Imágenes al día: todas las fotos tienen su versión actual.' : 'Imágenes rehechas. Quedan ' . $remaining . ' por rehacer: pulsa de nuevo «Rehacer imágenes» para continuar.') . '</p>';
+        }
         $section = (string) ($_GET['section'] ?? 'content');
         if ($section === 'profile') $section = 'content';
         if (!in_array($section, ['content', 'design', 'texts', 'social', 'publication', 'page'], true)) $section = 'content';
@@ -151,7 +154,8 @@ final class SettingsModule extends AbstractModule
         $previewLink = $section === 'design' ? '<a class="admin-mobile-preview-link" href="/admin.php?mobile_preview=1">Vista previa en móvil</a>' : '';
         $settingsTitles = ['content' => 'Contenido', 'design' => 'Diseño', 'texts' => 'Textos', 'social' => 'Redes Sociales', 'publication' => 'Publicación'];
         $settingsContent = adminNavigation((string) $_SESSION['csrf']) . $status . $previewLink
-            . site_settings_form((string) $_SESSION['csrf'], null, $section);
+            . site_settings_form((string) $_SESSION['csrf'], null, $section)
+            . ($section === 'publication' ? site_images_maintenance_card((string) $_SESSION['csrf']) : '');
         uploadPage($settingsTitles[$section] ?? 'Ajustes', $settingsContent, 200, true);
     }
 

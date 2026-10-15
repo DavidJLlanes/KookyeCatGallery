@@ -53,6 +53,12 @@ foreach ($rules['carpetas'] ?? [] as $folder) { // carpetas de datos vacías (un
     @mkdir("$destination/$folder", 0775, true);
     if (!is_file("$destination/$folder/.gitkeep")) file_put_contents("$destination/$folder/.gitkeep", '');
 }
+// El service worker nombra sus cachés con la versión: con una versión nueva, los navegadores sueltan lo viejo y cargan los archivos nuevos.
+if (preg_match('/^[a-f0-9]{7,40}$/i', $version) && is_file("$destination/service-worker.js")) {
+    $worker = (string) file_get_contents("$destination/service-worker.js");
+    $stamped = preg_replace("/const BUILD_VERSION = '[^']*';/", "const BUILD_VERSION = '" . strtolower($version) . "';", $worker, 1, $replacements);
+    if ($replacements === 1) file_put_contents("$destination/service-worker.js", $stamped);
+}
 Manifest::write($destination, $version, Manifest::scan($destination));
 // version.json: la web (pwa.js) pregunta por él para avisar de versiones nuevas; sin el archivo cada visita da un 404.
 if (preg_match('/^[a-f0-9]{7,40}$/i', $version)) file_put_contents("$destination/version.json", json_encode(['version' => strtolower($version)]) . "

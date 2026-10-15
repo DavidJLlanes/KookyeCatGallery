@@ -89,6 +89,52 @@ const phpErrors = () => (fs.existsSync(errorLog) ? fs.readFileSync(errorLog, 'ut
         assert.ok(slug, 'La portada enlaza a la ficha.');
         const detail = await send('/foto/' + slug);
         assert.equal(detail.status, 200, 'La ficha abre.');
+        // Imágenes de marca (perfil, logo, icono, redes) y redes sociales: se guardan en uploads/ (el código no se toca), reducidas, y las
+        // redes se dibujan con su icono oficial en SVG (nada depende de archivos sueltos como instagram.png).
+        const dims = file => execFileSync(php, ['-r', `$s=getimagesize('${file.split(path.sep).join('/')}'); echo $s[0].' '.$s[1].' '.$s[2];`]).toString().match(/(\d+) (\d+) (\d+)\s*$/).slice(1).map(Number);
+        const png = (name, w, h) => {
+            const file = path.join(tmp, name).split(path.sep).join('/');
+            execFileSync(php, ['-r', `$i=imagecreatetruecolor(${w},${h}); imagefill($i,0,0,imagecolorallocate($i,200,120,60)); imagepng($i,'${file}');`], { stdio: 'pipe' });
+            return new Blob([fs.readFileSync(file)], { type: 'image/png' });
+        };
+        // El formulario real envía todos los ajustes: se parte de los valores iniciales del esquema.
+        const defaults = JSON.parse(execFileSync(php, ['-r', `require '${root.split(path.sep).join('/')}/inc/site-settings.php'; echo json_encode(\\Kcg\\Core\\Settings\\Schema::defaults());`], { stdio: ['ignore', 'pipe', 'ignore'] }).toString().replace(/^[^{]*/, ''));
+        form = new FormData();
+        for (const [key, value] of Object.entries(defaults)) {
+            if (['texts', 'social_links', 'settings_version', 'profile_image', 'logo_image'].includes(key)) continue;
+            if (Array.isArray(value)) value.forEach(item => { if (typeof item !== 'object') form.append(key + '[]', String(item)); });
+            else if (typeof value === 'boolean') { if (value) form.append(key, '1'); }
+            else if (value !== null && typeof value !== 'object') form.append(key, String(value));
+        }
+        form.set('action', 'save_site_settings'); form.set('csrf', csrf); form.set('section', 'content'); form.set('show_social', '1');
+        form.append('social_links[0][network]', 'instagram'); form.append('social_links[0][url]', 'https://instagram.com/prueba'); form.append('social_links[0][handle]', '@prueba');
+        form.append('social_links[1][network]', 'bluesky'); form.append('social_links[1][url]', 'https://bsky.app/profile/prueba'); form.append('social_links[1][handle]', '@prueba');
+        form.append('profile_image_file', jpeg('perfil.jpg', 3000, 3750), 'perfil.jpg');
+        form.append('logo_image_file', png('logo.png', 2000, 2000), 'logo.png');
+        form.append('app_icon_file', png('icono.png', 1024, 1024), 'icono.png');
+        form.append('og_image_file', png('og.png', 2400, 1260), 'og.png');
+        r = await send('/admin.php?settings=1', { method: 'POST', multipart: form });
+        assert.equal(r.status, 303, 'Guardar las imágenes de marca debe redirigir (salió ' + r.status + '): ' + (r.text.match(/upload-message--error" role="alert">([^<]*)/) || [])[1]);
+        const uploads = path.join(site, 'uploads');
+        const profile = dims(path.join(uploads, 'profile-photo-custom.webp'));
+        assert.deepEqual([profile[0], profile[1], profile[2]], [1280, 1600, 18], 'La foto de perfil se reduce a 1280 × 1600 WebP.');
+        assert.ok(Math.max(...dims(path.join(uploads, 'site-logo-custom.webp')).slice(0, 2)) <= 1024, 'El logo se reduce a 1024 px.');
+        assert.deepEqual(dims(path.join(uploads, 'icons/site-app-icon-512.png')).slice(0, 2), [512, 512], 'El icono se genera a 512 × 512.');
+        assert.deepEqual(dims(path.join(uploads, 'site-social-image.jpg')).slice(0, 2), [1200, 630], 'La imagen social queda en 1200 × 630.');
+        assert.ok(!fs.existsSync(path.join(site, 'assets/icons')) && !fs.existsSync(path.join(site, 'profile-photo-custom.jpg')), 'No se escribe en la carpeta del código.');
+        const branded = await send('/');
+        assert.equal(branded.status, 200, 'La portada con imágenes propias abre.');
+        assert.ok(branded.text.includes('/uploads/profile-photo-custom.webp') && branded.text.includes('/uploads/site-logo-custom.webp') && branded.text.includes('/uploads/site-social-image.jpg'), 'La portada usa las imágenes de uploads/.');
+        const contact = (branded.text.match(/<div class="contact__links">[\s\S]*?<\/section>/) || [''])[0];
+        assert.ok((contact.match(/<svg[^>]*>\s*<path/g) || []).length === 2 && !contact.includes('contact__logo'), 'Cada red social se dibuja con su icono SVG oficial.');
+        const uploadedFile = await send('/uploads/profile-photo-custom.webp');
+        assert.equal(uploadedFile.status, 200, 'La foto de perfil de uploads/ se sirve.');
+        // «Rehacer imágenes» desde Ajustes → Publicación (sin SSH): todo está al día.
+        const publicationScreen = await send('/admin.php?settings=1&section=publication');
+        assert.ok(publicationScreen.text.includes('Rehacer imágenes'), 'Publicación ofrece rehacer las imágenes.');
+        r = await send('/admin.php?settings=1', { method: 'POST', form: { action: 'regenerate_images', csrf } });
+        assert.equal(r.status, 303, 'Rehacer imágenes redirige.');
+        assert.match(r.location, /section=publication&images=0$/, 'Tras rehacer no queda nada pendiente: ' + r.location);
         // Todas las pantallas del panel abren y todo lo que enlazan (scripts, estilos) existe en el paquete.
         const firstPhoto = fs.readdirSync(path.join(site, 'img')).find(f => f.endsWith('.jpg'));
         const pages = ['', '?settings=1', '?settings=1&section=content', '?settings=1&section=design', '?settings=1&section=texts', '?settings=1&section=social',

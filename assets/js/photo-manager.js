@@ -39,6 +39,7 @@
         const batchSubmit = document.getElementById('batchSubmit');
         const csrf = batchForm.querySelector('[name="csrf"]')?.value || '';
         const maxBytes = 15 * 1024 * 1024;
+        const hardLimit = 120 * 1024 * 1024; // más que esto ni siquiera se intenta optimizar en el dispositivo
         const selectedCategory = () => categoryChoice.value === '__new__' ? categoryInput.value.trim() : categoryChoice.value;
         const syncBatchCategory = () => {
             const custom = categoryChoice.value === '__new__';
@@ -66,15 +67,15 @@
             files.forEach(file => {
                 const row = document.createElement('div');
                 row.className = 'admin-batch__file';
-                row.dataset.invalid = String(file.size > maxBytes || !/^image\/(jpeg|png)$/.test(file.type));
+                row.dataset.invalid = String(file.size > hardLimit ||!/^image\/(jpeg|png)$/.test(file.type));
                 const name = document.createElement('span');
                 name.textContent = file.name;
                 const size = document.createElement('small');
-                size.textContent = file.size > maxBytes ? 'Supera 15 MB' : (file.size / 1048576).toFixed(1) + ' MB';
+                size.textContent = file.size > hardLimit ? 'Demasiado grande' : (file.size / 1048576).toFixed(1) + ' MB' + (file.size > maxBytes ? ' · se reducirá' : '');
                 row.append(name, size);
                 preview.append(row);
             });
-            batchSubmit.disabled = !selectedCategory() || files.some(file => file.size > maxBytes || !/^image\/(jpeg|png)$/.test(file.type));
+            batchSubmit.disabled = !selectedCategory() || files.some(file => file.size > hardLimit ||!/^image\/(jpeg|png)$/.test(file.type));
         };
         filesInput.addEventListener('change', renderBatchSelection);
         categoryChoice.addEventListener('change', syncBatchCategory);
@@ -99,7 +100,9 @@
                     body.set('csrf', csrf);
                     body.set('category', category);
                     body.set('draft', draft ? '1' : '0');
-                    body.set('photo', file, file.name);
+                    // Una foto de más de 15 MB se reduce aquí (lado mayor 4096 px) para que quepa en el límite del servidor; la web publica 1800 px.
+                    const ready = file.size > maxBytes ? await window.KcgImageFit.fit(file, maxBytes) : file;
+                    body.set('photo', ready, ready.name);
                     const response = await fetch('/admin.php', {method: 'POST', body, credentials: 'same-origin'});
                     const result = await response.json();
                     if (!response.ok || !result?.ok) throw new Error(result?.error || 'No se pudo subir esta fotografía.');

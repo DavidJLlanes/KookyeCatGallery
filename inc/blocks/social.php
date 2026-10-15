@@ -22,11 +22,10 @@
             foreach (($siteSettings['social_links'] ?? []) as $social):
                 $network = (string) ($social['network'] ?? '');
                 if (!isset($socialNames[$network]) || empty($social['url'])) continue;
-                $logoClass = $network === 'instagram' ? 'contact__logo--ig' : ($network === 'threads' ? 'contact__logo--threads' : '');
             ?>
             <a class="contact__link" href="<?= safe((string) $social['url']) ?>" target="_blank" rel="noopener">
                 <span class="contact__icon">
-                    <?php if ($logoClass !== ''): ?><span class="contact__logo <?= $logoClass ?>" aria-hidden="true"></span><?php else: ?><?= social_profile_icon($network) ?><?php endif; ?>
+                    <?= social_profile_icon($network) ?>
                 </span>
                 <span class="contact__net"><?= safe($socialNames[$network]) ?></span>
                 <span class="contact__handle"><?= safe((string) (($social['handle'] ?? '') ?: $socialNames[$network])) ?></span>

@@ -1,0 +1,8 @@
+# Imágenes de marca subidas desde el panel (perfil, logo, iconos, imagen social): públicas, pero sin ejecutar nada.
+Options -Indexes
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<FilesMatch "\.(php|phtml|phar|pl|py|cgi)$">
+    Require all denied
+</FilesMatch>

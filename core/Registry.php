@@ -56,7 +56,7 @@ final class Registry
             'fonts' => ['name', 'weights'],
             'pairs' => ['name', 'heading', 'body', 'group'],
             'galleries' => ['name', 'devices', 'capabilities'],
-            'badges' => ['name', 'svg'],
+            'badges', 'socials' => ['name', 'svg'],
             default => ['name'],
         };
     }

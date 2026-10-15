@@ -36,7 +36,7 @@ $contrast = static function (string $a, string $b) use ($luminance): float {
 };
 
 // Todos los registros se cargan (Registry lanza una excepción si falta una clave obligatoria o un id no es válido).
-$types = ['palettes', 'fonts', 'pairs', 'galleries', 'headers-mobile', 'headers-desktop', 'hover', 'grids', 'pagination-shapes', 'badges'];
+$types = ['palettes', 'fonts', 'pairs', 'galleries', 'headers-mobile', 'headers-desktop', 'hover', 'grids', 'pagination-shapes', 'badges', 'socials'];
 foreach ($types as $type) {
     try {
         if (Registry::for($type)->all() === []) $fail("themes/$type está vacío.");
@@ -66,6 +66,12 @@ foreach (Registry::for('palettes')->all() as $id => $palette) {
     foreach ($palette['css'] ?? [] as $rule) {
         if (!str_contains($rule, '{p}')) $fail("Paleta $id: cada regla de «css» debe empezar por {p} (el selector de la paleta).");
     }
+}
+
+// Redes sociales: glifo de una sola tinta, sin colores propios (para que se adapte a cualquier paleta).
+foreach (Registry::for('socials')->all() as $id => $network) {
+    if (preg_match('/(fill|stroke|style)=|<(text|image|script|foreignObject)/i', (string) $network['svg'])) $fail("Red $id: el icono debe ser solo trazados y heredar el color (sin fill, stroke, style ni texto).");
+    if (!str_contains((string) $network['svg'], '<path')) $fail("Red $id: el icono no tiene trazado.");
 }
 
 // Fuentes.

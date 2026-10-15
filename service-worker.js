@@ -76,7 +76,9 @@ const PUBLIC_STATIC = [
 ];
 
 self.addEventListener('install', (event) => {
-    event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PUBLIC_STATIC)));
+    // Cada archivo por separado: si una instalación no trae alguno (p. ej. los iconos predeterminados de assets/icons/, que son propios de
+    // cada web), el service worker se instala igual en lugar de fallar entero con un solo 404.
+    event.waitUntil(caches.open(CACHE_NAME).then((cache) => Promise.allSettled(PUBLIC_STATIC.map((url) => cache.add(url)))));
     self.skipWaiting();
 });
 

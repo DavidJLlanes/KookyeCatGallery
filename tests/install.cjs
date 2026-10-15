@@ -4,7 +4,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { spawn, execFileSync } = require('child_process');
+const { spawn, execFileSync, spawnSync } = require('child_process');
 
 const root = path.join(__dirname, '..');
 const php = process.env.PHP || 'php';
@@ -40,6 +40,7 @@ const csrfOf = html => (html.match(/name="csrf" value="([^"]+)"/) || [])[1];
         let page = await send('/install.php');
         check(page.status === 200 && csrfOf(page.text), 'Sin administrador debe mostrarse el formulario.');
         check(/es mejor borrarlo/i.test(page.text), 'El formulario debe decir que es mejor borrar install.php.');
+        check(/Comprobación del servidor/.test(page.text) && /class="checks"/.test(page.text) && /GD con soporte/.test(page.text), 'El formulario muestra la comprobación del servidor.');
         const cookie = page.cookie;
         const token = csrfOf(page.text);
         const good = { csrf: token, url: 'https://prueba.example', username: 'admin', password: 'una-contrasena-larga-1' };
@@ -61,7 +62,7 @@ const csrfOf = html => (html.match(/name="csrf" value="([^"]+)"/) || [])[1];
         check(fs.readFileSync(path.join(privateDir, 'public-url.txt'), 'utf8').trim() === 'https://prueba.example', 'Debe guardarse la dirección pública.');
         check(fs.existsSync(path.join(privateDir, 'site-settings.json')), 'Debe dejar los ajustes iniciales.');
         check(fs.existsSync(path.join(privateDir, 'microblog', 'microblog.sqlite')), 'Debe crear la base del microblog.');
-        for (const dir of ['img', 'imagenes/desktop', 'imagenes/mobile', 'microblog']) check(fs.statSync(path.join(site, dir)).isDirectory(), `Debe preparar ${dir}/.`);
+        for (const dir of ['img', 'imagenes/desktop', 'imagenes/mobile', 'microblog', 'uploads']) check(fs.statSync(path.join(site, dir)).isDirectory(), `Debe preparar ${dir}/.`);
         check(!fs.existsSync(path.join(site, 'install.php')), 'El instalador debe borrarse al terminar.');
         check(/pdo_sqlite|Base del microblog creada/.test(done.text) && /borrarlo|eliminado/.test(done.text), 'La página final detalla lo preparado y recuerda comprobar el borrado.');
 
@@ -75,7 +76,28 @@ const csrfOf = html => (html.match(/name="csrf" value="([^"]+)"/) || [])[1];
         const forced = await send('/install.php', { method: 'POST', cookie, form: { ...good, username: 'otro', password: 'otra-contrasena-larga-2' } });
         check(forced.status === 409, 'Un envío directo tampoco debe registrar a otro administrador.');
         check(fs.readFileSync(path.join(privateDir, 'upload-auth.php'), 'utf8') === before, 'El administrador original no debe cambiar.');
-        console.log('Instalador verificado: deja la web lista y no admite un segundo administrador.');
+
+        // 5. Instalador de línea de comandos (el que usa instalar.sh en un VPS): misma lógica, contraseña por la entrada estándar.
+        const cliSite = path.join(tmp, 'site-cli');
+        const cliPrivate = path.join(tmp, 'private-cli');
+        execFileSync(php, [path.join(root, 'scripts/export-core.php'), cliSite, 'prueba', '--produccion'], { stdio: 'pipe' });
+        const cliEnv = { ...process.env, GALLERY_PRIVATE_DIR: cliPrivate, SITE_CONFIG_DIR: '', MICROBLOG_DATA_DIR: '', GALLERY_PUBLIC_URL: '' };
+        const cli = (args, input = '') => spawnSync(php, [path.join(cliSite, 'scripts/install-cli.php'), ...args], { env: cliEnv, input, encoding: 'utf8' });
+        let run = cli(['--check']);
+        check(run.status === 0 && /OK +PHP/.test(run.stdout) && /Carpetas de fotos y datos/.test(run.stdout), 'La comprobación de la línea de comandos pasa: ' + run.stdout + run.stderr);
+        run = cli(['--url=http://prueba.example', '--username=david'], 'una-contrasena-larga-1');
+        check(run.status === 1 && /HTTPS/.test(run.stderr) && !fs.existsSync(path.join(cliPrivate, 'upload-auth.php')), 'Una dirección sin HTTPS se rechaza y no crea nada.');
+        run = cli(['--url=https://prueba.example', '--username=david'], 'corta');
+        check(run.status === 1 && /contraseña/.test(run.stderr), 'Una contraseña corta se rechaza.');
+        run = cli(['--url=https://prueba.example', '--username=david'], 'una-contrasena-larga-1\n');
+        check(run.status === 0 && /Instalación completada/.test(run.stdout), 'La instalación por línea de comandos termina: ' + run.stdout + run.stderr);
+        check(/'username' => 'david'/.test(fs.readFileSync(path.join(cliPrivate, 'upload-auth.php'), 'utf8')), 'Guarda el administrador.');
+        check(fs.existsSync(path.join(cliPrivate, 'site-settings.json')) && fs.existsSync(path.join(cliSite, 'uploads/.htaccess')), 'Deja ajustes iniciales y uploads/ protegida.');
+        run = cli(['--url=https://prueba.example', '--username=otro'], 'otra-contrasena-larga-2');
+        check(run.status === 3 && /ya tiene un administrador/.test(run.stderr), 'Con administrador no registra otro (código 3).');
+        check(!/una-contrasena/.test(run.stdout + run.stderr), 'La contraseña nunca se muestra.');
+        check(execFileSync('sh', ['-n', path.join(root, 'instalar.sh')], { stdio: 'pipe' }).length === 0, 'instalar.sh tiene sintaxis correcta.');
+        console.log('Instalador verificado: deja la web lista (web y línea de comandos) y no admite un segundo administrador.');
     } finally {
         if (server) server.kill();
         try { fs.rmSync(tmp, { recursive: true, force: true }); } catch (_) { /* Windows puede tardar en soltar archivos */ }

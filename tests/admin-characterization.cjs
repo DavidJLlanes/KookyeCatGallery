@@ -202,6 +202,8 @@ async function walk() {
     r = await request('POST', '/admin.php', { form: settingsForm({ palette: 'no-existe' }) }); record('guardar-ajustes-invalidos', r);
     r = await request('POST', '/admin.php', { form: settingsForm({ section: 'social', palette: 'forest', columns_desktop: '99' }) }); record('guardar-ajustes-columnas-invalidas', r);
     r = await request('POST', '/admin.php', { multipart: { ...settingsForm({ section: 'content' }), section_order: 'x', profile_image_file: { bytes: Buffer.from('no es una imagen'), type: 'text/plain', name: 'perfil.txt' } } }); record('guardar-ajustes-imagen-invalida', r);
+    r = await request('GET', '/admin.php?settings=1&section=publication'); record('pantalla-publicacion', r);
+    r = await request('POST', '/admin.php', { form: { action: 'regenerate_images', csrf: token } }); record('rehacer-imagenes', r);
     r = await request('POST', '/admin.php', { form: { action: 'save_site_page', csrf: token, page: 'legal_notice', content: '<p>Aviso de prueba</p><script>alert(1)</script>' } }); record('guardar-pagina', r);
     r = await request('GET', '/admin.php?settings=1&section=page&doc=legal_notice&saved=1'); record('pantalla-pagina-guardada', r);
     r = await request('POST', '/admin.php', { form: { action: 'save_site_page', csrf: token, page: 'no-existe', content: 'x' } }); record('guardar-pagina-invalida', r);

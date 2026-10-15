@@ -6,7 +6,7 @@ header('Content-Type: application/manifest+json; charset=utf-8');
 header('Cache-Control: no-cache, must-revalidate');
 header('X-Content-Type-Options: nosniff');
 
-$customIcon = is_file(__DIR__ . '/assets/icons/site-app-icon-192.png');
+$customIcon = site_brand_has_custom_icon();
 $icons = [];
 foreach ([192, 512] as $size) {
     $icons[] = [

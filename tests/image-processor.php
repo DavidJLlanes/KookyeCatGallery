@@ -79,6 +79,24 @@ check($redone === 1 + 4, "Se rehacen 4 fotos antiguas más la nueva (hecho: $red
 $cache = json_decode((string) file_get_contents($cachePath), true);
 check(count(array_filter($cache, static fn(array $entry): bool => ($entry['recipe'] ?? '') === '')) === 0, 'Tras unas llamadas todas las fotos tienen la receta actual.');
 
+// Sin límite (scripts/regenerate-images.php): todas las antiguas de una vez.
+$cache = json_decode((string) file_get_contents($cachePath), true);
+foreach (array_keys($cache) as $name) unset($cache[$name]['recipe']);
+file_put_contents($cachePath, json_encode($cache));
+(new ImageProcessor($tmp))->processAll(PHP_INT_MAX);
+$cache = json_decode((string) file_get_contents($cachePath), true);
+check(count(array_filter($cache, static fn(array $entry): bool => ($entry['recipe'] ?? '') === '')) === 0 && count($cache) >= 10, 'Con el límite quitado se rehacen todas en una llamada.');
+
+// Cuántas fotos faltan por rehacer (lo que muestra el botón «Rehacer imágenes» del panel), sin procesar nada.
+check((new ImageProcessor($tmp))->pendingCount() === 0, 'Con todo al día no queda nada pendiente.');
+photo("$tmp/img/otra.jpg", 3000, 2000);
+check((new ImageProcessor($tmp))->pendingCount() === 1, 'Una foto nueva cuenta como pendiente.');
+check(!is_file("$tmp/imagenes/desktop/otra.webp"), 'Contar no procesa.');
+$cache = json_decode((string) file_get_contents($cachePath), true);
+foreach (array_keys($cache) as $name) unset($cache[$name]['recipe']);
+file_put_contents($cachePath, json_encode($cache));
+check((new ImageProcessor($tmp))->pendingCount() === count($cache) + 1, 'Las de receta anterior también cuentan.');
+
 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($tmp, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $file) {
     $file->isDir() ? @rmdir($file->getPathname()) : @unlink($file->getPathname());
 }

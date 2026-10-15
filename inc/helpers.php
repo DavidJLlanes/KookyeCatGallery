@@ -196,22 +196,15 @@ function app_version(): string
     return $version;
 }
 
-/** Devuelve el SVG de un icono de red social / acción para compartir. */
+/**
+ * SVG de una red social (themes/socials/<id>.php): glifo oficial en una sola tinta que toma el color del texto (currentColor),
+ * así se adapta a cualquier paleta, actual o futura.
+ */
 function social_profile_icon(string $network): string
 {
-    $icons = [
-        'facebook' => '<path d="M13.5 22v-9h3l.5-3.5h-3.5V7.3c0-1 .3-1.8 1.8-1.8H17V2.4c-.7-.1-1.6-.2-2.7-.2-2.7 0-4.6 1.7-4.6 4.7v2.6H6.6V13h3.1v9h3.8z"/>',
-        'x' => '<path d="M18.9 2H22l-6.8 7.8L23.2 22H17l-4.9-6.4L6.5 22H3.4l7.2-8.3L2.9 2h6.3l4.4 5.8L18.9 2zm-1.1 17.9h1.7L8.3 4H6.5l11.3 15.9z"/>',
-        'youtube' => '<path d="M23 12s0-3.5-.4-5.2a3 3 0 0 0-2.1-2.1C18.7 4.2 12 4.2 12 4.2s-6.7 0-8.5.5a3 3 0 0 0-2.1 2.1C1 8.5 1 12 1 12s0 3.5.4 5.2a3 3 0 0 0 2.1 2.1c1.8.5 8.5.5 8.5.5s6.7 0 8.5-.5a3 3 0 0 0 2.1-2.1C23 15.5 23 12 23 12z"/><path fill="var(--bg)" d="m9.7 15.4 5.8-3.4-5.8-3.4z"/>',
-        'tiktok' => '<path d="M16 2h3a6 6 0 0 0 4 4v3a9 9 0 0 1-4-1v7.5a6.5 6.5 0 1 1-5.5-6.4v3.2a3.5 3.5 0 1 0 2.5 3.3V2z"/>',
-        'flickr' => '<circle cx="7" cy="12" r="4"/><circle cx="17" cy="12" r="4"/>',
-        'linkedin' => '<path d="M5.5 8H2v14h3.5V8zM3.8 2A2.1 2.1 0 1 0 3.8 6.2 2.1 2.1 0 0 0 3.8 2zM22 14.1c0-4.2-2.2-6.2-5.2-6.2-2.4 0-3.5 1.3-4.1 2.2V8H9.2v14h3.5v-7c0-1.8.3-3.6 2.6-3.6s2.3 2.1 2.3 3.7V22H22v-7.9z"/>',
-        'pinterest' => '<path d="M12 2a10 10 0 0 0-3.6 19.3c-.1-1.6 0-3.5.4-5.2l1.3-5.4s-.3-.7-.3-1.8c0-1.7 1-3 2.2-3 1 0 1.6.8 1.6 1.8 0 1.1-.7 2.7-1 4.2-.6 2.5 1.2 4.5 3.6 4.5 4.3 0 6.8-5.2 6.8-11.3C23 8.8 18.2 2 12 2z"/>',
-        '500px' => '<text x="12" y="16" text-anchor="middle" font-size="9" font-family="Arial" font-weight="700">500px</text>',
-        'bluesky' => '<path d="M5 4c2.8 2.1 5.8 6.4 7 8.7C13.2 10.4 16.2 6.1 19 4c2-1.5 5.2-2.7 5 1-.2 1.8-1 6.1-1.5 8.2-.7 2.8-3 3.5-5.1 3 3.7.6 4.6 2.7 2.6 4.8-3.8 4-5.5-1-6-2.3-.1-.3-.2-.5-.3-.7-.1.2-.2.4-.3.7-.5 1.3-2.2 6.3-6 2.3-2-2.1-1.1-4.2 2.6-4.8-2.1.5-4.4-.2-5.1-3C4.4 11.1 3.6 6.8 3.4 5 3.2 1.3 6.4 2.5 8.4 4z"/>',
-        'mastodon' => '<path d="M21.6 8.2c0-4.5-3-5.8-3-5.8C17 1.7 14.3 1.4 12 1.4h-.1c-2.3 0-5 .3-6.6 1C5.3 2.4 2.4 3.7 2.4 8.2c0 1 .1 2.2.1 3.5.2 4.4 1.6 8.8 5.7 9.9 1.9.5 3.5.6 4.8.5 2.4-.1 3.7-.8 3.7-.8l-.1-2.7s-1.7.5-3.6.5c-1.9-.1-3.9-.2-4.2-2.5a4 4 0 0 1 0-.7s1.9.5 4.3.6c1.5.1 3-.1 4.5-.3 2.8-.4 5.2-2.5 5.5-4.5.5-3 .5-7.4.5-7.4z"/>'
-    ];
-    return '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' . ($icons[$network] ?? '') . '</svg>';
+    $definition = \Kcg\Core\Registry::for('socials')->get($network);
+    if ($definition === null) return '';
+    return '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">' . $definition['svg'] . '</svg>';
 }
 
 function share_icon(string $net): string

@@ -254,7 +254,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     $isOwn = static fn(string $url): bool => $url !== '' && !in_array($url, ['/profile-placeholder.svg', '/favicon.svg'], true) && is_file(dirname(__DIR__) . strtok($url, '?'));
     $profileUrl = site_media_src('profile_image');
     $logoUrl = site_media_src('logo_image');
-    $iconCustom = is_file(dirname(__DIR__) . '/assets/icons/site-app-icon-192.png');
+    $iconCustom = site_brand_has_custom_icon();
     $ogUrl = site_brand_og_url();
     $html .= '<input type="hidden" name="profile_image" value="' . $escape((string) $settings['profile_image']) . '">'
         . '<input type="hidden" name="logo_image" value="' . $escape((string) $settings['logo_image']) . '">'
@@ -326,4 +326,23 @@ function site_page_editor_form(string $csrf, string $page): string
         . '<div class="upload-actions"><button class="upload-submit" type="submit">Guardar página</button><a class="upload-logout" href="/admin.php?settings=1&amp;section=texts">Volver a Textos</a></div>'
         . '</form><link rel="stylesheet" href="/assets/css/admin-page-editor.css?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/css/admin-page-editor.css'), 0, 12) . '"><link rel="stylesheet" href="/assets/vendor/quill/quill.core.css?v=2.0.3"><script src="/assets/vendor/quill/quill.js?v=2.0.3" defer></script><script src="/assets/js/admin-settings.js?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/js/admin-settings.js'), 0, 12) . '" defer></script>';
     return $html;
+}
+
+/**
+ * Ajustes → Publicación: mantenimiento de las imágenes de la galería. Rehace las versiones WebP (lado mayor 1800 px, calidad 80)
+ * de las fotos nuevas o hechas con una receta anterior, por tandas, sin acceso por SSH. Es un formulario aparte del de ajustes.
+ */
+function site_images_maintenance_card(string $csrf): string
+{
+    $escape = static fn(string $value): string => htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $pending = (new ImageProcessor(dirname(__DIR__)))->pendingCount();
+    $state = $pending === 0
+        ? 'Todas las fotos tienen ya su versión actual.'
+        : $pending . ($pending === 1 ? ' foto necesita' : ' fotos necesitan') . ' rehacer su versión optimizada.';
+    return '<form method="post" action="/admin.php?settings=1" class="upload-form site-settings site-settings--maintenance">'
+        . '<input type="hidden" name="action" value="regenerate_images"><input type="hidden" name="csrf" value="' . $escape($csrf) . '">'
+        . '<section class="admin-card"><header class="admin-card__head"><h2>Imágenes de la galería</h2>'
+        . '<p>Las fotos se publican en WebP, con el lado mayor de 1800 px como máximo y calidad 80. Tus originales no se tocan.</p></header>'
+        . '<div class="admin-card__body"><p class="upload-help">' . $escape($state) . ' Se rehacen de 20 en 20; si quedan más, pulsa otra vez.</p>'
+        . '<button class="upload-submit" type="submit">Rehacer imágenes</button></div></section></form>';
 }

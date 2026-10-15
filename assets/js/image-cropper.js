@@ -147,30 +147,63 @@
         accept.focus();
     });
 
+    const replaceFile = (input, file) => {
+        const transfer = new DataTransfer();
+        transfer.items.add(file);
+        input.files = transfer.files;
+    };
+
+    /** Reduce una imagen al lado máximo permitido (mismo encuadre). */
+    const shrink = (file, image) => new Promise((resolve) => {
+        const limit = Math.min(1, MAX_SIDE / Math.max(image.naturalWidth, image.naturalHeight));
+        const out = document.createElement('canvas');
+        out.width = Math.round(image.naturalWidth * limit);
+        out.height = Math.round(image.naturalHeight * limit);
+        const context = out.getContext('2d');
+        context.imageSmoothingQuality = 'high';
+        context.drawImage(image, 0, 0, out.width, out.height);
+        const type = file.type === 'image/png' || file.type === 'image/webp' ? file.type : 'image/jpeg';
+        out.toBlob((blob) => resolve(blob ? new File([blob], file.name, { type }) : null), type, 0.92);
+    });
+
     const handle = async (input) => {
         const file = input.files && input.files[0];
         if (!file || !/^image\/(jpeg|png|webp)$/.test(file.type)) return;
         const ratio = parseFloat(input.dataset.cropRatio || '1') || 1;
         const minSide = parseInt(input.dataset.cropMin || '0', 10) || 0;
-        const url = URL.createObjectURL(file);
+        // El archivo se copia a memoria al elegirlo: si el navegador lo leyera al enviar y el archivo se hubiera movido, se
+        // sincronizara desde la nube o estuviera en un disco externo, el envío fallaría con ERR_FILE_NOT_FOUND.
+        let snapshot;
+        try {
+            snapshot = new File([await file.arrayBuffer()], file.name, { type: file.type, lastModified: file.lastModified });
+        } catch (error) {
+            input.value = '';
+            window.alert('No se ha podido leer el archivo elegido (puede estar en la nube sin descargar o haberse movido). Descárgalo en el dispositivo y vuelve a elegirlo.');
+            return;
+        }
+        const url = URL.createObjectURL(snapshot);
         try {
             const image = new Image();
             image.decoding = 'async';
             image.src = url;
             await image.decode();
             const current = image.naturalWidth / image.naturalHeight;
-            if (Math.abs(current - ratio) / ratio <= TOLERANCE && (!minSide || Math.min(image.naturalWidth, image.naturalHeight) >= minSide)) return;
-            const cropped = await open(file, image, ratio, minSide, input.dataset.cropLabel || '');
+            if (Math.abs(current - ratio) / ratio <= TOLERANCE && (!minSide || Math.min(image.naturalWidth, image.naturalHeight) >= minSide)) {
+                // Proporción correcta: solo se reduce si es enorme (la web nunca usa más de MAX_SIDE).
+                const ready = Math.max(image.naturalWidth, image.naturalHeight) > MAX_SIDE ? await shrink(snapshot, image) : snapshot;
+                replaceFile(input, ready || snapshot);
+                return;
+            }
+            const cropped = await open(snapshot, image, ratio, minSide, input.dataset.cropLabel || '');
             if (cropped) {
-                const transfer = new DataTransfer();
-                transfer.items.add(cropped);
-                input.files = transfer.files;
+                replaceFile(input, cropped);
                 input.dispatchEvent(new CustomEvent('cropper:done', { bubbles: true, detail: { file: cropped } }));
             } else {
                 input.value = '';
             }
         } catch (error) {
-            // Si el navegador no puede decodificar la imagen, se envía tal cual y el servidor decide.
+            // Si el navegador no puede decodificar la imagen, se envía la copia en memoria y el servidor decide.
+            try { replaceFile(input, snapshot); } catch (ignored) { /* sin DataTransfer: se queda el original */ }
         } finally {
             URL.revokeObjectURL(url);
         }

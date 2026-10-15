@@ -34,6 +34,12 @@ En **Ajustes → Contenido** se suben cuatro imágenes (foto de perfil, logo, ic
 
 El logo y la foto de perfil tienen su proporción de recorte (logo 1:1, perfil 4:5): si la imagen elegida no la tiene se abre un recortador (`assets/js/image-cropper.js`). El logo se muestra siempre redondo (cabecera móvil, hero de escritorio, precarga) y en la cabecera móvil va **al lado** de la foto de perfil, nunca encima, en todas las plantillas (`tests/logo-layout.cjs`). Si se sube un logo propio, también aparece en la marca del panel.
 
+Dónde se guardan y con qué tamaño: **todo lo que subes desde el panel vive en `uploads/`** (nunca en la carpeta del código, así que actualizar la web no lo toca): `profile-photo-custom.webp` (lado mayor ≤ 1600 px), `site-logo-custom.webp` (≤ 1024 px, con transparencia), `icons/site-app-icon-N.png` (32, 180, 192 y 512 px) y `site-social-image.jpg` (1200 × 630). Cada imagen se reduce, se corrige su orientación, se pasa a WebP (el icono a PNG, la imagen social a JPEG) y pierde sus metadatos. El navegador copia además el archivo a memoria al elegirlo (así el envío no falla con `ERR_FILE_NOT_FOUND` si el archivo está en la nube o se ha movido) y reduce las imágenes con más de 2400 px. Las instalaciones antiguas, con estos archivos en la raíz o en `assets/`, se siguen leyendo. Si PHP no puede escribir en `uploads/`, el panel lo dice y señala `sudo sh scripts/preparar-servidor.sh`. Pruebas: `php tests/site-brand-assets.php`, `node tests/image-cropper.cjs`.
+
+## Redes sociales
+
+Cada red es un archivo de `themes/socials/` (Instagram, Threads, Facebook, X, YouTube, TikTok, Flickr, LinkedIn, Pinterest, 500px, Bluesky y Mastodon) con su **glifo oficial en una sola tinta** (Simple Icons, licencia CC0). El icono hereda el color del texto (`currentColor`), así que se adapta solo a cualquier paleta, actual o futura, y al pasar el ratón. Añadir una red nueva es crear `themes/socials/<id>.php` con `name` y `svg`; aparece sola en el panel y en la portada. Prueba: `php tests/catalogs.php`.
+
 ## Título y rótulo de «El proyecto»
 
 En **Ajustes → Textos → Sección «El proyecto»** hay un campo para el rótulo pequeño y otro para el título de la sección (un solo texto cada uno; la migración 0005 une las dos líneas antiguas del título). El contenido de la sección se edita en «Páginas de texto».

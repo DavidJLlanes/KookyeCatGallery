@@ -104,34 +104,7 @@
     const prepareUploadFile=async file=>{
         if(file.size<=maxBytes)return file;
         setMessage('La foto supera 15 MB. Preparando una copia optimizada en este dispositivo…');
-        let bitmap=null,objectUrl='';
-        try{
-            if('createImageBitmap' in window)bitmap=await createImageBitmap(file);
-            else{
-                objectUrl=URL.createObjectURL(file);
-                bitmap=new Image();bitmap.src=objectUrl;await bitmap.decode();
-            }
-            const longest=Math.max(bitmap.width,bitmap.height),scale=Math.min(1,4096/longest);
-            let width=Math.max(1,Math.round(bitmap.width*scale)),height=Math.max(1,Math.round(bitmap.height*scale));
-            const canvas=document.createElement('canvas');
-            for(let attempt=0;attempt<12;attempt++){
-                canvas.width=width;canvas.height=height;
-                const context=canvas.getContext('2d',{alpha:false});
-                context.fillStyle='#fff';context.fillRect(0,0,width,height);context.drawImage(bitmap,0,0,width,height);
-                const quality=Math.max(.62,.92-attempt*.035);
-                const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',quality));
-                if(blob&&blob.size<=maxBytes-128*1024){
-                    const name=file.name.replace(/\.[^.]+$/,'')+'.jpg';
-                    canvas.width=canvas.height=1;
-                    return new File([blob],name,{type:'image/jpeg',lastModified:file.lastModified});
-                }
-                width=Math.max(1,Math.round(width*.88));height=Math.max(1,Math.round(height*.88));
-            }
-            throw new Error('No se pudo optimizar la foto por debajo del límite de subida.');
-        }finally{
-            if(bitmap&&typeof bitmap.close==='function')bitmap.close();
-            if(objectUrl)URL.revokeObjectURL(objectUrl);
-        }
+        return window.KcgImageFit.fit(file,maxBytes);
     };
     const postUploadForm=async body=>{
         let response;
