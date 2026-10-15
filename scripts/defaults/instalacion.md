@@ -95,4 +95,4 @@ Copia las fotografías y la carpeta privada `config` (o `var` si se usa el fallb
 ## Personalizar y actualizar
 
 - **`installation.php`** (opcional, en la raíz pública): copia `installation.example.php` y deja solo lo que necesites: dirección, rutas privadas, lugar de la web, textos y ajustes iniciales. El instalador no lo necesita.
-- **Actualizar**: `php scripts/update.php <carpeta-con-la-version-nueva>` guarda una copia de lo que cambia y puede deshacerse con `php scripts/update.php --rollback`. Ver el README.
+- **Actualizar**: genera el paquete nuevo (`php scripts/export-core.php ../kcg-hosting --produccion`), súbelo a una carpeta temporal del servidor y ejecuta, desde la carpeta de tu web, `sudo php scripts/update.php /tmp/kcg-nueva --plan` (ver qué cambia) y después sin `--plan` (aplicar). Guarda una copia antes y puede deshacerse con `sudo php scripts/update.php --rollback`. Los pasos completos, con lo que se conserva y qué hacer después, están en el [README](../README.md#actualizar-una-instalación).

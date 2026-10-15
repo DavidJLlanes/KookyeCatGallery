@@ -4,7 +4,7 @@ El panel acepta imágenes de hasta 15 MiB y envía dos peticiones independientes
 
 ## Nginx
 
-En el bloque HTTPS (`server { ... }`) del sitio `davidjimenezllanes.es` añade:
+En el bloque HTTPS (`server { ... }`) de tu sitio añade:
 
 ```nginx
 client_max_body_size 20m;

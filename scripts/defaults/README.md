@@ -152,16 +152,62 @@ Las rutas de las fichas, como `/foto/slug`, requieren las reglas de reescritura 
 
 ### Actualizar una instalación
 
-El núcleo (código, estilos, scripts y archivos genéricos) se separa de lo propio de tu web: `installation.php`, las fotografías, los datos y la carpeta privada `config/`. Una actualización solo cambia el núcleo y deja una copia de seguridad para volver atrás.
+El núcleo (código, estilos, scripts y archivos genéricos) se separa de lo propio de tu web: `installation.php`, las fotografías (`img/`), lo que subes desde el panel (`uploads/`), los datos, el microblog y la carpeta privada `config/`. Una actualización **solo cambia el núcleo**, guarda antes una copia de seguridad y puede deshacerse. En los ejemplos, `/var/www/tu-dominio` es la carpeta de tu web y `/tmp/kcg-nueva` una carpeta temporal cualquiera: usa las tuyas.
 
-1. Descarga la versión nueva (un paquete del núcleo para producción, con `core-manifest.json`; no hace falta subir `tests/` ni la documentación de desarrollo) y descomprímela en una carpeta **fuera** de la raíz pública.
-2. Desde la raíz de tu web, mira qué cambiaría: `php scripts/update.php /ruta/a/la-version-nueva --plan`.
-3. Aplícala: `php scripts/update.php /ruta/a/la-version-nueva`. Antes de tocar nada guarda en `config/backups/` los archivos que se van a cambiar y tus ajustes, y al terminar comprueba la sintaxis; si algo falla, se deshace sola.
-4. Si algo no va bien después: `php scripts/update.php --rollback` (restaura la última copia; `--list` las enumera).
-5. Si has modificado a mano archivos del núcleo, la actualización se detiene y los nombra: tus personalizaciones van en `installation.php`. Con `--overwrite-modified` se pisan (quedan en la copia).
-6. **No dejes `install.php` accesible**: el paquete no lo incluye en una instalación que ya tiene acceso configurado; si lo ves en la raíz pública, bórralo. Conserva solo el archivo de ejemplo `reset-admin-access.php.example`.
+**1. Genera el paquete de la versión nueva** en tu ordenador (hace falta PHP solo para esto):
 
-Sin SSH ni PHP de línea de comandos, copia los archivos del paquete sobre los existentes (nunca sobre `installation.php`, `config/`, `var/`, `data/` ni las fotografías) y guarda antes una copia de `config/`.
+```sh
+cd KookyeCatGallery
+git pull
+php scripts/export-core.php ../kcg-hosting --produccion
+```
+
+También sirve descargar el ZIP de la versión nueva desde GitHub y generar el paquete con ese mismo comando. `kcg-hosting/` es lo que se sube: contiene `core-manifest.json`, la lista de archivos del núcleo con su huella, que es lo que permite saber qué cambia.
+
+**2. Súbelo a una carpeta temporal del servidor, fuera de la carpeta pública** (nunca encima de la web):
+
+```sh
+scp -r kcg-hosting/. usuario@tu-servidor:/tmp/kcg-nueva/
+```
+
+Con FileZilla o SFTP vale igual: sube el **contenido** de `kcg-hosting/` a esa carpeta, con los archivos ocultos (`.htaccess`).
+
+**3. Mira qué cambiaría, sin tocar nada.** Por SSH, desde la carpeta de tu web:
+
+```sh
+cd /var/www/tu-dominio
+sudo php scripts/update.php /tmp/kcg-nueva --plan
+```
+
+Lista lo que se añade, se cambia y se retira. Si hay archivos del núcleo que modificaste a mano, se detiene y los nombra (tus personalizaciones van en `installation.php`, que nunca se toca). Con `--overwrite-modified` se pisan igualmente; quedan en la copia de seguridad.
+
+**4. Aplícala:**
+
+```sh
+sudo php scripts/update.php /tmp/kcg-nueva
+```
+
+Guarda en `config/backups/` los archivos que se van a cambiar y tus ajustes, copia los archivos nuevos, actualiza `version.json` y `core-manifest.json` y comprueba la sintaxis; **si algo falla, se deshace sola**. Los ajustes guardados se actualizan solos al formato nuevo la primera vez que abres el panel.
+
+**5. Después:**
+
+- Recarga a fondo la web una vez en el móvil: el service worker lleva versión y renueva su caché.
+- Entra en el panel y comprueba que **Ajustes** abre y que se ve la portada.
+- Borra la carpeta temporal: `sudo rm -rf /tmp/kcg-nueva`.
+- Si ves que `install.php` está en la raíz pública, bórralo (el paquete de una web ya instalada no lo trae).
+
+**Si algo va mal**, vuelve a la versión anterior:
+
+```sh
+sudo php scripts/update.php --list        # copias disponibles
+sudo php scripts/update.php --rollback    # restaura la última (o indica una concreta)
+```
+
+**Por qué `sudo`.** En un servidor propio el código pertenece a `root` (PHP no puede modificarlo, que es más seguro) y la actualización necesita escribir en él; las carpetas de datos siguen siendo de PHP. Si tu instalación es de otro usuario (hosting compartido), ejecuta el comando sin `sudo` con ese usuario.
+
+**Sin SSH ni PHP de línea de comandos** (algunos hostings compartidos): copia por FTP los archivos del paquete sobre los existentes, **nunca** sobre `installation.php`, `config/`, `var/`, `data/`, `img/`, `imagenes/`, `uploads/` ni `microblog/`, y guarda antes una copia de `config/`. Si solo cambian unos pocos archivos, basta con sustituir esos (el propio `--plan` te dice cuáles) y `version.json`, `core-manifest.json` y `service-worker.js`.
+
+Si solo copiaste archivos y el panel dice que no puede guardar algo, repite los permisos: `sudo sh scripts/preparar-servidor.sh`.
 
 ### Copias de seguridad y cambio de dominio
 

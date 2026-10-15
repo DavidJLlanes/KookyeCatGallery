@@ -14,7 +14,7 @@ Entra en `/admin.php`, inicia sesión y usa las secciones **Diseño** y **Textos
 - Cabeceras: nueve para móvil y nueve para escritorio, con selectores independientes de la cuadrícula y de la paleta. Móvil corresponde a hasta 768 px y escritorio a partir de 769 px.
 - Textos: en **Textos → Nombre y marca** edita el nombre de la web, el nombre del fotógrafo, sus descripciones y el crédito del pie. **Textos de las plantillas** cambia según la cabecera y la galería elegidas. Los controles técnicos y etiquetas de accesibilidad se generan automáticamente; títulos, descripciones y categorías de fotos se editan en **Gestionar fotos**.
 
-La configuración se guarda en `/davidjimenezllanes.es/config/site-settings.json`, fuera del directorio público y de los archivos desplegados. El usuario que ejecuta PHP necesita permisos de escritura en esa carpeta. El archivo se crea al guardar por primera vez. Un error de guardado se muestra en el panel y conserva el archivo anterior. No se necesitan migraciones de base de datos.
+La configuración se guarda en `site-settings.json` de la carpeta privada (`config/`), fuera del directorio público y de los archivos desplegados. El usuario que ejecuta PHP necesita permisos de escritura en esa carpeta. El archivo se crea al guardar por primera vez. Un error de guardado se muestra en el panel y conserva el archivo anterior. No se necesitan migraciones de base de datos.
 
 Los valores por defecto usan la paleta Elegante y las cabeceras Perfil social en móvil y Tipográfica en escritorio; las columnas iniciales son tres en ambas pantallas. La opción adaptativa usa imágenes cuadradas en móvil y masonry en escritorio. Las cuadrículas de proporción fija recortan la miniatura; el visor abre la fotografía completa.
 
@@ -39,6 +39,10 @@ Dónde se guardan y con qué tamaño: **todo lo que subes desde el panel vive en
 ## Redes sociales
 
 Cada red es un archivo de `themes/socials/` (Instagram, Threads, Facebook, X, YouTube, TikTok, Flickr, LinkedIn, Pinterest, 500px, Bluesky y Mastodon) con su **glifo oficial en una sola tinta** (Simple Icons, licencia CC0). El icono hereda el color del texto (`currentColor`), así que se adapta solo a cualquier paleta, actual o futura, y al pasar el ratón. Añadir una red nueva es crear `themes/socials/<id>.php` con `name` y `svg`; aparece sola en el panel y en la portada. Prueba: `php tests/catalogs.php`.
+
+## Perfil público (usuario, biografía y web)
+
+En **Textos → Perfil público** se editan el **nombre de usuario** («@usuario» bajo la foto), las **dos líneas de la biografía**, el **texto** del enlace a tu web y la **dirección** (`https://…`) a la que lleva. Son los mismos datos que se cambian en la propia web con el lápiz de «Editar página» (un solo almacén, `texts` de los ajustes), así que lo que escribes en un sitio se ve en el otro. Prueba: `node tests/publish-flow.cjs`.
 
 ## Título y rótulo de «El proyecto»
 

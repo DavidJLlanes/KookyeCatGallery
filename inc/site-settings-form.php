@@ -237,6 +237,23 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
             . '<input id="project-title" name="texts[' . $titleKey . ']" type="text" maxlength="120" autocomplete="off" value="' . $escape((string) ($settings['texts'][$titleKey] ?? site_text_catalog()[$titleKey]['default'])) . '">'
             . '<small class="upload-help">El título grande de esa sección. Es un solo texto; también se cambia desde la web con el lápiz.</small></div>';
         $html .= $card('Sección «El proyecto»', 'El rótulo y el título de la sección; el contenido se edita en «Páginas de texto».', $projectField);
+        // Perfil público: los mismos textos que se editan en la web con el lápiz (un solo almacén: se ven igual en los dos sitios).
+        $profileFields = '';
+        foreach ([
+            'text_4577bab0d9627af1' => ['profile-handle', 'Nombre de usuario', 80, 'El «@usuario» que aparece bajo tu foto en la cabecera y en el microblog.'],
+            'text_2e2b80d871481edc' => ['profile-bio-1', 'Biografía (primera línea)', 200, 'La primera frase de tu presentación, bajo el nombre de usuario.'],
+            'text_54b7645201863e32' => ['profile-bio-2', 'Biografía (segunda línea)', 200, 'La segunda frase de tu presentación. Déjala vacía si solo quieres una.'],
+            'text_7e6debbd1dab03b1' => ['profile-website-text', 'Texto de la web de usuario', 80, 'Lo que se lee en el enlace a tu web personal (por ejemplo «tuweb.com»).'],
+        ] as $key => [$id, $label, $max, $help]) {
+            $value = (string) ($settings['texts'][$key] ?? site_text_catalog()[$key]['default']);
+            $profileFields .= '<div class="upload-field"><label for="' . $id . '">' . $escape($label) . '</label>'
+                . '<input id="' . $id . '" name="texts[' . $key . ']" type="text" maxlength="' . $max . '" autocomplete="off" value="' . $escape($value) . '">'
+                . '<small class="upload-help">' . $escape($help) . '</small></div>';
+        }
+        $profileFields .= '<div class="upload-field"><label for="profile-website-url">Dirección de la web de usuario</label>'
+            . '<input id="profile-website-url" name="profile_website_url" type="url" maxlength="500" placeholder="https://" autocomplete="off" value="' . $escape((string) ($settings['profile_website_url'] ?? '')) . '">'
+            . '<small class="upload-help">A dónde lleva el enlace de arriba. Debe empezar por https://. Los textos también se cambian pulsándolos en la propia web con «Editar página»: es el mismo dato y se actualiza en los dos sitios.</small></div>';
+        $html .= $card('Perfil público', 'Nombre de usuario, biografía y enlace a tu web, bajo tu foto de perfil.', $profileFields);
         $html .= $card('Identidad del área privada', 'Personaliza el nombre del propietario, fotógrafo o estudio.', $adminAreaField);
         $html .= $card('Páginas de texto', 'Edita el contenido de «El proyecto», aviso legal, privacidad y cookies.', $pages . '</div>');
     }

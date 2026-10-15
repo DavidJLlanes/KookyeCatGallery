@@ -109,6 +109,8 @@ const phpErrors = () => (fs.existsSync(errorLog) ? fs.readFileSync(errorLog, 'ut
         form.set('action', 'save_site_settings'); form.set('csrf', csrf); form.set('section', 'content'); form.set('show_social', '1');
         form.append('social_links[0][network]', 'instagram'); form.append('social_links[0][url]', 'https://instagram.com/prueba'); form.append('social_links[0][handle]', '@prueba');
         form.append('social_links[1][network]', 'bluesky'); form.append('social_links[1][url]', 'https://bsky.app/profile/prueba'); form.append('social_links[1][handle]', '@prueba');
+        form.set('profile_website_url', 'https://prueba.example/web');
+        form.append('texts[text_4577bab0d9627af1]', '@prueba-usuario'); form.append('texts[text_2e2b80d871481edc]', 'Mi biografía de prueba'); form.append('texts[text_7e6debbd1dab03b1]', 'prueba.example/web');
         form.append('profile_image_file', jpeg('perfil.jpg', 3000, 3750), 'perfil.jpg');
         form.append('logo_image_file', png('logo.png', 2000, 2000), 'logo.png');
         form.append('app_icon_file', png('icono.png', 1024, 1024), 'icono.png');
@@ -125,6 +127,10 @@ const phpErrors = () => (fs.existsSync(errorLog) ? fs.readFileSync(errorLog, 'ut
         const branded = await send('/');
         assert.equal(branded.status, 200, 'La portada con imágenes propias abre.');
         assert.ok(branded.text.includes('/uploads/profile-photo-custom.webp') && branded.text.includes('/uploads/site-logo-custom.webp') && branded.text.includes('/uploads/site-social-image.jpg'), 'La portada usa las imágenes de uploads/.');
+        // Perfil público (nombre de usuario, biografía y web) editado desde el panel: se ve en la web y el panel lo vuelve a mostrar (mismo almacén que la edición en vivo).
+        assert.ok(branded.text.includes('@prueba-usuario') && branded.text.includes('Mi biografía de prueba') && branded.text.includes('href="https://prueba.example/web"'), 'La web muestra el perfil público guardado desde el panel.');
+        const textsScreen = await send('/admin.php?settings=1&section=texts');
+        assert.ok(textsScreen.text.includes('value="@prueba-usuario"') && textsScreen.text.includes('value="https://prueba.example/web"') && textsScreen.text.includes('Perfil público'), 'Textos muestra el perfil público guardado.');
         const contact = (branded.text.match(/<div class="contact__links">[\s\S]*?<\/section>/) || [''])[0];
         assert.ok((contact.match(/<svg[^>]*>\s*<path/g) || []).length === 2 && !contact.includes('contact__logo'), 'Cada red social se dibuja con su icono SVG oficial.');
         const uploadedFile = await send('/uploads/profile-photo-custom.webp');
