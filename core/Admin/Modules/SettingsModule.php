@@ -83,6 +83,8 @@ final class SettingsModule extends AbstractModule
             } elseif (!array_key_exists('texts', $settingsInput)) {
                 $settingsInput['texts'] = $currentSettings['texts'] ?? [];
             }
+            // Las páginas de texto (aviso legal, «El proyecto»…) se guardan en su propio editor: guardar los ajustes no debe borrarlas.
+            if (!array_key_exists('pages', $settingsInput)) $settingsInput['pages'] = $currentSettings['pages'] ?? [];
             $settingsInput = site_gallery_preserve_inactive($settingsInput, $currentSettings);
             // Foto de perfil y logo: se reducen, se pasan a WebP y se guardan en uploads/ (nunca en la carpeta del código).
             $brandImages = [

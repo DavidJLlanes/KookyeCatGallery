@@ -44,7 +44,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     }
     // Las etiquetas salen del esquema de ajustes (core/Settings/Schema.php).
     $labels = [];
-    foreach (['palette', 'verified_badge', 'grid', 'header_mobile', 'header_desktop', 'gallery_mobile', 'gallery_desktop', 'hover', 'pagination_shape', 'gallery_premium'] as $labelKey) {
+    foreach (['palette', 'verified_badge', 'project_layout', 'grid', 'header_mobile', 'header_desktop', 'gallery_mobile', 'gallery_desktop', 'hover', 'pagination_shape', 'gallery_premium'] as $labelKey) {
         $labels[$labelKey] = Schema::label($labelKey);
     }
     $choices = site_design_choices();
@@ -112,7 +112,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     // Tarjeta «Cabecera»: estilo y visibilidad independientes en móvil y escritorio.
     $html .= $card('Cabecera', 'Elige el estilo y decide si se muestra en cada tipo de pantalla.',
         '<div class="admin-fields">' . $select('header_mobile', $labels['header_mobile'], $choices['header_mobile'], $settings['header_mobile']) . $select('header_desktop', $labels['header_desktop'], $choices['header_desktop'], $settings['header_desktop']) . '</div>'
-        . '<div class="admin-switches">' . $switch('show_header_mobile', 'Mostrar la cabecera en móvil', !empty($settings['show_header_mobile'])) . $switch('show_header_desktop', 'Mostrar la cabecera en escritorio', !empty($settings['show_header_desktop'])) . '</div>');
+        . '<div class="admin-switches">' . $switch('show_header_mobile', 'Mostrar la cabecera en móvil', !empty($settings['show_header_mobile'])) . $switch('show_header_desktop', 'Mostrar la cabecera en escritorio', !empty($settings['show_header_desktop'])) . $switch('show_logo', 'Mostrar el logo junto a la foto de perfil', !empty($settings['show_logo'])) . '</div>');
     // Tarjeta «Insignia de verificación»: mostrarla u ocultarla y elegir entre las de themes/badges.
     $badgeCards = '<div class="admin-switches">' . $switch('show_verified_badge', 'Mostrar la insignia junto al nombre', !empty($settings['show_verified_badge'])) . '</div>'
         . '<fieldset class="badge-picker"><legend class="sr-only">' . $escape($labels['verified_badge']) . '</legend>';
@@ -122,6 +122,9 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
     }
     $badgeCards .= '</fieldset><link rel="stylesheet" href="/assets/css/components/verified-badge.css?v=' . substr(hash_file('sha256', dirname(__DIR__) . '/assets/css/components/verified-badge.css'), 0, 12) . '">';
     $html .= $card('Insignia de verificación', 'La marca junto al nombre en la cabecera de perfil del móvil. Toma los colores de la paleta.', $badgeCards);
+    // Tarjeta «El proyecto»: imagen con texto, dos columnas de texto o solo texto (themes/project-layouts/).
+    $html .= $card('Disposición de «El proyecto»', 'Imagen y texto, dos columnas de texto o solo texto centrado. El texto de la segunda columna se escribe en Textos → Páginas de texto → «El Proyecto · segunda columna».',
+        '<div class="admin-fields">' . $select('project_layout', $labels['project_layout'], \Kcg\Core\Registry::for('project-layouts')->choices(), $settings['project_layout']) . '</div>');
     // Tarjeta «Galería premium»: diseños completos que sustituyen a la galería estándar (inc/premium-galleries.php).
     // El orden del JS (assets/js/admin-ui.js) desactiva los campos de la tarjeta siguiente al elegir una.
     $premiumList = '';
@@ -236,7 +239,7 @@ function site_settings_form(string $csrf, ?array $values = null, string $section
         $projectField .= '<div class="upload-field"><label for="project-title">Título de la sección</label>'
             . '<input id="project-title" name="texts[' . $titleKey . ']" type="text" maxlength="120" autocomplete="off" value="' . $escape((string) ($settings['texts'][$titleKey] ?? site_text_catalog()[$titleKey]['default'])) . '">'
             . '<small class="upload-help">El título grande de esa sección. Es un solo texto; también se cambia desde la web con el lápiz.</small></div>';
-        $html .= $card('Sección «El proyecto»', 'El rótulo y el título de la sección; el contenido se edita en «Páginas de texto».', $projectField);
+        $html .= $card('Sección «El proyecto»', 'El rótulo y el título de la sección; el contenido se edita en «Páginas de texto». Si no hay imagen, o la disposición (en Diseño) es de solo texto, el texto sale centrado.', $projectField);
         // Perfil público: los mismos textos que se editan en la web con el lápiz (un solo almacén: se ven igual en los dos sitios).
         $profileFields = '';
         foreach ([

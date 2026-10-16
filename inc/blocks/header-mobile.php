@@ -21,7 +21,7 @@
     <div class="mobile-profile__identity">
         <div class="mobile-profile__portraits">
             <a class="mobile-profile__avatar-link" href="/" aria-label="<?= site_text_html('text_84f085942c2a2aa1') ?>"><img class="mobile-profile__avatar" src="<?= safe(site_media_src('profile_image')) ?>" width="88" height="88" alt="<?= site_text_html('text_30170303c506cf6c') ?>"></a>
-            <span class="mobile-profile__crest-wrap"><img src="<?= safe(site_media_src('logo_image')) ?>" width="512" height="512" alt="<?= site_text_html('text_125ff372f2933b34') ?>"></span>
+            <?php if (!empty($siteSettings['show_logo'])): ?><span class="mobile-profile__crest-wrap"><img src="<?= safe(site_media_src('logo_image')) ?>" width="512" height="512" alt="<?= site_text_html('text_125ff372f2933b34') ?>"></span><?php endif; ?>
         </div>
         <div class="mobile-profile__stats" aria-label="<?= site_text_html('text_7f9488ff977b7f67') ?>">
             <div><strong><?= $totalFotos ?></strong><span><?= site_text_html('text_577e559428a23438') ?></span></div>

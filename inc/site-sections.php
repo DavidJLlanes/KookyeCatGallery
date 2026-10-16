@@ -39,7 +39,7 @@ function site_section_labels(): array
 function site_toggle_keys(): array
 {
     $keys = array_values(array_filter(array_column(site_section_definitions(), 'toggle')));
-    return array_merge($keys, ['show_header_mobile', 'show_header_desktop', 'show_verified_badge']);
+    return array_merge($keys, ['show_header_mobile', 'show_header_desktop', 'show_verified_badge', 'show_logo']);
 }
 
 /**

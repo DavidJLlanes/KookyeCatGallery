@@ -141,6 +141,41 @@ const phpErrors = () => (fs.existsSync(errorLog) ? fs.readFileSync(errorLog, 'ut
         r = await send('/admin.php?settings=1', { method: 'POST', form: { action: 'regenerate_images', csrf } });
         assert.equal(r.status, 303, 'Rehacer imágenes redirige.');
         assert.match(r.location, /section=publication&images=0$/, 'Tras rehacer no queda nada pendiente: ' + r.location);
+        // Logo junto a la foto de perfil, insignia de verificación y disposición de «El proyecto»: cada opción se ve (o se oculta) en la web.
+        const saveSettings = async overrides => {
+            const body = new FormData();
+            for (const [key, value] of Object.entries(defaults)) {
+                if (['texts', 'social_links', 'settings_version', 'profile_image', 'logo_image'].includes(key)) continue;
+                if (Array.isArray(value)) value.forEach(item => { if (typeof item !== 'object') body.append(key + '[]', String(item)); });
+                else if (typeof value === 'boolean') { if (value) body.append(key, '1'); }
+                else if (value !== null && typeof value !== 'object') body.append(key, String(value));
+            }
+            body.set('action', 'save_site_settings'); body.set('csrf', csrf); body.set('section', 'design'); body.set('show_social', '1');
+            for (const [key, value] of Object.entries(overrides)) { if (value === null) body.delete(key); else body.set(key, value); }
+            const saved = await send('/admin.php?settings=1', { method: 'POST', multipart: body });
+            assert.equal(saved.status, 303, 'Guardar ajustes (' + JSON.stringify(overrides) + ') debe redirigir: ' + (saved.text.match(/upload-message--error" role="alert">([^<]*)/) || [])[1]);
+            return (await send('/')).text;
+        };
+        let view = await saveSettings({});
+        assert.ok(view.includes('mobile-profile__crest-wrap') && view.includes('hero__crest') && view.includes('verified-badge'), 'Por defecto se ven el logo y la insignia.');
+        assert.ok(view.includes('class="project"') || /class="project(?! project--)/.test(view), 'Por defecto «El proyecto» lleva su imagen.');
+        view = await saveSettings({ show_logo: null });
+        assert.ok(!view.includes('mobile-profile__crest-wrap') && !view.includes('hero__crest'), 'Sin «Mostrar el logo» desaparece el logo de las dos cabeceras.');
+        view = await saveSettings({ show_verified_badge: null });
+        assert.ok(!view.includes('class="verified-badge'), 'Sin «Mostrar la insignia» desaparece la insignia.');
+        view = await saveSettings({ project_layout: 'text' });
+        assert.ok(/class="project project--no-photo"/.test(view) && !view.includes('project__media') && !view.includes('project__aside'), 'Solo texto: sin imagen y centrado.');
+        r = await send('/admin.php', { method: 'POST', form: { action: 'save_site_page', csrf, page: 'project_aside', content: '<p>Segunda columna de prueba</p>' } });
+        assert.equal(r.status, 303, 'Se guarda la segunda columna.');
+        view = await saveSettings({ project_layout: 'columns' });
+        assert.ok(view.includes('project__aside') && view.includes('Segunda columna de prueba') && !view.includes('project__media') && !/class="project project--no-photo/.test(view), 'Dos columnas: el texto sustituye a la imagen. ' + view.slice(view.indexOf('<section class="project'), view.indexOf('<section class="project') + 500));
+        r = await send('/admin.php', { method: 'POST', form: { action: 'save_site_page', csrf, page: 'project_aside', content: '' } });
+        view = await saveSettings({ project_layout: 'columns' });
+        assert.ok(/class="project project--no-photo"/.test(view) && !view.includes('project__aside'), 'Dos columnas sin texto en la segunda: queda solo texto, centrado.');
+        view = await saveSettings({ project_layout: 'image' });
+        assert.ok(view.includes('project__media'), 'Imagen y texto vuelve a mostrar la imagen.');
+        const designScreen = await send('/admin.php?settings=1&section=design');
+        assert.ok(designScreen.text.includes('name="show_logo"') && designScreen.text.includes('name="project_layout"') && designScreen.text.includes('name="show_verified_badge"'), 'Diseño ofrece el logo, la insignia y la disposición de «El proyecto».');
         // Todas las pantallas del panel abren y todo lo que enlazan (scripts, estilos) existe en el paquete.
         const firstPhoto = fs.readdirSync(path.join(site, 'img')).find(f => f.endsWith('.jpg'));
         const pages = ['', '?settings=1', '?settings=1&section=content', '?settings=1&section=design', '?settings=1&section=texts', '?settings=1&section=social',

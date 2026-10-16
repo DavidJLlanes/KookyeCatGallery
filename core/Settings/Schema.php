@@ -49,7 +49,7 @@ final class Schema
         if ($definitions !== null) return $definitions;
 
         // Interruptores que no son de un bloque de la portada (cabeceras e insignia de verificación): van en Diseño.
-        $headerToggles = ['show_header_mobile', 'show_header_desktop', 'show_verified_badge'];
+        $headerToggles = ['show_header_mobile', 'show_header_desktop', 'show_verified_badge', 'show_logo'];
         $sectionToggles = array_values(array_diff(\site_toggle_keys(), $headerToggles));
         $registry = static fn(string $type): \Closure => static fn(): array => Registry::for($type)->choices();
         $galleries = static fn(string $device): \Closure => static fn(): array => Registry::for('galleries')->choices(
@@ -67,6 +67,7 @@ final class Schema
             'photos_desktop' => ['type' => 'int-choice', 'default' => 20, 'section' => 'design', 'label' => 'Fotos visibles a la vez en escritorio', 'error' => 'Selecciona un número válido de fotos visibles.', 'options' => static fn(): array => \site_photos_per_view_choices(), 'gallery' => 8],
             'header_mobile' => ['type' => 'choice', 'default' => 'current', 'section' => 'design', 'label' => 'Cabecera móvil', 'choices' => $registry('headers-mobile'), 'body' => 'data'],
             'verified_badge' => ['type' => 'choice', 'default' => 'check', 'section' => 'design', 'label' => 'Insignia de verificación', 'choices' => $registry('badges'), 'body' => 'data'],
+            'project_layout' => ['type' => 'choice', 'default' => 'image', 'section' => 'content', 'label' => 'Disposición de «El proyecto»', 'choices' => $registry('project-layouts'), 'body' => 'data'],
             'header_desktop' => ['type' => 'choice', 'default' => 'current', 'section' => 'design', 'label' => 'Cabecera de escritorio', 'choices' => $registry('headers-desktop'), 'body' => 'data'],
             'gallery_mobile' => ['type' => 'choice', 'default' => 'standard', 'section' => 'design', 'label' => 'Galería móvil', 'choices' => $galleries('mobile'), 'body' => 'data', 'gallery' => 2, 'premium_mark' => true],
             'gallery_desktop' => ['type' => 'choice', 'default' => 'standard', 'section' => 'design', 'label' => 'Galería de escritorio', 'choices' => $galleries('desktop'), 'body' => 'data', 'gallery' => 3, 'premium_mark' => true],

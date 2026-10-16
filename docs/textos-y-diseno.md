@@ -44,6 +44,16 @@ Cada red es un archivo de `themes/socials/` (Instagram, Threads, Facebook, X, Yo
 
 En **Textos → Perfil público** se editan el **nombre de usuario** («@usuario» bajo la foto), las **dos líneas de la biografía**, el **texto** del enlace a tu web y la **dirección** (`https://…`) a la que lleva. Son los mismos datos que se cambian en la propia web con el lápiz de «Editar página» (un solo almacén, `texts` de los ajustes), así que lo que escribes en un sitio se ve en el otro. Prueba: `node tests/publish-flow.cjs`.
 
+## Logo, insignia y disposición de «El proyecto»
+
+En **Diseño**:
+
+- **Cabecera → «Mostrar el logo junto a la foto de perfil»** (`show_logo`): oculta el logo pequeño que va al lado de la foto de perfil en la cabecera móvil (todas las plantillas) y el de la portada de escritorio. Los ajustes guardados antes de esta opción siguen mostrándolo (migración 0007).
+- **Insignia de verificación → «Mostrar la insignia junto al nombre»** (`show_verified_badge`): la quita o la deja; además se elige entre las de `themes/badges/`.
+- **Disposición de «El proyecto»** (`project_layout`, una por archivo en `themes/project-layouts/`): *Imagen y texto* (la de siempre), *Dos columnas de texto* (el texto de la segunda columna sustituye a la imagen; se escribe en **Textos → Páginas de texto → «El Proyecto · segunda columna»**, página `project_aside`) o *Solo texto, centrado*. Si eliges dos columnas pero la segunda está vacía, o no hay imagen de perfil, el bloque queda como solo texto, centrado. Pruebas: `php tests/site-settings.php`, `node tests/publish-flow.cjs`.
+
+Guardar los ajustes ya no borra las páginas de texto editadas (aviso legal, «El proyecto»…): se conservan igual que los textos.
+
 ## Título y rótulo de «El proyecto»
 
 En **Ajustes → Textos → Sección «El proyecto»** hay un campo para el rótulo pequeño y otro para el título de la sección (un solo texto cada uno; la migración 0005 une las dos líneas antiguas del título). El contenido de la sección se edita en «Páginas de texto».

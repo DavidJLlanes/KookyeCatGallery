@@ -57,6 +57,7 @@ final class Registry
             'pairs' => ['name', 'heading', 'body', 'group'],
             'galleries' => ['name', 'devices', 'capabilities'],
             'badges', 'socials' => ['name', 'svg'],
+            'project-layouts' => ['name', 'media'],
             default => ['name'],
         };
     }

@@ -11,6 +11,7 @@ Opciones de personalización registradas **una por archivo**. Cada `themes/<tipo
 | `galleries/` | Galería estándar | `name`, `devices`, `capabilities` |
 | `hover/`, `grids/`, `pagination-shapes/` | Efecto hover, proporción, forma de paginación | `name` |
 | `badges/` | Insignia de verificación | `name`, `svg` |
+| `project-layouts/` | Disposición de «El proyecto» (imagen, dos columnas de texto, solo texto) | `name`, `media` |
 | `socials/` | Red social (su icono oficial, una sola tinta) | `name`, `svg` |
 
 Para añadir una **red social**, crea `themes/socials/<id>.php` con `name` y `svg` (el interior de un `<svg viewBox="0 0 24 24">` con el glifo oficial, sin `fill` ni colores propios: toma el color de la paleta). Aparece sola en el panel y en la portada.

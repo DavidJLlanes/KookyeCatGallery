@@ -75,6 +75,7 @@ html.js .project [data-reveal] {
     transition: opacity 1s var(--ease-out), transform 1s var(--ease-out);
 }
 html.js .project .project__media[data-reveal] { transform: translateY(40px) scale(0.98); }
+html.js .project .project__aside[data-reveal] { transform: translateY(40px); }
 html.js .project [data-reveal].is-revealed {
     opacity: 1;
     transform: none;
@@ -108,6 +109,14 @@ html.js .project__link[data-reveal]   { transition-delay: 0.24s; }
 .project--no-photo .project__title {
     font-style: italic;
 }
+
+/* Segunda columna de texto (disposición «Dos columnas de texto»): ocupa el sitio del retrato. */
+.project--aside .project__inner { grid-template-columns: 1fr 1fr; }
+.project__aside { align-self: center; }
+.project__body--aside > :last-child { margin-bottom: 0; }
+.project__body--aside h2,
+.project__body--aside h3 { font-family: var(--serif); font-weight: 400; color: var(--fg); margin: 0 0 .8rem; }
+.project__body--aside a { color: var(--accent); }
 
 .project__body p {
     font-family: var(--sans);
@@ -167,7 +176,8 @@ html.js .project__link[data-reveal]   { transition-delay: 0.24s; }
         max-width: 560px;
         text-align: center;
     }
-    .project__media { order: -1; }
+    .project__media,
+    .project__aside { order: -1; }
     .project__media-frame { aspect-ratio: 4 / 5; max-width: 360px; margin: 0 auto; }
     .project__link { margin-inline: auto; }
 }

@@ -53,7 +53,7 @@ $migratedProfiles = site_settings_validate($legacyProfiles)['social_links'];
 check(array_column($migratedProfiles, 'network') === ['instagram', 'threads'], 'Legacy Instagram and Threads profiles must migrate.');
 check($migratedProfiles[0]['handle'] === '@legacy_ig' && $migratedProfiles[1]['handle'] === '@legacy_threads', 'Legacy network handles must be preserved.');
 check(!array_key_exists('premium', $defaults), 'Premium designs must not be part of settings.');
-check(count(site_editable_page_keys()) === 4, 'Expected four editable text pages.');
+check(count(site_editable_page_keys()) === 5, 'Expected five editable text pages (legal, privacy, cookies, project and its second column).');
 check(count(site_design_choices()['gallery_mobile']) === 10, 'Expected ten mobile gallery designs.');
 check(count(site_design_choices()['gallery_desktop']) === 10, 'Expected ten desktop gallery designs.');
 foreach (['gallery_mobile', 'gallery_desktop'] as $field) {
@@ -271,3 +271,22 @@ check(count(site_design_choices()['palette']) === 7, 'Expected seven palettes.')
 check(count(site_design_choices()['header_mobile']) === 9, 'Expected nine mobile interfaces.');
 check(count(site_design_choices()['header_desktop']) === 9, 'Expected nine desktop interfaces.');
 echo "Site settings tests passed.\n";
+
+// Logo junto a la foto de perfil, insignia y disposición de «El proyecto».
+check($defaults['show_logo'] === true && $defaults['show_verified_badge'] === true && $defaults['project_layout'] === 'image', 'Logo and badge are shown and the project keeps its image by default.');
+check(site_settings_validate(array_diff_key($defaults, ['show_logo' => 1]))['show_logo'] === false, 'An unchecked switch hides the logo.');
+foreach (['image', 'columns', 'text'] as $layoutId) {
+    check(site_settings_validate(array_replace($defaults, ['project_layout' => $layoutId]))['project_layout'] === $layoutId, "Project layout $layoutId must be accepted.");
+}
+try {
+    site_settings_validate(array_replace($defaults, ['project_layout' => 'no-existe']));
+    check(false, 'An unknown project layout must be rejected.');
+} catch (InvalidArgumentException $error) {
+    check(str_contains($error->getMessage(), 'project_layout'), 'The error names the setting.');
+}
+$old = array_diff_key($defaults, ['show_logo' => 1, 'project_layout' => 1]);
+$migrated = \Kcg\Core\Settings\Migrations::apply($old, true);
+check($migrated['show_logo'] === true && $migrated['project_layout'] === 'image', 'A saved file from before these options keeps the logo visible and the project with its image.');
+check(in_array('project_aside', site_editable_page_keys(), true) && trim(site_page_content('project_aside')) === '', 'The second column starts empty.');
+$designForm = site_settings_form('t', $defaults, 'design');
+check(str_contains($designForm, 'name="show_logo"') && str_contains($designForm, 'name="project_layout"') && str_contains($designForm, 'name="show_verified_badge"'), 'Design form must offer the logo switch, the badge switch and the project layout.');

@@ -11,7 +11,7 @@ declare(strict_types=1);
  */
 function site_editable_page_keys(): array
 {
-    return ['legal_notice', 'privacy_policy', 'cookies_policy', 'project'];
+    return ['legal_notice', 'privacy_policy', 'cookies_policy', 'project', 'project_aside'];
 }
 
 /**
@@ -20,7 +20,7 @@ function site_editable_page_keys(): array
 function site_page_labels(): array
 {
     return ['legal_notice' => 'Aviso legal', 'privacy_policy' => 'Política de privacidad',
-        'cookies_policy' => 'Política de cookies', 'project' => 'El Proyecto'];
+        'cookies_policy' => 'Política de cookies', 'project' => 'El Proyecto', 'project_aside' => 'El Proyecto · segunda columna'];
 }
 
 /**
@@ -57,6 +57,7 @@ function site_page_default_html(string $page): string
         'project' => '<p><em>' . $t('text_52179dc42df7efe5') . '</em> ' . $t('text_9b9e0ce956198ed6') . '</p><p>'
             . $t('text_ded2b00dd9f9aee9') . ' <strong>' . $t('text_30170303c506cf6c') . '</strong>' . $t('text_5b20d476495c8ab2') . '</p>',
     ];
+    // «project_aside» (segunda columna de «El proyecto») empieza vacía: solo se usa si eliges esa disposición y la escribes.
     return $content[$page] ?? '';
 }
 

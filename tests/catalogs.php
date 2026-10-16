@@ -36,7 +36,7 @@ $contrast = static function (string $a, string $b) use ($luminance): float {
 };
 
 // Todos los registros se cargan (Registry lanza una excepción si falta una clave obligatoria o un id no es válido).
-$types = ['palettes', 'fonts', 'pairs', 'galleries', 'headers-mobile', 'headers-desktop', 'hover', 'grids', 'pagination-shapes', 'badges', 'socials'];
+$types = ['palettes', 'fonts', 'pairs', 'galleries', 'headers-mobile', 'headers-desktop', 'hover', 'grids', 'pagination-shapes', 'badges', 'socials', 'project-layouts'];
 foreach ($types as $type) {
     try {
         if (Registry::for($type)->all() === []) $fail("themes/$type está vacío.");
