@@ -42,7 +42,7 @@
     position: relative;
     width: 100%;
     aspect-ratio: var(--aspect, 1.5);
-    background: linear-gradient(135deg, #1a1a1a 0%, #0e0e0e 100%);
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-soft) 100%);
     overflow: hidden;
     border-radius: 4px;
     box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.7);
@@ -74,7 +74,7 @@
     transform: translateY(-4px);
     box-shadow:
         0 30px 60px -25px rgba(0, 0, 0, 0.9),
-        0 12px 30px -15px rgba(212, 165, 116, 0.18);
+        0 12px 30px -15px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .card__img {
@@ -132,7 +132,7 @@
     height: 1px;
     background: var(--accent);
     margin-top: 0.58rem;
-    box-shadow: 0 0 12px rgba(212, 165, 116, 0.35);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent);
     transform-origin: left center;
     transition: width 0.6s var(--ease-out), background 0.4s;
 }

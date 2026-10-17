@@ -174,6 +174,13 @@ const phpErrors = () => (fs.existsSync(errorLog) ? fs.readFileSync(errorLog, 'ut
         assert.ok(/class="project project--no-photo"/.test(view) && !view.includes('project__aside'), 'Dos columnas sin texto en la segunda: queda solo texto, centrado.');
         view = await saveSettings({ project_layout: 'image' });
         assert.ok(view.includes('project__media'), 'Imagen y texto vuelve a mostrar la imagen.');
+        // El nombre del fotógrafo no se repite bajo el título cuando es el mismo texto que el nombre de la web; si es otro, sí se muestra.
+        view = await saveSettings({ 'texts[text_30170303c506cf6c]': 'Kookye Cat Gallery' });
+        assert.ok(!view.includes('hero__subtitle'), 'Con el mismo nombre, el subtítulo de la cabecera no se repite.');
+        const legal = await send('/aviso-legal');
+        assert.ok(!legal.text.includes('legal-brand__sub'), 'Tampoco se repite en las páginas legales.');
+        view = await saveSettings({ 'texts[text_30170303c506cf6c]': 'Ana Pérez' });
+        assert.ok(view.includes('hero__subtitle') && view.includes('Ana Pérez'), 'Con otro nombre, el fotógrafo aparece bajo el título.');
         const designScreen = await send('/admin.php?settings=1&section=design');
         assert.ok(designScreen.text.includes('name="show_logo"') && designScreen.text.includes('name="project_layout"') && designScreen.text.includes('name="show_verified_badge"'), 'Diseño ofrece el logo, la insignia y la disposición de «El proyecto».');
         // Todas las pantallas del panel abren y todo lo que enlazan (scripts, estilos) existe en el paquete.

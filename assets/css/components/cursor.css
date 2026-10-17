@@ -20,7 +20,7 @@
 
 .cursor-ring {
     width: 36px; height: 36px;
-    border: 1px solid rgba(212, 165, 116, 0.5);
+    border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
     transition: transform 0.4s var(--ease-out), width 0.3s, height 0.3s, opacity 0.3s;
 }
 

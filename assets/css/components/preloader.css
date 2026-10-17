@@ -8,7 +8,7 @@
     position: fixed;
     inset: 0;
     z-index: 2000;
-    background: #050505;
+    background: var(--bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -37,7 +37,7 @@
     aspect-ratio: 1 / 1;
     object-fit: cover;
     border-radius: 50%; /* el logo siempre redondo */
-    filter: drop-shadow(0 0 22px rgba(212, 165, 116, 0.3));
+    filter: drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 30%, transparent));
     opacity: 0;
     transform: translateY(10px) scale(0.9);
     animation: preCrest 1s var(--ease-out) 0.1s forwards;
@@ -59,7 +59,7 @@
     position: relative;
     width: clamp(120px, 30vw, 200px);
     height: 1.5px;
-    background: rgba(243, 240, 234, 0.12);
+    background: color-mix(in srgb, var(--fg) 12%, transparent);
     overflow: hidden;
     border-radius: 2px;
 }
@@ -68,7 +68,7 @@
     position: absolute;
     inset: 0;
     width: 0%;
-    background: linear-gradient(90deg, rgba(212, 165, 116, 0.4), var(--accent));
+    background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 40%, transparent), var(--accent));
     transition: width 0.3s var(--ease-out);
     /* Fallback sin JS: se rellena solo */
     animation: preBarFallback 2.4s ease-out 0.2s forwards;

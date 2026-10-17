@@ -79,14 +79,14 @@
     border-radius: 6px;
     box-shadow:
         0 30px 80px rgba(0, 0, 0, 0.6),
-        0 0 0 1px rgba(243, 240, 234, 0.10);
+        0 0 0 1px color-mix(in srgb, var(--fg) 10%, transparent);
     transition: transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out);
 }
 .photo-detail__btn:hover .photo-detail__img {
     transform: scale(1.012);
     box-shadow:
         0 36px 92px rgba(0, 0, 0, 0.68),
-        0 0 0 1px rgba(212, 165, 116, 0.35);
+        0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .photo-detail__info {
@@ -137,7 +137,7 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--accent);
-    border: 1px solid rgba(212, 165, 116, 0.35);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
     border-radius: 20px;
     padding: 0.42rem 0.95rem;
 }
@@ -151,13 +151,13 @@
     letter-spacing: 0.04em;
     color: var(--fg-soft);
     text-decoration: none;
-    border: 1px solid rgba(243, 240, 234, 0.14);
+    border: 1px solid color-mix(in srgb, var(--fg) 14%, transparent);
     border-radius: 20px;
     padding: 0.42rem 0.95rem;
     transition: color 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
 }
 .photo-detail__coords svg { width: 14px; height: 14px; color: var(--accent); }
-.photo-detail__coords:hover { color: var(--fg); border-color: rgba(212, 165, 116, 0.45); }
+.photo-detail__coords:hover { color: var(--fg); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
 
 .photo-detail__actions {
     display: flex;
@@ -180,7 +180,7 @@
     text-transform: uppercase;
     color: var(--accent);
     background: transparent;
-    border: 1px solid rgba(212, 165, 116, 0.65);
+    border: 1px solid color-mix(in srgb, var(--accent) 65%, transparent);
     border-radius: 30px;
     padding: 0.85rem 1.9rem;
     text-decoration: none;
@@ -188,7 +188,7 @@
 }
 .photo-detail__edit:hover {
     transform: translateY(-2px);
-    background: rgba(212, 165, 116, 0.12);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 .photo-detail__edit:focus-visible {
     outline: 2px solid var(--accent);
@@ -212,7 +212,7 @@
 }
 .photo-detail__zoom:hover {
     transform: translateY(-2px);
-    background: #e0b988;
+    background: color-mix(in srgb, var(--accent) 85%, white);
 }
 
 @media (max-width: 768px) {

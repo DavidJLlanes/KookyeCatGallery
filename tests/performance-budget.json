@@ -1,8 +1,8 @@
 {
-  "descripcion": "Presupuesto de estilos y scripts propios por tipo de página (bytes sin comprimir; los módulos de main.js, que se precargan con modulepreload, cuentan como scripts). Fijado el 13 oct 2026 tras trocear style.css, interface-worlds.css y main.js (Fase 6), con un margen del 3 %. Si una cifra tiene que subir, se sube aquí a propósito; si baja, bájalo para que no vuelva a crecer. Ver tests/performance-budget.php.",
+  "descripcion": "Presupuesto de estilos y scripts propios por tipo de página (bytes sin comprimir; los módulos de main.js, que se precargan con modulepreload, cuentan como scripts). Fijado el 13 oct 2026 tras trocear style.css, interface-worlds.css y main.js (Fase 6), con un margen del 3 %. El 17 oct 2026 «portada-minima» sube de 121000 a 121700 B de CSS: los colores de la paleta con transparencia pasan a color-mix(), más largo que el rgba() fijo. Si una cifra tiene que subir, se sube aquí a propósito; si baja, bájalo para que no vuelva a crecer. Ver tests/performance-budget.php.",
   "paginas": {
     "portada": { "cssBytes": 137500, "jsBytes": 141400, "archivos": 64, "externos": 2 },
-    "portada-minima": { "cssBytes": 121000, "jsBytes": 125200, "archivos": 62, "externos": 0 },
+    "portada-minima": { "cssBytes": 121700, "jsBytes": 125200, "archivos": 62, "externos": 0 },
     "portada-cabeceras-especiales": { "cssBytes": 147700, "jsBytes": 141400, "archivos": 68, "externos": 2 },
     "portada-orbita-observatorio": { "cssBytes": 147900, "jsBytes": 147400, "archivos": 70, "externos": 2 },
     "aviso-legal": { "cssBytes": 21500, "jsBytes": 10800, "archivos": 8, "externos": 0 },

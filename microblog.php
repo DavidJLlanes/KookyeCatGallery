@@ -112,7 +112,7 @@ elseif ($post !== null) $ogImage = $siteUrl . site_media_url('profile_image');
     </a>
     <a href="/" class="legal-brand">
         <span class="legal-brand__title"><?= site_text_html('text_52179dc42df7efe5') ?></span>
-        <span class="legal-brand__sub"><?= site_text_html('text_30170303c506cf6c') ?></span>
+        <?php if (site_author_differs_from_name()): ?><span class="legal-brand__sub"><?= site_text_html('text_30170303c506cf6c') ?></span><?php endif; ?>
     </a>
 </header>
 <main class="mb-permalink">

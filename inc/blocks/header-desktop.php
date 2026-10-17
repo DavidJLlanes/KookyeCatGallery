@@ -31,7 +31,7 @@
             <?php if ($nameSecondLine !== ''): ?><span class="hero__title-line hero__title-line--accent" data-reveal><?= site_name_part_html($nameSecondLine) ?></span><?php endif; ?>
         </h1>
         <span class="hero__divider" aria-hidden="true"></span>
-        <p class="hero__subtitle" data-reveal><?= site_inline_text_html('text_30170303c506cf6c') ?></p>
+        <?php if (site_author_differs_from_name()): ?><p class="hero__subtitle" data-reveal><?= site_inline_text_html('text_30170303c506cf6c') ?></p><?php endif; ?>
         <?php if ($heroItem): ?>
         <div class="hero__meta" data-reveal>
             <span><?= $totalFotos ?> <?= site_text_html($totalFotos === 1 ? 'text_08e81d4e64f6b4ff' : 'text_577e559428a23438') ?></span>

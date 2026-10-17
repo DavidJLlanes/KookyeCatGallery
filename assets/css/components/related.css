@@ -46,7 +46,7 @@
     overflow: hidden;
     border-radius: 8px;
     background: var(--bg-soft);
-    border: 1px solid rgba(243, 240, 234, 0.06);
+    border: 1px solid color-mix(in srgb, var(--fg) 6%, transparent);
 }
 .related__media img {
     width: 100%;

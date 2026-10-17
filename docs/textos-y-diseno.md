@@ -40,6 +40,14 @@ Dónde se guardan y con qué tamaño: **todo lo que subes desde el panel vive en
 
 Cada red es un archivo de `themes/socials/` (Instagram, Threads, Facebook, X, YouTube, TikTok, Flickr, LinkedIn, Pinterest, 500px, Bluesky y Mastodon) con su **glifo oficial en una sola tinta** (Simple Icons, licencia CC0). El icono hereda el color del texto (`currentColor`), así que se adapta solo a cualquier paleta, actual o futura, y al pasar el ratón. Añadir una red nueva es crear `themes/socials/<id>.php` con `name` y `svg`; aparece sola en el panel y en la portada. Prueba: `php tests/catalogs.php`.
 
+## Todos los bloques usan la paleta elegida
+
+Categorías, mapa, «El proyecto», contacto, botones, avisos y el resto de bloques públicos toman sus colores de la paleta (`--accent`, `--fg`, `--bg`, `--bg-card`, `--line`…), también con paletas claras. Para un color con transparencia se usa `color-mix(in srgb, var(--accent) 25%, transparent)`, nunca el dorado original escrito a mano. Solo `base.css` define los valores de la paleta por defecto, y los velos negros sobre fotos (lightbox, pies de foto) son a propósito. `php tests/palette-colors.php` falla si un estilo público vuelve a llevar un color de la paleta original.
+
+## Editor en vivo: textos vacíos
+
+Si borras un texto con «Editar página», en el modo de edición sigue habiendo un hueco punteado con el nombre del texto como pista, para poder volver a escribirlo (`node tests/inline-editor-empty.cjs`).
+
 ## Perfil público (usuario, biografía y web)
 
 En **Textos → Perfil público** se editan el **nombre de usuario** («@usuario» bajo la foto), las **dos líneas de la biografía**, el **texto** del enlace a tu web y la **dirección** (`https://…`) a la que lleva. Son los mismos datos que se cambian en la propia web con el lápiz de «Editar página» (un solo almacén, `texts` de los ajustes), así que lo que escribes en un sitio se ve en el otro. Prueba: `node tests/publish-flow.cjs`.

@@ -10,7 +10,7 @@
     align-items: center;
     justify-content: center;
     isolation: isolate;
-    background: #050505;
+    background: var(--bg);
 }
 
 /* Fondo con gradientes radiales suaves */
@@ -19,10 +19,10 @@
     inset: 0;
     z-index: -3;
     background:
-        radial-gradient(ellipse 90% 58% at 22% 28%, rgba(212, 165, 116, 0.11) 0%, transparent 62%),
+        radial-gradient(ellipse 90% 58% at 22% 28%, color-mix(in srgb, var(--accent) 11%, transparent) 0%, transparent 62%),
         radial-gradient(ellipse 72% 50% at 78% 42%, rgba(109, 149, 188, 0.09) 0%, transparent 60%),
         radial-gradient(ellipse 75% 52% at 52% 108%, rgba(0, 0, 0, 0.74) 0%, transparent 62%),
-        linear-gradient(160deg, #070707 0%, #101113 47%, #050505 100%);
+        linear-gradient(160deg, var(--bg) 0%, var(--bg-soft) 47%, var(--bg) 100%);
     background-size: 145% 145%, 135% 135%, 100% 100%, 100% 100%;
     background-position: 0% 0%, 100% 0%, 50% 100%, 50% 50%;
     animation: heroAurora 24s ease-in-out infinite alternate;
@@ -50,9 +50,9 @@
     inset: -15%;
     z-index: -2;
     background:
-        radial-gradient(ellipse 45% 32% at 50% 42%, rgba(212, 165, 116, 0.13) 0%, transparent 60%),
-        radial-gradient(ellipse 30% 20% at 30% 70%, rgba(212, 165, 116, 0.06) 0%, transparent 60%),
-        radial-gradient(ellipse 25% 18% at 75% 30%, rgba(212, 165, 116, 0.05) 0%, transparent 60%);
+        radial-gradient(ellipse 45% 32% at 50% 42%, color-mix(in srgb, var(--accent) 13%, transparent) 0%, transparent 60%),
+        radial-gradient(ellipse 30% 20% at 30% 70%, color-mix(in srgb, var(--accent) 6%, transparent) 0%, transparent 60%),
+        radial-gradient(ellipse 25% 18% at 75% 30%, color-mix(in srgb, var(--accent) 5%, transparent) 0%, transparent 60%);
     filter: blur(40px);
     will-change: transform, opacity;
     animation: heroGlow 18s ease-in-out infinite alternate;
@@ -86,15 +86,15 @@
 .hero__ornament--tl {
     top: 2.5rem;
     left: 2.5rem;
-    border-top: 1px solid rgba(212, 165, 116, 0.5);
-    border-left: 1px solid rgba(212, 165, 116, 0.5);
+    border-top: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    border-left: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .hero__ornament--br {
     bottom: 2.5rem;
     right: 2.5rem;
-    border-bottom: 1px solid rgba(212, 165, 116, 0.5);
-    border-right: 1px solid rgba(212, 165, 116, 0.5);
+    border-bottom: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    border-right: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 @keyframes ornamentReveal {
@@ -138,9 +138,9 @@
     height: 215%;
     transform: translate(-50%, -50%);
     background: radial-gradient(ellipse at center,
-        rgba(212, 165, 116, 0.22) 0%,
-        rgba(212, 165, 116, 0.08) 42%,
-        rgba(212, 165, 116, 0) 70%);
+        color-mix(in srgb, var(--accent) 22%, transparent) 0%,
+        color-mix(in srgb, var(--accent) 8%, transparent) 42%,
+        color-mix(in srgb, var(--accent) 0%, transparent) 70%);
     filter: blur(8px);
     z-index: -1;
     pointer-events: none;
@@ -156,7 +156,7 @@
     border-radius: 50%; /* el logo siempre redondo */
     filter:
         drop-shadow(0 12px 28px rgba(0, 0, 0, 0.5))
-        drop-shadow(0 0 22px rgba(212, 165, 116, 0.22));
+        drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 22%, transparent));
     animation: crestFloat 7s ease-in-out 1.6s infinite;
 }
 
@@ -246,7 +246,7 @@
     line-height: 0.85;
     letter-spacing: -0.028em;
     margin: 0;
-    text-shadow: 0 0 80px rgba(212, 165, 116, 0.15);
+    text-shadow: 0 0 80px color-mix(in srgb, var(--accent) 15%, transparent);
 }
 
 .hero__title::before {
@@ -259,10 +259,10 @@
     transform: translate(-50%, -50%);
     background:
         radial-gradient(ellipse at center,
-        rgba(212, 165, 116, 0.22) 0%,
-        rgba(212, 165, 116, 0.11) 34%,
-        rgba(212, 165, 116, 0.05) 58%,
-        rgba(212, 165, 116, 0) 78%);
+        color-mix(in srgb, var(--accent) 22%, transparent) 0%,
+        color-mix(in srgb, var(--accent) 11%, transparent) 34%,
+        color-mix(in srgb, var(--accent) 5%, transparent) 58%,
+        color-mix(in srgb, var(--accent) 0%, transparent) 78%);
     filter: blur(18px);
     opacity: 0.7;
     pointer-events: none;

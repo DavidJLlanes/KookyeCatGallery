@@ -2,11 +2,11 @@
 .photo-app-actions,.gallery-app-tools{display:flex;flex-wrap:wrap;gap:.65rem;align-items:center}
 .photo-app-actions{justify-content:center;width:100%;margin-top:1rem;pointer-events:auto}
 .gallery-app-tools{justify-content:center;margin:1.25rem auto 2rem;padding:0 1rem}
-.photo-app-action,.gallery-app-tool{appearance:none;border:1px solid rgba(212,165,116,.38);background:rgba(15,14,13,.72);color:var(--fg);border-radius:999px;padding:.62rem .95rem;font:500 .72rem/1 var(--sans);letter-spacing:.04em;cursor:pointer;backdrop-filter:blur(10px)}
+.photo-app-action,.gallery-app-tool{appearance:none;border:1px solid color-mix(in srgb, var(--accent) 38%, transparent);background:color-mix(in srgb, var(--bg-card) 78%, transparent);color:var(--fg);border-radius:999px;padding:.62rem .95rem;font:500 .72rem/1 var(--sans);letter-spacing:.04em;cursor:pointer;backdrop-filter:blur(10px)}
 .photo-app-action:hover,.gallery-app-tool:hover,.gallery-app-tool[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
 .photo-app-action:disabled{opacity:.65;cursor:wait}
 .photo-like-error{flex-basis:100%;color:#f1a39f;text-align:center;font:.72rem/1.4 var(--sans)}
-.card.is-favorite .card__picture{box-shadow:inset 0 0 0 1px rgba(212,165,116,.55)}
+.card.is-favorite .card__picture{box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent)}
 .card[hidden]{display:none!important}
 @media(max-width:768px){.photo-app-action,.gallery-app-tool{min-height:44px;padding:.72rem 1rem}.gallery-app-tools{position:relative;z-index:3;margin-top:.75rem}}
 

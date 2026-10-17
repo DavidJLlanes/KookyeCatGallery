@@ -202,3 +202,14 @@ function site_inline_text_html(string $key, bool $preserveLineBreaks = false): s
     if (empty($GLOBALS['siteInlineEditorEnabled']) || !in_array($key, site_inline_editable_text_keys(), true)) return $value;
     return '<span class="inline-edit-text" data-inline-edit-key="' . $escape($key) . '" data-inline-edit-label="' . $escape(site_inline_text_label($key)) . '">' . $value . '</span>';
 }
+
+/**
+ * ¿El nombre del fotógrafo o estudio es distinto del nombre de la web? Cuando son el mismo texto («Fotos de León» y «Fotos de León»), las
+ * cabeceras no lo repiten bajo el título: solo se muestra el segundo si aporta algo.
+ */
+function site_author_differs_from_name(): bool
+{
+    $normalize = static fn(string $text): string => mb_strtolower(trim(preg_replace('/\s+/u', ' ', $text) ?? $text), 'UTF-8');
+    $author = $normalize(site_text('text_30170303c506cf6c'));
+    return $author !== '' && $author !== $normalize(site_title());
+}

@@ -33,6 +33,9 @@
 .inline-edit-panel__actions button:disabled { opacity:.45; cursor:default; }
 body[data-inline-edit-mode="true"] .inline-edit-text { position:relative; outline:1px dashed rgba(227,184,137,.65); outline-offset:3px; border-radius:2px; cursor:pointer; transition:background .15s, outline-color .15s; white-space:pre-line; }
 body[data-inline-edit-mode="true"] .inline-edit-text:hover, body[data-inline-edit-mode="true"] .inline-edit-text:focus { outline:2px solid #e2b98c; outline-offset:4px; background:rgba(226,185,140,.1); }
+/* Un texto vacío (borrado a propósito) sigue teniendo hueco en el modo de edición, con su nombre como pista, para poder volver a escribirlo. */
+body[data-inline-edit-mode="true"] .inline-edit-text:empty { display:inline-block; min-width:7ch; min-height:1.3em; vertical-align:middle; }
+body[data-inline-edit-mode="true"] .inline-edit-text:empty::before { content:attr(data-inline-edit-label); font-style:italic; font-weight:400; font-size:.75em; letter-spacing:0; text-transform:none; opacity:.6; white-space:nowrap; }
 .inline-edit-text--saved { animation:inline-edit-saved .8s ease; }
 @keyframes inline-edit-saved { 50% { background:rgba(106,184,123,.28); } }
 @media (max-width:600px) {
